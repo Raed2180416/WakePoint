@@ -5,29 +5,43 @@ import 'services/trackingservice.dart';
 import 'screens/homescreen.dart';
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
-import 'screens/splash_screen.dart'; // <-- new splash screen file
+import 'screens/splash_screen.dart';
 import 'themes/appthemes.dart';
 import 'screens/otherimpservices/recent_locations_service.dart';
+import 'services/notification_service.dart';
+import 'dart:developer' as dev;
 
 Future<void> main() async {
+  // Ensure Flutter binding is initialized before any Flutter-specific code.
   WidgetsFlutterBinding.ensureInitialized();
-
+  
+  // Initialize Hive itself. We will let the service manage opening the box.
   try {
-    // Initialize Hive for recent locations.
     await Hive.initFlutter();
-    await Hive.openBox(RecentLocationsService.boxName);
+    dev.log("Hive engine initialized successfully.", name: "main");
   } catch (e) {
-    debugPrint("Hive initialization failed: $e");
+    dev.log("FATAL: Hive initialization failed: $e", name: "main");
+  }
+  
+  // Initialize other essential services.
+  await _initializeServices();
+  
+  runApp(const MyApp());
+}
+
+// Separate function to keep service initializations clean.
+Future<void> _initializeServices() async {
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    dev.log("Notification Service initialization failed: $e", name: "main");
   }
 
   try {
-    // Initialize the background tracking service (but do not start tracking yet).
     await TrackingService().initializeService();
   } catch (e) {
-    debugPrint("Tracking Service initialization failed: $e");
+    dev.log("Tracking Service initialization failed: $e", name: "main");
   }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -37,13 +51,43 @@ class MyApp extends StatefulWidget {
   MyAppState createState() => MyAppState();
 }
 
-class MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
+    // Start listening for app lifecycle events (pause, resume, etc.).
+    WidgetsBinding.instance.addObserver(this);
+    
+    // =======================================================================
+    // FIX: Call the permission check function here.
+    // =======================================================================
     _checkNotificationPermission();
+  }
+
+  @override
+  void dispose() {
+    // Stop listening to prevent memory leaks.
+    WidgetsBinding.instance.removeObserver(this);
+    // As a final cleanup when the app is truly closing, close Hive.
+    Hive.close();
+    super.dispose();
+  }
+
+  // This is the definitive fix for saving data before the app closes.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // This is called when the user backgrounds the app (e.g., presses home).
+    if (state == AppLifecycleState.paused) {
+      dev.log("App paused, flushing Hive box to disk.", name: "main");
+      // `flush()` is a direct command to write all in-memory changes to disk.
+      // This prevents the OS from killing the app before data is saved.
+      if (Hive.isBoxOpen(RecentLocationsService.boxName)) {
+        Hive.box(RecentLocationsService.boxName).flush();
+      }
+    }
   }
 
   /// Check and request notification permission on Android 13+ or iOS.
@@ -65,7 +109,6 @@ class MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'GeoWake',
       theme: isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
-      // Set the initial route to our splash screen.
       initialRoute: '/splash',
       onGenerateRoute: (settings) {
         if (settings.name == '/splash') {
@@ -87,7 +130,6 @@ class MyAppState extends State<MyApp> {
             settings: settings,
           );
         }
-        // The default route '/' now points to your HomeScreen.
         if (settings.name == '/') {
           return MaterialPageRoute(builder: (_) => const HomeScreen());
         }

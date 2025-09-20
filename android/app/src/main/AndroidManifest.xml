@@ -1,45 +1,32 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.geowake2"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Required for Android 14 foreground service with location -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
 
     <application
-        android:label="geowake2"
+        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:label="geowake2"
         android:enableOnBackInvokedCallback="true">
 
-        <!-- Meta-data for background tracking notification -->
-        <meta-data
-            android:name="flutter_background_geolocation.notification.channel_name"
-            android:value="GeoWake Tracking" />
-        <meta-data
-            android:name="flutter_background_geolocation.notification.channel_description"
-            android:value="Your location is being tracked for timely alerts." />
-
-        <!-- AdMob App ID (test ID) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:taskAffinity=""
-            android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:exported="true"
             android:hardwareAccelerated="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
             android:windowSoftInputMode="adjustResize">
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
@@ -50,21 +37,18 @@
             </intent-filter>
         </activity>
 
-        <!-- Google Maps API key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0" />
 
-        <!-- Flutter embedding version -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Declare the TrackingService with the appropriate foreground service type -->
         <service
-            android:name=".services.trackingservice.TrackingService"
-            android:exported="false"
+            android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="location" />
+
     </application>
 
     <queries>

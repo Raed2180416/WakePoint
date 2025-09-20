@@ -218,6 +218,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     }
     return PopScope(
       canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (!didPop) {
+          // Handle the back button press here if needed
+          // For now, we'll just prevent the pop since canPop is false
+        }
+      },
       child: Scaffold(
         drawer: const SettingsDrawer(),
         appBar: AppBar(

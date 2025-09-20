@@ -1,7 +1,13 @@
+// lib/screens/settingsdrawer.dart
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
+// --- STEP 1: ADD THIS IMPORT ---
+// This line tells our settings drawer that the RingtonesScreen exists and where to find it.
+import 'package:geowake2/screens/ringtones_screen.dart';
+
+ 
 class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({super.key});
 
@@ -15,17 +21,15 @@ class SettingsDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: Colors.deepPurple),
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.deepPurple),
               child: Text(
                 'Settings',
-                // You could keep Pacifico here or use Montserrat; your choice
-                style: GoogleFonts.pacifico(
-                  textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                style: TextStyle(
+                  fontFamily: 'Pacifico', // Using fontFamily for consistency
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -42,8 +46,16 @@ class SettingsDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.alarm),
               title: const Text('Alarm Ringtones'),
+              // --- STEP 2: UPDATE THIS onTap FUNCTION ---
               onTap: () {
-                // Implement ringtone selection
+                // This closes the drawer before navigating to the new screen
+                // for a smoother user experience.
+                Navigator.of(context).pop();
+                
+                // This is the command that pushes the RingtonesScreen onto the view.
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const RingtonesScreen(),
+                ));
               },
             ),
             ListTile(

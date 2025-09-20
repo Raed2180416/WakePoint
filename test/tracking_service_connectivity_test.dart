@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
@@ -20,6 +21,8 @@ Position fakePosition(double lat, double lng, {double speed = 0.0}) {
     speedAccuracy: 0.0,
   );
 }
+
+enum AlarmMode { distance, time }
 
 void main() {
   group('TrackingService Connectivity Simulation', () {
@@ -52,7 +55,12 @@ void main() {
       // Emit an initial GPS update.
       final initialPos = fakePosition(37.422, -122.084);
       gpsController.add(initialPos);
-      await trackingService.startTracking();
+      await trackingService.startTracking(
+        destination: LatLng(37.422, -122.084),
+        destinationName: 'Test Destination',
+        alarmMode: AlarmMode.distance.name,
+        alarmValue: 100.0,
+      );
 
       // Wait 1 second.
       await Future.delayed(Duration(seconds: 1));
