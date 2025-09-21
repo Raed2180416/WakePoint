@@ -3,135 +3,86 @@ const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const config = require('../config/config');
 
-// Rate limiting for API endpoints
-const createRateLimit = (windowMs, max, message) => {
+// ================================
+// RATE LIMITER
+// ================================
+const createRateLimit = (options) => {
   return rateLimit({
-    windowMs,
-    max,
-    message: {
-      success: false,
-      error: message,
-      retryAfter: Math.ceil(windowMs / 1000)
-    },
-    standardHeaders: true,
+    windowMs: options.windowMs,
+    max: options.max,
+    standardHeaders: 'draft-7',
     legacyHeaders: false,
-    // Fixed keyGenerator for IPv6 compatibility
-    keyGenerator: (req) => {
-      return req.device?.id || req.ip || 'anonymous';
+    keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
+    handler: (req, res, next, options) => {
+      res.status(options.statusCode).json({
+        success: false,
+        error: `Too many requests. Please try again after ${Math.ceil(options.windowMs / 60000)} minutes.`
+      });
     },
-    // Disable the IPv6 validation since we're handling it properly
-    validate: {
-      keyGeneratorIpFallback: false
-    }
+    ...options
   });
 };
 
-// Slow down requests after hitting certain thresholds
-const createSlowDown = (windowMs, delayAfter, delayMs) => {
+// ================================
+// SLOW DOWN
+// ================================
+const createSlowDown = (options) => {
   return slowDown({
-    windowMs,
-    delayAfter,
-    // Fixed delayMs for new version
-    delayMs: () => delayMs,
-    keyGenerator: (req) => {
-      return req.device?.id || req.ip || 'anonymous';
-    },
-    // Disable the delayMs validation warning
-    validate: {
-      delayMs: false,
-      keyGeneratorIpFallback: false
-    }
+    windowMs: options.windowMs,
+    delayAfter: options.delayAfter,
+    delayMs: (hits) => hits * 100, // Increase delay by 100ms for every request after the limit
+    keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0] || req.ip,
+    ...options
   });
 };
 
-// Different rate limits for different endpoints
-const rateLimits = {
-  // General API rate limit
-  general: createRateLimit(
-    60 * 60 * 1000, // 1 hour
-    config.maxRequestsPerHour,
-    'Too many requests from this device. Try again in an hour.'
-  ),
-  
-  // More restrictive for expensive operations
-  directions: createRateLimit(
-    60 * 1000, // 1 minute
-    20, // 20 requests per minute max
-    'Too many direction requests. Please wait before requesting new routes.'
-  ),
-  
-  // Less restrictive for autocomplete
-  autocomplete: createRateLimit(
-    60 * 1000, // 1 minute
-    config.maxRequestsPerMinute,
-    'Too many autocomplete requests. Please slow down your typing.'
-  )
-};
 
-// Slow down for burst protection
+// ================================
+// RULES
+// ================================
 const slowDownRules = {
-  general: createSlowDown(
-    15 * 60 * 1000, // 15 minutes
-    50, // Start slowing down after 50 requests
-    500 // Add 500ms delay per request after threshold
-  )
+  general: createSlowDown({
+    windowMs: 60 * 1000, // 1 minute
+    delayAfter: config.maxRequestsPerMinute / 2, // Start delaying after half the requests
+  }),
+  maps: createSlowDown({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    delayAfter: 50
+  })
 };
 
-// Request validation middleware
-const validateRequest = (req, res, next) => {
-  // Log request for monitoring
-  console.log(`📍 ${req.method} ${req.path} - Device: ${req.device?.id || 'anonymous'}`);
-  
-  // Validate required parameters based on endpoint
-  const endpoint = req.path.split('/').pop();
-  
-  switch (endpoint) {
-    case 'directions':
-      if (!req.query.origin || !req.query.destination) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required parameters: origin and destination'
-        });
-      }
-      break;
-      
-    case 'autocomplete':
-      if (!req.query.input) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required parameter: input'
-        });
-      }
-      break;
-      
-    case 'place-details':
-      if (!req.query.place_id) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required parameter: place_id'
-        });
-      }
-      break;
-  }
-  
-  next();
+const rateLimitRules = {
+  general: createRateLimit({
+    windowMs: 60 * 1000,
+    max: config.maxRequestsPerMinute,
+  }),
+  auth: createRateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20
+  }),
+  maps: createRateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: config.maxRequestsPerHour
+  })
 };
 
-// Error handling for rate limits
+
+// ================================
+// ERROR HANDLER
+// ================================
 const handleRateLimitError = (err, req, res, next) => {
-  if (err && err.status === 429) {
+  if (err instanceof rateLimit.RateLimitExceeded) {
     return res.status(429).json({
       success: false,
-      error: 'Rate limit exceeded',
-      retryAfter: err.retryAfter
+      error: 'Rate limit exceeded. Please try again later.'
     });
   }
   next(err);
 };
 
+
 module.exports = {
-  rateLimits,
   slowDownRules,
-  validateRequest,
+  rateLimitRules,
   handleRateLimitError
 };
