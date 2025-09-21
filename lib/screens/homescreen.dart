@@ -15,6 +15,10 @@ import 'package:geowake2/services/trackingservice.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
+import 'package:geowake2/config/app_config.dart';
+import 'package:geowake2/services/api_client.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,14 +51,16 @@ class HomeScreenState extends State<HomeScreen> {
   final Completer<GoogleMapController> _mapController = Completer();
   Set<Marker> _markers = {};
 
-  final String _apiKey = 'AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0'; // Replace with your API key
+  // Battery instance
   final Battery _battery = Battery();
+
+  // Subscription for connectivity changes remains
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
-    _placesService = PlacesService(apiKey: _apiKey);
+    _placesService = PlacesService();
     _loadRecentLocations();
     _initBatteryMonitoring();
 
@@ -105,10 +111,12 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _getCountryCode() async {
     if (_currentPosition == null) return;
+    
     final url = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
       'latlng': '${_currentPosition!.latitude},${_currentPosition!.longitude}',
-      'key': _apiKey
+      'key': AppConfig.googleMapsApiKey
     });
+    
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -347,7 +355,7 @@ class HomeScreenState extends State<HomeScreen> {
         'userLng': userLng,
         'lat': destLat,
         'lng': destLng,
-        'apiKey': _apiKey,
+        'apiKey': AppConfig.googleMapsApiKey,
       };
 
       if (!context.mounted) return;
@@ -391,25 +399,25 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<Map<String, dynamic>> _fetchDirections(
     double startLat, double startLng, double endLat, double endLng) async {
-    final params = <String, String>{
-      'origin': '$startLat,$startLng',
-      'destination': '$endLat,$endLng',
-      'key': _apiKey,
-    };
-    params['mode'] = _metroMode ? 'transit' : 'driving';
-    if(_metroMode) params['transit_mode'] = 'rail';
-
-    final url = Uri.https('maps.googleapis.com', '/maps/api/directions/json', params);
-    final response = await http.get(url);
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to fetch directions (HTTP ${response.statusCode})");
+    
+    final apiClient = ApiClient.instance;
+    
+    try {
+      final directions = await apiClient.getDirections(
+        origin: '$startLat,$startLng',
+        destination: '$endLat,$endLng',
+        mode: _metroMode ? 'transit' : 'driving',
+        transitMode: _metroMode ? 'rail' : null,
+      );
+      
+      if (directions['status'] != 'OK' || (directions['routes'] as List).isEmpty) {
+        throw Exception("No feasible route found: ${directions['error_message'] ?? directions['status']}");
+      }
+      
+      return directions;
+    } catch (e) {
+      throw Exception("Failed to fetch directions: $e");
     }
-    final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-    if (jsonResponse['status'] != 'OK' || (jsonResponse['routes'] as List).isEmpty) {
-      throw Exception("No feasible route found: ${jsonResponse['error_message'] ?? jsonResponse['status']}");
-    }
-    return jsonResponse;
   }
 
   @override

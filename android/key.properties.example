@@ -1,0 +1,12 @@
+# Android Key Properties for Production Builds
+# This file should contain your production signing keys and API keys
+# Add this to your .gitignore to keep it secure
+
+# Google Maps API Key for Android
+googleMapsApiKey=your_production_api_key_here
+
+# Signing keys (example - replace with your actual paths)
+storePassword=your_store_password
+keyPassword=your_key_password
+keyAlias=your_key_alias
+storeFile=path_to_your_keystore.jks

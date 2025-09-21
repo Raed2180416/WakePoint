@@ -44,3 +44,13 @@ android/local.properties
 # Symbolication related
 app.*.symbols
 app.*.map.json
+
+# Environment variables and API keys
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+**/google-services.json
+**/GoogleService-Info.plist
+android/key.properties

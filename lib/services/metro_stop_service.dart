@@ -1,46 +1,32 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 import 'dart:developer' as dev;
+import 'package:geowake2/services/api_client.dart';
 
 class MetroStopService {
-  static const String _googlePlacesApiKey = 'AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0';
+  static final ApiClient _apiClient = ApiClient.instance;
 
-  // Fetch nearby transit stops using the Places API.
+  // Fetch nearby transit stops using your secure server instead of direct API calls
   static Future<List<TransitStop>> getNearbyTransitStops({
     required LatLng location,
     double radius = 500, // meters, adjust as needed
   }) async {
-    final String url =
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
-        'location=${location.latitude},${location.longitude}'
-        '&radius=$radius'
-        '&type=transit_station'
-        '&key=$_googlePlacesApiKey';
-
     try {
-      final response = await http.get(Uri.parse(url));
-      dev.log("Places API response: ${response.body}", name: "MetroStopService");
+      final results = await _apiClient.getNearbyTransitStations(
+        location: '${location.latitude},${location.longitude}',
+        radius: radius.toString(),
+      );
       
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        if (data['status'] == 'OK') {
-          return (data['results'] as List)
-              .map((place) => TransitStop(
-                    name: place['name'],
-                    location: LatLng(
-                      place['geometry']['location']['lat'],
-                      place['geometry']['location']['lng'],
-                    ),
-                    placeId: place['place_id'],
-                  ))
-              .toList();
-        } else {
-          dev.log("Places API status not OK: ${data['status']}", name: "MetroStopService");
-        }
-      }
-      return [];
+      dev.log("Transit stops API response: Found ${results.length} stops", name: "MetroStopService");
+      
+      return results.map((place) => TransitStop(
+        name: place['name'],
+        location: LatLng(
+          place['geometry']['location']['lat'],
+          place['geometry']['location']['lng'],
+        ),
+        placeId: place['place_id'],
+      )).toList();
     } catch (e) {
       dev.log("Error fetching transit stops: $e", name: "MetroStopService");
       return [];

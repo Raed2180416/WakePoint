@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'services/trackingservice.dart';
+import 'services/api_client.dart';
 import 'screens/homescreen.dart';
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -31,6 +32,14 @@ Future<void> main() async {
 
 // Separate function to keep service initializations clean.
 Future<void> _initializeServices() async {
+  // Initialize API client FIRST - this secures all API calls
+  try {
+    await ApiClient.instance.initialize();
+    dev.log("API Client initialized successfully.", name: "main");
+  } catch (e) {
+    dev.log("API Client initialization failed: $e", name: "main");
+  }
+
   try {
     await NotificationService().initialize();
   } catch (e) {

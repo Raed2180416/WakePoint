@@ -4,6 +4,12 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace "com.example.geowake2"
     compileSdkVersion 35
@@ -14,6 +20,12 @@ android {
         targetSdkVersion 34
         versionCode 1
         versionName "1.0"
+        
+        // Set API key from key.properties or use development default
+        manifestPlaceholders = [
+            googleMapsApiKey: keystoreProperties['googleMapsApiKey'] ?: 'AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0',
+            applicationName: 'io.flutter.app.FlutterApplication'
+        ]
     }
 
     compileOptions {

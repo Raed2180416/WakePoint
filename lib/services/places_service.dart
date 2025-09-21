@@ -1,12 +1,10 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:geowake2/services/api_client.dart';
+import 'dart:developer' as dev;
 
 class PlacesService {
-  final String apiKey;
+  final ApiClient _apiClient = ApiClient.instance;
   
-  PlacesService({required this.apiKey});
-  
-  /// Fetches autocomplete suggestions from the Google Places API.
+  /// Fetches autocomplete suggestions through your secure server
   /// If countryCode is provided, results will be biased towards that country.
   Future<List<Map<String, dynamic>>> fetchAutocompleteResults(
     String query, {
@@ -15,59 +13,48 @@ class PlacesService {
     double? lng,
   }) async {
     try {
-      // Build the URL with optional country restriction and location bias
-      String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$apiKey';
-      
-      // Add country restriction if available
-      if (countryCode != null && countryCode.isNotEmpty) {
-        url += '&components=country:$countryCode';
-      }
-      
-      // Add location bias if coordinates are available
+      String? location;
       if (lat != null && lng != null) {
-        url += '&location=$lat,$lng&radius=50000'; // 50km radius for biasing
+        location = '$lat,$lng';
       }
       
-      final response = await http.get(Uri.parse(url));
-      
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['status'] == 'OK') {
-          final predictions = jsonResponse['predictions'] as List<dynamic>;
-          return predictions.map((item) {
-            return {
-              'description': item['description'],
-              'place_id': item['place_id'],
-              'isLocal': false,
-            };
-          }).toList();
-        }
+      String? components;
+      if (countryCode != null && countryCode.isNotEmpty) {
+        components = 'country:$countryCode';
       }
-      return [];
+      
+      final results = await _apiClient.getAutocompleteSuggestions(
+        input: query,
+        location: location,
+        components: components,
+      );
+      
+      return results.map((item) => {
+        'description': item['description'],
+        'place_id': item['place_id'],
+        'isLocal': false,
+      }).toList();
     } catch (e) {
+      dev.log("Error fetching autocomplete results: $e", name: "PlacesService");
       return [];
     }
   }
   
-  /// Fetches detailed information about a place from the Google Places API.
+  /// Fetches detailed information about a place through your secure server
   Future<Map<String, dynamic>?> fetchPlaceDetails(String placeId) async {
     try {
-      final url = Uri.parse(
-          'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        if (jsonResponse['status'] == 'OK') {
-          final loc = jsonResponse['result']['geometry']['location'];
-          return {
-            'description': jsonResponse['result']['name'],
-            'lat': loc['lat'],
-            'lng': loc['lng'],
-          };
-        }
+      final result = await _apiClient.getPlaceDetails(placeId: placeId);
+      if (result != null) {
+        final loc = result['geometry']['location'];
+        return {
+          'description': result['name'],
+          'lat': loc['lat'],
+          'lng': loc['lng'],
+        };
       }
       return null;
     } catch (e) {
+      dev.log("Error fetching place details: $e", name: "PlacesService");
       return null;
     }
   }
