@@ -13,8 +13,11 @@ const config = {
   jwtExpiration: '24h',
   
   // Security
-  appBundleId: process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake',
-  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  appBundleId: process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2',
+  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || [
+    'https://geowake-production.up.railway.app',
+    '*'
+  ],
   
   // Rate Limiting
   maxRequestsPerHour: parseInt(process.env.MAX_REQUESTS_PER_HOUR) || 1000,

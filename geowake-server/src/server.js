@@ -28,26 +28,22 @@ app.use(helmet({
 // Compression
 app.use(compression());
 
-// CORS configuration
+// CORS configuration for mobile apps
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps)
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl requests)
     if (!origin) return callback(null, true);
     
     // Check if origin is in allowed list
-    if (config.allowedOrigins.includes(origin)) {
+    if (config.allowedOrigins.includes('*') || config.allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     
-    // For development, allow localhost
-    if (config.nodeEnv === 'development' && origin.includes('localhost')) {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
+    // Reject origin
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
@@ -78,6 +74,17 @@ app.get('/', (req, res) => {
     environment: config.nodeEnv,
     timestamp: new Date().toISOString(),
     uptime: process.uptime()
+  });
+});
+
+// Add health check endpoint BEFORE other routes
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'GeoWake Server is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: config.nodeEnv
   });
 });
 

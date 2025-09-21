@@ -1,13 +1,11 @@
 // lib/services/api_client.dart
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as dev;
 
 class ApiClient {
-  static const String _baseUrl = 'http://localhost:3000/api'; // Your server
+  static const String _baseUrl = 'https://geowake-production.up.railway.app/api'; // Fixed: Added https:// and /api
   static const String _tokenKey = 'geowake_api_token';
   static const String _deviceIdKey = 'geowake_device_id';
   
@@ -18,14 +16,45 @@ class ApiClient {
   
   String? _authToken;
   String? _deviceId;
+  DateTime? _tokenExpiration;
   
   /// Initialize the API client - call this on app startup
   Future<void> initialize() async {
+    dev.log('🚀 Initializing ApiClient...', name: 'ApiClient');
     await _loadStoredCredentials();
     
-    if (_authToken == null || _deviceId == null) {
-      await _registerDevice();
+    if (_authToken == null || _isTokenExpired()) {
+      await _authenticate();
     }
+    
+    // Test connection
+    await testConnection();
+  }
+  
+  /// Test server connection
+  Future<void> testConnection() async {
+    try {
+      dev.log('🔗 Testing connection to: $_baseUrl', name: 'ApiClient');
+      final response = await http.get(
+        Uri.parse('$_baseUrl/health'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
+      
+      if (response.statusCode == 200) {
+        dev.log('✅ Server connection successful', name: 'ApiClient');
+      } else {
+        dev.log('⚠️ Server responded with: ${response.statusCode}', name: 'ApiClient');
+      }
+    } catch (e) {
+      dev.log('❌ Server connection failed: $e', name: 'ApiClient');
+      // Don't rethrow - connection test failure shouldn't break initialization
+    }
+  }
+  
+  /// Check if token is expired
+  bool _isTokenExpired() {
+    if (_tokenExpiration == null) return true;
+    return DateTime.now().isAfter(_tokenExpiration!.subtract(const Duration(minutes: 5)));
   }
   
   /// Load stored token and device ID
@@ -33,49 +62,46 @@ class ApiClient {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString(_tokenKey);
     _deviceId = prefs.getString(_deviceIdKey);
+    
+    // Load token expiration if exists
+    final expString = prefs.getString('${_tokenKey}_exp');
+    if (expString != null) {
+      _tokenExpiration = DateTime.tryParse(expString);
+    }
   }
   
-  /// Register device with server and get JWT token
-  Future<void> _registerDevice() async {
+  /// Authenticate with server using bundle ID
+  Future<void> _authenticate() async {
     try {
-      // Generate or load device ID
-      if (_deviceId == null) {
-        final deviceInfo = DeviceInfoPlugin();
-        if (Platform.isAndroid) {
-          final androidInfo = await deviceInfo.androidInfo;
-          _deviceId = androidInfo.id;
-        } else if (Platform.isIOS) {
-          final iosInfo = await deviceInfo.iosInfo;
-          _deviceId = iosInfo.identifierForVendor;
-        } else {
-          _deviceId = 'dev-${DateTime.now().millisecondsSinceEpoch}';
-        }
-      }
+      dev.log('🔐 Authenticating with server...', name: 'ApiClient');
       
       final response = await http.post(
-        Uri.parse('$_baseUrl/auth/register-device'),
+        Uri.parse('$_baseUrl/auth/token'), // Fixed: Changed to /auth/token
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'deviceId': _deviceId,
-          'appVersion': '1.0.0',
-          'bundleId': 'com.yourcompany.geowake',
+          'bundleId': 'com.yourcompany.geowake2', // Fixed: Updated bundle ID to match your app
         }),
-      );
+      ).timeout(const Duration(seconds: 15));
+      
+      dev.log('📡 Auth response status: ${response.statusCode}', name: 'ApiClient');
+      dev.log('📡 Auth response body: ${response.body}', name: 'ApiClient');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success']) {
+        if (data['success'] == true) {
           _authToken = data['token'];
+          // Set token expiration (server returns expiresIn like '24h')
+          _tokenExpiration = DateTime.now().add(const Duration(hours: 23));
           await _saveCredentials();
-          dev.log('✅ Device registered with server', name: 'ApiClient');
+          dev.log('✅ Authentication successful', name: 'ApiClient');
         } else {
-          throw Exception('Registration failed: ${data['error']}');
+          throw Exception('Authentication failed: ${data['error'] ?? 'Unknown error'}');
         }
       } else {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      dev.log('❌ Device registration failed: $e', name: 'ApiClient');
+      dev.log('❌ Authentication failed: $e', name: 'ApiClient');
       rethrow;
     }
   }
@@ -85,49 +111,92 @@ class ApiClient {
     final prefs = await SharedPreferences.getInstance();
     if (_authToken != null) await prefs.setString(_tokenKey, _authToken!);
     if (_deviceId != null) await prefs.setString(_deviceIdKey, _deviceId!);
+    if (_tokenExpiration != null) {
+      await prefs.setString('${_tokenKey}_exp', _tokenExpiration!.toIso8601String());
+    }
   }
   
   /// Build headers with authentication
   Map<String, String> _buildHeaders() {
-    return {
+    final headers = <String, String>{
       'Content-Type': 'application/json',
-      if (_authToken != null) 'Authorization': 'Bearer $_authToken',
     };
+    
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+    
+    return headers;
   }
   
   /// Make authenticated API request with auto-retry on auth failure
   Future<Map<String, dynamic>> _makeRequest(
     String method,
-    String endpoint,
-    Map<String, String> queryParams,
-  ) async {
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? queryParams,
+  }) async {
     try {
-      final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
+      // Ensure we have a valid token
+      if (_authToken == null || _isTokenExpired()) {
+        dev.log('🔄 Token missing or expired, authenticating...', name: 'ApiClient');
+        await _authenticate();
+      }
+      
+      Uri uri = Uri.parse('$_baseUrl$endpoint');
+      if (queryParams != null) {
+        uri = uri.replace(queryParameters: queryParams);
+      }
+      
+      dev.log('📡 Making ${method.toUpperCase()} request to: $uri', name: 'ApiClient');
       
       late http.Response response;
+      final headers = _buildHeaders();
+      
       switch (method.toUpperCase()) {
         case 'GET':
-          response = await http.get(uri, headers: _buildHeaders());
+          response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));
+          break;
+        case 'POST':
+          response = await http.post(
+            uri, 
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          ).timeout(const Duration(seconds: 15));
           break;
         default:
           throw Exception('Unsupported HTTP method: $method');
       }
       
+      dev.log('📡 Response status: ${response.statusCode}', name: 'ApiClient');
+      dev.log('📡 Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}', name: 'ApiClient');
+      
       // Handle token expiration
       if (response.statusCode == 401) {
-        dev.log('🔄 Token expired, re-registering device...', name: 'ApiClient');
-        await _registerDevice();
+        dev.log('🔄 Token expired (401), re-authenticating...', name: 'ApiClient');
+        await _authenticate();
         
         // Retry the request with new token
-        response = await http.get(uri, headers: _buildHeaders());
+        headers['Authorization'] = 'Bearer $_authToken';
+        switch (method.toUpperCase()) {
+          case 'GET':
+            response = await http.get(uri, headers: headers);
+            break;
+          case 'POST':
+            response = await http.post(
+              uri, 
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null,
+            );
+            break;
+        }
       }
       
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      
-      if (response.statusCode == 200 && data['success']) {
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
         return data;
       } else {
-        throw Exception('API Error: ${data['error'] ?? 'Unknown error'}');
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
       dev.log('❌ API request failed: $e', name: 'ApiClient');
@@ -146,15 +215,17 @@ class ApiClient {
     String mode = 'driving',
     String? transitMode,
   }) async {
-    final params = <String, String>{
+    dev.log('🗺️ Getting directions from $origin to $destination', name: 'ApiClient');
+    
+    final body = <String, dynamic>{
       'origin': origin,
       'destination': destination,
       'mode': mode,
       if (transitMode != null) 'transit_mode': transitMode,
     };
     
-    final result = await _makeRequest('GET', '/maps/directions', params);
-    return result['data'];
+    final result = await _makeRequest('POST', '/maps/directions', body: body); // Fixed: Changed to POST
+    return result; // Return the full result, not just 'data' field
   }
   
   /// Get autocomplete suggestions
@@ -163,27 +234,39 @@ class ApiClient {
     String? location,
     String? components,
   }) async {
-    final params = <String, String>{
+    dev.log('🔍 Getting autocomplete for: "$input"', name: 'ApiClient');
+    
+    final body = <String, dynamic>{
       'input': input,
       if (location != null) 'location': location,
       if (components != null) 'components': components,
     };
     
-    final result = await _makeRequest('GET', '/maps/autocomplete', params);
-    final predictions = result['data']['predictions'] as List;
-    return predictions.map((p) => p as Map<String, dynamic>).toList();
+    final result = await _makeRequest('POST', '/maps/autocomplete', body: body); // Fixed: Changed to POST
+    
+    // Handle the response structure from your server
+    if (result['predictions'] != null) {
+      final predictions = result['predictions'] as List;
+      return predictions.map((p) => p as Map<String, dynamic>).toList();
+    }
+    
+    return [];
   }
   
   /// Get place details
   Future<Map<String, dynamic>?> getPlaceDetails({
     required String placeId,
   }) async {
-    final params = <String, String>{
+    dev.log('📍 Getting place details for: $placeId', name: 'ApiClient');
+    
+    final body = <String, String>{
       'place_id': placeId,
     };
     
-    final result = await _makeRequest('GET', '/maps/place-details', params);
-    return result['data']['result'];
+    final result = await _makeRequest('POST', '/maps/place-details', body: body); // Fixed: Changed to POST
+    
+    // Handle the response structure from your server
+    return result['result'] ?? result;
   }
   
   /// Get nearby transit stations
@@ -191,14 +274,42 @@ class ApiClient {
     required String location,
     String radius = '500',
   }) async {
-    final params = <String, String>{
+    dev.log('🚇 Getting nearby transit stations at: $location', name: 'ApiClient');
+    
+    final body = <String, dynamic>{
       'location': location,
       'radius': radius,
       'type': 'transit_station',
     };
     
-    final result = await _makeRequest('GET', '/maps/nearby-search', params);
-    final results = result['data']['results'] as List;
-    return results.map((r) => r as Map<String, dynamic>).toList();
+    final result = await _makeRequest('POST', '/maps/nearby-search', body: body); // Fixed: Changed to POST
+    
+    // Handle the response structure from your server
+    if (result['results'] != null) {
+      final results = result['results'] as List;
+      return results.map((r) => r as Map<String, dynamic>).toList();
+    }
+    
+    return [];
+  }
+  
+  /// Get geocoding results
+  Future<Map<String, dynamic>?> geocode({
+    required String latlng,
+  }) async {
+    dev.log('🌍 Geocoding: $latlng', name: 'ApiClient');
+    
+    final body = <String, String>{
+      'address': latlng, // Note: server expects 'address' parameter for geocoding
+    };
+    
+    final result = await _makeRequest('POST', '/maps/geocode', body: body);
+    
+    // Handle the response structure
+    if (result['results'] != null && (result['results'] as List).isNotEmpty) {
+      return (result['results'] as List).first;
+    }
+    
+    return null;
   }
 }
