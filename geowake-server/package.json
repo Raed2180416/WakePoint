@@ -10,9 +10,8 @@
   "scripts": {
     "start": "NODE_ENV=production node src/server.js",
     "dev": "nodemon src/server.js",
-    "prod": "NODE_ENV=production node src/server.js",
-    "build": "echo 'No build step required for Node.js'",
-    "test": "echo 'No tests specified'"
+    "build": "echo 'No build step required'",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "keywords": ["geowake", "api", "maps", "secure"],
   "author": "Your Name",
@@ -23,7 +22,7 @@
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "express": "^4.21.0",
-    "express-rate-limit": "^7.4.0",
+    "express-rate-limit": "^7.4.0", 
     "express-slow-down": "^2.0.3",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
