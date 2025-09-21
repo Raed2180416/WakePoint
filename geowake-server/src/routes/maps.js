@@ -1,12 +1,12 @@
 // src/routes/maps.js
 const express = require('express');
 const { getDirections, getAutocomplete, getPlaceDetails, getGeocoding, getNearbySearch } = require('../controllers/mapsController');
-const { rateLimitRules } = require('../middleware/security'); // Corrected import
+const { rateLimitRules } = require('../middleware/security'); // Corrected import variable name
 
 const router = express.Router();
 
 // Apply specific rate limiting to the maps routes
-router.use(rateLimitRules.maps);
+router.use(rateLimitRules.maps); // Corrected variable name
 
 // Route for getting directions
 router.post('/directions', getDirections);
