@@ -47,6 +47,11 @@ class HomeScreenState extends State<HomeScreen> {
   LatLng? _currentPosition;
   final Completer<GoogleMapController> _mapController = Completer();
   Set<Marker> _markers = {};
+  // Tap handling state for single vs double tap on map
+  Timer? _tapTimer;
+  DateTime? _lastTapAt;
+  LatLng? _lastTapLatLng;
+  double _lastZoom = 12.0;
 
   // Battery instance
   final Battery _battery = Battery();
@@ -92,6 +97,51 @@ class HomeScreenState extends State<HomeScreen> {
       } else if (!_searchFocus.hasFocus) {
         setState(() => _autocompleteResults = []);
       }
+    });
+  }
+
+  Future<void> _setDestinationFromLatLng(LatLng position) async {
+    try {
+      final lat = position.latitude;
+      final lng = position.longitude;
+      final result = await ApiClient.instance.geocode(latlng: '$lat,$lng');
+      final desc = (result != null ? (result['formatted_address'] ?? result['name']) : null) ?? 'Dropped pin';
+      await _setSelectedLocation(desc, lat, lng);
+    } catch (e) {
+      dev.log('Reverse geocode failed on map tap: $e', name: 'HomeScreen');
+      await _setSelectedLocation('Dropped pin', position.latitude, position.longitude);
+    }
+  }
+
+  Future<void> _handleMapTap(LatLng position) async {
+    final now = DateTime.now();
+    final isQuickSecondTap = _lastTapAt != null && now.difference(_lastTapAt!).inMilliseconds < 300;
+    final isNearPrevious = _lastTapLatLng != null &&
+        Geolocator.distanceBetween(
+              _lastTapLatLng!.latitude,
+              _lastTapLatLng!.longitude,
+              position.latitude,
+              position.longitude,
+            ) < 40; // within ~40 meters counts as same spot for double-tap
+
+    _lastTapAt = now;
+    _lastTapLatLng = position;
+
+    // If this looks like a double-tap: zoom in and cancel pending single-tap action
+    if (isQuickSecondTap && isNearPrevious) {
+      _tapTimer?.cancel();
+      if (_mapController.isCompleted) {
+        final controller = await _mapController.future;
+        final targetZoom = (_lastZoom.isFinite ? _lastZoom : 12.0) + 1.0;
+        controller.animateCamera(CameraUpdate.newLatLngZoom(position, targetZoom));
+      }
+      return;
+    }
+
+    // Debounce single-tap to allow time to detect a potential double-tap
+    _tapTimer?.cancel();
+    _tapTimer = Timer(const Duration(milliseconds: 280), () async {
+      await _setDestinationFromLatLng(position);
     });
   }
 
@@ -295,7 +345,10 @@ class HomeScreenState extends State<HomeScreen> {
       final Position? currentPosition = await _getCurrentLocation();
       if (currentPosition == null) {
         _showErrorDialog("Location Error", "Could not get your current location. Please enable location services.");
-        setState(() => _isTracking = false);
+        setState(() {
+          _isTracking = false;
+          _isLoading = false;
+        });
         return;
       }
 
@@ -312,7 +365,10 @@ class HomeScreenState extends State<HomeScreen> {
         if (!mounted) return;
         if (!validationResult.isValid || validationResult.closestStop == null) {
           _showErrorDialog("Metro Route Unavailable", validationResult.errorMessage ?? "No valid metro route found.");
-          setState(() => _isTracking = false);
+          setState(() {
+            _isTracking = false;
+            _isLoading = false;
+          });
           return;
         } else {
           destLat = validationResult.closestStop!.location.latitude;
@@ -348,12 +404,20 @@ class HomeScreenState extends State<HomeScreen> {
 
       if (!context.mounted) return;
       Navigator.pushReplacementNamed(context, '/preloadMap', arguments: mapArgs);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
     } catch (e) {
       dev.log("Error in _proceedWithDirections: $e", name: "HomeScreen");
       if(mounted) {
          _showErrorDialog("Route Error", "Could not calculate the route. Please try again.");
-         setState(() => _isTracking = false);
+         setState(() {
+           _isTracking = false;
+           _isLoading = false;
+         });
       }
     }
   }
@@ -528,6 +592,10 @@ class HomeScreenState extends State<HomeScreen> {
                         zoom: 12,
                       ),
                       markers: _markers,
+                      onTap: _handleMapTap,
+                      onCameraMove: (position) {
+                        _lastZoom = position.zoom;
+                      },
                       onMapCreated: (controller) {
                         if (!_mapController.isCompleted) {
                            _mapController.complete(controller);
@@ -620,10 +688,30 @@ class HomeScreenState extends State<HomeScreen> {
                           _isTracking)
                       ? null
                       : _onWakeMePressed,
-                  child: Text(
-                    _isLoading ? 'Loading...' : 'Wake Me!',
-                    style: TextStyle(fontSize: screenWidth * 0.05),
-                  ),
+                  child: _isLoading
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Loading route...',
+                              style: TextStyle(fontSize: screenWidth * 0.05),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          'Wake Me!',
+                          style: TextStyle(fontSize: screenWidth * 0.05),
+                        ),
                 ),
                 if (_lowBattery)
                   Padding(
