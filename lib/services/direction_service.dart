@@ -1,13 +1,14 @@
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart'; // Newly added import
+import 'package:geolocator/geolocator.dart';
 import 'polyline_decoder.dart';
 import 'polyline_simplifier.dart';
+import 'package:geowake2/services/api_client.dart'; // ADD THIS IMPORT
+import 'dart:developer' as dev;
 
 class DirectionService {
-  final String apiKey;
+  final ApiClient _apiClient = ApiClient.instance;
   Map<String, dynamic>? _cachedDirections;
   DateTime? _lastFetchTime;
 
@@ -16,11 +17,9 @@ class DirectionService {
   final Duration midInterval = const Duration(minutes: 7);
   final Duration nearInterval = const Duration(minutes: 3);
 
-  DirectionService({required this.apiKey});
+  DirectionService();
 
-  /// Fetches directions using a tiered strategy.
-  /// [transitMode] indicates if transit (metro) mode is requested.
-  /// [isDistanceMode] and [threshold] are used for tiering.
+  /// Fetches directions using a tiered strategy through your secure API.
   Future<Map<String, dynamic>> getDirections(
     double startLat,
     double startLng,
@@ -57,60 +56,53 @@ class DirectionService {
       }
     }
 
-    // Build the URL. For transit mode, use the transit parameter.
-    String modeParam = transitMode ? 'transit&transit_mode=rail' : 'driving';
-    final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/directions/json'
-      '?origin=$startLat,$startLng'
-      '&destination=$endLat,$endLng'
-      '&mode=$modeParam'
-      '&key=$apiKey',
-    );
+    try {
+      // REPLACE THE DIRECT HTTP CALL WITH API CLIENT
+      final directions = await _apiClient.getDirections(
+        origin: '$startLat,$startLng',
+        destination: '$endLat,$endLng',
+        mode: transitMode ? 'transit' : 'driving',
+        transitMode: transitMode ? 'rail' : null,
+      );
 
-    final response = await http.get(url);
-    if (response.statusCode != 200) {
-      throw Exception("Failed to fetch directions (HTTP ${response.statusCode}).");
-    }
-    final jsonResponse = jsonDecode(response.body) as Map<String, dynamic>;
-
-    // Check for error statuses.
-    if (jsonResponse['status'] == 'ZERO_RESULTS') {
-      throw Exception("No feasible route found (ZERO_RESULTS).");
-    }
-    if (jsonResponse['status'] != 'OK') {
-      throw Exception("No feasible route found: ${jsonResponse['status']}");
-    }
-
-    // --- New logic: Simplify & compress the overview polyline ---
-    if (jsonResponse['routes'] != null && jsonResponse['routes'].isNotEmpty) {
-      final route = jsonResponse['routes'][0];
-      if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
-        final String encodedPolyline = route['overview_polyline']['points'] as String;
-        // Decode the polyline.
-        List<LatLng> decodedPoints = decodePolyline(encodedPolyline);
-        // Simplify with a tolerance of 10 meters.
-        List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(decodedPoints, 10);
-        // Compress the simplified polyline.
-        String compressedPolyline = PolylineSimplifier.compressPolyline(simplifiedPoints);
-        // Add the simplified compressed polyline to the response.
-        route['simplified_polyline'] = compressedPolyline;
+      if (directions['status'] != 'OK' || (directions['routes'] as List).isEmpty) {
+        throw Exception("No feasible route found: ${directions['error_message'] ?? directions['status']}");
       }
-    }
-    // --- End new logic ---
 
-    _cachedDirections = jsonResponse;
-    _lastFetchTime = DateTime.now();
-    return jsonResponse;
+      // --- Simplify & compress the overview polyline ---
+      if (directions['routes'] != null && directions['routes'].isNotEmpty) {
+        final route = directions['routes'][0];
+        if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
+          final String encodedPolyline = route['overview_polyline']['points'] as String;
+          // Decode the polyline.
+          List<LatLng> decodedPoints = decodePolyline(encodedPolyline);
+          // Simplify with a tolerance of 10 meters.
+          List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(decodedPoints, 10);
+          // Compress the simplified polyline.
+          String compressedPolyline = PolylineSimplifier.compressPolyline(simplifiedPoints);
+          // Add the simplified compressed polyline to the response.
+          route['simplified_polyline'] = compressedPolyline;
+        }
+      }
+
+      _cachedDirections = directions;
+      _lastFetchTime = DateTime.now();
+      return directions;
+
+    } catch (e) {
+      dev.log("Error fetching directions via API client: $e", name: "DirectionService");
+      throw Exception("Failed to fetch directions: $e");
+    }
   }
 
-  /// Builds segmented polylines from the directions response.
-  /// For transit mode, groups segments by transit line; non-transit segments are drawn in blue.
+  // Rest of the class remains the same...
   List<Polyline> buildSegmentedPolylines(Map<String, dynamic> directions, bool transitMode) {
     List<Polyline> polylines = [];
     if (directions['routes'] == null || directions['routes'].isEmpty) return polylines;
 
-    Map<String, Color> transitColorMap = {};
-    List<Color> transitColors = [Colors.red, Colors.green, Colors.orange, Colors.purple];
+  Map<String, Color> transitColorMap = {};
+  // Only use green and purple for metro transit lines
+  List<Color> transitColors = [Colors.green, Colors.purple];
     int transitColorIndex = 0;
 
     for (var leg in directions['routes'][0]['legs']) {

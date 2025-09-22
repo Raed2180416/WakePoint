@@ -99,8 +99,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     directions = args['directions'];
     if (directions != null) {
       if (_metroMode) {
-        final apiKey = args['apiKey'] ?? '';
-        final directionService = DirectionService(apiKey: apiKey);
+        final directionService = DirectionService();
         final segmentedPolylines =
             directionService.buildSegmentedPolylines(directions!, true);
         setState(() {

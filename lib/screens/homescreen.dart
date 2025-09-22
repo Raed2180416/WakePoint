@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/permission_service.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
@@ -15,7 +13,6 @@ import 'package:geowake2/services/trackingservice.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
-import 'package:geowake2/config/app_config.dart';
 import 'package:geowake2/services/api_client.dart';
 
 
@@ -111,29 +108,21 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _getCountryCode() async {
     if (_currentPosition == null) return;
-    
-    final url = Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
-      'latlng': '${_currentPosition!.latitude},${_currentPosition!.longitude}',
-      'key': AppConfig.googleMapsApiKey
-    });
-    
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
-          final components = data['results'][0]['address_components'] as List;
-          final countryComponent = components.firstWhere(
-            (c) => (c['types'] as List).contains('country'),
-            orElse: () => null,
-          );
-          if (countryComponent != null && mounted) {
-            setState(() => _currentCountryCode = countryComponent['short_name']);
-          }
+      final result = await ApiClient.instance
+          .geocode(latlng: '${_currentPosition!.latitude},${_currentPosition!.longitude}');
+      if (result != null) {
+        final components = (result['address_components'] as List?) ?? [];
+        final countryComponent = components.cast<Map<String, dynamic>?>().firstWhere(
+          (c) => c != null && ((c['types'] as List?) ?? []).contains('country'),
+          orElse: () => null,
+        );
+        if (countryComponent != null && mounted) {
+          setState(() => _currentCountryCode = countryComponent['short_name']);
         }
       }
     } catch (e) {
-      dev.log("Error fetching country code: $e", name: "HomeScreen");
+      dev.log("Error fetching country code via server: $e", name: "HomeScreen");
     }
   }
 
@@ -355,7 +344,6 @@ class HomeScreenState extends State<HomeScreen> {
         'userLng': userLng,
         'lat': destLat,
         'lng': destLng,
-        'apiKey': AppConfig.googleMapsApiKey,
       };
 
       if (!context.mounted) return;
@@ -552,12 +540,12 @@ class HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Time'),
+                    const Text('Distance'), // Swapped
                     Switch(
                       value: !_useDistanceMode,
                       onChanged: (val) => setState(() => _useDistanceMode = !val),
                     ),
-                    const Text('Distance'),
+                    const Text('Time'), // Swapped
                   ],
                 ),
                 SizedBox(height: screenHeight * 0.02),

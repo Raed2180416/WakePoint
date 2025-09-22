@@ -37,11 +37,15 @@ const googleApiProxy = async (req, res, { url, params, cacheKey, cacheTimeout })
 
 // Handler for Directions API
 const getDirections = (req, res) => {
-  const { origin, destination, mode } = req.body;
-  const cacheKey = `directions:${origin}-${destination}-${mode || 'driving'}`;
+  const { origin, destination, mode, transit_mode } = req.body;
+  const cacheKey = `directions:${origin}-${destination}-${mode || 'driving'}-${transit_mode || 'none'}`;
+  const params = { origin, destination };
+  if (mode) params.mode = mode;
+  if (mode === 'transit' && transit_mode) params.transit_mode = transit_mode;
+
   googleApiProxy(req, res, {
     url: config.googleMapsUrls.directions,
-    params: { origin, destination, mode },
+    params,
     cacheKey,
     cacheTimeout: config.cacheTimeouts.directions
   });
