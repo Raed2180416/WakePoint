@@ -21,10 +21,10 @@ class CacheManager {
   generateKey(type, params) {
     switch (type) {
       case 'directions':
-        return `directions:${params.origin}:${params.destination}:${params.mode || 'driving'}`;
+        return `directions:${params.origin}:${params.destination}:${params.mode || 'driving'}:${params.transit_mode || ''}`;
       
       case 'places':
-        return `places:${params.input}:${params.location || ''}:${params.radius || ''}`;
+        return `places:${params.input}:${params.location || ''}:${params.radius || ''}:${params.components || ''}`;
       
       case 'place-details':
         return `place-details:${params.place_id}`;
