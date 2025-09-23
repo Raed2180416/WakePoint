@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter: Debug app (disable DDS)",
+      "request": "launch",
+      "type": "dart",
+      "args": ["--disable-dds"]
+    },
+    {
+      "name": "Flutter: Profile app (disable DDS)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "args": ["--disable-dds"]
+    },
+    {
+      "name": "Dart: Run test (disable DDS)",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/test",
+      "args": ["--disable-dds"]
+    }
+  ]
+}

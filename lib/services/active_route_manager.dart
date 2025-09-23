@@ -38,9 +38,13 @@ class ActiveRouteManager {
   final Duration postSwitchBlackout;
 
   String? _activeKey;
-  DateTime? _candidateSince;
+  // removed: wall-clock based candidate since
   String? _candidateKey;
-  DateTime? _lastSwitchAt;
+  // removed: wall-clock based last switch time
+
+  // Use monotonic timers to avoid wall-clock jumps affecting countdowns
+  Stopwatch? _candidateTimer;
+  Stopwatch? _blackoutTimer;
 
   final _stateCtrl = StreamController<ActiveRouteState>.broadcast();
   final _switchCtrl = StreamController<RouteSwitchEvent>.broadcast();
@@ -58,8 +62,10 @@ class ActiveRouteManager {
   void setActive(String key) {
     _activeKey = key;
     _candidateKey = null;
-    _candidateSince = null;
-    _lastSwitchAt = DateTime.now();
+    // reset timers
+    _candidateTimer?.stop();
+    _candidateTimer = null;
+    _blackoutTimer = Stopwatch()..start(); // start blackout immediately on activation
   }
 
   void ingestPosition(LatLng rawPosition) {
@@ -91,25 +97,29 @@ class ActiveRouteManager {
 
     // Handle candidate selection with sustain and blackout
     final now = DateTime.now();
-    final inBlackout = _lastSwitchAt != null && now.difference(_lastSwitchAt!) < postSwitchBlackout;
+    final inBlackout = _blackoutTimer != null && _blackoutTimer!.isRunning && _blackoutTimer!.elapsed < postSwitchBlackout;
     if (bestKey != active.key && !inBlackout) {
       if (_candidateKey != bestKey) {
         _candidateKey = bestKey;
-        _candidateSince = now;
+        _candidateTimer?.stop();
+        _candidateTimer = Stopwatch()..start();
       } else {
-        if (_candidateSince != null && now.difference(_candidateSince!) >= sustainDuration) {
+        final elapsedOk = _candidateTimer != null && _candidateTimer!.elapsed >= sustainDuration;
+        if (elapsedOk) {
           // Switch routes
           final fromKey = active.key;
           _activeKey = bestKey;
-          _lastSwitchAt = now;
           _candidateKey = null;
-          _candidateSince = null;
+          _candidateTimer?.stop();
+          _candidateTimer = null;
+          _blackoutTimer = Stopwatch()..start();
           _switchCtrl.add(RouteSwitchEvent(fromKey: fromKey, toKey: bestKey, at: now));
         }
       }
     } else {
       _candidateKey = null;
-      _candidateSince = null;
+      _candidateTimer?.stop();
+      _candidateTimer = null;
     }
 
     final activeEntry = registry.entries.firstWhere((e) => e.key == _activeKey);
@@ -117,13 +127,14 @@ class ActiveRouteManager {
     final remaining = (activeEntry.lengthMeters - progress).clamp(0.0, double.infinity);
     double? pendingSecs;
     String? pendingKey;
-    final now2 = DateTime.now();
-    final inBlackout2 = _lastSwitchAt != null && now2.difference(_lastSwitchAt!) < postSwitchBlackout;
-    if (_candidateKey != null && _candidateSince != null && !inBlackout2) {
-      final elapsed = now2.difference(_candidateSince!);
+    final inBlackout2 = _blackoutTimer != null && _blackoutTimer!.isRunning && _blackoutTimer!.elapsed < postSwitchBlackout;
+    if (_candidateKey != null && _candidateTimer != null && !inBlackout2) {
+      final elapsed = _candidateTimer!.elapsed;
       final left = sustainDuration - elapsed;
       if (left > Duration.zero) {
-        pendingSecs = left.inMilliseconds / 1000.0;
+        // Clamp to sustainDuration to avoid spikes from any anomalies
+        final leftMs = left.inMilliseconds.clamp(0, sustainDuration.inMilliseconds);
+        pendingSecs = leftMs / 1000.0;
         pendingKey = _candidateKey;
       }
     }

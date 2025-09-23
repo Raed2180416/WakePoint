@@ -142,41 +142,46 @@ class DirectionService {
     if (directions['routes'] == null || directions['routes'].isEmpty) return polylines;
 
   Map<String, Color> transitColorMap = {};
-  // Only use green and purple for metro transit lines
-  List<Color> transitColors = [Colors.green, Colors.purple];
-    int transitColorIndex = 0;
+  // Only use green and purple for metro transit lines; deterministic assignment
+  final List<Color> transitColors = [Colors.green, Colors.purple];
+  int transitColorIndex = 0;
 
     for (var leg in directions['routes'][0]['legs']) {
       List<dynamic> steps = leg['steps'];
       if (steps.isEmpty) continue;
 
-      List<LatLng> groupPoints = [];
-      String currentGroupType;
+  List<LatLng> groupPoints = [];
+  String currentGroupType;
+  // non_transit subtype to distinguish DRIVING vs WALKING for styling
+  String? currentNonTransitMode; // 'DRIVING' | 'WALKING' | null when transit
       String? currentTransitLine;
 
       // Initialize first step
       var firstStep = steps[0];
       String firstMode = firstStep['travel_mode'];
-      bool isFirstTransitMetro = false;
-      if (firstMode == 'TRANSIT' && transitMode) {
+  bool isFirstTransitMetro = false;
+  if (firstMode == 'TRANSIT' && transitMode) {
         if (firstStep.containsKey('transit_details') && firstStep['transit_details'] != null) {
           var transitDetails = firstStep['transit_details'];
           var vehicleType = transitDetails['line']['vehicle']['type'];
-          isFirstTransitMetro = vehicleType == 'SUBWAY' || vehicleType == 'HEAVY_RAIL';
+          isFirstTransitMetro = vehicleType == 'SUBWAY' || vehicleType == 'HEAVY_RAIL' || vehicleType == 'RAIL';
           if (isFirstTransitMetro) {
             currentGroupType = "transit";
             currentTransitLine = transitDetails['line']['short_name'] ?? transitDetails['line']['name'];
           } else {
             currentGroupType = "non_transit";
             currentTransitLine = null;
+            currentNonTransitMode = firstMode;
           }
         } else {
           currentGroupType = "non_transit";
           currentTransitLine = null;
+          currentNonTransitMode = firstMode;
         }
       } else {
         currentGroupType = "non_transit";
         currentTransitLine = null;
+        currentNonTransitMode = firstMode;
       }
       // Decode, simplify, then add first step points.
       List<LatLng> rawPoints = decodePolyline(firstStep['polyline']['points']);
@@ -186,28 +191,34 @@ class DirectionService {
       for (int i = 1; i < steps.length; i++) {
         var step = steps[i];
         String stepMode = step['travel_mode'];
-        String stepGroupType = "non_transit";
+  String stepGroupType = "non_transit";
         String? stepTransitLine;
-        bool isStepTransitMetro = false;
+  bool isStepTransitMetro = false;
+  String? stepNonTransitMode; // track DRIVING vs WALKING
 
         if (stepMode == 'TRANSIT' && transitMode) {
           if (step.containsKey('transit_details') && step['transit_details'] != null) {
             var transitDetails = step['transit_details'];
             var vehicleType = transitDetails['line']['vehicle']['type'];
-            isStepTransitMetro = vehicleType == 'SUBWAY' || vehicleType == 'HEAVY_RAIL';
+            isStepTransitMetro = vehicleType == 'SUBWAY' || vehicleType == 'HEAVY_RAIL' || vehicleType == 'RAIL';
             if (isStepTransitMetro) {
               stepGroupType = "transit";
               stepTransitLine = transitDetails['line']['short_name'] ?? transitDetails['line']['name'];
             } else {
-              stepGroupType = "non_transit";
-              stepTransitLine = null;
+                stepGroupType = "non_transit";
+                stepTransitLine = null;
+                stepNonTransitMode = stepMode; // could be BUS etc., but treat as non_transit
             }
           }
+          } else {
+            // Non-transit: remember the specific mode for styling (DRIVING/WALKING)
+            stepNonTransitMode = stepMode;
         }
 
         bool sameGroup = false;
-        if (currentGroupType == "non_transit" && stepGroupType == "non_transit") {
-          sameGroup = true;
+          if (currentGroupType == "non_transit" && stepGroupType == "non_transit") {
+            // keep grouping only if same non-transit mode to allow different styling
+            sameGroup = (currentNonTransitMode == stepNonTransitMode);
         } else if (currentGroupType == "transit" && stepGroupType == "transit") {
           sameGroup = (currentTransitLine == stepTransitLine);
         }
@@ -228,16 +239,25 @@ class DirectionService {
             groupColor = transitColorMap[currentTransitLine]!;
           }
 
+          // Determine walking dashed pattern; driving solid
+          List<PatternItem>? pattern;
+          if (currentGroupType == 'non_transit' && currentNonTransitMode == 'WALKING') {
+            pattern = [PatternItem.dash(20), PatternItem.gap(12)];
+          }
+
           polylines.add(Polyline(
             polylineId: PolylineId('group_${polylines.length}'),
             points: groupPoints,
             color: groupColor,
-            width: 4,
+            width: 5,
+            patterns: pattern ?? const <PatternItem>[],
+            zIndex: currentGroupType == 'transit' ? 3 : 2,
           ));
 
           groupPoints = [];
           currentGroupType = stepGroupType;
           currentTransitLine = stepTransitLine;
+          currentNonTransitMode = stepNonTransitMode;
           List<LatLng> rawStepPoints = decodePolyline(step['polyline']['points']);
           List<LatLng> simplifiedStepPoints = PolylineSimplifier.simplifyPolyline(rawStepPoints, 10);
           groupPoints.addAll(simplifiedStepPoints);
@@ -256,11 +276,19 @@ class DirectionService {
           finalColor = transitColorMap[currentTransitLine]!;
         }
 
+        // Walking dashed at tail too
+        List<PatternItem>? pattern;
+        if (currentGroupType == 'non_transit' && currentNonTransitMode == 'WALKING') {
+          pattern = [PatternItem.dash(20), PatternItem.gap(12)];
+        }
+
         polylines.add(Polyline(
           polylineId: PolylineId('group_${polylines.length}'),
           points: groupPoints,
           color: finalColor,
-          width: 4,
+          width: 5,
+          patterns: pattern ?? const <PatternItem>[],
+          zIndex: currentGroupType == 'transit' ? 3 : 2,
         ));
       }
     }

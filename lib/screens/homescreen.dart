@@ -398,14 +398,13 @@ class HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         dev.log('Failed to register route with TrackingService: $e', name: 'HomeScreen');
       }
-      // Compute alarm mode/value. For metro+stops, convert stops -> distance using route data if possible.
+      // Compute alarm mode/value. For metro+stops, use stops-based threshold.
       String alarmMode = _useDistanceMode ? 'distance' : 'time';
       double alarmValue;
       if (_metroMode && _useDistanceMode) {
-        // stops mode -> compute km per stop from the last metro TRANSIT step
-        final double kmPerStop = _estimateKmPerStopFromDirections(directions) ?? 0.8; // fallback
-        alarmMode = 'distance';
-        alarmValue = (_stopsSliderValue * kmPerStop);
+        // When metro mode and 'stops' selected, send stops threshold directly
+        alarmMode = 'stops';
+        alarmValue = _stopsSliderValue;
       } else {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
       }
@@ -451,39 +450,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Estimate average km per metro stop using the last TRANSIT (SUBWAY/HEAVY_RAIL) step
-  double? _estimateKmPerStopFromDirections(Map<String, dynamic> directions) {
-    try {
-      if (directions['routes'] == null || (directions['routes'] as List).isEmpty) return null;
-      final route = (directions['routes'] as List).first;
-      if (route['legs'] == null || (route['legs'] as List).isEmpty) return null;
-      final legs = (route['legs'] as List);
-      // Search legs from end to start for the last metro transit step
-      for (int li = legs.length - 1; li >= 0; li--) {
-        final leg = legs[li] as Map<String, dynamic>;
-        final steps = (leg['steps'] as List?) ?? [];
-        for (int si = steps.length - 1; si >= 0; si--) {
-          final step = steps[si] as Map<String, dynamic>;
-          if (step['travel_mode'] == 'TRANSIT' && step['transit_details'] != null) {
-            final td = step['transit_details'] as Map<String, dynamic>;
-            final vehicle = ((td['line'] as Map<String, dynamic>?)?['vehicle']) as Map<String, dynamic>?;
-            final type = vehicle != null ? vehicle['type'] as String? : null;
-            final isMetro = type == 'SUBWAY' || type == 'HEAVY_RAIL';
-            if (!isMetro) continue;
-            final distM = ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
-            final numStops = td['num_stops'] as num?;
-            if (distM != null && distM > 0 && numStops != null && numStops > 0) {
-              return (distM.toDouble() / 1000.0) / numStops.toDouble();
-            }
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      dev.log('Failed to estimate km/stop from directions: $e', name: 'HomeScreen');
-      return null;
-    }
-  }
+  // Removed legacy km-per-stop estimator (now use stops mode directly)
 
   void _showErrorDialog(String title, String message) {
     if (!mounted) return;
@@ -534,6 +501,8 @@ class HomeScreenState extends State<HomeScreen> {
       throw Exception("Failed to fetch directions: $e");
     }
   }
+
+  // (Reverted) No special blocking for absence of metro in directions
 
   @override
   void dispose() {
@@ -831,6 +800,7 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+      // No floating action button in production
     );
   }
 

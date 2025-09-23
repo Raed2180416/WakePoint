@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:developer' as dev;
-import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -16,6 +15,9 @@ import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'package:geowake2/widgets/pulsing_dots.dart';
 import 'package:geowake2/services/eta_utils.dart';
+import 'package:geowake2/services/alarm_player.dart';
+import 'package:geowake2/services/notification_service.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   MapTrackingScreen({Key? key}) : super(key: key);
@@ -131,11 +133,23 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         _adjustCamera(userLat, userLng);
       } else {
         try {
-          // Prefer precomputed simplified polyline if present
-          final route = directions!['routes'][0];
-          final String? simplifiedCompressed = route['simplified_polyline'] as String?;
-          if (simplifiedCompressed != null) {
-            final points = PolylineSimplifier.decompressPolyline(simplifiedCompressed);
+          final directionService = DirectionService();
+          final segmentedPolylines =
+              directionService.buildSegmentedPolylines(directions!, false);
+          if (segmentedPolylines.isNotEmpty) {
+            setState(() {
+              _polylines = segmentedPolylines.toSet();
+              _routePoints = segmentedPolylines
+                  .expand((p) => p.points)
+                  .toList(growable: false);
+              _isLoading = false;
+            });
+          } else {
+            // Fallback to overview polyline if step data is missing
+            final route = directions!['routes'][0];
+            final String encodedPolyline = route['overview_polyline']['points'] as String;
+            final points = PolylineSimplifier.simplifyPolyline(
+                decodePolyline(encodedPolyline), 10);
             setState(() {
               _polylines = {
                 Polyline(
@@ -148,47 +162,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               _routePoints = points;
               _isLoading = false;
             });
-            _computeRouteLength();
-            _transferBoundariesMeters.clear();
-            _buildStepBoundariesAndDurations();
-            _computeInitialMetrics(userLat, userLng);
-            _adjustCamera(userLat, userLng);
-          } else {
-            final String encodedPolyline = route['overview_polyline']['points'] as String;
-            dev.log("Encoded polyline: $encodedPolyline", name: "MapTrackingScreen");
-            compute(decodePolyline, encodedPolyline).then((points) {
-              List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(points, 10);
-              if (mounted) {
-                setState(() {
-                  _polylines = {
-                    Polyline(
-                      polylineId: const PolylineId('route'),
-                      points: simplifiedPoints,
-                      color: Colors.blue,
-                      width: 4,
-                    )
-                  };
-                  _routePoints = simplifiedPoints;
-                  _isLoading = false;
-                });
-                _computeRouteLength();
-                _transferBoundariesMeters.clear();
-                _buildStepBoundariesAndDurations();
-                _computeInitialMetrics(userLat, userLng);
-                _adjustCamera(userLat, userLng);
-              }
-            }).catchError((error) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              dev.log("Error decoding polyline: $error", name: "MapTrackingScreen");
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Error decoding route: $error")),
-              );
-            }
-            });
           }
+          _computeRouteLength();
+          _transferBoundariesMeters.clear();
+          _buildStepBoundariesAndDurations();
+          _computeInitialMetrics(userLat, userLng);
+          _adjustCamera(userLat, userLng);
         } catch (e) {
           if (mounted) {
             setState(() {
@@ -512,6 +491,51 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                         }
                       },
                     ),
+                    // Route legend overlay (compact, avoids overflow)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      right: 12,
+                      child: Material(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return Wrap(
+                                spacing: 12,
+                                runSpacing: 6,
+                                alignment: WrapAlignment.start,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  _LegendItem(
+                                    color: Colors.blue,
+                                    dashed: false,
+                                    label: 'Driving',
+                                  ),
+                                  _LegendItem(
+                                    color: Colors.blue,
+                                    dashed: true,
+                                    label: 'Walking',
+                                  ),
+                                  _LegendItem(
+                                    color: Colors.green,
+                                    dashed: false,
+                                    label: 'Metro Line A',
+                                  ),
+                                  _LegendItem(
+                                    color: Colors.purple,
+                                    dashed: false,
+                                    label: 'Metro Line B',
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                     if (_isLoading)
                       const Center(child: CircularProgressIndicator()),
                   ],
@@ -521,6 +545,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    // Stop alarm button moved to bottom of screen
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -556,11 +581,71 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/');
-                      },
-                      child: const Text('End Tracking'),
+                    Row(
+                      children: [
+                        // Stop Alarm Button - only visible when alarm is playing
+                        Expanded(
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable: AlarmPlayer.isPlaying,
+                            builder: (context, playing, child) {
+                              final cs = Theme.of(context).colorScheme;
+                              return ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: cs.secondaryContainer,
+                                  foregroundColor: cs.onSecondaryContainer,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  disabledBackgroundColor: Colors.grey.shade300,
+                                  disabledForegroundColor: Colors.grey.shade600,
+                                ),
+                                onPressed: playing ? () async {
+                                  await AlarmPlayer.stop();
+                                  try {
+                                    // Also notify the background service
+                                    final service = FlutterBackgroundService();
+                                    service.invoke('stopAlarm');
+                                  } catch (e) {
+                                    dev.log('Failed to send stopAlarm to service: $e', name: 'MapTracking');
+                                  }
+                                } : null, // Button disabled when alarm not playing
+                                icon: const Icon(Icons.notifications_off, size: 24),
+                                label: const Text('STOP ALARM'),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8), // Spacing between buttons
+                        // End Tracking Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                              foregroundColor: Theme.of(context).colorScheme.onError,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () async {
+                              // Stop alarm sounds and vibration
+                              await AlarmPlayer.stop();
+                              
+                              // Stop tracking service
+                              await TrackingService().stopTracking();
+                              
+                              // Cancel notifications through notification service
+                              try {
+                                await NotificationService().cancelJourneyProgress();
+                              } catch (e) {
+                                dev.log('Error cancelling notifications: $e', name: 'MapTracking');
+                              }
+                              
+                              // Navigate back to home screen
+                              Navigator.pushReplacementNamed(context, '/');
+                            },
+                            icon: const Icon(Icons.stop_circle_outlined, size: 24),
+                            label: const Text('END TRACKING'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -571,4 +656,60 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       ),
     );
   }
+}
+
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final bool dashed;
+  final String label;
+  const _LegendItem({required this.color, required this.dashed, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomPaint(
+          painter: _LineSamplePainter(color: color, dashed: dashed),
+          size: const Size(28, 6),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _LineSamplePainter extends CustomPainter {
+  final Color color;
+  final bool dashed;
+  _LineSamplePainter({required this.color, required this.dashed});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final y = size.height / 2;
+    if (!dashed) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    } else {
+      const double dashWidth = 8.0;
+      const double dashSpace = 6.0;
+      double x = 0.0;
+      while (x < size.width) {
+        final double x2 = (x + dashWidth) > size.width ? size.width : (x + dashWidth);
+        canvas.drawLine(Offset(x, y), Offset(x2, y), paint);
+        x += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -10,7 +10,11 @@ import 'screens/splash_screen.dart';
 import 'themes/appthemes.dart';
 import 'screens/otherimpservices/recent_locations_service.dart';
 import 'services/notification_service.dart';
+import 'services/navigation_service.dart';
 import 'dart:developer' as dev;
+import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
+import 'debug/dev_server.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is initialized before any Flutter-specific code.
@@ -51,6 +55,12 @@ Future<void> _initializeServices() async {
   } catch (e) {
     dev.log("Tracking Service initialization failed: $e", name: "main");
   }
+
+  // Start lightweight dev HTTP server in debug/profile for remote demo triggers
+  if (kDebugMode || kProfileMode) {
+    // ignore: unawaited_futures
+    DevServer.start();
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -73,6 +83,27 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // FIX: Call the permission check function here.
     // =======================================================================
     _checkNotificationPermission();
+    // If an alarm was fired while app was backgrounded, present it now.
+    NotificationService().showPendingAlarmScreenIfAny();
+
+    // Bridge background 'fireAlarm' events to foreground UI/audio
+    try {
+      final service = FlutterBackgroundService();
+      service.on('fireAlarm').listen((event) async {
+        if (event == null) return;
+        final title = (event['title'] as String?) ?? 'Wake Up!';
+        final body = (event['body'] as String?) ?? 'Approaching your target';
+        final allow = (event['allowContinueTracking'] as bool?) ?? true;
+        // Show full-screen alarm notification + native activity and play sound
+        await NotificationService().showWakeUpAlarm(
+          title: title,
+          body: body,
+          allowContinueTracking: allow,
+        );
+      });
+    } catch (e) {
+      dev.log('Failed to subscribe to fireAlarm: $e', name: 'main');
+    }
   }
 
   @override
@@ -97,6 +128,10 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         Hive.box(RecentLocationsService.boxName).flush();
       }
     }
+    if (state == AppLifecycleState.resumed) {
+      // On resume, auto-present any pending full-screen alarm.
+      NotificationService().showPendingAlarmScreenIfAny();
+    }
   }
 
   /// Check and request notification permission on Android 13+ or iOS.
@@ -117,6 +152,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GeoWake',
+      navigatorKey: NavigationService.navigatorKey,
       theme: isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
       initialRoute: '/splash',
       onGenerateRoute: (settings) {

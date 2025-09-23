@@ -1,0 +1,26 @@
+{
+  "$schema": "vscode://schemas/tasks",
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "flutter test (disable DDS)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "test",
+        "--disable-dds"
+      ],
+      "group": "test"
+    },
+    {
+      "label": "flutter run (disable DDS)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "run",
+        "--disable-dds"
+      ],
+      "group": "build"
+    }
+  ]
+}

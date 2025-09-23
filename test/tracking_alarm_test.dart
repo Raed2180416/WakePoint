@@ -63,18 +63,44 @@ bool mockAlarmWasTriggered = false;
 /// Instead of showing a real notification, it just sets our flag to true.
 class MockableNotificationService implements NotificationService {
   @override
-  Future<void> showWakeUpAlarm({required String title, required String body}) async {
-    mockAlarmWasTriggered = true;
-    print("✅ --- MOCK ALARM TRIGGERED --- ✅");
-    print("Title: $title, Body: $body");
+  Future<void> cancelAlarm() async {
+    // No-op for tests
+  }
+  @override
+  Future<void> stopVibration() async {
+    // No-op for tests
   }
   
+  @override
+  Future<void> showWakeUpAlarm({
+    required String title,
+    required String body,
+    bool allowContinueTracking = true,
+  }) async {
+    mockAlarmWasTriggered = true;
+  }
+
   @override
   Future<void> initialize() async {
     // Mock implementation
   }
-  
-  Future<void> cancelAllNotifications() async {
+
+  @override
+  Future<void> showJourneyProgress({
+    required String title,
+    required String subtitle,
+    required double progress0to1,
+  }) async {
+    // Mock implementation
+  }
+
+  @override
+  Future<void> cancelJourneyProgress() async {
+    // Mock implementation
+  }
+
+  @override
+  Future<void> showPendingAlarmScreenIfAny() async {
     // Mock implementation
   }
 }
