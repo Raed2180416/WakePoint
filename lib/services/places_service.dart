@@ -3,6 +3,25 @@ import 'dart:developer' as dev;
 
 class PlacesService {
   final ApiClient _apiClient = ApiClient.instance;
+  String? _sessionToken; // Google Places session token per search session
+  DateTime? _sessionStartedAt;
+
+  /// Returns an active session token, creating one if needed.
+  /// Tokens should be reused for autocomplete + place details in a single session.
+  String _ensureSessionToken() {
+    final now = DateTime.now();
+    // Rotate token if older than ~3 minutes or missing.
+    if (_sessionToken == null || _sessionStartedAt == null || now.difference(_sessionStartedAt!) > const Duration(minutes: 3)) {
+      _sessionToken = DateTime.now().millisecondsSinceEpoch.toString();
+      _sessionStartedAt = now;
+    }
+    return _sessionToken!;
+  }
+
+  void endSession() {
+    _sessionToken = null;
+    _sessionStartedAt = null;
+  }
   
   /// Fetches autocomplete suggestions through your secure server
   /// If countryCode is provided, results will be biased towards that country.
@@ -13,6 +32,7 @@ class PlacesService {
     double? lng,
   }) async {
     try {
+      final token = _ensureSessionToken();
       String? location;
       if (lat != null && lng != null) {
         location = '$lat,$lng';
@@ -27,6 +47,7 @@ class PlacesService {
         input: query,
         location: location,
         components: components,
+        sessionToken: token,
       );
       
       return results.map((item) => {
@@ -43,7 +64,8 @@ class PlacesService {
   /// Fetches detailed information about a place through your secure server
   Future<Map<String, dynamic>?> fetchPlaceDetails(String placeId) async {
     try {
-      final result = await _apiClient.getPlaceDetails(placeId: placeId);
+      final token = _ensureSessionToken();
+      final result = await _apiClient.getPlaceDetails(placeId: placeId, sessionToken: token);
       if (result != null) {
         final loc = result['geometry']['location'];
         return {

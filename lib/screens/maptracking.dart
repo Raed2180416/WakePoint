@@ -109,29 +109,43 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         _adjustCamera(userLat, userLng);
       } else {
         try {
-          final String encodedPolyline =
-              directions!['routes'][0]['overview_polyline']['points']
-                  as String;
-          dev.log("Encoded polyline: $encodedPolyline", name: "MapTrackingScreen");
-          compute(decodePolyline, encodedPolyline).then((points) {
-            // Simplify the decoded polyline.
-            List<LatLng> simplifiedPoints =
-                PolylineSimplifier.simplifyPolyline(points, 10);
-            if (mounted) {
-              setState(() {
-                _polylines = {
-                  Polyline(
-                    polylineId: const PolylineId('route'),
-                    points: simplifiedPoints,
-                    color: Colors.blue,
-                    width: 4,
-                  )
-                };
-                _isLoading = false;
-              });
-              _adjustCamera(userLat, userLng);
-            }
-          }).catchError((error) {
+          // Prefer precomputed simplified polyline if present
+          final route = directions!['routes'][0];
+          final String? simplifiedCompressed = route['simplified_polyline'] as String?;
+          if (simplifiedCompressed != null) {
+            final points = PolylineSimplifier.decompressPolyline(simplifiedCompressed);
+            setState(() {
+              _polylines = {
+                Polyline(
+                  polylineId: const PolylineId('route'),
+                  points: points,
+                  color: Colors.blue,
+                  width: 4,
+                )
+              };
+              _isLoading = false;
+            });
+            _adjustCamera(userLat, userLng);
+          } else {
+            final String encodedPolyline = route['overview_polyline']['points'] as String;
+            dev.log("Encoded polyline: $encodedPolyline", name: "MapTrackingScreen");
+            compute(decodePolyline, encodedPolyline).then((points) {
+              List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(points, 10);
+              if (mounted) {
+                setState(() {
+                  _polylines = {
+                    Polyline(
+                      polylineId: const PolylineId('route'),
+                      points: simplifiedPoints,
+                      color: Colors.blue,
+                      width: 4,
+                    )
+                  };
+                  _isLoading = false;
+                });
+                _adjustCamera(userLat, userLng);
+              }
+            }).catchError((error) {
             if (mounted) {
               setState(() {
                 _isLoading = false;
@@ -141,7 +155,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                 SnackBar(content: Text("Error decoding route: $error")),
               );
             }
-          });
+            });
+          }
         } catch (e) {
           if (mounted) {
             setState(() {

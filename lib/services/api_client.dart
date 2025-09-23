@@ -11,6 +11,11 @@ class ApiClient {
   
   static ApiClient? _instance;
   static ApiClient get instance => _instance ??= ApiClient._internal();
+  static bool testMode = false; // When true, _makeRequest returns canned responses and records bodies
+  static Map<String, dynamic>? lastAutocompleteBody;
+  static Map<String, dynamic>? lastPlaceDetailsBody;
+  static Map<String, dynamic>? lastDirectionsBody;
+  static int directionsCallCount = 0;
   
   ApiClient._internal();
   
@@ -137,6 +142,56 @@ class ApiClient {
     Map<String, String>? queryParams,
   }) async {
     try {
+      // Test mode: short-circuit HTTP and return canned payloads
+      if (testMode) {
+        // Record bodies for verification
+        if (endpoint.contains('/maps/autocomplete')) {
+          lastAutocompleteBody = body != null ? Map<String, dynamic>.from(body) : {};
+          return {
+            'predictions': [
+              {
+                'description': 'Test Place',
+                'place_id': 'test_place_id',
+              }
+            ],
+            'status': 'OK'
+          };
+        }
+        if (endpoint.contains('/maps/place-details')) {
+          lastPlaceDetailsBody = body != null ? Map<String, dynamic>.from(body) : {};
+          return {
+            'result': {
+              'name': 'Test Place',
+              'geometry': {
+                'location': {'lat': 12.34, 'lng': 56.78}
+              },
+              'formatted_address': '123 Test St'
+            },
+            'status': 'OK'
+          };
+        }
+        if (endpoint.contains('/maps/directions')) {
+          lastDirectionsBody = body != null ? Map<String, dynamic>.from(body) : {};
+          directionsCallCount++;
+          // Minimal directions payload
+          return {
+            'routes': [
+              {
+                'overview_polyline': {'points': '}_se}Ff`miO??'},
+                'legs': [
+                  {
+                    'steps': [],
+                    'duration': {'value': 600}
+                  }
+                ]
+              }
+            ],
+            'status': 'OK'
+          };
+        }
+        // Default canned OK
+        return {'status': 'OK'};
+      }
       // Ensure we have a valid token
       if (_authToken == null || _isTokenExpired()) {
         dev.log('🔄 Token missing or expired, authenticating...', name: 'ApiClient');
@@ -233,6 +288,7 @@ class ApiClient {
     required String input,
     String? location,
     String? components,
+    String? sessionToken,
   }) async {
     dev.log('🔍 Getting autocomplete for: "$input"', name: 'ApiClient');
     
@@ -240,6 +296,7 @@ class ApiClient {
       'input': input,
       if (location != null) 'location': location,
       if (components != null) 'components': components,
+      if (sessionToken != null) 'sessiontoken': sessionToken,
     };
     
     final result = await _makeRequest('POST', '/maps/autocomplete', body: body); // Fixed: Changed to POST
@@ -256,11 +313,13 @@ class ApiClient {
   /// Get place details
   Future<Map<String, dynamic>?> getPlaceDetails({
     required String placeId,
+    String? sessionToken,
   }) async {
     dev.log('📍 Getting place details for: $placeId', name: 'ApiClient');
     
     final body = <String, String>{
       'place_id': placeId,
+      if (sessionToken != null) 'sessiontoken': sessionToken,
     };
     
     final result = await _makeRequest('POST', '/maps/place-details', body: body); // Fixed: Changed to POST

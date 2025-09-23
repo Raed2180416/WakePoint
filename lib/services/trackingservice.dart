@@ -90,6 +90,11 @@ class TrackingService {
       'alarmValue': alarmValue,
     };
     if (isTestMode) {
+      try {
+        // Silence plugin calls in tests
+        // ignore: invalid_use_of_visible_for_testing_member
+        NotificationService.isTestMode = true;
+      } catch (_) {}
       // In test mode, we can directly call _onStart with the parameters
       _onStart(TestServiceInstance(), initialData: params);
       return;
@@ -112,6 +117,12 @@ class TrackingService {
 
   @visibleForTesting
   bool get fusionActive => _fusionActive;
+  @visibleForTesting
+  bool get alarmTriggered => _alarmTriggered;
+  @visibleForTesting
+  DateTime? get lastGpsUpdateValue => _lastGpsUpdate;
+  @visibleForTesting
+  LatLng? get lastValidPosition => _lastProcessedPosition;
 }
 
 @pragma('vm:entry-point')
@@ -183,11 +194,12 @@ void _checkAndTriggerAlarm(Position currentPosition, ServiceInstance service) {
   if (shouldTrigger) {
     dev.log("ALARM TRIGGERED!", name: "TrackingService");
     _alarmTriggered = true;
-
-    NotificationService().showWakeUpAlarm(
-      title: 'Wake Up! You Are Arriving!',
-      body: 'You are near your destination: $_destinationName',
-    );
+    if (!NotificationService.isTestMode) {
+      NotificationService().showWakeUpAlarm(
+        title: 'Wake Up! You Are Arriving!',
+        body: 'You are near your destination: $_destinationName',
+      );
+    }
     
     // Stop the service to save battery
     service.invoke("stopTracking");
@@ -239,9 +251,11 @@ Future<void> startLocationStream(ServiceInstance service) async {
   if (_positionSubscription != null) {
     await _positionSubscription!.cancel();
   }
-
-  final Battery battery = Battery();
-  int batteryLevel = await battery.batteryLevel;
+  int batteryLevel = 100;
+  if (!TrackingService.isTestMode) {
+    final Battery battery = Battery();
+    batteryLevel = await battery.batteryLevel;
+  }
   
   LocationSettings settings = batteryLevel > 20
       ? const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 20)
@@ -274,15 +288,27 @@ Future<void> startLocationStream(ServiceInstance service) async {
       "eta": _smoothedETA,
     });
   });
-
-  // (GPS Dropout and Sensor Fusion logic can be added back here if needed)
+  // Start GPS dropout checker to enable sensor fusion when GPS is silent.
+  _gpsCheckTimer?.cancel();
+  final Duration checkPeriod = TrackingService.isTestMode
+      ? const Duration(milliseconds: 50)
+      : const Duration(seconds: 1);
+  _gpsCheckTimer = Timer.periodic(checkPeriod, (_) {
+    final last = _lastGpsUpdate;
+    if (last == null) return;
+    final silentFor = DateTime.now().difference(last);
+    if (silentFor >= gpsDropoutBuffer) {
+      if (!_fusionActive && _lastProcessedPosition != null) {
+        _sensorFusionManager = SensorFusionManager(
+          initialPosition: _lastProcessedPosition!,
+          accelerometerStream: testAccelerometerStream,
+        );
+        _sensorFusionManager!.startFusion();
+        _fusionActive = true;
+      }
+    }
+  });
 }
 
 
-// Expose testing getters.
-@visibleForTesting
-DateTime? get lastGpsUpdateValue => _lastGpsUpdate;
-@visibleForTesting
-LatLng? get lastValidPosition => _lastProcessedPosition;
-@visibleForTesting
-bool get fusionActive => _fusionActive;
+// No top-level testing getters; use instance getters on TrackingService.

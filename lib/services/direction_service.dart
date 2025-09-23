@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'polyline_decoder.dart';
 import 'polyline_simplifier.dart';
 import 'package:geowake2/services/api_client.dart'; // ADD THIS IMPORT
+import 'package:geowake2/services/route_cache.dart';
 import 'dart:developer' as dev;
 
 class DirectionService {
@@ -30,6 +31,23 @@ class DirectionService {
     required bool transitMode,
     bool forceRefresh = false,
   }) async {
+    // L2 persistent cache check (Hive)
+    final origin = LatLng(startLat, startLng);
+    final dest = LatLng(endLat, endLng);
+    final mode = transitMode ? 'transit' : 'driving';
+    if (!forceRefresh) {
+      final cached = await RouteCache.get(
+        origin: origin,
+        destination: dest,
+        mode: mode,
+        transitVariant: transitMode ? 'rail' : null,
+      );
+      if (cached != null) {
+        dev.log('Using RouteCache entry for $mode', name: 'DirectionService');
+        _cachedDirections = cached.directions;
+        _lastFetchTime = cached.timestamp;
+      }
+    }
     // Calculate the straight-line distance in meters.
     double straightDistance = Geolocator.distanceBetween(startLat, startLng, endLat, endLng);
 
@@ -48,7 +66,7 @@ class DirectionService {
       updateInterval = nearInterval;
     }
 
-    // Return cached data if available and recent.
+    // Return in-memory cached data if available and recent.
     if (!forceRefresh && _cachedDirections != null && _lastFetchTime != null) {
       final elapsed = DateTime.now().difference(_lastFetchTime!);
       if (elapsed < updateInterval) {
@@ -70,6 +88,7 @@ class DirectionService {
       }
 
       // --- Simplify & compress the overview polyline ---
+      String? simplifiedCompressed;
       if (directions['routes'] != null && directions['routes'].isNotEmpty) {
         final route = directions['routes'][0];
         if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
@@ -82,11 +101,33 @@ class DirectionService {
           String compressedPolyline = PolylineSimplifier.compressPolyline(simplifiedPoints);
           // Add the simplified compressed polyline to the response.
           route['simplified_polyline'] = compressedPolyline;
+          simplifiedCompressed = compressedPolyline;
         }
       }
 
       _cachedDirections = directions;
       _lastFetchTime = DateTime.now();
+
+      // Persist to RouteCache (L2)
+      try {
+        final key = RouteCache.makeKey(
+          origin: origin,
+          destination: dest,
+          mode: mode,
+          transitVariant: transitMode ? 'rail' : null,
+        );
+        await RouteCache.put(RouteCacheEntry(
+          key: key,
+          directions: directions,
+          timestamp: _lastFetchTime!,
+          origin: origin,
+          destination: dest,
+          mode: mode,
+          simplifiedCompressedPolyline: simplifiedCompressed,
+        ));
+      } catch (e) {
+        dev.log('Failed to persist route cache: $e', name: 'DirectionService');
+      }
       return directions;
 
     } catch (e) {

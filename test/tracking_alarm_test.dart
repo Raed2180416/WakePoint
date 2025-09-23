@@ -46,17 +46,12 @@ class MockLocationProvider {
 class TestRoutes {
   /// A sample route in Bengaluru from Majestic to Lalbagh.
   static const List<LatLng> majesticToLalbagh = [
-    LatLng(12.9767, 77.5713), // Start: Majestic
-    LatLng(12.9745, 77.5732),
-    LatLng(12.9721, 77.5755),
-    LatLng(12.9698, 77.5780),
-    LatLng(12.9673, 77.5805),
-    LatLng(12.9650, 77.5828),
-    LatLng(12.9625, 77.5845),
-    LatLng(12.9600, 77.5855), // Getting closer... (~1.1km away)
-    LatLng(12.9575, 77.5860), // Inside 1km threshold
-    LatLng(12.9550, 77.5865),
-    LatLng(12.9515, 77.5868), // Destination: Lalbagh Main Gate
+    LatLng(12.9600, 77.5855),
+    LatLng(12.9588, 77.5858),
+    LatLng(12.9578, 77.5860), // within 1km
+    LatLng(12.9569, 77.5862),
+    LatLng(12.9559, 77.5865),
+    LatLng(12.9515, 77.5868), // destination
   ];
 }
 
@@ -98,7 +93,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('Alarm should trigger when mock location enters the distance threshold', (WidgetTester tester) async {
+  test('Alarm should trigger when mock location enters the distance threshold', () async {
     // --- SETUP ---
     
     // 1. Create instances of our test tools.
@@ -115,9 +110,10 @@ void main() {
     // to accept a NotificationService instance.
     // However, we can test it visually by checking the print log.
 
-    // 3. Initialize the real TrackingService but in its special test mode.
-    TrackingService.isTestMode = true;
-    final trackingService = TrackingService();
+  // 3. Initialize service in test mode and silence notifications.
+  TrackingService.isTestMode = true;
+  NotificationService.isTestMode = true;
+  final trackingService = TrackingService();
     
     // --- DEFINE TEST PARAMETERS ---
     
@@ -127,36 +123,27 @@ void main() {
 
     // --- EXECUTION ---
 
-    // 1. Start the tracking service with our test parameters.
-    trackingService.startTracking(
+    // 1. Inject our fake GPS stream into the TrackingService before start.
+    testGpsStream = mockLocationProvider.positionStream;
+    // 2. Start the tracking service with our test parameters.
+    await trackingService.startTracking(
       destination: destination,
       destinationName: destinationName,
       alarmMode: 'distance',
       alarmValue: alarmDistanceKm,
     );
-
-    // 2. Inject our fake GPS stream into the TrackingService.
-    testGpsStream = mockLocationProvider.positionStream;
     
     // 3. "Play" the fake route, which feeds coordinates to the service.
-    await mockLocationProvider.playRoute(TestRoutes.majesticToLalbagh);
-
-    // 4. Wait for any lingering async operations to complete.
-    await tester.pumpAndSettle();
+  await mockLocationProvider.playRoute(TestRoutes.majesticToLalbagh);
+  await Future.delayed(const Duration(milliseconds: 100));
 
     // --- VERIFICATION ---
     
-    // 5. Check the flag. This proves the alarm logic was correctly executed.
-    // For this to work, you need to modify your TrackingService to call your
-    // mock service instead of the real one. A simpler way for now is to check
-    // the console logs for the "ALARM TRIGGERED!" message.
-    
-    // A placeholder expectation:
-    print("Test finished. Check console for 'ALARM TRIGGERED!' log from TrackingService.");
-    expect(true, isTrue); // This is just to make the test pass structurally.
+  // 5. Verify alarm logic without plugins.
+  expect(trackingService.alarmTriggered, isTrue);
 
     // --- CLEANUP ---
-    trackingService.stopTracking();
+    await trackingService.stopTracking();
     mockLocationProvider.dispose();
   });
 }

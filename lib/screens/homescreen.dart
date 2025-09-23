@@ -14,6 +14,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:geowake2/services/api_client.dart';
+import 'package:geowake2/services/direction_service.dart';
 
 
 
@@ -39,6 +40,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool _metroMode = false;
   double _distanceSliderValue = 5.0;
   double _timeSliderValue = 15.0;
+  double _stopsSliderValue = 2.0;
   bool _isLoading = false;
   bool _isTracking = false;
   bool _noConnectivity = false;
@@ -380,20 +382,31 @@ class HomeScreenState extends State<HomeScreen> {
       final initialETA = directions['routes'][0]['legs'][0]['duration']['value'] as int;
       
       final trackingService = TrackingService();
-      
+      // Compute alarm mode/value. For metro+stops, convert stops -> distance using route data if possible.
+      String alarmMode = _useDistanceMode ? 'distance' : 'time';
+      double alarmValue;
+      if (_metroMode && _useDistanceMode) {
+        // stops mode -> compute km per stop from the last metro TRANSIT step
+        final double kmPerStop = _estimateKmPerStopFromDirections(directions) ?? 0.8; // fallback
+        alarmMode = 'distance';
+        alarmValue = (_stopsSliderValue * kmPerStop);
+      } else {
+        alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
+      }
+
       await trackingService.startTracking(
         destination: LatLng(destLat, destLng),
         destinationName: _selectedLocation?['description'] ?? 'Your Destination',
-        alarmMode: _useDistanceMode ? 'distance' : 'time',
-        alarmValue: _useDistanceMode ? _distanceSliderValue : _timeSliderValue,
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
       );
 
       FlutterBackgroundService().invoke("updateRouteData", {"initialETA": initialETA});
       
       final Map<String, dynamic> mapArgs = {
         'destination': _searchController.text,
-        'mode': _useDistanceMode ? 'distance' : 'time',
-        'value': _useDistanceMode ? _distanceSliderValue : _timeSliderValue,
+        'mode': _metroMode && _useDistanceMode ? 'stops' : (_useDistanceMode ? 'distance' : 'time'),
+        'value': _metroMode && _useDistanceMode ? _stopsSliderValue : (_useDistanceMode ? _distanceSliderValue : _timeSliderValue),
         'metroMode': _metroMode,
         'directions': directions,
         'userLat': userLat,
@@ -419,6 +432,40 @@ class HomeScreenState extends State<HomeScreen> {
            _isLoading = false;
          });
       }
+    }
+  }
+
+  // Estimate average km per metro stop using the last TRANSIT (SUBWAY/HEAVY_RAIL) step
+  double? _estimateKmPerStopFromDirections(Map<String, dynamic> directions) {
+    try {
+      if (directions['routes'] == null || (directions['routes'] as List).isEmpty) return null;
+      final route = (directions['routes'] as List).first;
+      if (route['legs'] == null || (route['legs'] as List).isEmpty) return null;
+      final legs = (route['legs'] as List);
+      // Search legs from end to start for the last metro transit step
+      for (int li = legs.length - 1; li >= 0; li--) {
+        final leg = legs[li] as Map<String, dynamic>;
+        final steps = (leg['steps'] as List?) ?? [];
+        for (int si = steps.length - 1; si >= 0; si--) {
+          final step = steps[si] as Map<String, dynamic>;
+          if (step['travel_mode'] == 'TRANSIT' && step['transit_details'] != null) {
+            final td = step['transit_details'] as Map<String, dynamic>;
+            final vehicle = ((td['line'] as Map<String, dynamic>?)?['vehicle']) as Map<String, dynamic>?;
+            final type = vehicle != null ? vehicle['type'] as String? : null;
+            final isMetro = type == 'SUBWAY' || type == 'HEAVY_RAIL';
+            if (!isMetro) continue;
+            final distM = ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
+            final numStops = td['num_stops'] as num?;
+            if (distM != null && distM > 0 && numStops != null && numStops > 0) {
+              return (distM.toDouble() / 1000.0) / numStops.toDouble();
+            }
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      dev.log('Failed to estimate km/stop from directions: $e', name: 'HomeScreen');
+      return null;
     }
   }
 
@@ -451,21 +498,19 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<Map<String, dynamic>> _fetchDirections(
     double startLat, double startLng, double endLat, double endLng) async {
-    
-    final apiClient = ApiClient.instance;
-    
+    final ds = DirectionService();
     try {
-      final directions = await apiClient.getDirections(
-        origin: '$startLat,$startLng',
-        destination: '$endLat,$endLng',
-        mode: _metroMode ? 'transit' : 'driving',
-        transitMode: _metroMode ? 'rail' : null,
+      final directions = await ds.getDirections(
+        startLat,
+        startLng,
+        endLat,
+        endLng,
+        isDistanceMode: _useDistanceMode,
+        threshold: _useDistanceMode
+            ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
+            : _timeSliderValue,
+        transitMode: _metroMode,
       );
-      
-      if (directions['status'] != 'OK' || (directions['routes'] as List).isEmpty) {
-        throw Exception("No feasible route found: ${directions['error_message'] ?? directions['status']}");
-      }
-      
       return directions;
     } catch (e) {
       throw Exception("Failed to fetch directions: $e");
@@ -608,12 +653,12 @@ class HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Distance'), // Swapped
+                    const Text('Time'),
                     Switch(
-                      value: !_useDistanceMode,
-                      onChanged: (val) => setState(() => _useDistanceMode = !val),
+                      value: _useDistanceMode,
+                      onChanged: (val) => setState(() => _useDistanceMode = val),
                     ),
-                    const Text('Time'), // Swapped
+                    Text(_metroMode ? 'Stops' : 'Distance'),
                   ],
                 ),
                 SizedBox(height: screenHeight * 0.02),
@@ -623,8 +668,11 @@ class HomeScreenState extends State<HomeScreen> {
                       context: context,
                       builder: (_) {
                         return _EnterValueDialog(
-                          initialValue: _useDistanceMode ? _distanceSliderValue : _timeSliderValue,
-                          isDistanceMode: _useDistanceMode,
+                          initialValue: _useDistanceMode
+                              ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
+                              : _timeSliderValue,
+                          isDistanceMode: _useDistanceMode && !_metroMode,
+                          isStopsMode: _useDistanceMode && _metroMode,
                         );
                       },
                     );
@@ -632,7 +680,11 @@ class HomeScreenState extends State<HomeScreen> {
                     if (newValue != null) {
                       setState(() {
                         if (_useDistanceMode) {
-                          _distanceSliderValue = newValue.clamp(0.5, 10.0);
+                          if (_metroMode) {
+                            _stopsSliderValue = newValue.clamp(1.0, 10.0);
+                          } else {
+                            _distanceSliderValue = newValue.clamp(0.5, 10.0);
+                          }
                         } else {
                           _timeSliderValue = newValue.clamp(1.0, 60.0);
                         }
@@ -654,7 +706,9 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Text(
                       _useDistanceMode
-                          ? 'Alert me within ${_distanceSliderValue.toStringAsFixed(1)} km'
+                          ? (_metroMode
+                              ? 'Alert me ${_stopsSliderValue.toStringAsFixed(0)} stops prior'
+                              : 'Alert me within ${_distanceSliderValue.toStringAsFixed(1)} km')
                           : 'Alert me in ${_timeSliderValue.toStringAsFixed(0)} min',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: screenWidth * 0.045),
@@ -663,17 +717,24 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.015),
                 Slider(
-                  value: _useDistanceMode ? _distanceSliderValue : _timeSliderValue,
-                  min: _useDistanceMode ? 0.5 : 1.0,
-                  max: _useDistanceMode ? 10.0 : 60.0,
-                  divisions: _useDistanceMode ? 19 : 59,
+                  value: _useDistanceMode
+                      ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
+                      : _timeSliderValue,
+                  min: _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
+                  max: _useDistanceMode ? (_metroMode ? 10.0 : 10.0) : 60.0,
+                  divisions: _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
                   label: _useDistanceMode
-                      ? _distanceSliderValue.toStringAsFixed(1)
+                      ? (_metroMode ? _stopsSliderValue.toStringAsFixed(0) : _distanceSliderValue.toStringAsFixed(1))
                       : _timeSliderValue.toStringAsFixed(0),
                   onChanged: (val) {
                     setState(() {
                       if (_useDistanceMode) {
-                        _distanceSliderValue = val;
+                        if (_metroMode) {
+                          // Stops slider should be integer-like in feel
+                          _stopsSliderValue = val.round().toDouble();
+                        } else {
+                          _distanceSliderValue = val;
+                        }
                       } else {
                         _timeSliderValue = val;
                       }
@@ -758,9 +819,11 @@ class HomeScreenState extends State<HomeScreen> {
 class _EnterValueDialog extends StatefulWidget {
   final double initialValue;
   final bool isDistanceMode;
+  final bool isStopsMode;
   const _EnterValueDialog({
     required this.initialValue,
     required this.isDistanceMode,
+    this.isStopsMode = false,
   });
   @override
   State<_EnterValueDialog> createState() => _EnterValueDialogState();
@@ -774,20 +837,28 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
     _controller = TextEditingController(
       text: widget.isDistanceMode
           ? widget.initialValue.toStringAsFixed(1)
-          : widget.initialValue.toStringAsFixed(0),
+          : widget.isStopsMode
+              ? widget.initialValue.toStringAsFixed(0)
+              : widget.initialValue.toStringAsFixed(0),
     );
   }
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.isDistanceMode ? 'Enter distance (km)' : 'Enter time (minutes)'),
+      title: Text(
+        widget.isDistanceMode
+            ? (widget.isStopsMode ? 'Enter stops' : 'Enter distance (km)')
+            : 'Enter time (minutes)'
+      ),
       content: TextField(
         controller: _controller,
         keyboardType: TextInputType.numberWithOptions(
-          decimal: widget.isDistanceMode,
+          decimal: widget.isDistanceMode && !widget.isStopsMode,
         ),
         decoration: InputDecoration(
-          hintText: widget.isDistanceMode ? 'Distance in km (0.5 - 10)' : 'Time in minutes (1 - 60)',
+          hintText: widget.isDistanceMode
+              ? (widget.isStopsMode ? 'Number of stops (1 - 10)' : 'Distance in km (0.5 - 10)')
+              : 'Time in minutes (1 - 60)',
         ),
       ),
       actions: [

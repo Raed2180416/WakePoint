@@ -9,6 +9,9 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  // Allows tests to disable platform/plugin calls.
+  static bool isTestMode = false;
+
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   // Initialize the notification service
@@ -32,6 +35,9 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
+    if (isTestMode) {
+      return;
+    }
     // 1. Read the saved ringtone from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     // Default to the first ringtone if none is saved

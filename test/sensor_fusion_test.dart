@@ -85,3 +85,6 @@ class SensorFusionManager {
     _positionController.close();
   }
 }
+
+// This file is not a real test; provide an empty main to satisfy the test runner.
+void main() {}
