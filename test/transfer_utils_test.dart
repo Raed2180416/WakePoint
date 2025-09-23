@@ -38,8 +38,8 @@ void main() {
     };
 
     final boundaries = TransferUtils.buildTransferBoundariesMeters(directions, metroMode: true);
-    expect(boundaries.length, 1);
-    expect(boundaries.first, 800 + 1200); // boundary after second TRANSIT step (A->B change captured)
+  expect(boundaries.length, 1);
+  expect(boundaries.first, 800); // boundary at end of current A step before switching to B
   });
 
   test('TransferUtils detects transfer boundaries with walking segments between lines', () {
