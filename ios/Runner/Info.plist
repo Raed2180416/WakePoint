@@ -47,5 +47,15 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Location is used to navigate and trigger wake-up alarms near your destination.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Location is used in the background during active trips to ensure timely alerts.</string>
+		<key>NSMotionUsageDescription</key>
+		<string>Motion data helps improve accuracy when GPS signal is temporarily unavailable.</string>
+		<key>NSUserTrackingUsageDescription</key>
+		<string>Tracking permission is used for analytics to improve the app experience. We do not sell your data.</string>
+		<key>NSUserNotificationUsageDescription</key>
+		<string>Notifications are used to alert you as you approach your destination.</string>
 	</dict>
 </plist>

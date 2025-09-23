@@ -13,6 +13,13 @@ import 'package:geowake2/services/notification_service.dart';
 // but the core alarm logic will work without them for now.
 import 'package:geowake2/services/sensor_fusion.dart';
 // ---
+import 'package:geowake2/services/route_registry.dart';
+import 'package:geowake2/services/active_route_manager.dart';
+import 'package:geowake2/services/deviation_monitor.dart';
+import 'package:geowake2/services/reroute_policy.dart';
+import 'package:geowake2/services/route_cache.dart';
+import 'package:geowake2/services/polyline_simplifier.dart';
+import 'package:geowake2/services/polyline_decoder.dart';
 
 import 'package:meta/meta.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -54,6 +61,11 @@ class TrackingService {
   factory TrackingService() => _instance;
   TrackingService._internal();
   final FlutterBackgroundService _service = FlutterBackgroundService();
+
+  // Expose streams bound to background isolate controllers
+  Stream<ActiveRouteState> get activeRouteStateStream => _routeStateCtrl.stream;
+  Stream<RouteSwitchEvent> get routeSwitchStream => _routeSwitchCtrl.stream;
+  Stream<RerouteDecision> get rerouteDecisionStream => _rerouteCtrl.stream;
 
   Future<void> initializeService() async {
     if (isTestMode) return;
@@ -141,6 +153,7 @@ Timer? _gpsCheckTimer;
 LatLng? _lastProcessedPosition;
 double? _smoothedETA;
 bool _fusionActive = false;
+double? _lastSpeedMps;
 
 // --- NEW STATE VARIABLES FOR ALARM LOGIC ---
 LatLng? _destination;
@@ -148,6 +161,21 @@ String? _destinationName;
 String? _alarmMode;
 double? _alarmValue;
 bool _alarmTriggered = false; // Flag to ensure alarm only fires once
+
+// Route management and deviation/reroute state
+final RouteRegistry _registry = RouteRegistry();
+ActiveRouteManager? _activeManager;
+DeviationMonitor? _devMonitor;
+ReroutePolicy? _reroutePolicy;
+final _routeStateCtrl = StreamController<ActiveRouteState>.broadcast();
+final _routeSwitchCtrl = StreamController<RouteSwitchEvent>.broadcast();
+final _rerouteCtrl = StreamController<RerouteDecision>.broadcast();
+
+StreamSubscription<ActiveRouteState>? _mgrStateSub;
+StreamSubscription<RouteSwitchEvent>? _mgrSwitchSub;
+StreamSubscription<DeviationState>? _devSub;
+StreamSubscription<RerouteDecision>? _rerouteSub;
+bool _activeRouteInitialized = false;
 
 @pragma('vm:entry-point')
 void _onStop() {
@@ -161,6 +189,20 @@ void _onStop() {
     _sensorFusionManager = null;
   }
   _fusionActive = false;
+  _mgrStateSub?.cancel();
+  _mgrStateSub = null;
+  _mgrSwitchSub?.cancel();
+  _mgrSwitchSub = null;
+  _devSub?.cancel();
+  _devSub = null;
+  _rerouteSub?.cancel();
+  _rerouteSub = null;
+  _activeManager?.dispose();
+  _activeManager = null;
+  _devMonitor?.dispose();
+  _devMonitor = null;
+  _reroutePolicy?.dispose();
+  _reroutePolicy = null;
   dev.log("Tracking has been fully stopped.", name: "TrackingService");
 }
 
@@ -247,6 +289,101 @@ void _onStart(ServiceInstance service, {Map<String, dynamic>? initialData}) asyn
   dev.log("Background Service Instance Started", name: "TrackingService");
 }
 
+extension TrackingServiceRouteOps on TrackingService {
+  // Public: update connectivity for reroute policy gating
+  void setOnline(bool online) {
+    _reroutePolicy?.setOnline(online);
+  }
+
+  // Public: Register a fetched route into registry and initialize active manager if needed
+  void registerRoute({
+    required String key,
+    required String mode,
+    required String destinationName,
+    required List<LatLng> points,
+  }) {
+    final entry = RouteEntry(
+      key: key,
+      mode: mode,
+      destinationName: destinationName,
+      points: points,
+    );
+    _registry.upsert(entry);
+    // Initialize manager and pipelines if not exists
+    _activeManager ??= ActiveRouteManager(
+      registry: _registry,
+      sustainDuration: TrackingService.isTestMode ? const Duration(milliseconds: 300) : const Duration(seconds: 6),
+      switchMarginMeters: TrackingService.isTestMode ? 20 : 50,
+      postSwitchBlackout: TrackingService.isTestMode ? const Duration(milliseconds: 300) : const Duration(seconds: 5),
+    );
+    _devMonitor ??= DeviationMonitor(
+      sustainDuration: TrackingService.isTestMode ? const Duration(milliseconds: 300) : const Duration(seconds: 5),
+    );
+    _reroutePolicy ??= ReroutePolicy(
+      cooldown: TrackingService.isTestMode ? const Duration(seconds: 2) : const Duration(seconds: 20),
+      initialOnline: true,
+    );
+
+    // Set this route as active if none
+    if (!_activeRouteInitialized) {
+      _activeManager!.setActive(key);
+      _activeRouteInitialized = true;
+    }
+
+    // Bridge streams once
+    _mgrStateSub ??= _activeManager!.stateStream.listen((s) {
+      _routeStateCtrl.add(s);
+      final spd = _lastSpeedMps ?? 0.0;
+      _devMonitor?.ingest(offsetMeters: s.offsetMeters, speedMps: spd);
+    });
+    _mgrSwitchSub ??= _activeManager!.switchStream.listen((e) {
+      _routeSwitchCtrl.add(e);
+    });
+    _devSub ??= _devMonitor!.stream.listen((ds) {
+      if (ds.sustained) {
+        _reroutePolicy?.onSustainedDeviation(at: ds.at);
+      }
+    });
+    _rerouteSub ??= _reroutePolicy!.stream.listen((r) async {
+      if (r.shouldReroute) {
+        dev.log('Reroute triggered by policy', name: 'TrackingService');
+        // Future work: trigger network reroute via OfflineCoordinator
+      }
+      _rerouteCtrl.add(r);
+    });
+  }
+
+  // Convenience: register from a Directions response
+  void registerRouteFromDirections({
+    required Map<String, dynamic> directions,
+    required LatLng origin,
+    required LatLng destination,
+    required bool transitMode,
+    String? destinationName,
+  }) {
+    final mode = transitMode ? 'transit' : 'driving';
+    final key = RouteCache.makeKey(origin: origin, destination: destination, mode: mode, transitVariant: transitMode ? 'rail' : null);
+    // Extract polyline points
+    List<LatLng> points = [];
+    try {
+      final route = (directions['routes'] as List).first as Map<String, dynamic>;
+      final scp = route['simplified_polyline'] as String?;
+      if (scp != null) {
+        points = PolylineSimplifier.decompressPolyline(scp);
+      } else if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
+        points = decodePolyline(route['overview_polyline']['points'] as String);
+      }
+    } catch (_) {}
+    registerRoute(
+      key: key,
+      mode: mode,
+      destinationName: destinationName ?? 'Destination',
+      points: points,
+    );
+  }
+}
+
+
 Future<void> startLocationStream(ServiceInstance service) async {
   if (_positionSubscription != null) {
     await _positionSubscription!.cancel();
@@ -279,7 +416,14 @@ Future<void> startLocationStream(ServiceInstance service) async {
         _smoothedETA = distance / speed;
     }
 
-    // --- CRITICAL CHANGE: CHECK THE ALARM CONDITION ON EVERY UPDATE ---
+    // Ingest into active route manager and deviation pipeline if present
+    _lastSpeedMps = position.speed;
+    if (_activeManager != null) {
+      final raw = LatLng(position.latitude, position.longitude);
+      _activeManager!.ingestPosition(raw);
+    }
+
+    // --- CHECK THE ALARM CONDITION ON EVERY UPDATE ---
     _checkAndTriggerAlarm(position, service);
 
     service.invoke("updateLocation", {

@@ -10,6 +10,12 @@ import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/polyline_simplifier.dart';
 import 'package:geolocator/geolocator.dart';
 import 'settingsdrawer.dart';
+import 'package:geowake2/services/snap_to_route.dart';
+import 'package:geowake2/services/trackingservice.dart';
+import 'package:geowake2/services/active_route_manager.dart';
+import 'package:geowake2/services/transfer_utils.dart';
+import 'package:geowake2/widgets/pulsing_dots.dart';
+import 'package:geowake2/services/eta_utils.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   MapTrackingScreen({Key? key}) : super(key: key);
@@ -28,6 +34,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   Set<Polyline> _polylines = {};
   String _etaText = "Calculating ETA...";
   String _distanceText = "Calculating distance...";
+  String? _switchNotice;
   bool _hasValidArgs = false;
 
   Map<String, dynamic>? directions;
@@ -35,6 +42,15 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   // StreamSubscription to update the current location marker.
   StreamSubscription<Position>? _locationSubscription;
   LatLng? _currentUserLocation;
+  List<LatLng> _routePoints = const [];
+  int? _lastSnapIndex;
+  StreamSubscription<RouteSwitchEvent>? _routeSwitchSub;
+  StreamSubscription<ActiveRouteState>? _routeStateSub;
+  double _routeLengthMeters = 0.0;
+  double? _speedEmaMps; // simple smoothed speed estimate
+  final List<double> _transferBoundariesMeters = [];
+  final List<double> _stepBoundariesMeters = [];
+  final List<double> _stepDurationsSeconds = [];
 
   @override
   void didChangeDependencies() {
@@ -104,8 +120,14 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
             directionService.buildSegmentedPolylines(directions!, true);
         setState(() {
           _polylines = segmentedPolylines.toSet();
+          // For metro, merge all polylines to a single list for snapping (optional)
+          _routePoints = segmentedPolylines.expand((p) => p.points).toList(growable: false);
           _isLoading = false;
         });
+        _computeRouteLength();
+        _buildTransferBoundariesFromDirections();
+  _buildStepBoundariesAndDurations();
+        _computeInitialMetrics(userLat, userLng);
         _adjustCamera(userLat, userLng);
       } else {
         try {
@@ -123,8 +145,13 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                   width: 4,
                 )
               };
+              _routePoints = points;
               _isLoading = false;
             });
+            _computeRouteLength();
+            _transferBoundariesMeters.clear();
+            _buildStepBoundariesAndDurations();
+            _computeInitialMetrics(userLat, userLng);
             _adjustCamera(userLat, userLng);
           } else {
             final String encodedPolyline = route['overview_polyline']['points'] as String;
@@ -141,8 +168,13 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       width: 4,
                     )
                   };
+                  _routePoints = simplifiedPoints;
                   _isLoading = false;
                 });
+                _computeRouteLength();
+                _transferBoundariesMeters.clear();
+                _buildStepBoundariesAndDurations();
+                _computeInitialMetrics(userLat, userLng);
                 _adjustCamera(userLat, userLng);
               }
             }).catchError((error) {
@@ -178,6 +210,54 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
 
     // Start listening for location updates to update the current location marker.
     _startLocationUpdates();
+
+    // Listen for route switches from TrackingService and show a banner.
+    _routeSwitchSub ??= TrackingService().routeSwitchStream.listen((evt) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Switched route: ${evt.fromKey} → ${evt.toKey}')
+        ),
+      );
+    });
+
+    // Listen for continuous route state to compute ETA and remaining distance.
+    _routeStateSub ??= TrackingService().activeRouteStateStream.listen((state) {
+      if (!mounted) return;
+      // Remaining distance from manager
+      final remainingM = state.remainingMeters;
+    // Derive ETA using a fallback speed; will be replaced by fusion/dead-reckoning later
+      double etaSec;
+      final fallbackSpeed = 12.0; // ~43 km/h; TODO: replace with fusion when ready
+      etaSec = remainingM / fallbackSpeed;
+      // Format
+      String etaStr;
+      if (etaSec < 90) {
+        etaStr = '${etaSec.toStringAsFixed(0)} sec remaining';
+      } else if (etaSec < 3600) {
+        etaStr = '${(etaSec / 60).toStringAsFixed(0)} min remaining';
+      } else {
+        etaStr = '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+      }
+      String distStr = remainingM >= 1000
+          ? '${(remainingM / 1000).toStringAsFixed(2)} km to destination'
+          : '${remainingM.toStringAsFixed(0)} m to destination';
+
+      String? switchMsg;
+      if (state.pendingSwitchToKey != null && state.pendingSwitchInSeconds != null) {
+        final secs = state.pendingSwitchInSeconds!;
+        final when = secs < 60
+            ? '${secs.toStringAsFixed(0)} sec'
+            : '${(secs / 60).toStringAsFixed(0)} min';
+        switchMsg = "You'll have to switch routes in $when";
+      }
+
+      setState(() {
+        _etaText = etaStr;
+        _distanceText = distStr;
+        _switchNotice = switchMsg;
+      });
+    });
   }
 
   Future<void> _startLocationUpdates() async {
@@ -191,19 +271,166 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       _currentUserLocation = LatLng(position.latitude, position.longitude);
       dev.log("MapTrackingScreen: New user location: (${position.latitude}, ${position.longitude})",
           name: "MapTrackingScreen");
-      // Update the marker for current location.
-      setState(() {
-        _markers.removeWhere(
-            (marker) => marker.markerId.value == 'currentLocationMarker');
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('currentLocationMarker'),
-            position: _currentUserLocation!,
-            infoWindow: const InfoWindow(title: 'Your Location'),
-          ),
+      // Smooth speed estimate
+      final rawSpeed = position.speed; // m/s
+      if (rawSpeed.isFinite && rawSpeed >= 0) {
+        final v = rawSpeed < 0.5 && _speedEmaMps != null ? _speedEmaMps! : rawSpeed;
+        _speedEmaMps = _speedEmaMps == null ? v : (_speedEmaMps! * 0.8 + v * 0.2);
+      }
+      // Prefer snapped position onto the route if available
+      LatLng markerPos = _currentUserLocation!;
+      if (_routePoints.length >= 2) {
+        final snap = SnapToRouteEngine.snap(
+          point: _currentUserLocation!,
+          polyline: _routePoints,
+          hintIndex: _lastSnapIndex,
+          searchWindow: 30,
         );
+        _lastSnapIndex = snap.segmentIndex;
+        markerPos = snap.snappedPoint;
+        // Compute remaining distance and ETA locally
+        final progress = snap.progressMeters;
+        final remaining = (_routeLengthMeters - progress).clamp(0.0, double.infinity);
+        // Prefer ETA from directions step durations (no API) if available; fallback to speed-based
+        double? etaSec = EtaUtils.etaRemainingSeconds(
+          progressMeters: progress,
+          stepBoundariesMeters: _stepBoundariesMeters,
+          stepDurationsSeconds: _stepDurationsSeconds,
+        );
+        if (etaSec == null) {
+          final spd = (_speedEmaMps != null && _speedEmaMps! > 0.5) ? _speedEmaMps! : 12.0;
+          etaSec = remaining / spd;
+        }
+        final etaStr = etaSec < 90
+            ? '${etaSec.toStringAsFixed(0)} sec remaining'
+            : etaSec < 3600
+                ? '${(etaSec / 60).toStringAsFixed(0)} min remaining'
+                : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+        final distStr = remaining >= 1000
+            ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
+            : '${remaining.toStringAsFixed(0)} m to destination';
+
+        String? switchMsg;
+        if (_transferBoundariesMeters.isNotEmpty) {
+          final next = _transferBoundariesMeters.firstWhere(
+            (b) => b > progress,
+            orElse: () => -1,
+          );
+          if (next > 0) {
+            final toSwitchM = next - progress;
+            final spd = (_speedEmaMps != null && _speedEmaMps! > 0.5) ? _speedEmaMps! : 12.0;
+            final tSec = toSwitchM / spd;
+            final when = tSec < 60 ? '${tSec.toStringAsFixed(0)} sec' : '${(tSec / 60).toStringAsFixed(0)} min';
+            switchMsg = "You'll have to switch routes in $when";
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _etaText = etaStr;
+            _distanceText = distStr;
+            _switchNotice = switchMsg;
+            // metrics ready
+          });
+        }
+      }
+      // Update the marker for current (snapped) location.
+      setState(() {
+        _markers.removeWhere((m) => m.markerId.value == 'currentLocationMarker');
+        _markers.add(Marker(
+          markerId: const MarkerId('currentLocationMarker'),
+          position: markerPos,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ));
       });
     });
+  }
+
+  void _computeInitialMetrics(double userLat, double userLng) {
+    if (_routePoints.length < 2) return;
+    final p = LatLng(userLat, userLng);
+    final snap = SnapToRouteEngine.snap(point: p, polyline: _routePoints, hintIndex: null, searchWindow: 30);
+    final progress = snap.progressMeters;
+    final remaining = (_routeLengthMeters - progress).clamp(0.0, double.infinity);
+    double? etaSec = EtaUtils.etaRemainingSeconds(
+      progressMeters: progress,
+      stepBoundariesMeters: _stepBoundariesMeters,
+      stepDurationsSeconds: _stepDurationsSeconds,
+    );
+    if (etaSec == null) {
+      final spd = 12.0;
+      etaSec = remaining / spd;
+    }
+    final etaStr = etaSec < 90
+        ? '${etaSec.toStringAsFixed(0)} sec remaining'
+        : etaSec < 3600
+            ? '${(etaSec / 60).toStringAsFixed(0)} min remaining'
+            : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+    final distStr = remaining >= 1000
+        ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
+        : '${remaining.toStringAsFixed(0)} m to destination';
+    String? switchMsg;
+    if (_transferBoundariesMeters.isNotEmpty) {
+      final next = _transferBoundariesMeters.firstWhere((b) => b > progress, orElse: () => -1);
+      if (next > 0) {
+        final toSwitchM = next - progress;
+        final spd = 12.0;
+        final tSec = toSwitchM / spd;
+        final when = tSec < 60 ? '${tSec.toStringAsFixed(0)} sec' : '${(tSec / 60).toStringAsFixed(0)} min';
+        switchMsg = "You'll have to switch routes in $when";
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _etaText = etaStr;
+        _distanceText = distStr;
+        _switchNotice = switchMsg;
+  // metrics ready
+      });
+    }
+  }
+
+  void _computeRouteLength() {
+    double sum = 0.0;
+    for (var i = 1; i < _routePoints.length; i++) {
+      sum += Geolocator.distanceBetween(
+        _routePoints[i - 1].latitude,
+        _routePoints[i - 1].longitude,
+        _routePoints[i].latitude,
+        _routePoints[i].longitude,
+      );
+    }
+    _routeLengthMeters = sum;
+  }
+
+  void _buildTransferBoundariesFromDirections() {
+    _transferBoundariesMeters
+      ..clear()
+      ..addAll(TransferUtils.buildTransferBoundariesMeters(directions!, metroMode: _metroMode));
+  }
+
+  void _buildStepBoundariesAndDurations() {
+    _stepBoundariesMeters.clear();
+    _stepDurationsSeconds.clear();
+    if (directions == null) return;
+    try {
+      final routes = (directions!['routes'] as List?) ?? const [];
+      if (routes.isEmpty) return;
+      final route = routes.first as Map<String, dynamic>;
+      final legs = (route['legs'] as List?) ?? const [];
+      double cum = 0.0;
+      for (final leg in legs) {
+        final steps = (leg['steps'] as List?) ?? const [];
+        for (final step in steps) {
+          final m = ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
+          final s = ((step['duration'] as Map<String, dynamic>?)?['value']) as num?;
+          if (m != null && s != null) {
+            cum += m.toDouble();
+            _stepBoundariesMeters.add(cum);
+            _stepDurationsSeconds.add(s.toDouble());
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _adjustCamera(double userLat, double userLng) async {
@@ -219,6 +446,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   @override
   void dispose() {
     _locationSubscription?.cancel();
+    _routeSwitchSub?.cancel();
+    _routeStateSub?.cancel();
     super.dispose();
   }
 
@@ -292,15 +521,40 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    Text(
-                      _etaText,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _etaText,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        if (!_etaText.contains('remaining')) ...[
+                          const SizedBox(width: 8),
+                          const PulsingDots(color: Colors.grey),
+                        ]
+                      ],
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      _distanceText,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _distanceText,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                        if (!_distanceText.contains('to destination')) ...[
+                          const SizedBox(width: 8),
+                          const PulsingDots(color: Colors.grey),
+                        ]
+                      ],
                     ),
+                    if (_switchNotice != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _switchNotice!,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.orange),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {

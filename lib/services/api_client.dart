@@ -1,5 +1,6 @@
 // lib/services/api_client.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as dev;
@@ -26,6 +27,13 @@ class ApiClient {
   /// Initialize the API client - call this on app startup
   Future<void> initialize() async {
     dev.log('🚀 Initializing ApiClient...', name: 'ApiClient');
+    // Prevent test mode in release builds
+    assert(() {
+      return true;
+    }(), '');
+    if (kReleaseMode) {
+      testMode = false;
+    }
     await _loadStoredCredentials();
     
     if (_authToken == null || _isTokenExpired()) {
@@ -89,7 +97,9 @@ class ApiClient {
       ).timeout(const Duration(seconds: 15));
       
       dev.log('📡 Auth response status: ${response.statusCode}', name: 'ApiClient');
-      dev.log('📡 Auth response body: ${response.body}', name: 'ApiClient');
+      if (!kReleaseMode) {
+        dev.log('📡 Auth response body (redacted)', name: 'ApiClient');
+      }
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -203,7 +213,7 @@ class ApiClient {
         uri = uri.replace(queryParameters: queryParams);
       }
       
-      dev.log('📡 Making ${method.toUpperCase()} request to: $uri', name: 'ApiClient');
+  dev.log('📡 Making ${method.toUpperCase()} request to: $uri', name: 'ApiClient');
       
       late http.Response response;
       final headers = _buildHeaders();
@@ -224,7 +234,10 @@ class ApiClient {
       }
       
       dev.log('📡 Response status: ${response.statusCode}', name: 'ApiClient');
-      dev.log('📡 Response body preview: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}', name: 'ApiClient');
+      if (!kReleaseMode) {
+        final preview = response.body.length > 200 ? '${response.body.substring(0, 200)}...' : response.body;
+        dev.log('📡 Response body preview (redacted in release): $preview', name: 'ApiClient');
+      }
       
       // Handle token expiration
       if (response.statusCode == 401) {

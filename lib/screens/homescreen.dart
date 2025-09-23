@@ -14,7 +14,8 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:geowake2/services/api_client.dart';
-import 'package:geowake2/services/direction_service.dart';
+// import 'package:geowake2/services/direction_service.dart';
+import 'package:geowake2/services/offline_coordinator.dart';
 
 
 
@@ -45,6 +46,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool _isTracking = false;
   bool _noConnectivity = false;
   bool _lowBattery = false;
+  late OfflineCoordinator _offline;
 
   LatLng? _currentPosition;
   final Completer<GoogleMapController> _mapController = Completer();
@@ -67,12 +69,18 @@ class HomeScreenState extends State<HomeScreen> {
     _placesService = PlacesService();
     _loadRecentLocations();
     _initBatteryMonitoring();
+    _offline = OfflineCoordinator(initialOffline: false);
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
       if (!mounted) return;
       setState(() {
         _noConnectivity = results.contains(ConnectivityResult.none);
       });
+      _offline.setOffline(_noConnectivity);
+      // Inform tracking service about connectivity for reroute gating
+      try {
+        TrackingService().setOnline(!_noConnectivity);
+      } catch (_) {}
     });
 
     _getCurrentLocation().then((pos) async {
@@ -315,10 +323,6 @@ class HomeScreenState extends State<HomeScreen> {
   // The rest of your file remains the same...
   
   Future<void> _onWakeMePressed() async {
-    if (_noConnectivity) {
-      _showErrorDialog("Internet Required", "An internet connection is needed to fetch route data.");
-      return;
-    }
     if (_selectedLocation == null) {
       _showErrorDialog("Destination Missing", "Please select a valid destination.");
       return;
@@ -382,6 +386,18 @@ class HomeScreenState extends State<HomeScreen> {
       final initialETA = directions['routes'][0]['legs'][0]['duration']['value'] as int;
       
       final trackingService = TrackingService();
+      // Register this route so ActiveRouteManager can snap/switch
+      try {
+        trackingService.registerRouteFromDirections(
+          directions: directions,
+          origin: LatLng(userLat, userLng),
+          destination: LatLng(destLat, destLng),
+          transitMode: _metroMode,
+          destinationName: _selectedLocation?['description'] ?? 'Your Destination',
+        );
+      } catch (e) {
+        dev.log('Failed to register route with TrackingService: $e', name: 'HomeScreen');
+      }
       // Compute alarm mode/value. For metro+stops, convert stops -> distance using route data if possible.
       String alarmMode = _useDistanceMode ? 'distance' : 'time';
       double alarmValue;
@@ -498,21 +514,23 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<Map<String, dynamic>> _fetchDirections(
     double startLat, double startLng, double endLat, double endLng) async {
-    final ds = DirectionService();
+    final threshold = _useDistanceMode
+        ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
+        : _timeSliderValue;
     try {
-      final directions = await ds.getDirections(
-        startLat,
-        startLng,
-        endLat,
-        endLng,
+      final res = await _offline.getRoute(
+        origin: LatLng(startLat, startLng),
+        destination: LatLng(endLat, endLng),
         isDistanceMode: _useDistanceMode,
-        threshold: _useDistanceMode
-            ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
-            : _timeSliderValue,
+        threshold: threshold,
         transitMode: _metroMode,
+        forceRefresh: false,
       );
-      return directions;
+      return res.directions;
     } catch (e) {
+      if (_noConnectivity) {
+        throw Exception("Offline with no cached route available.");
+      }
       throw Exception("Failed to fetch directions: $e");
     }
   }
@@ -571,6 +589,27 @@ class HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_noConnectivity)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade700,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.wifi_off, color: Colors.white),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Offline mode: using cached routes only',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TextField(
                   focusNode: _searchFocus,
                   controller: _searchController,
