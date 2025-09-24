@@ -14,6 +14,8 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController ringController;
   late AnimationController textController;
+  Timer? _textTimer;
+  Timer? _navTimer;
   
   @override
   void initState() {
@@ -32,12 +34,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
     
     // Start text animation slightly after the splash appears.
-    Future.delayed(const Duration(milliseconds: 800), () {
+    _textTimer = Timer(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
       textController.forward();
     });
-    
+
     // Navigate to the HomeScreen after 3 seconds.
-    Future.delayed(const Duration(seconds: 3), () {
+    _navTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
@@ -46,6 +50,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   
   @override
   void dispose() {
+    _textTimer?.cancel();
+    _navTimer?.cancel();
     ringController.dispose();
     textController.dispose();
     super.dispose();

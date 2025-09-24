@@ -4,30 +4,34 @@ import 'dart:developer' as dev;
 class RecentLocationsService {
   static const String boxName = 'recent_locations';
   static Box? _box;
+  static Future<void>? _opening;
+  static const int _maxItems = 15;
 
   // This is the gatekeeper function. It ensures the box is open and ready.
   // It's the most critical part of the fix.
   static Future<void> _ensureBoxIsOpen() async {
-    // If the box is already open and valid, do nothing.
-    if (_box != null && _box!.isOpen) {
-      return;
-    }
-
-    try {
-      _box = await Hive.openBox(boxName);
-      dev.log("Hive box '$boxName' opened successfully.", name: "RecentLocationsService");
-    } catch (e) {
-      dev.log("Error opening Hive box: $e. This may indicate corruption.", name: "RecentLocationsService");
-      
-      // If opening fails, the file is likely corrupt. Delete and recreate it.
+    if (_box != null && _box!.isOpen) return;
+    if (_opening != null) return _opening; // Another caller is opening
+    _opening = () async {
       try {
-        await Hive.deleteBoxFromDisk(boxName);
         _box = await Hive.openBox(boxName);
-        dev.log("Corrupted box deleted and recreated successfully.", name: "RecentLocationsService");
-      } catch (recreateError) {
-        dev.log("Failed to recreate box after corruption: $recreateError", name: "RecentLocationsService");
-        rethrow; // Propagate the error if recreation also fails.
+        dev.log("Hive box '$boxName' opened successfully.", name: "RecentLocationsService");
+      } catch (e) {
+        dev.log("Error opening Hive box: $e. This may indicate corruption.", name: "RecentLocationsService");
+        try {
+          await Hive.deleteBoxFromDisk(boxName);
+          _box = await Hive.openBox(boxName);
+          dev.log("Corrupted box deleted and recreated successfully.", name: "RecentLocationsService");
+        } catch (recreateError) {
+          dev.log("Failed to recreate box after corruption: $recreateError", name: "RecentLocationsService");
+          rethrow;
+        }
       }
+    }();
+    try {
+      await _opening;
+    } finally {
+      _opening = null;
     }
   }
 
@@ -58,10 +62,23 @@ class RecentLocationsService {
   static Future<void> saveRecentLocations(List<Map<String, dynamic>> locations) async {
     try {
       await _ensureBoxIsOpen();
-      await _box!.put('locations', locations);
-      // `flush()` ensures the data is written to disk immediately.
-      await _box!.flush();
-      dev.log("Saved ${locations.length} recent locations to storage.", name: "RecentLocationsService");
+      // Normalize, dedupe, and cap size
+      final seen = <String>{};
+      List<Map<String, dynamic>> normalized = locations
+          .map((m) => Map<String, dynamic>.from(m))
+          .where((m) => m.isNotEmpty)
+          .toList();
+      List<Map<String, dynamic>> deduped = [];
+      for (final m in normalized) {
+        final key = (m['placeId'] ?? m['place_id'] ?? '${m['lat']},${m['lng']}').toString();
+        if (seen.add(key)) deduped.add(m);
+      }
+      if (deduped.length > _maxItems) {
+        deduped = deduped.sublist(0, _maxItems);
+      }
+
+      await _box!.put('locations', deduped);
+      dev.log("Saved ${deduped.length} recent locations to storage.", name: "RecentLocationsService");
     } catch (e) {
       dev.log("Error saving recent locations: $e", name: "RecentLocationsService");
     }

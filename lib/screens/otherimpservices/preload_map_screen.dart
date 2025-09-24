@@ -14,6 +14,7 @@ class PreloadMapScreen extends StatefulWidget {
 class _PreloadMapScreenState extends State<PreloadMapScreen> {
   final Completer<GoogleMapController> _controller = Completer();
   bool _isMapReady = false;
+  Timer? _handoffTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +25,8 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: LatLng(
-                widget.arguments['lat'] ?? 37.422,
-                widget.arguments['lng'] ?? -122.084,
+                (widget.arguments['lat'] as num?)?.toDouble() ?? 37.422,
+                (widget.arguments['lng'] as num?)?.toDouble() ?? -122.084,
               ),
               zoom: 14,
             ),
@@ -34,11 +35,11 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
                 _controller.complete(controller);
               }
               if (!_isMapReady) {
-                setState(() {
-                  _isMapReady = true;
-                });
+                if (!mounted) return;
+                setState(() => _isMapReady = true);
                 dev.log("PreloadMapScreen: Map is ready.", name: "PreloadMapScreen");
-                Future.delayed(const Duration(milliseconds: 700), () {
+                _handoffTimer = Timer(const Duration(milliseconds: 700), () async {
+                  if (!mounted) return;
                   Navigator.pushReplacementNamed(context, '/mapTracking', arguments: widget.arguments);
                 });
               }
@@ -51,5 +52,11 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _handoffTimer?.cancel();
+    super.dispose();
   }
 }
