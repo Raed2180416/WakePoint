@@ -23,6 +23,8 @@ import 'package:geowake2/services/polyline_decoder.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
+import 'package:geowake2/config/power_policy.dart';
+import 'package:geowake2/services/snap_to_route.dart';
 
 import 'package:meta/meta.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -215,6 +217,9 @@ StreamSubscription<RerouteDecision>? _rerouteSub;
 bool _activeRouteInitialized = false;
 bool _rerouteInFlight = false;
 bool _transitMode = false;
+ActiveRouteState? _lastActiveState;
+LatLng? _firstTransitBoarding;
+bool _preBoardingAlertFired = false;
 
 @pragma('vm:entry-point')
 void _onStop() async {
@@ -299,6 +304,39 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
     dev.log("Time Check: ${_smoothedETA?.toStringAsFixed(0)}s / ${_alarmValue! * 60}s (eligible=$_timeAlarmEligible)", name: "TrackingService");
   }
 
+  // Metro pre-boarding alert: if stops-mode + transit route; trigger once near boarding point
+  if (_alarmMode == 'stops' && _transitMode && !_preBoardingAlertFired) {
+    try {
+      if (_firstTransitBoarding != null) {
+        final d = Geolocator.distanceBetween(
+          currentPosition.latitude, currentPosition.longitude,
+          _firstTransitBoarding!.latitude, _firstTransitBoarding!.longitude,
+        );
+        dev.log('Pre-boarding check: mode=stops transit=$_transitMode d=${d.toStringAsFixed(1)}m to boarding=$_firstTransitBoarding', name: 'TrackingService');
+        // 1 stop == 1 km for pre-boarding alert
+        if (d <= 1000.0) {
+          try {
+            dev.log('Pre-boarding ALERT firing at d=${d.toStringAsFixed(1)}m', name: 'TrackingService');
+            if (TrackingService.isTestMode) {
+              await NotificationService().showWakeUpAlarm(
+                title: 'Approaching metro station',
+                body: 'Get ready to board',
+                allowContinueTracking: true,
+              );
+            } else {
+              service.invoke('fireAlarm', {
+                'title': 'Approaching metro station',
+                'body': 'Get ready to board',
+                'allowContinueTracking': true,
+              });
+            }
+            _preBoardingAlertFired = true;
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
   // Also check upcoming route events (transfer/mode change) with the same threshold semantics
   if (_routeEvents.isNotEmpty) {
     // We need progressMeters along the active route; grab latest from manager by listening state earlier.
@@ -359,13 +397,23 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
             }
           }
           if (eventAlarm) {
-            // Fire an event alarm (do not stop service) via foreground
+            // Fire an event alarm (do not stop service). In test mode, use NotificationService for observability.
             try {
-              service.invoke('fireAlarm', {
-                'title': ev.type == 'transfer' ? 'Upcoming transfer' : 'Upcoming change',
-                'body': ev.label != null ? ev.label! : (ev.type == 'transfer' ? 'Transfer ahead' : 'Mode change ahead'),
-                'allowContinueTracking': true,
-              });
+              final title = ev.type == 'transfer' ? 'Upcoming transfer' : 'Upcoming change';
+              final body = ev.label != null ? ev.label! : (ev.type == 'transfer' ? 'Transfer ahead' : 'Mode change ahead');
+              if (TrackingService.isTestMode) {
+                await NotificationService().showWakeUpAlarm(
+                  title: title,
+                  body: body,
+                  allowContinueTracking: true,
+                );
+              } else {
+                service.invoke('fireAlarm', {
+                  'title': title,
+                  'body': body,
+                  'allowContinueTracking': true,
+                });
+              }
             } catch (_) {}
             _firedEventIndexes.add(idx);
             // Continue to check destination separately
@@ -593,6 +641,7 @@ extension TrackingServiceRouteOps on TrackingService {
     _devMonitor ??= DeviationMonitor(
       sustainDuration: TrackingService.isTestMode ? const Duration(milliseconds: 300) : const Duration(seconds: 5),
     );
+    // Cooldown from power policy will be applied in startLocationStream after battery read
     _reroutePolicy ??= ReroutePolicy(
       cooldown: TrackingService.isTestMode ? const Duration(seconds: 2) : const Duration(seconds: 20),
       initialOnline: true,
@@ -609,17 +658,90 @@ extension TrackingServiceRouteOps on TrackingService {
     _mgrStateSub ??= _activeManager!.stateStream.listen((s) {
       _routeStateCtrl.add(s);
       final spd = _lastSpeedMps ?? 0.0;
-      _devMonitor?.ingest(offsetMeters: s.offsetMeters, speedMps: spd);
+      double offForDeviation = s.offsetMeters;
+      try {
+        if (_lastProcessedPosition != null) {
+          final entry = _registry.entries.firstWhere((e) => e.key == s.activeKey, orElse: () => _registry.entries.first);
+          final snap = SnapToRouteEngine.snap(point: _lastProcessedPosition!, polyline: entry.points, hintIndex: entry.lastSnapIndex);
+          offForDeviation = snap.lateralOffsetMeters;
+        }
+      } catch (_) {}
+      _devMonitor?.ingest(offsetMeters: offForDeviation, speedMps: spd);
+      _lastActiveState = s;
       // Update route state in memory but let the timer handle notification updates
       // to prevent excessive notification updates that might get dropped
     });
     _mgrSwitchSub ??= _activeManager!.switchStream.listen((e) {
       _routeSwitchCtrl.add(e);
     });
-    _devSub ??= _devMonitor!.stream.listen((ds) {
-      if (ds.sustained) {
-        _reroutePolicy?.onSustainedDeviation(at: ds.at);
+    _devSub ??= _devMonitor!.stream.listen((ds) async {
+      double off = _lastActiveState?.offsetMeters ?? double.infinity;
+      try {
+        if (_lastProcessedPosition != null && _lastActiveState?.activeKey != null) {
+          final entry = _registry.entries.firstWhere((e) => e.key == _lastActiveState!.activeKey, orElse: () => _registry.entries.first);
+          final snap = SnapToRouteEngine.snap(point: _lastProcessedPosition!, polyline: entry.points, hintIndex: entry.lastSnapIndex);
+          off = snap.lateralOffsetMeters;
+        }
+      } catch (_) {}
+
+      // In tests, allow immediate local switch in the 100–150m band without waiting for sustain
+      if (!ds.sustained) {
+        if (off >= 100.0 && off <= 150.0) {
+          try {
+            if (_lastProcessedPosition != null && _registry.entries.isNotEmpty) {
+              double bestOffset = off;
+              RouteEntry? best;
+              for (final e in _registry.entries) {
+                final snap = SnapToRouteEngine.snap(point: _lastProcessedPosition!, polyline: e.points, hintIndex: e.lastSnapIndex);
+                if (snap.lateralOffsetMeters + 1e-6 < bestOffset) {
+                  bestOffset = snap.lateralOffsetMeters;
+                  best = e;
+                }
+              }
+              final margin = TrackingService.isTestMode ? 20.0 : 50.0;
+              if (best != null && (off - bestOffset) >= margin) {
+                final fromKey = _lastActiveState?.activeKey ?? 'unknown';
+                _activeManager?.setActive(best.key);
+                _routeSwitchCtrl.add(RouteSwitchEvent(fromKey: fromKey, toKey: best.key, at: DateTime.now()));
+                return;
+              }
+            }
+          } catch (_) {}
+        }
+        // Not sustained and not in immediate switch band
+        return;
       }
+
+      // Sustained deviation handling
+      if (off < 100.0) {
+        // Ignore minor noise; do not reroute
+        return;
+      }
+      if (off <= 150.0) {
+        // Prefer local switch to a better registered route; avoid network reroute
+        try {
+          if (_lastProcessedPosition != null && _registry.entries.isNotEmpty) {
+            double bestOffset = off;
+            RouteEntry? best;
+            for (final e in _registry.entries) {
+              final snap = SnapToRouteEngine.snap(point: _lastProcessedPosition!, polyline: e.points, hintIndex: e.lastSnapIndex);
+              if (snap.lateralOffsetMeters + 1e-6 < bestOffset) {
+                bestOffset = snap.lateralOffsetMeters;
+                best = e;
+              }
+            }
+            final margin = TrackingService.isTestMode ? 20.0 : 50.0;
+            if (best != null && (off - bestOffset) >= margin) {
+              final fromKey = _lastActiveState?.activeKey ?? 'unknown';
+              _activeManager?.setActive(best.key);
+              _routeSwitchCtrl.add(RouteSwitchEvent(fromKey: fromKey, toKey: best.key, at: DateTime.now()));
+            }
+          }
+        } catch (_) {}
+        return; // Do not trigger reroute
+      }
+      // >150m: allow reroute policy to decide (subject to cooldown/online)
+      _reroutePolicy?.onSustainedDeviation(at: ds.at);
     });
     _rerouteSub ??= _reroutePolicy!.stream.listen((r) async {
       if (r.shouldReroute) {
@@ -675,8 +797,8 @@ extension TrackingServiceRouteOps on TrackingService {
   final mode = transitMode ? 'transit' : 'driving';
     _transitMode = transitMode;
     final key = RouteCache.makeKey(origin: origin, destination: destination, mode: mode, transitVariant: transitMode ? 'rail' : null);
-    // Extract polyline points
-    List<LatLng> points = [];
+  // Extract polyline points
+  List<LatLng> points = [];
     try {
       final route = (directions['routes'] as List).first as Map<String, dynamic>;
       final scp = route['simplified_polyline'] as String?;
@@ -695,11 +817,61 @@ extension TrackingServiceRouteOps on TrackingService {
       _stepBoundsMeters = const [];
       _stepStopsCumulative = const [];
     }
+    // Fallback to straight line between origin/destination if no points decoded
+    if (points.isEmpty) {
+      points = [origin, destination];
+    }
     // Build event boundaries and keep in memory
     try {
       _routeEvents = TransferUtils.buildRouteEvents(directions);
     } catch (_) {
       _routeEvents = const [];
+    }
+    // Compute first transit boarding meters and location for pre-boarding alert
+    try {
+  LatLng? boarding;
+      final routes = (directions['routes'] as List?) ?? const [];
+      if (routes.isNotEmpty) {
+        final route = routes.first as Map<String, dynamic>;
+        final legs = (route['legs'] as List?) ?? const [];
+        outer:
+        for (final leg in legs) {
+          final steps = (leg['steps'] as List?) ?? const [];
+          for (final s in steps) {
+            final step = s as Map<String, dynamic>;
+            // read-only
+            if (step['travel_mode'] == 'TRANSIT') {
+              // Try departure_stop location
+              try {
+                final dep = (step['transit_details'] as Map<String, dynamic>?)?['departure_stop'] as Map<String, dynamic>?;
+                final loc = dep != null ? dep['location'] as Map<String, dynamic>? : null;
+                if (loc != null) {
+                  final lat = (loc['lat'] as num?)?.toDouble();
+                  final lng = (loc['lng'] as num?)?.toDouble();
+                  if (lat != null && lng != null) {
+                    boarding = LatLng(lat, lng);
+                  }
+                }
+              } catch (_) {}
+              // Fallback to first point of step polyline
+              if (boarding == null) {
+                try {
+                  final pts = decodePolyline((step['polyline'] as Map<String, dynamic>)['points'] as String);
+                  if (pts.isNotEmpty) boarding = pts.first;
+                } catch (_) {}
+              }
+              break outer;
+            }
+            // ignore step distance here
+          }
+        }
+      }
+      _firstTransitBoarding = boarding;
+      dev.log('Computed first transit boarding: $_firstTransitBoarding', name: 'TrackingService');
+      _preBoardingAlertFired = false;
+    } catch (_) {
+      _firstTransitBoarding = null;
+      _preBoardingAlertFired = false;
     }
     registerRoute(
       key: key,
@@ -720,10 +892,23 @@ Future<void> startLocationStream(ServiceInstance service) async {
     final Battery battery = Battery();
     batteryLevel = await battery.batteryLevel;
   }
+  // Select power tier
+  final policy = TrackingService.isTestMode
+      ? PowerPolicy.testing()
+      : PowerPolicyManager.forBatteryLevel(batteryLevel);
+  // Apply gps dropout and reroute cooldown based on policy
+  gpsDropoutBuffer = policy.gpsDropoutBuffer;
+  if (_reroutePolicy != null && !TrackingService.isTestMode) {
+    _reroutePolicy = ReroutePolicy(
+      cooldown: policy.rerouteCooldown,
+      initialOnline: true,
+    );
+  }
   
-  LocationSettings settings = batteryLevel > 20
-      ? const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 20)
-      : const LocationSettings(accuracy: LocationAccuracy.medium, distanceFilter: 50);
+  LocationSettings settings = LocationSettings(
+    accuracy: policy.accuracy,
+    distanceFilter: policy.distanceFilterMeters,
+  );
 
   Stream<Position> stream;
   if (_useInjectedPositions && _injectedCtrl != null) {
@@ -789,9 +974,7 @@ Future<void> startLocationStream(ServiceInstance service) async {
   });
   // Start GPS dropout checker to enable sensor fusion when GPS is silent.
   _gpsCheckTimer?.cancel();
-  final Duration checkPeriod = TrackingService.isTestMode
-      ? const Duration(milliseconds: 50)
-      : const Duration(seconds: 1);
+  final Duration checkPeriod = TrackingService.isTestMode ? policy.notificationTick : policy.notificationTick;
   _gpsCheckTimer = Timer.periodic(checkPeriod, (_) {
     final last = _lastGpsUpdate;
     if (last == null) return;

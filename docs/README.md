@@ -1,0 +1,38 @@
+# GeoWake Docs Index
+
+- Logic Flow: `logic-flow.md`
+- App: `app/main.md` (line-by-line)
+- Screens:
+  - `screens/maptracking.md`
+  - `screens/ringtones_screen.md`
+  - `screens/settingsdrawer.md`
+  - `screens/splash_screen.md`
+- Services (high-priority):
+  - `services/trackingservice.md`
+  - `services/active_route_manager.md`
+  - `services/route_registry.md`
+  - `services/notification_service.md`
+- Services (additional):
+  - `services/deviation_monitor.md`
+  - `services/reroute_policy.md`
+  - `services/snap_to_route.md`
+  - `services/transfer_utils.md`
+  - `services/offline_coordinator.md`
+  - `services/route_cache.md`
+  - `services/direction_service.md`
+  - `services/polyline_decoder.md`
+  - `services/polyline_simplifier.md`
+  - `services/sensor_fusion.md`
+  - `services/alarm_player.md`
+  - `services/navigation_service.md`
+  - `services/eta_utils.md`
+  - `services/metro_stop_service.md`
+  - `services/permission_service.md`
+  - `services/places_service.md`
+  - `services/api_client.md`
+  - `services/route_queue.md`
+- Config:
+  - `config/power_policy.md`
+  - `config/app_config.md`
+- Tests:
+  - `tests/coverage.md`

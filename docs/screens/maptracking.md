@@ -1,0 +1,21 @@
+# MapTrackingScreen
+
+- Purpose: Foreground map tracking UI that shows route polylines, current location (snapped), ETA, remaining distance, and upcoming route switch advice. Provides Stop Alarm and End Tracking controls.
+- Inputs: Receives `lat`, `lng`, `destination`, `directions`, and optional `metroMode`, `userLat`, `userLng`, `eta`, `distance` via route arguments.
+- Initialization:
+  - Validates args; sets markers for destination and current user position.
+  - Builds segmented polylines via `DirectionService.buildSegmentedPolylines` with metro-specific coloring when `metroMode`.
+  - Computes `_routePoints`, `_routeLengthMeters`, transfer boundaries (for switch hints), and step boundaries/durations for ETA without API calls.
+  - Adjusts camera to include user and destination.
+- Streams:
+  - Location stream (foreground) with `accuracy=high`, `distanceFilter=5` updates markers and provides smoothed speed EMA.
+  - Snaps user location to `_routePoints` with `SnapToRouteEngine.snap` for marker position and computes progress/remaining.
+  - Computes ETA using `EtaUtils.etaRemainingSeconds` from step durations or speed fallback; computes time to next transfer using EMA speed and `_transferBoundariesMeters`.
+  - Subscribes to `TrackingService().routeSwitchStream` to show a snackbar on route switches.
+  - Subscribes to `TrackingService().activeRouteStateStream` to keep `_etaText`, `_distanceText`, and `_switchNotice` updated from manager-side progress.
+- UI:
+  - Google Map with polylines and markers.
+  - Legend overlay (compact) for driving/walking/metro styles.
+  - Bottom panel with ETA, distance, switch notice, and two buttons:
+    - Stop Alarm: visible when `AlarmPlayer.isPlaying` is true; sends `stopAlarm` to background.
+    - End Tracking: stops alarm, stops tracking, cancels progress notification, navigates home.

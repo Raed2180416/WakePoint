@@ -176,4 +176,53 @@ class TransferUtils {
         return mode;
     }
   }
+
+  // Identify the cumulative stops at the first boarding of a TRANSIT segment.
+  static double? firstTransitBoardingStops(Map<String, dynamic> directions) {
+    try {
+      final routes = (directions['routes'] as List?) ?? const [];
+      if (routes.isEmpty) return null;
+      final route = routes.first as Map<String, dynamic>;
+      final legs = (route['legs'] as List?) ?? const [];
+      double cumStops = 0.0;
+      for (final leg in legs) {
+        final steps = (leg['steps'] as List?) ?? const [];
+        for (final s in steps) {
+          final step = s as Map<String, dynamic>;
+          if (step['travel_mode'] == 'TRANSIT') {
+            return cumStops; // stops before boarding first transit
+          }
+          if (step['travel_mode'] == 'TRANSIT') {
+            final td = (step['transit_details'] as Map<String, dynamic>?);
+            final ns = td != null ? td['num_stops'] as num? : null;
+            if (ns != null) cumStops += ns.toDouble();
+          }
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // Compute the target cumulative stops for an alert N stops prior to a given event index
+  // in the events list (e.g., transfer or final arrival). Returns cumulative stop counts.
+  static double? nStopsPriorTarget({
+    required ({List<double> bounds, List<double> stops}) stepData,
+    required List<RouteEventBoundary> events,
+    required int eventIndex,
+    required double nStops,
+  }) {
+    if (eventIndex < 0 || eventIndex >= events.length) return null;
+    final evM = events[eventIndex].meters;
+    // Find cumulative stops at event boundary
+    double? evStops;
+    for (int i = 0; i < stepData.bounds.length; i++) {
+      if (evM <= stepData.bounds[i]) {
+        evStops = stepData.stops[i];
+        break;
+      }
+    }
+    if (evStops == null) return null;
+    final targetStops = (evStops - nStops).clamp(0.0, double.infinity);
+    return targetStops;
+  }
 }

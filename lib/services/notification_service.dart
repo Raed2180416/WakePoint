@@ -169,11 +169,11 @@ class NotificationService {
     required String body,
     bool allowContinueTracking = true,
   }) async {
-    // If a test hook is registered, call it and record the event for assertions.
-    if (testOnShowWakeUpAlarm != null) {
-      try {
-        await testOnShowWakeUpAlarm!(title, body, allowContinueTracking);
-      } catch (_) {}
+    // Test-mode observability: always record, and call optional hook when present
+    if (isTestMode || testOnShowWakeUpAlarm != null) {
+      if (testOnShowWakeUpAlarm != null) {
+        try { await testOnShowWakeUpAlarm!(title, body, allowContinueTracking); } catch (_) {}
+      }
       try {
         testRecordedAlarms.add({
           'title': title,

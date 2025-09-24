@@ -36,6 +36,13 @@ class RouteEntry {
         lastProgressMeters = lastProgressMeters;
 
   static LatLngBounds _computeBounds(List<LatLng> pts) {
+    if (pts.isEmpty) {
+      // Safe default: zero-area bounds at origin
+      return LatLngBounds(
+        southwest: const LatLng(0.0, 0.0),
+        northeast: const LatLng(0.0, 0.0),
+      );
+    }
     double minLat = double.infinity, minLng = double.infinity;
     double maxLat = -double.infinity, maxLng = -double.infinity;
     for (final p in pts) {
@@ -44,9 +51,14 @@ class RouteEntry {
       maxLat = max(maxLat, p.latitude);
       maxLng = max(maxLng, p.longitude);
     }
+    // Ensure ordering respects southwest <= northeast constraints
+    final swLat = min(minLat, maxLat);
+    final neLat = max(minLat, maxLat);
+    final swLng = min(minLng, maxLng);
+    final neLng = max(minLng, maxLng);
     return LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
+      southwest: LatLng(swLat, swLng),
+      northeast: LatLng(neLat, neLng),
     );
   }
 
