@@ -73,7 +73,7 @@ class ActiveRouteManager {
     final active = registry.entries.firstWhere((e) => e.key == _activeKey, orElse: () => registry.entries.isNotEmpty ? registry.entries.first : throw StateError('No routes'));
 
     // Snap to active route first
-    final snapActive = _snapTo(active, rawPosition);
+  final snapActive = _snapTo(active, rawPosition);
     registry.updateSessionState(active.key, lastSnapIndex: snapActive.segmentIndex, lastProgressMeters: snapActive.progressMeters);
 
     // Candidate search near current location
@@ -153,6 +153,7 @@ class ActiveRouteManager {
     return SnapToRouteEngine.snap(
       point: p,
       polyline: entry.points,
+      precomputedCumMeters: entry.cumMeters,
       hintIndex: entry.lastSnapIndex,
       searchWindow: 30,
     );

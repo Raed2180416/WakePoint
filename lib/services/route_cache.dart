@@ -145,12 +145,10 @@ class RouteCache {
     final key = entry.key;
     final jsonStr = jsonEncode(entry.toJson());
     await _box!.put(key, jsonStr);
-    await _box!.flush();
   }
 
   static Future<void> clear() async {
     await _ensureOpen();
     await _box!.clear();
-    await _box!.flush();
   }
 }

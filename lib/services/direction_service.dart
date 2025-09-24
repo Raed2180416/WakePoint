@@ -6,12 +6,16 @@ import 'polyline_decoder.dart';
 import 'polyline_simplifier.dart';
 import 'package:geowake2/services/api_client.dart'; // ADD THIS IMPORT
 import 'package:geowake2/services/route_cache.dart';
+import 'dart:convert' show utf8;
+import 'package:crypto/crypto.dart' as crypto;
 import 'dart:developer' as dev;
 
 class DirectionService {
   final ApiClient _apiClient = ApiClient.instance;
   Map<String, dynamic>? _cachedDirections;
   DateTime? _lastFetchTime;
+  // In-memory cache for decode+simplify keyed by hash 'len:md5' of polyline+tol
+  final Map<String, List<LatLng>> _polylineSimplifyCache = {};
 
   // Tiered intervals for updating directions.
   final Duration farInterval = const Duration(minutes: 15);
@@ -93,10 +97,8 @@ class DirectionService {
         final route = directions['routes'][0];
         if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
           final String encodedPolyline = route['overview_polyline']['points'] as String;
-          // Decode the polyline.
-          List<LatLng> decodedPoints = decodePolyline(encodedPolyline);
-          // Simplify with a tolerance of 10 meters.
-          List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(decodedPoints, 10);
+          // Decode + simplify with small in-memory cache
+          final simplifiedPoints = _decodeAndSimplifyCached(encodedPolyline, 10);
           // Compress the simplified polyline.
           String compressedPolyline = PolylineSimplifier.compressPolyline(simplifiedPoints);
           // Add the simplified compressed polyline to the response.
@@ -184,8 +186,7 @@ class DirectionService {
         currentNonTransitMode = firstMode;
       }
       // Decode, simplify, then add first step points.
-      List<LatLng> rawPoints = decodePolyline(firstStep['polyline']['points']);
-      List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(rawPoints, 10);
+  List<LatLng> simplifiedPoints = _decodeAndSimplifyCached(firstStep['polyline']['points'], 10);
       groupPoints.addAll(simplifiedPoints);
 
       for (int i = 1; i < steps.length; i++) {
@@ -224,8 +225,7 @@ class DirectionService {
         }
 
         if (sameGroup) {
-          List<LatLng> rawStepPoints = decodePolyline(step['polyline']['points']);
-          List<LatLng> simplifiedStepPoints = PolylineSimplifier.simplifyPolyline(rawStepPoints, 10);
+          List<LatLng> simplifiedStepPoints = _decodeAndSimplifyCached(step['polyline']['points'], 10);
           groupPoints.addAll(simplifiedStepPoints);
         } else {
           Color groupColor;
@@ -294,5 +294,22 @@ class DirectionService {
     }
 
     return polylines;
+  }
+
+  // Decode an encoded polyline and simplify it with caching keyed by md5 of input+tol
+  List<LatLng> _decodeAndSimplifyCached(String encoded, double toleranceMeters) {
+    final key = _polyKey(encoded, toleranceMeters);
+    final cached = _polylineSimplifyCache[key];
+    if (cached != null) return cached;
+    final decoded = decodePolyline(encoded);
+    final simplified = PolylineSimplifier.simplifyPolyline(decoded, toleranceMeters);
+    _polylineSimplifyCache[key] = simplified;
+    return simplified;
+  }
+
+  String _polyKey(String encoded, double tol) {
+    final bytes = utf8.encode('$tol|' + encoded);
+    final digest = crypto.md5.convert(bytes).toString();
+    return '${encoded.length}:$digest';
   }
 }

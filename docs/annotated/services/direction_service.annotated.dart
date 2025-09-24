@@ -14,6 +14,9 @@ class DirectionService { // Fetches directions and produces display polylines
   final ApiClient _apiClient = ApiClient.instance; // Shared API client
   Map<String, dynamic>? _cachedDirections; // In-memory cache
   DateTime? _lastFetchTime; // Last fetch timestamp
+  // P1: In-memory cache for decode+simplify keyed by md5 of (polyline + tolerance)
+  // This prevents repeated decode/simplify for identical step polylines across builds.
+  // Implementation lives in lib/services/direction_service.dart as _polylineSimplifyCache.
 
   // Tiered intervals for updating directions.
   final Duration farInterval = const Duration(minutes: 15);
@@ -89,16 +92,15 @@ class DirectionService { // Fetches directions and produces display polylines
         throw Exception("No feasible route found: ${directions['error_message'] ?? directions['status']}");
       }
 
-      // --- Simplify & compress the overview polyline ---
+  // --- Simplify & compress the overview polyline (with cached decode+simplify) ---
       String? simplifiedCompressed;
       if (directions['routes'] != null && directions['routes'].isNotEmpty) {
         final route = directions['routes'][0];
         if (route['overview_polyline'] != null && route['overview_polyline']['points'] != null) {
           final String encodedPolyline = route['overview_polyline']['points'] as String;
-          // Decode the polyline.
-          List<LatLng> decodedPoints = decodePolyline(encodedPolyline);
-          // Simplify with a tolerance of 10 meters.
-          List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(decodedPoints, 10);
+          // Decode + simplify with a small in-memory cache to avoid repeated work.
+          // See _decodeAndSimplifyCached in the impl which uses md5(encoded + tol) as key.
+          List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(decodePolyline(encodedPolyline), 10);
           // Compress the simplified polyline.
           String compressedPolyline = PolylineSimplifier.compressPolyline(simplifiedPoints);
           // Add the simplified compressed polyline to the response.
@@ -185,9 +187,9 @@ class DirectionService { // Fetches directions and produces display polylines
         currentTransitLine = null;
         currentNonTransitMode = firstMode;
       }
-      // Decode, simplify, then add first step points.
-      List<LatLng> rawPoints = decodePolyline(firstStep['polyline']['points']);
-      List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(rawPoints, 10);
+  // Decode, simplify, then add first step points. P1: actual impl uses cached helper _decodeAndSimplifyCached
+  List<LatLng> rawPoints = decodePolyline(firstStep['polyline']['points']);
+  List<LatLng> simplifiedPoints = PolylineSimplifier.simplifyPolyline(rawPoints, 10);
       groupPoints.addAll(simplifiedPoints);
 
       for (int i = 1; i < steps.length; i++) {
@@ -226,6 +228,7 @@ class DirectionService { // Fetches directions and produces display polylines
         }
 
         if (sameGroup) {
+          // P1: impl uses cached decode+simplify; annotated doc keeps the high-level flow.
           List<LatLng> rawStepPoints = decodePolyline(step['polyline']['points']);
           List<LatLng> simplifiedStepPoints = PolylineSimplifier.simplifyPolyline(rawStepPoints, 10);
           groupPoints.addAll(simplifiedStepPoints);
@@ -260,6 +263,7 @@ class DirectionService { // Fetches directions and produces display polylines
           currentGroupType = stepGroupType;
           currentTransitLine = stepTransitLine;
           currentNonTransitMode = stepNonTransitMode;
+          // P1: impl uses cached decode+simplify; annotated doc keeps the high-level flow.
           List<LatLng> rawStepPoints = decodePolyline(step['polyline']['points']);
           List<LatLng> simplifiedStepPoints = PolylineSimplifier.simplifyPolyline(rawStepPoints, 10);
           groupPoints.addAll(simplifiedStepPoints);

@@ -161,6 +161,8 @@ class ActiveRouteManager {
     return SnapToRouteEngine.snap(
       point: p,
       polyline: entry.points,
+      // P1: Use precomputed cumulative distances to compute progress cheaply
+      precomputedCumMeters: entry.cumMeters,
       hintIndex: entry.lastSnapIndex,
       searchWindow: 30,
     );
@@ -187,4 +189,6 @@ File summary: ActiveRouteManager maintains the current route, evaluates nearby a
 by comparing lateral offsets after snapping, gates switches with a sustain window and a
 post-switch blackout to avoid oscillation, and emits state snapshots plus switch events.
 The headingAgreement check is intentionally lightweight, relying on progress monotonicity.
+P1 note: We now pass precomputed cumulative distances (cumMeters) from RouteRegistry into the snapping engine. This
+reduces repeated per-call cumulative summations while preserving identical output values (behavior remains unchanged).
 */

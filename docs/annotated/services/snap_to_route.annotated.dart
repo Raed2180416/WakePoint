@@ -27,6 +27,7 @@ class SnapToRouteEngine { // Provides snapping utilities for projecting a point 
   static SnapResult snap({ // Static method so callers can use without instantiating the class
     required LatLng point, // Input GPS/location sample to snap
     required List<LatLng> polyline, // The polyline representing the route (ordered list of vertices)
+    List<double>? precomputedCumMeters, // P1: optional cumulative meters to avoid recomputing progress sums
     int? hintIndex, // Optional previous segment index to narrow the search window for efficiency and continuity
     int searchWindow = 20, // Number of segments on either side of hintIndex to consider (caps work to a small neighborhood)
   }) { // Start snap()
@@ -51,11 +52,14 @@ class SnapToRouteEngine { // Provides snapping utilities for projecting a point 
     int bestIdx = 0; // Track the best segment index
     double bestProgress = 0.0; // Track the best cumulative progress in meters
 
-    // Precompute cumulative distances for progress
-    final cum = List<double>.filled(polyline.length, 0.0); // cum[i] = distance from start to vertex i
-    for (int i = 1; i < polyline.length; i++) { // Iterate vertices to accumulate distances
-      cum[i] = cum[i - 1] + _dist(polyline[i - 1], polyline[i]); // cum[i] = cum[i-1] + distance between consecutive vertices
-    } // End cumulative precomputation
+    // Progress uses cumulative distances; prefer provided precomputed array when available
+    final cum = precomputedCumMeters ?? (() {
+      final c = List<double>.filled(polyline.length, 0.0);
+      for (int i = 1; i < polyline.length; i++) {
+        c[i] = c[i - 1] + _dist(polyline[i - 1], polyline[i]);
+      }
+      return c;
+    })();
 
     for (int i = start; i <= end; i++) { // Iterate through candidate segments [start..end]
       final A = polyline[i]; // Segment start vertex
@@ -114,7 +118,8 @@ class SnapToRouteEngine { // Provides snapping utilities for projecting a point 
 /* Block summary: snap() iterates candidate segments (all, or a hint-centered window) and finds the projection with the
    smallest perpendicular distance to the input point, then computes progress as cumulative length to the segment plus
    the partial segment length to the projection. The projection uses a locally flat (equirectangular) approximation,
-   which is numerically stable and efficient for short segments and typical GPS scales. */
+  which is numerically stable and efficient for short segments and typical GPS scales.
+  P1 uses an optional precomputed cumulative meters array to accelerate progress calculations without changing results. */
 
 /* File summary: SnapToRoute underpins the entire tracking pipeline:
    - ActiveRouteManager uses it to report snapped position and progress along the active route.

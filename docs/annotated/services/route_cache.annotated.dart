@@ -1,6 +1,9 @@
 // docs/annotated/services/route_cache.annotated.dart
 // Purpose: Line-by-line annotated copy of `lib/services/route_cache.dart`.
 // Scope: Hive-backed cache entries, stable keying, TTL and origin deviation guards, clear/put/get lifecycle.
+// P2 Improvement: Removed per-write flush operations in put/clear to cut synchronous I/O overhead.
+//                 Durability is still acceptable for ephemeral navigation cache; flush can be deferred to
+//                 app lifecycle or periodic maintenance if needed.
 
 import 'dart:convert'; // JSON serialization for payload and key.
 import 'package:geolocator/geolocator.dart'; // Distance computation for origin deviation checks.
@@ -148,14 +151,12 @@ class RouteCache { // Static utility for cache lifecycle.
     await _ensureOpen(); // Ensure box is open.
     final key = entry.key; // Use entry key.
     final jsonStr = jsonEncode(entry.toJson()); // Serialize entry.
-    await _box!.put(key, jsonStr); // Write to box.
-    await _box!.flush(); // Ensure persisted to disk.
+    await _box!.put(key, jsonStr); // Write to box (no per-write flush; P2 change).
   }
 
   static Future<void> clear() async { // Purge all entries.
     await _ensureOpen(); // Ensure box is open.
-    await _box!.clear(); // Clear contents.
-    await _box!.flush(); // Persist clearing.
+    await _box!.clear(); // Clear contents (no immediate flush; P2 change).
   }
 }
 
@@ -168,4 +169,5 @@ class RouteCache { // Static utility for cache lifecycle.
 // End-of-file summary:
 // - API: makeKey/get/put/clear; storage in Hive `boxName` String box.
 // - Validations: TTL freshness and origin proximity; safe miss behavior on any error.
-// - Performance: O(1) typical; JSON encode/decode costs on access; flush() ensures durability after writes.
+// - Performance: O(1) typical; JSON encode/decode costs on access; removed per-write flush reduces sync I/O.
+//   If durability needs tighten later, add an app-lifecycle or periodic flush rather than flushing every write.

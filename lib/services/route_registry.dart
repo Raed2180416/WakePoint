@@ -13,6 +13,8 @@ class RouteEntry {
   final LatLngBounds bbox;
   // Cached geodesic length for the full route polyline
   final double lengthMeters;
+  // Precomputed cumulative distances along polyline for fast progress calculations
+  final List<double> cumMeters;
   // Session-only
   int? lastSnapIndex;
   double? lastProgressMeters;
@@ -31,7 +33,8 @@ class RouteEntry {
         lastUsed = lastUsed ?? DateTime.now(),
         usageCount = usageCount,
         bbox = _computeBounds(points),
-        lengthMeters = _computeLength(points),
+    lengthMeters = _computeLength(points),
+    cumMeters = _computeCum(points),
         lastSnapIndex = lastSnapIndex,
         lastProgressMeters = lastProgressMeters;
 
@@ -62,6 +65,12 @@ class RouteEntry {
     );
   }
 
+  // P2: Heuristic factor to allow a generous center-distance check after bbox prefilter.
+  // This accounts for irregular shapes where the bbox center may be farther than radius,
+  // while the route still intersects the padded bbox.
+  // TODO(telemetry): Log candidate hit/miss distances to tune this factor with field data.
+  static const double _bboxCenterDistanceFactor = 2.5;
+
   bool isNear(LatLng p, double radiusMeters) {
     // Quick bbox prefilter with padding by approximate degrees.
     const metersPerDegLat = 110540.0;
@@ -78,7 +87,7 @@ class RouteEntry {
     final c = LatLng((bbox.southwest.latitude + bbox.northeast.latitude) / 2,
         (bbox.southwest.longitude + bbox.northeast.longitude) / 2);
     final d = Geolocator.distanceBetween(p.latitude, p.longitude, c.latitude, c.longitude);
-    return d <= radiusMeters * 2.5; // generous since bbox check already passed
+    return d <= radiusMeters * _bboxCenterDistanceFactor;
   }
 
   static double _computeLength(List<LatLng> pts) {
@@ -93,6 +102,20 @@ class RouteEntry {
       );
     }
     return sum;
+  }
+
+  static List<double> _computeCum(List<LatLng> pts) {
+    if (pts.isEmpty) return const <double>[];
+    final list = List<double>.filled(pts.length, 0.0);
+    for (var i = 1; i < pts.length; i++) {
+      list[i] = list[i - 1] + Geolocator.distanceBetween(
+        pts[i - 1].latitude,
+        pts[i - 1].longitude,
+        pts[i].latitude,
+        pts[i].longitude,
+      );
+    }
+    return list;
   }
 }
 

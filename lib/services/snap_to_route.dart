@@ -20,6 +20,7 @@ class SnapToRouteEngine {
   static SnapResult snap({
     required LatLng point,
     required List<LatLng> polyline,
+    List<double>? precomputedCumMeters,
     int? hintIndex,
     int searchWindow = 20,
   }) {
@@ -44,11 +45,14 @@ class SnapToRouteEngine {
     int bestIdx = 0;
     double bestProgress = 0.0;
 
-    // Precompute cumulative distances for progress
-    final cum = List<double>.filled(polyline.length, 0.0);
-    for (int i = 1; i < polyline.length; i++) {
-      cum[i] = cum[i - 1] + _dist(polyline[i - 1], polyline[i]);
-    }
+    // Use provided cumulative distances if available; otherwise compute locally
+    final cum = precomputedCumMeters ?? (() {
+      final c = List<double>.filled(polyline.length, 0.0);
+      for (int i = 1; i < polyline.length; i++) {
+        c[i] = c[i - 1] + _dist(polyline[i - 1], polyline[i]);
+      }
+      return c;
+    })();
 
     for (int i = start; i <= end; i++) {
       final A = polyline[i];

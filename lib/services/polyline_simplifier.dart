@@ -56,12 +56,13 @@ class PolylineSimplifier {
     double dLat = lat2 - lat1;
     double dLng = lng2 - lng1;
 
-    // Project point p onto the line.
-    double u = ((latP - lat1) * dLat + (lngP - lng1) * dLng) / (dLat * dLat + dLng * dLng);
+  // Project point p onto the line and clamp to segment [0,1].
+  double u = ((latP - lat1) * dLat + (lngP - lng1) * dLng) / (dLat * dLat + dLng * dLng);
+  if (u < 0.0) u = 0.0; else if (u > 1.0) u = 1.0;
 
-    // Find the closest point on the line.
-    double latClosest = lat1 + u * dLat;
-    double lngClosest = lng1 + u * dLng;
+  // Find the closest point on the segment.
+  double latClosest = lat1 + u * dLat;
+  double lngClosest = lng1 + u * dLng;
 
     // Return the distance from p to the closest point on the line.
     return _distanceBetweenRadians(latP, lngP, latClosest, lngClosest);

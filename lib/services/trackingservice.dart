@@ -342,14 +342,8 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
     // We need progressMeters along the active route; grab latest from manager by listening state earlier.
     // Since we don't keep state here, approximate using last known remaining distance if available via registry lastProgress.
     try {
-      // Rely on last updated from registry entries by proximity to _lastProcessedPosition.
-      double? progressMeters;
-      if (_lastProcessedPosition != null) {
-        final near = _registry.candidatesNear(_lastProcessedPosition!, radiusMeters: 5000, maxCandidates: 1);
-        if (near.isNotEmpty) {
-          progressMeters = near.first.lastProgressMeters;
-        }
-      }
+      // Use authoritative progress from the active route manager state
+      final double? progressMeters = _lastActiveState?.progressMeters;
       if (progressMeters != null) {
         final thresholdMeters = _alarmMode == 'distance' ? (_alarmValue! * 1000.0) : null;
   final thresholdSeconds = _alarmMode == 'time' ? (_alarmValue! * 60.0) : null;
@@ -427,13 +421,12 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
   if (_alarmMode == 'stops' && !_destinationAlarmFired) {
     // Compute remaining stops based on progress
     try {
-      if (_stepBoundsMeters.isNotEmpty && _stepStopsCumulative.isNotEmpty && _lastProcessedPosition != null) {
-        final near = _registry.candidatesNear(_lastProcessedPosition!, radiusMeters: 5000, maxCandidates: 1);
-        if (near.isNotEmpty) {
-          final progressMeters = near.first.lastProgressMeters ?? 0.0;
+      if (_stepBoundsMeters.isNotEmpty && _stepStopsCumulative.isNotEmpty) {
+        final pm = _lastActiveState?.progressMeters;
+        if (pm != null) {
           double progressStops = 0.0;
           for (int i = 0; i < _stepBoundsMeters.length; i++) {
-            if (progressMeters <= _stepBoundsMeters[i]) {
+            if (pm <= _stepBoundsMeters[i]) {
               progressStops = _stepStopsCumulative[i];
               break;
             }
@@ -479,6 +472,9 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
 @pragma('vm:entry-point')
 void _onStart(ServiceInstance service, {Map<String, dynamic>? initialData}) async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await NotificationService().initialize();
+  } catch (_) {}
   
   service.on('stopService').listen((event) {
     service.stopSelf();
@@ -899,10 +895,9 @@ Future<void> startLocationStream(ServiceInstance service) async {
   // Apply gps dropout and reroute cooldown based on policy
   gpsDropoutBuffer = policy.gpsDropoutBuffer;
   if (_reroutePolicy != null && !TrackingService.isTestMode) {
-    _reroutePolicy = ReroutePolicy(
-      cooldown: policy.rerouteCooldown,
-      initialOnline: true,
-    );
+    try {
+      _reroutePolicy!.setCooldown(policy.rerouteCooldown);
+    } catch (_) {}
   }
   
   LocationSettings settings = LocationSettings(

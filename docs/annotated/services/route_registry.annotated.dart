@@ -16,6 +16,10 @@ class RouteEntry { // Represents a registered route with derived metadata and se
   final LatLngBounds bbox; // Bounding box for quick spatial checks
   // Cached geodesic length for the full route polyline
   final double lengthMeters; // Sum of segment distances
+  // P1: Precomputed cumulative distances along the polyline for fast progress lookup
+  // cumMeters[i] = geodesic meters from start to vertex i
+  // This avoids repeatedly summing segments during snapping and progress computation.
+  final List<double> cumMeters;
   // Session-only
   int? lastSnapIndex; // Last segment index used during snapping
   double? lastProgressMeters; // Cumulative progress along polyline
@@ -34,7 +38,8 @@ class RouteEntry { // Represents a registered route with derived metadata and se
         lastUsed = lastUsed ?? DateTime.now(),
         usageCount = usageCount,
         bbox = _computeBounds(points), // Safe bounds computation with empty guard + proper ordering
-        lengthMeters = _computeLength(points), // Precompute length once
+  lengthMeters = _computeLength(points), // Precompute length once
+  cumMeters = _computeCum(points), // P1: Precompute cumulative meters once per entry
         lastSnapIndex = lastSnapIndex,
         lastProgressMeters = lastProgressMeters;
 
@@ -65,6 +70,11 @@ class RouteEntry { // Represents a registered route with derived metadata and se
     );
   }
 
+  // P2: Heuristic factor for center-distance check following bbox prefilter.
+  // Keeps behavior explicit and tunable without magic numbers.
+  // TODO(telemetry): Capture candidate hit/miss stats to re-tune this factor with real-world traces.
+  static const double _bboxCenterDistanceFactor = 2.5;
+
   bool isNear(LatLng p, double radiusMeters) { // Quick spatial filter using padded bbox then center distance
     // Quick bbox prefilter with padding by approximate degrees.
     const metersPerDegLat = 110540.0;
@@ -77,11 +87,11 @@ class RouteEntry { // Represents a registered route with derived metadata and se
     if (p.latitude < sw.latitude || p.latitude > ne.latitude || p.longitude < sw.longitude || p.longitude > ne.longitude) {
       return false; // Outside padded bbox
     }
-    // Fallback precise distance to bbox center
+  // Fallback precise distance to bbox center
     final c = LatLng((bbox.southwest.latitude + bbox.northeast.latitude) / 2,
         (bbox.southwest.longitude + bbox.northeast.longitude) / 2);
     final d = Geolocator.distanceBetween(p.latitude, p.longitude, c.latitude, c.longitude);
-    return d <= radiusMeters * 2.5; // generous since bbox check already passed
+  return d <= radiusMeters * _bboxCenterDistanceFactor; // generous since bbox check already passed
   }
 
   static double _computeLength(List<LatLng> pts) { // Geodesic length sum
@@ -96,6 +106,21 @@ class RouteEntry { // Represents a registered route with derived metadata and se
       );
     }
     return sum;
+  }
+
+  // P1: Precompute cumulative distances for O(1) progress along a segment during snapping
+  static List<double> _computeCum(List<LatLng> pts) {
+    if (pts.isEmpty) return const <double>[];
+    final list = List<double>.filled(pts.length, 0.0);
+    for (var i = 1; i < pts.length; i++) {
+      list[i] = list[i - 1] + Geolocator.distanceBetween(
+        pts[i - 1].latitude,
+        pts[i - 1].longitude,
+        pts[i].latitude,
+        pts[i].longitude,
+      );
+    }
+    return list;
   }
 }
 
@@ -156,4 +181,5 @@ class RouteRegistry { // LRU map of route entries + helpers for candidate select
 }
 
 /* File summary: RouteRegistry safely computes bounds and length for each route and tracks session progress/snap hints.
-   It provides quick candidate selection near a point to support local switching and progress estimation in notifications. */
+  It provides quick candidate selection near a point to support local switching and progress estimation in notifications.
+  P1 adds cumMeters precomputation to speed up snapping/progress without changing public behavior. */
