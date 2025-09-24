@@ -342,16 +342,13 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
 
   // Also check upcoming route events (transfer/mode change) with the same threshold semantics
   if (_routeEvents.isNotEmpty) {
-    // We need progressMeters along the active route; grab latest from manager by listening state earlier.
-    // Since we don't keep state here, approximate using last known remaining distance if available via registry lastProgress.
+    // We need progressMeters along the active route; use authoritative manager state when available.
     try {
-      // Rely on last updated from registry entries by proximity to _lastProcessedPosition.
-      double? progressMeters;
-      if (_lastProcessedPosition != null) {
+      double? progressMeters = _lastActiveState?.progressMeters;
+      // Legacy proximity fallback, only if state is momentarily unavailable
+      if (progressMeters == null && _lastProcessedPosition != null) {
         final near = _registry.candidatesNear(_lastProcessedPosition!, radiusMeters: 5000, maxCandidates: 1);
-        if (near.isNotEmpty) {
-          progressMeters = near.first.lastProgressMeters;
-        }
+        if (near.isNotEmpty) progressMeters = near.first.lastProgressMeters;
       }
       if (progressMeters != null) {
         final thresholdMeters = _alarmMode == 'distance' ? (_alarmValue! * 1000.0) : null;
@@ -430,10 +427,8 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
   if (_alarmMode == 'stops' && !_destinationAlarmFired) { // Remaining stops to destination
     // Compute remaining stops based on progress
     try {
-      if (_stepBoundsMeters.isNotEmpty && _stepStopsCumulative.isNotEmpty && _lastProcessedPosition != null) {
-        final near = _registry.candidatesNear(_lastProcessedPosition!, radiusMeters: 5000, maxCandidates: 1);
-        if (near.isNotEmpty) {
-          final progressMeters = near.first.lastProgressMeters ?? 0.0;
+      if (_stepBoundsMeters.isNotEmpty && _stepStopsCumulative.isNotEmpty) {
+        final progressMeters = _lastActiveState?.progressMeters ?? 0.0; // authoritative progress
           double progressStops = 0.0;
           for (int i = 0; i < _stepBoundsMeters.length; i++) {
             if (progressMeters <= _stepBoundsMeters[i]) {
@@ -447,7 +442,6 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
             shouldTriggerDestination = true;
             destinationReasonLabel = _destinationName;
           }
-        }
       }
     } catch (_) {}
   }
@@ -482,6 +476,8 @@ Future<void> _checkAndTriggerAlarm(Position currentPosition, ServiceInstance ser
 @pragma('vm:entry-point')
 void _onStart(ServiceInstance service, {Map<String, dynamic>? initialData}) async { // Background entrypoint
   WidgetsFlutterBinding.ensureInitialized(); // Initialize Flutter in background
+  // Ensure notification channels are ready in the background isolate before any alarm/notification usage
+  try { await NotificationService().initialize(); } catch (_) {}
   
   service.on('stopService').listen((event) { // Handle explicit stop
     service.stopSelf();
@@ -901,11 +897,9 @@ Future<void> startLocationStream(ServiceInstance service) async { // Start and m
       : PowerPolicyManager.forBatteryLevel(batteryLevel);
   // Apply gps dropout and reroute cooldown based on policy
   gpsDropoutBuffer = policy.gpsDropoutBuffer;
-  if (_reroutePolicy != null && !TrackingService.isTestMode) {
-    _reroutePolicy = ReroutePolicy(
-      cooldown: policy.rerouteCooldown,
-      initialOnline: true,
-    );
+  // IMPORTANT: update cooldown in-place to preserve stream subscribers
+  if (_reroutePolicy != null) {
+    _reroutePolicy!.setCooldown(policy.rerouteCooldown);
   }
   
   LocationSettings settings = LocationSettings(

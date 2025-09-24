@@ -40,8 +40,9 @@ class PolylineSimplifier { // Names a static-utility style class.
     }
   }
 
-  /// Helper: Calculates the perpendicular distance from point [p] to the line defined by [lineStart] and [lineEnd]. // Geometry helper.
-  /// Uses a projection method and returns the distance in meters. // Uses radian projection and haversine.
+  /// Helper: Calculates the perpendicular distance from point [p] to the SEGMENT defined by [lineStart] and [lineEnd]. // Geometry helper.
+  /// Uses a projection method clamped to [0,1] so the closest point lies on the segment, not the infinite line. // Segment distance.
+  /// Returns the distance in meters using haversine on radian coordinates. // Uses radian projection and haversine.
   static double _perpendicularDistance(LatLng p, LatLng lineStart, LatLng lineEnd) { // Private static helper.
     // If lineStart and lineEnd are the same point, return the direct distance. // Degenerate line segment.
     if (lineStart.latitude == lineEnd.latitude && lineStart.longitude == lineEnd.longitude) {
@@ -60,10 +61,12 @@ class PolylineSimplifier { // Names a static-utility style class.
     double dLat = lat2 - lat1;
     double dLng = lng2 - lng1;
 
-    // Project point p onto the line. // Scalar projection along line vector.
-    double u = ((latP - lat1) * dLat + (lngP - lng1) * dLng) / (dLat * dLat + dLng * dLng);
+  // Project point p onto the line and clamp to segment. // Scalar projection along line vector with clamping.
+  double u = ((latP - lat1) * dLat + (lngP - lng1) * dLng) / (dLat * dLat + dLng * dLng);
+  if (u < 0) u = 0; // Clamp to start of segment
+  if (u > 1) u = 1; // Clamp to end of segment
 
-    // Find the closest point on the line. // Parametric point on infinite line.
+  // Find the closest point on the segment (after clamping). // Parametric point on segment.
     double latClosest = lat1 + u * dLat;
     double lngClosest = lng1 + u * dLng;
 
@@ -128,7 +131,7 @@ class PolylineSimplifier { // Names a static-utility style class.
 
 // Post-block notes:
 // - The RDP algorithm keeps endpoints and recursively splits at the worst-offending point until within tolerance.
-// - Distances are computed using haversine; perpendicular projection uses radians for stability.
+// - Distances are computed using haversine; perpendicular projection uses radians for stability, clamped to segment.
 // - Compression uses JSON+gzip+base64 for simplicity and portability; favoring readability over maximum compactness.
 // - This simplifier is deterministic for given inputs and tolerance.
 
