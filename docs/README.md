@@ -1,4 +1,18 @@
-# GeoWake Docs Index
+# GeoWake Documentation
+
+## 🌟 New: Comprehensive API & Infrastructure Documentation
+
+**Start here for complete system overview:**
+
+- **[📘 Documentation Index (INDEX.md)](INDEX.md)** - Complete documentation catalog
+- **[🚀 Quick Start Guide](QUICK_START_GUIDE.md)** - Setup & run the project
+- **[🏗️ Frontend-Backend Connectivity](FRONTEND_BACKEND_CONNECTIVITY.md)** - Complete architecture, APIs, security
+- **[☁️ Railway Deployment](RAILWAY_DEPLOYMENT.md)** - Production deployment guide
+- **[🧪 API & Testing Overview](API_TESTING_OVERVIEW.md)** - All tests & infrastructure summary
+
+---
+
+## Original Documentation (Code-Level Details)
 
 - Logic Flow: `logic-flow.md`
 - App: `app/main.md` (line-by-line)
