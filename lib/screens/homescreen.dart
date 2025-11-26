@@ -17,8 +17,6 @@ import 'package:geowake2/services/api_client.dart';
 // import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
 
-
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -71,7 +69,9 @@ class HomeScreenState extends State<HomeScreen> {
     _initBatteryMonitoring();
     _offline = OfflineCoordinator(initialOffline: false);
 
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
       if (!mounted) return;
       setState(() {
         _noConnectivity = results.contains(ConnectivityResult.none);
@@ -115,24 +115,35 @@ class HomeScreenState extends State<HomeScreen> {
       final lat = position.latitude;
       final lng = position.longitude;
       final result = await ApiClient.instance.geocode(latlng: '$lat,$lng');
-      final desc = (result != null ? (result['formatted_address'] ?? result['name']) : null) ?? 'Dropped pin';
+      final desc =
+          (result != null
+              ? (result['formatted_address'] ?? result['name'])
+              : null) ??
+          'Dropped pin';
       await _setSelectedLocation(desc, lat, lng);
     } catch (e) {
       dev.log('Reverse geocode failed on map tap: $e', name: 'HomeScreen');
-      await _setSelectedLocation('Dropped pin', position.latitude, position.longitude);
+      await _setSelectedLocation(
+        'Dropped pin',
+        position.latitude,
+        position.longitude,
+      );
     }
   }
 
   Future<void> _handleMapTap(LatLng position) async {
     final now = DateTime.now();
-    final isQuickSecondTap = _lastTapAt != null && now.difference(_lastTapAt!).inMilliseconds < 300;
-    final isNearPrevious = _lastTapLatLng != null &&
+    final isQuickSecondTap =
+        _lastTapAt != null && now.difference(_lastTapAt!).inMilliseconds < 300;
+    final isNearPrevious =
+        _lastTapLatLng != null &&
         Geolocator.distanceBetween(
               _lastTapLatLng!.latitude,
               _lastTapLatLng!.longitude,
               position.latitude,
               position.longitude,
-            ) < 40; // within ~40 meters counts as same spot for double-tap
+            ) <
+            40; // within ~40 meters counts as same spot for double-tap
 
     _lastTapAt = now;
     _lastTapLatLng = position;
@@ -143,7 +154,9 @@ class HomeScreenState extends State<HomeScreen> {
       if (_mapController.isCompleted) {
         final controller = await _mapController.future;
         final targetZoom = (_lastZoom.isFinite ? _lastZoom : 12.0) + 1.0;
-        controller.animateCamera(CameraUpdate.newLatLngZoom(position, targetZoom));
+        controller.animateCamera(
+          CameraUpdate.newLatLngZoom(position, targetZoom),
+        );
       }
       return;
     }
@@ -169,14 +182,19 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _getCountryCode() async {
     if (_currentPosition == null) return;
     try {
-      final result = await ApiClient.instance
-          .geocode(latlng: '${_currentPosition!.latitude},${_currentPosition!.longitude}');
+      final result = await ApiClient.instance.geocode(
+        latlng: '${_currentPosition!.latitude},${_currentPosition!.longitude}',
+      );
       if (result != null) {
         final components = (result['address_components'] as List?) ?? [];
-        final countryComponent = components.cast<Map<String, dynamic>?>().firstWhere(
-          (c) => c != null && ((c['types'] as List?) ?? []).contains('country'),
-          orElse: () => null,
-        );
+        final countryComponent = components
+            .cast<Map<String, dynamic>?>()
+            .firstWhere(
+              (c) =>
+                  c != null &&
+                  ((c['types'] as List?) ?? []).contains('country'),
+              orElse: () => null,
+            );
         if (countryComponent != null && mounted) {
           setState(() => _currentCountryCode = countryComponent['short_name']);
         }
@@ -189,14 +207,17 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> _loadRecentLocations() async {
     final loaded = await RecentLocationsService.getRecentLocations();
     if (mounted) {
-      setState(() => _recentLocations = List<Map<String, dynamic>>.from(loaded));
+      setState(
+        () => _recentLocations = List<Map<String, dynamic>>.from(loaded),
+      );
     }
   }
 
   void _showTopRecentLocations() {
     final top3 = _recentLocations.take(3).toList();
     setState(() {
-      _autocompleteResults = top3.map((loc) => {...loc, 'isLocal': true}).toList();
+      _autocompleteResults =
+          top3.map((loc) => {...loc, 'isLocal': true}).toList();
     });
   }
 
@@ -208,9 +229,15 @@ class HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      final localMatches = _recentLocations.where((loc) {
-        return (loc['description'] ?? '').toLowerCase().contains(query.toLowerCase());
-      }).map((loc) => {...loc, 'isLocal': true}).toList();
+      final localMatches =
+          _recentLocations
+              .where((loc) {
+                return (loc['description'] ?? '').toLowerCase().contains(
+                  query.toLowerCase(),
+                );
+              })
+              .map((loc) => {...loc, 'isLocal': true})
+              .toList();
 
       try {
         final remoteResults = await _placesService.fetchAutocompleteResults(
@@ -222,11 +249,13 @@ class HomeScreenState extends State<HomeScreen> {
 
         final combined = [...localMatches];
         for (var remote in remoteResults) {
-          if (!combined.any((local) => local['place_id'] == remote['place_id'])) {
+          if (!combined.any(
+            (local) => local['place_id'] == remote['place_id'],
+          )) {
             combined.add(remote);
           }
         }
-        
+
         if (mounted) setState(() => _autocompleteResults = combined);
       } catch (e) {
         dev.log("Error fetching autocomplete results: $e", name: "HomeScreen");
@@ -253,10 +282,10 @@ class HomeScreenState extends State<HomeScreen> {
         final desc = details['description'] ?? 'Unknown Location';
         final lat = details['lat'];
         final lng = details['lng'];
-        
+
         // Update the map and selected location state
         await _setSelectedLocation(desc, lat, lng);
-        
+
         // Correctly save the location with its unique place_id
         await _addToRecentLocations(desc, placeId, lat, lng);
       }
@@ -291,16 +320,21 @@ class HomeScreenState extends State<HomeScreen> {
   // =======================================================================
   // CORRECTED LOGIC FOR SAVING RECENTS USING UNIQUE 'place_id'
   // =======================================================================
-  Future<void> _addToRecentLocations(String desc, String placeId, double lat, double lng) async {
+  Future<void> _addToRecentLocations(
+    String desc,
+    String placeId,
+    double lat,
+    double lng,
+  ) async {
     // 1. Remove any existing entry with the same UNIQUE place_id.
     _recentLocations.removeWhere((loc) => loc['place_id'] == placeId);
-    
+
     // 2. Add the new location data to the top of the list.
     _recentLocations.insert(0, {
-      'description': desc, 
+      'description': desc,
       'place_id': placeId, // Store the unique ID
-      'lat': lat, 
-      'lng': lng
+      'lat': lat,
+      'lng': lng,
     });
 
     // 3. Keep the list from getting too long.
@@ -314,27 +348,35 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _removeRecentLocation(Map<String, dynamic> suggestion) async {
     setState(() {
-      _recentLocations.removeWhere((loc) => loc['place_id'] == suggestion['place_id']);
-      _autocompleteResults.removeWhere((item) => item['place_id'] == suggestion['place_id']);
+      _recentLocations.removeWhere(
+        (loc) => loc['place_id'] == suggestion['place_id'],
+      );
+      _autocompleteResults.removeWhere(
+        (item) => item['place_id'] == suggestion['place_id'],
+      );
     });
     await RecentLocationsService.saveRecentLocations(_recentLocations);
   }
 
-  // The rest of your file remains the same...
-  
   Future<void> _onWakeMePressed() async {
     if (_selectedLocation == null) {
-      _showErrorDialog("Destination Missing", "Please select a valid destination.");
+      _showErrorDialog(
+        "Destination Missing",
+        "Please select a valid destination.",
+      );
       return;
     }
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     // This is the updated block that uses our new, robust service
     final permissionService = PermissionService(context);
-    final bool canProceed = await permissionService.requestEssentialPermissions();
-    
+    final bool canProceed =
+        await permissionService.requestEssentialPermissions();
+
     if (!mounted) return;
-    
+
     if (canProceed) {
       // Permissions were granted, proceed with tracking!
       setState(() => _isTracking = true);
@@ -350,7 +392,10 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final Position? currentPosition = await _getCurrentLocation();
       if (currentPosition == null) {
-        _showErrorDialog("Location Error", "Could not get your current location. Please enable location services.");
+        _showErrorDialog(
+          "Location Error",
+          "Could not get your current location. Please enable location services.",
+        );
         setState(() {
           _isTracking = false;
           _isLoading = false;
@@ -370,7 +415,10 @@ class HomeScreenState extends State<HomeScreen> {
         );
         if (!mounted) return;
         if (!validationResult.isValid || validationResult.closestStop == null) {
-          _showErrorDialog("Metro Route Unavailable", validationResult.errorMessage ?? "No valid metro route found.");
+          _showErrorDialog(
+            "Metro Route Unavailable",
+            validationResult.errorMessage ?? "No valid metro route found.",
+          );
           setState(() {
             _isTracking = false;
             _isLoading = false;
@@ -382,22 +430,17 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      final directions = await _fetchDirections(userLat, userLng, destLat, destLng);
-      final initialETA = directions['routes'][0]['legs'][0]['duration']['value'] as int;
-      
+      final directions = await _fetchDirections(
+        userLat,
+        userLng,
+        destLat,
+        destLng,
+      );
+      final initialETA =
+          directions['routes'][0]['legs'][0]['duration']['value'] as int;
+
       final trackingService = TrackingService();
-      // Register this route so ActiveRouteManager can snap/switch
-      try {
-        trackingService.registerRouteFromDirections(
-          directions: directions,
-          origin: LatLng(userLat, userLng),
-          destination: LatLng(destLat, destLng),
-          transitMode: _metroMode,
-          destinationName: _selectedLocation?['description'] ?? 'Your Destination',
-        );
-      } catch (e) {
-        dev.log('Failed to register route with TrackingService: $e', name: 'HomeScreen');
-      }
+
       // Compute alarm mode/value. For metro+stops, use stops-based threshold.
       String alarmMode = _useDistanceMode ? 'distance' : 'time';
       double alarmValue;
@@ -409,19 +452,46 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
       }
 
+      // 1. Start Tracking (Ensure service is running)
       await trackingService.startTracking(
         destination: LatLng(destLat, destLng),
-        destinationName: _selectedLocation?['description'] ?? 'Your Destination',
+        destinationName:
+            _selectedLocation?['description'] ?? 'Your Destination',
         alarmMode: alarmMode,
         alarmValue: alarmValue,
       );
 
-      FlutterBackgroundService().invoke("updateRouteData", {"initialETA": initialETA});
-      
+      // 2. Register Route (Now service is running, invoke will work)
+      try {
+        trackingService.registerRouteFromDirections(
+          directions: directions,
+          origin: LatLng(userLat, userLng),
+          destination: LatLng(destLat, destLng),
+          transitMode: _metroMode,
+          destinationName:
+              _selectedLocation?['description'] ?? 'Your Destination',
+        );
+      } catch (e) {
+        dev.log(
+          'Failed to register route with TrackingService: $e',
+          name: 'HomeScreen',
+        );
+      }
+
+      FlutterBackgroundService().invoke("updateRouteData", {
+        "initialETA": initialETA,
+      });
+
       final Map<String, dynamic> mapArgs = {
         'destination': _searchController.text,
-        'mode': _metroMode && _useDistanceMode ? 'stops' : (_useDistanceMode ? 'distance' : 'time'),
-        'value': _metroMode && _useDistanceMode ? _stopsSliderValue : (_useDistanceMode ? _distanceSliderValue : _timeSliderValue),
+        'mode':
+            _metroMode && _useDistanceMode
+                ? 'stops'
+                : (_useDistanceMode ? 'distance' : 'time'),
+        'value':
+            _metroMode && _useDistanceMode
+                ? _stopsSliderValue
+                : (_useDistanceMode ? _distanceSliderValue : _timeSliderValue),
         'metroMode': _metroMode,
         'directions': directions,
         'userLat': userLat,
@@ -431,21 +501,27 @@ class HomeScreenState extends State<HomeScreen> {
       };
 
       if (!context.mounted) return;
-      Navigator.pushReplacementNamed(context, '/preloadMap', arguments: mapArgs);
+      Navigator.pushReplacementNamed(
+        context,
+        '/preloadMap',
+        arguments: mapArgs,
+      );
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-
     } catch (e) {
       dev.log("Error in _proceedWithDirections: $e", name: "HomeScreen");
-      if(mounted) {
-         _showErrorDialog("Route Error", "Could not calculate the route. Please try again.");
-         setState(() {
-           _isTracking = false;
-           _isLoading = false;
-         });
+      if (mounted) {
+        _showErrorDialog(
+          "Route Error",
+          "Could not calculate the route. Please try again.",
+        );
+        setState(() {
+          _isTracking = false;
+          _isLoading = false;
+        });
       }
     }
   }
@@ -480,10 +556,15 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<Map<String, dynamic>> _fetchDirections(
-    double startLat, double startLng, double endLat, double endLng) async {
-    final threshold = _useDistanceMode
-        ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
-        : _timeSliderValue;
+    double startLat,
+    double startLng,
+    double endLat,
+    double endLng,
+  ) async {
+    final threshold =
+        _useDistanceMode
+            ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
+            : _timeSliderValue;
     try {
       final res = await _offline.getRoute(
         origin: LatLng(startLat, startLng),
@@ -518,7 +599,8 @@ class HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final Color searchBarFillColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
+    final Color searchBarFillColor =
+        isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
 
     return Scaffold(
       drawer: const SettingsDrawer(),
@@ -538,7 +620,10 @@ class HomeScreenState extends State<HomeScreen> {
               const Text('Metro Mode', style: TextStyle(fontSize: 12)),
               Switch(
                 value: _metroMode,
-                onChanged: _isTracking ? null : (val) => setState(() => _metroMode = val),
+                onChanged:
+                    _isTracking
+                        ? null
+                        : (val) => setState(() => _metroMode = val),
               ),
               const SizedBox(width: 8),
             ],
@@ -560,7 +645,10 @@ class HomeScreenState extends State<HomeScreen> {
               children: [
                 if (_noConnectivity)
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 12,
+                    ),
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade700,
@@ -583,7 +671,9 @@ class HomeScreenState extends State<HomeScreen> {
                   focusNode: _searchFocus,
                   controller: _searchController,
                   onChanged: _onSearchChanged,
-                  style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Enter your destination',
                     prefixIcon: const Icon(Icons.search),
@@ -597,8 +687,11 @@ class HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(24),
                       borderSide: BorderSide.none,
                     ),
-                    hintStyle: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-                    prefixIconColor: isDarkMode ? Colors.white70 : Colors.black54,
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                    ),
+                    prefixIconColor:
+                        isDarkMode ? Colors.white70 : Colors.black54,
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.01),
@@ -617,19 +710,21 @@ class HomeScreenState extends State<HomeScreen> {
                         return ListTile(
                           title: Text(suggestion['description'] ?? 'Unknown'),
                           onTap: () => _onSuggestionSelected(suggestion),
-                          trailing: suggestion['isLocal'] == true
-                              ? GestureDetector(
-                                  onTap: () => _removeRecentLocation(suggestion),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.grey.shade400,
+                          trailing:
+                              suggestion['isLocal'] == true
+                                  ? GestureDetector(
+                                    onTap:
+                                        () => _removeRecentLocation(suggestion),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: const Icon(Icons.close, size: 16),
                                     ),
-                                    padding: const EdgeInsets.all(4),
-                                    child: const Icon(Icons.close, size: 16),
-                                  ),
-                                )
-                              : null,
+                                  )
+                                  : null,
                         );
                       },
                     ),
@@ -641,7 +736,9 @@ class HomeScreenState extends State<HomeScreen> {
                     height: screenHeight * 0.3,
                     child: GoogleMap(
                       initialCameraPosition: CameraPosition(
-                        target: _currentPosition ?? const LatLng(12.9716, 77.5946), // Bengaluru
+                        target:
+                            _currentPosition ??
+                            const LatLng(12.9716, 77.5946), // Bengaluru
                         zoom: 12,
                       ),
                       markers: _markers,
@@ -651,7 +748,7 @@ class HomeScreenState extends State<HomeScreen> {
                       },
                       onMapCreated: (controller) {
                         if (!_mapController.isCompleted) {
-                           _mapController.complete(controller);
+                          _mapController.complete(controller);
                         }
                       },
                     ),
@@ -664,7 +761,8 @@ class HomeScreenState extends State<HomeScreen> {
                     const Text('Time'),
                     Switch(
                       value: _useDistanceMode,
-                      onChanged: (val) => setState(() => _useDistanceMode = val),
+                      onChanged:
+                          (val) => setState(() => _useDistanceMode = val),
                     ),
                     Text(_metroMode ? 'Stops' : 'Distance'),
                   ],
@@ -676,9 +774,12 @@ class HomeScreenState extends State<HomeScreen> {
                       context: context,
                       builder: (_) {
                         return _EnterValueDialog(
-                          initialValue: _useDistanceMode
-                              ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
-                              : _timeSliderValue,
+                          initialValue:
+                              _useDistanceMode
+                                  ? (_metroMode
+                                      ? _stopsSliderValue
+                                      : _distanceSliderValue)
+                                  : _timeSliderValue,
                           isDistanceMode: _useDistanceMode && !_metroMode,
                           isStopsMode: _useDistanceMode && _metroMode,
                         );
@@ -725,15 +826,21 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.015),
                 Slider(
-                  value: _useDistanceMode
-                      ? (_metroMode ? _stopsSliderValue : _distanceSliderValue)
-                      : _timeSliderValue,
+                  value:
+                      _useDistanceMode
+                          ? (_metroMode
+                              ? _stopsSliderValue
+                              : _distanceSliderValue)
+                          : _timeSliderValue,
                   min: _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
                   max: _useDistanceMode ? (_metroMode ? 10.0 : 10.0) : 60.0,
                   divisions: _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
-                  label: _useDistanceMode
-                      ? (_metroMode ? _stopsSliderValue.toStringAsFixed(0) : _distanceSliderValue.toStringAsFixed(1))
-                      : _timeSliderValue.toStringAsFixed(0),
+                  label:
+                      _useDistanceMode
+                          ? (_metroMode
+                              ? _stopsSliderValue.toStringAsFixed(0)
+                              : _distanceSliderValue.toStringAsFixed(1))
+                          : _timeSliderValue.toStringAsFixed(0),
                   onChanged: (val) {
                     setState(() {
                       if (_useDistanceMode) {
@@ -751,36 +858,40 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.03),
                 ElevatedButton(
-                  onPressed: (_selectedLocation == null ||
-                          _searchController.text.isEmpty ||
-                          _isLoading ||
-                          _isTracking)
-                      ? null
-                      : _onWakeMePressed,
-                  child: _isLoading
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  onPressed:
+                      (_selectedLocation == null ||
+                              _searchController.text.isEmpty ||
+                              _isLoading ||
+                              _isTracking)
+                          ? null
+                          : _onWakeMePressed,
+                  child:
+                      _isLoading
+                          ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Loading route...',
-                              style: TextStyle(fontSize: screenWidth * 0.05),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          'Wake Me!',
-                          style: TextStyle(fontSize: screenWidth * 0.05),
-                        ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Loading route...',
+                                style: TextStyle(fontSize: screenWidth * 0.05),
+                              ),
+                            ],
+                          )
+                          : Text(
+                            'Wake Me!',
+                            style: TextStyle(fontSize: screenWidth * 0.05),
+                          ),
                 ),
                 if (_lowBattery)
                   Padding(
@@ -844,20 +955,22 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
   void initState() {
     super.initState();
     _controller = TextEditingController(
-      text: widget.isDistanceMode
-          ? widget.initialValue.toStringAsFixed(1)
-          : widget.isStopsMode
+      text:
+          widget.isDistanceMode
+              ? widget.initialValue.toStringAsFixed(1)
+              : widget.isStopsMode
               ? widget.initialValue.toStringAsFixed(0)
               : widget.initialValue.toStringAsFixed(0),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
         widget.isDistanceMode
             ? (widget.isStopsMode ? 'Enter stops' : 'Enter distance (km)')
-            : 'Enter time (minutes)'
+            : 'Enter time (minutes)',
       ),
       content: TextField(
         controller: _controller,
@@ -865,9 +978,12 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
           decimal: widget.isDistanceMode && !widget.isStopsMode,
         ),
         decoration: InputDecoration(
-          hintText: widget.isDistanceMode
-              ? (widget.isStopsMode ? 'Number of stops (1 - 10)' : 'Distance in km (0.5 - 10)')
-              : 'Time in minutes (1 - 60)',
+          hintText:
+              widget.isDistanceMode
+                  ? (widget.isStopsMode
+                      ? 'Number of stops (1 - 10)'
+                      : 'Distance in km (0.5 - 10)')
+                  : 'Time in minutes (1 - 60)',
         ),
       ),
       actions: [
@@ -889,6 +1005,7 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
       ],
     );
   }
+
   @override
   void dispose() {
     _controller.dispose();
