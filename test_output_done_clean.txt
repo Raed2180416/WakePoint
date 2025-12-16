@@ -1,0 +1,83 @@
+00:00 +0: loading D:/GeoWake/test/complex_route_alarm_test.dart
+00:00 +0: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: Test: Setup testGpsStream Hash=999775768
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1048:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:699:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:705:5)
+DEBUG: TS: Using testGpsStream? true Hash=999775768
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: Test: Waiting for GPS listener...
+DEBUG: Test: GPS hasListener=true
+DEBUG: Test: Adding GPS point 1
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0015,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0015, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0015, 0.0)
+DEBUG: ARM: emitting state progress=166.97923618991035
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=101.00469652623178
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=101.00469652623178
+DEBUG: StopLogic: progress=101.0m target=1100.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=1.9979906069475364, Dest=6.0, Alarm=2.0, Target=Metro Stn 1
+DEBUG: ALARM TRIGGERED: Metro Stn 1 (2.0 stops left)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1048:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1042:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: Test: State received
+DEBUG: TS: listener ENTRY 0.03,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.03, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.03, 0.0)
+DEBUG: ARM: emitting state progress=1246.778296884664
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=166.97923618991035
+DEBUG: StopLogic: progress=167.0m target=1100.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=1.8660415276201794, Dest=6.0, Alarm=2.0, Target=Metro Stn 1
+DEBUG: ALARM TRIGGERED: Metro Stn 1 (1.9 stops left)
+00:00 +0 -1: Complex Route Alarm Logic: Switch vs Destination Conflict [E]
+  Expected: true
+    Actual: <false>
+  Failed to trigger Switch 2 alarm at 2 stops out
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\complex_route_alarm_test.dart 131:5            main.<fn>
+  
+DEBUG: TS: _onStop called
+00:00 +0 -1: Conflict Resolution: Destination beats Switch
+DEBUG: Test: Setup testGpsStream Hash=393309258
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1048:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:699:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:705:5)
+DEBUG: TS: Using testGpsStream? true Hash=393309258
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: Test: Waiting for GPS listener...
+DEBUG: Test: GPS hasListener=true
+DEBUG: Test: Adding GPS point conflict
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0081,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0081, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0081, 0.0)
+DEBUG: ARM: emitting state progress=901.6878754255158
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=927.1734766995066
+DEBUG: TS: passing bounds=1, stops=1, events=1, progress=927.1734766995066
+DEBUG: StopLogic: progress=927.2m target=1000.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=0.1456530466009867, Dest=0.6456530466009868, Alarm=2.0, Target=Switch Point
+DEBUG: ALARM TRIGGERED: Final Home
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1048:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1042:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: Test: State received
+Conflict Alarms: [{title: Wake Up!, body: Approaching: Final Home, allow: true, ts: 2025-12-10T21:05:24.985296}]
+DEBUG: TS: _onStop called
+DEBUG: TS: _onStop called
+00:00 +1 -1: Some tests failed.

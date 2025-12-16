@@ -1,66 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'services/trackingservice.dart';
-import 'services/api_client.dart';
+import 'package:geowake2/services/trackingservice.dart';
+import 'services/navigation_service.dart';
+import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
 import 'screens/splash_screen.dart';
 import 'themes/appthemes.dart';
 import 'screens/otherimpservices/recent_locations_service.dart';
-import 'services/notification_service.dart';
-import 'services/navigation_service.dart';
-import 'dart:developer' as dev;
-import 'package:flutter/foundation.dart' show kDebugMode, kProfileMode;
-import 'debug/dev_server.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
-  // Ensure Flutter binding is initialized before any Flutter-specific code.
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Hive itself. We will let the service manage opening the box.
-  try {
-    await Hive.initFlutter();
-    dev.log("Hive engine initialized successfully.", name: "main");
-  } catch (e) {
-    dev.log("FATAL: Hive initialization failed: $e", name: "main");
-  }
-  
-  // Initialize other essential services.
-  await _initializeServices();
-  
+  // Ensure Flutter binding is initialized before any Flutter-specific code.
+  await Hive.initFlutter();
+  // Service initialization moved to SplashScreen to improve startup time.
+
   runApp(const MyApp());
-}
-
-// Separate function to keep service initializations clean.
-Future<void> _initializeServices() async {
-  // Initialize API client FIRST - this secures all API calls
-  try {
-    await ApiClient.instance.initialize();
-    dev.log("API Client initialized successfully.", name: "main");
-  } catch (e) {
-    dev.log("API Client initialization failed: $e", name: "main");
-  }
-
-  try {
-    await NotificationService().initialize();
-  } catch (e) {
-    dev.log("Notification Service initialization failed: $e", name: "main");
-  }
-
-  try {
-    await TrackingService().initializeService();
-  } catch (e) {
-    dev.log("Tracking Service initialization failed: $e", name: "main");
-  }
-
-  // Start lightweight dev HTTP server in debug/profile for remote demo triggers
-  if (kDebugMode || kProfileMode) {
-    // ignore: unawaited_futures
-    DevServer.start();
-  }
 }
 
 class MyApp extends StatefulWidget {
@@ -72,38 +31,19 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool isDarkMode = false;
+  static const _themePrefKey = 'gw_dark_mode';
 
   @override
   void initState() {
     super.initState();
     // Start listening for app lifecycle events (pause, resume, etc.).
     WidgetsBinding.instance.addObserver(this);
-    
+
     // =======================================================================
     // FIX: Call the permission check function here.
     // =======================================================================
     _checkNotificationPermission();
-    // If an alarm was fired while app was backgrounded, present it now.
-    NotificationService().showPendingAlarmScreenIfAny();
-
-    // Bridge background 'fireAlarm' events to foreground UI/audio
-    try {
-      final service = FlutterBackgroundService();
-      service.on('fireAlarm').listen((event) async {
-        if (event == null) return;
-        final title = (event['title'] as String?) ?? 'Wake Up!';
-        final body = (event['body'] as String?) ?? 'Approaching your target';
-        final allow = (event['allowContinueTracking'] as bool?) ?? true;
-        // Show full-screen alarm notification + native activity and play sound
-        await NotificationService().showWakeUpAlarm(
-          title: title,
-          body: body,
-          allowContinueTracking: allow,
-        );
-      });
-    } catch (e) {
-      dev.log('Failed to subscribe to fireAlarm: $e', name: 'main');
-    }
+    _restoreThemePreference();
   }
 
   @override
@@ -128,10 +68,9 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         Hive.box(RecentLocationsService.boxName).flush();
       }
     }
-    if (state == AppLifecycleState.resumed) {
-      // On resume, auto-present any pending full-screen alarm.
-      NotificationService().showPendingAlarmScreenIfAny();
-    }
+
+    // Allow the tracking service to mirror lifecycle transitions for its own bookkeeping.
+    TrackingService().handleAppLifecycleChange(state);
   }
 
   /// Check and request notification permission on Android 13+ or iOS.
@@ -146,6 +85,30 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    _persistThemePreference(isDarkMode);
+  }
+
+  Future<void> _restoreThemePreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getBool(_themePrefKey);
+      if (stored != null) {
+        setState(() {
+          isDarkMode = stored;
+        });
+      }
+    } catch (e) {
+      dev.log('Failed to restore theme preference: $e', name: 'main');
+    }
+  }
+
+  Future<void> _persistThemePreference(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_themePrefKey, value);
+    } catch (e) {
+      dev.log('Failed to persist theme preference: $e', name: 'main');
+    }
   }
 
   @override

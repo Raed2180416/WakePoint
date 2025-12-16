@@ -2,9 +2,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    TrackingService.isTestMode = true;
+  });
+
+  tearDown(() async {
+    TrackingService.isTestMode = false;
+    SharedPreferences.setMockInitialValues({});
+  });
 
   test('Event alarm uses active route progress on overlapping routes', () async {
     // Arrange: enable test mode and hook NotificationService to record alarms
@@ -15,14 +25,20 @@ void main() {
     final origin = const LatLng(37.0, -122.0);
     final destination = const LatLng(37.01, -122.0);
 
-    Map<String, dynamic> mkStep(String mode, double meters, {int? numStops, Map<String,dynamic>? transitDetails}) => {
+    Map<String, dynamic> mkStep(
+      String mode,
+      double meters, {
+      int? numStops,
+      Map<String, dynamic>? transitDetails,
+    }) => {
       'travel_mode': mode,
       'distance': {'value': meters},
-      if (mode == 'TRANSIT' && numStops != null) 'transit_details': {
-        'num_stops': numStops,
-        'line': {'short_name': 'R1'},
-        if (transitDetails != null) ...transitDetails,
-      },
+      if (mode == 'TRANSIT' && numStops != null)
+        'transit_details': {
+          'num_stops': numStops,
+          'line': {'short_name': 'R1'},
+          if (transitDetails != null) ...transitDetails,
+        },
       if (mode != 'TRANSIT') 'transit_details': null,
     };
 
@@ -33,24 +49,34 @@ void main() {
             {
               'steps': [
                 mkStep('WALKING', 200.0),
-                mkStep('TRANSIT', 1000.0, numStops: 3, transitDetails: {
-                  'arrival_stop': {'name': 'Xfer Station'},
-                  'line': {'short_name': 'R1'}
-                }),
-                mkStep('TRANSIT', 1000.0, numStops: 3, transitDetails: {
-                  'line': {'short_name': 'R2'}
-                }),
+                mkStep(
+                  'TRANSIT',
+                  1000.0,
+                  numStops: 3,
+                  transitDetails: {
+                    'arrival_stop': {'name': 'Xfer Station'},
+                    'line': {'short_name': 'R1'},
+                  },
+                ),
+                mkStep(
+                  'TRANSIT',
+                  1000.0,
+                  numStops: 3,
+                  transitDetails: {
+                    'line': {'short_name': 'R2'},
+                  },
+                ),
                 mkStep('WALKING', 200.0),
-              ]
-            }
+              ],
+            },
           ],
           'overview_polyline': {'points': '}_ibE_seK_seK_seK'},
-        }
-      ]
+        },
+      ],
     };
 
     // Build events/steps
-  TransferUtils.buildStepBoundariesAndStops(directions);
+    TransferUtils.buildStepBoundariesAndStops(directions);
     final events = TransferUtils.buildRouteEvents(directions);
     expect(events.where((e) => e.type == 'transfer').isNotEmpty, isTrue);
 

@@ -1,0 +1,10 @@
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=1, stops=1, events=1, progress=901.6878754255158
+DEBUG: StopLogic: progress=901.7m target=1000.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=0.19662424914896837, Dest=0.6966242491489684, Alarm=2.0, Target=Switch Point
+Conflict Alarms: [{title: Wake Up!, body: Approaching: Final Home, allow: true, ts: 2025-12-10T21:25:55.695897}]
+DEBUG: TS: _onStop called
+DEBUG: TS: _onStop called
+00:00 +2: All tests passed!

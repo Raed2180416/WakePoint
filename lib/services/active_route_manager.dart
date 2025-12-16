@@ -9,7 +9,8 @@ class RouteSwitchEvent {
   final String fromKey;
   final String toKey;
   final DateTime at;
-  RouteSwitchEvent({required this.fromKey, required this.toKey, DateTime? at}) : at = at ?? DateTime.now();
+  RouteSwitchEvent({required this.fromKey, required this.toKey, DateTime? at})
+    : at = at ?? DateTime.now();
 }
 
 class ActiveRouteState {
@@ -34,13 +35,12 @@ class ActiveRouteState {
 class ActiveRouteManager {
   final RouteRegistry registry;
   final Duration sustainDuration;
-  final double switchMarginMeters; // candidate must be this much better in offset
+  final double
+  switchMarginMeters; // candidate must be this much better in offset
   final Duration postSwitchBlackout;
 
   String? _activeKey;
-  // removed: wall-clock based candidate since
   String? _candidateKey;
-  // removed: wall-clock based last switch time
 
   // Use monotonic timers to avoid wall-clock jumps affecting countdowns
   Stopwatch? _candidateTimer;
@@ -65,19 +65,35 @@ class ActiveRouteManager {
     // reset timers
     _candidateTimer?.stop();
     _candidateTimer = null;
-    _blackoutTimer = Stopwatch()..start(); // start blackout immediately on activation
+    _blackoutTimer =
+        Stopwatch()..start(); // start blackout immediately on activation
   }
 
   void ingestPosition(LatLng rawPosition) {
     if (_activeKey == null) return;
-    final active = registry.entries.firstWhere((e) => e.key == _activeKey, orElse: () => registry.entries.isNotEmpty ? registry.entries.first : throw StateError('No routes'));
+    final active = registry.entries.firstWhere(
+      (e) => e.key == _activeKey,
+      orElse:
+          () =>
+              registry.entries.isNotEmpty
+                  ? registry.entries.first
+                  : throw StateError('No routes'),
+    );
 
     // Snap to active route first
-  final snapActive = _snapTo(active, rawPosition);
-    registry.updateSessionState(active.key, lastSnapIndex: snapActive.segmentIndex, lastProgressMeters: snapActive.progressMeters);
+    final snapActive = _snapTo(active, rawPosition);
+    registry.updateSessionState(
+      active.key,
+      lastSnapIndex: snapActive.segmentIndex,
+      lastProgressMeters: snapActive.progressMeters,
+    );
 
     // Candidate search near current location
-    final candidates = registry.candidatesNear(rawPosition, radiusMeters: 1200, maxCandidates: 3);
+    final candidates = registry.candidatesNear(
+      rawPosition,
+      radiusMeters: 1200,
+      maxCandidates: 3,
+    );
     String bestKey = active.key;
     double bestOffset = snapActive.lateralOffsetMeters;
     SnapResult bestSnap = snapActive;
@@ -87,7 +103,8 @@ class ActiveRouteManager {
       if (s.lateralOffsetMeters + switchMarginMeters < bestOffset) {
         // Heading and progress consistency check (lightweight)
         final agree = _headingAgreement(c, s);
-        if (agree > 0.3) { // require minimal agreement
+        if (agree > 0.3) {
+          // require minimal agreement
           bestOffset = s.lateralOffsetMeters;
           bestSnap = s;
           bestKey = c.key;
@@ -97,14 +114,19 @@ class ActiveRouteManager {
 
     // Handle candidate selection with sustain and blackout
     final now = DateTime.now();
-    final inBlackout = _blackoutTimer != null && _blackoutTimer!.isRunning && _blackoutTimer!.elapsed < postSwitchBlackout;
+    final inBlackout =
+        _blackoutTimer != null &&
+        _blackoutTimer!.isRunning &&
+        _blackoutTimer!.elapsed < postSwitchBlackout;
     if (bestKey != active.key && !inBlackout) {
       if (_candidateKey != bestKey) {
         _candidateKey = bestKey;
         _candidateTimer?.stop();
         _candidateTimer = Stopwatch()..start();
       } else {
-        final elapsedOk = _candidateTimer != null && _candidateTimer!.elapsed >= sustainDuration;
+        final elapsedOk =
+            _candidateTimer != null &&
+            _candidateTimer!.elapsed >= sustainDuration;
         if (elapsedOk) {
           // Switch routes
           final fromKey = active.key;
@@ -113,7 +135,9 @@ class ActiveRouteManager {
           _candidateTimer?.stop();
           _candidateTimer = null;
           _blackoutTimer = Stopwatch()..start();
-          _switchCtrl.add(RouteSwitchEvent(fromKey: fromKey, toKey: bestKey, at: now));
+          _switchCtrl.add(
+            RouteSwitchEvent(fromKey: fromKey, toKey: bestKey, at: now),
+          );
         }
       }
     } else {
@@ -122,31 +146,60 @@ class ActiveRouteManager {
       _candidateTimer = null;
     }
 
-    final activeEntry = registry.entries.firstWhere((e) => e.key == _activeKey);
-    final progress = bestKey == active.key ? snapActive.progressMeters : bestSnap.progressMeters;
-    final remaining = (activeEntry.lengthMeters - progress).clamp(0.0, double.infinity);
+    // IMPORTANT: Do not mix candidate snap/progress with the active route metrics.
+    // Only use the candidate snap values after an actual switch has occurred.
+    final currentActiveKey = _activeKey!;
+    final activeEntry = registry.entries.firstWhere(
+      (e) => e.key == currentActiveKey,
+    );
+
+    final SnapResult snapForState;
+    if (currentActiveKey == active.key) {
+      snapForState = snapActive;
+    } else if (currentActiveKey == bestKey) {
+      // We just switched to the bestKey candidate.
+      snapForState = bestSnap;
+    } else {
+      // Fallback: recompute snap for whichever key is active.
+      snapForState = _snapTo(activeEntry, rawPosition);
+    }
+
+    final progress = snapForState.progressMeters;
+    final remaining = (activeEntry.lengthMeters - progress).clamp(
+      0.0,
+      double.infinity,
+    );
     double? pendingSecs;
     String? pendingKey;
-    final inBlackout2 = _blackoutTimer != null && _blackoutTimer!.isRunning && _blackoutTimer!.elapsed < postSwitchBlackout;
+    final inBlackout2 =
+        _blackoutTimer != null &&
+        _blackoutTimer!.isRunning &&
+        _blackoutTimer!.elapsed < postSwitchBlackout;
     if (_candidateKey != null && _candidateTimer != null && !inBlackout2) {
       final elapsed = _candidateTimer!.elapsed;
       final left = sustainDuration - elapsed;
       if (left > Duration.zero) {
         // Clamp to sustainDuration to avoid spikes from any anomalies
-        final leftMs = left.inMilliseconds.clamp(0, sustainDuration.inMilliseconds);
+        final leftMs = left.inMilliseconds.clamp(
+          0,
+          sustainDuration.inMilliseconds,
+        );
         pendingSecs = leftMs / 1000.0;
         pendingKey = _candidateKey;
       }
     }
-    _stateCtrl.add(ActiveRouteState(
-      activeKey: _activeKey!,
-      snapped: bestKey == active.key ? snapActive.snappedPoint : bestSnap.snappedPoint,
-      offsetMeters: bestKey == active.key ? snapActive.lateralOffsetMeters : bestSnap.lateralOffsetMeters,
-      progressMeters: progress,
-      remainingMeters: remaining,
-      pendingSwitchToKey: pendingKey,
-      pendingSwitchInSeconds: pendingSecs,
-    ));
+
+    _stateCtrl.add(
+      ActiveRouteState(
+        activeKey: currentActiveKey,
+        snapped: snapForState.snappedPoint,
+        offsetMeters: snapForState.lateralOffsetMeters,
+        progressMeters: progress,
+        remainingMeters: remaining,
+        pendingSwitchToKey: pendingKey,
+        pendingSwitchInSeconds: pendingSecs,
+      ),
+    );
   }
 
   SnapResult _snapTo(RouteEntry entry, LatLng p) {

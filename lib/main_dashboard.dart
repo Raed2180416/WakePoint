@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as dev;
+
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
+import 'config/playground_bridge.dart';
 import 'simulation_engine.dart'; // Import the engine
 
 void main() {
@@ -32,19 +35,59 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   GoogleMapController? _mapController;
-  final Set<Marker> _markers = {};
-  final Set<Polyline> _polylines = {};
+  Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
+
+  // Route Data State
+  List<Map<String, dynamic>>? _segments;
+
+  List<Map<String, dynamic>>? _routeEvents; // For Alarm Markers
+
+  // Track last loaded route signature to avoid resetting the map on repeated broadcasts.
+  String? _lastRouteSignature;
+
+  String _computeRouteSignature(List<LatLng> pts, String? dest) {
+    if (pts.isEmpty) return dest ?? '';
+    double sum = 0;
+    // Sample points to avoid huge strings but remain robust against small changes.
+    final step = (pts.length / 20).ceil().clamp(1, 50);
+    for (int i = 0; i < pts.length; i += step) {
+      sum += pts[i].latitude.toStringAsFixed(5).hashCode;
+      sum += pts[i].longitude.toStringAsFixed(5).hashCode;
+    }
+    final first = pts.first;
+    final last = pts.last;
+    return '${dest ?? ''}|${pts.length}|${first.latitude.toStringAsFixed(6)},${first.longitude.toStringAsFixed(6)}|${last.latitude.toStringAsFixed(6)},${last.longitude.toStringAsFixed(6)}|$sum';
+  }
 
   // WebSocket
   html.WebSocket? _socket;
   bool _connected = false;
   String _status = 'Disconnected';
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  DateTime? _lastPingReceived;
+
+  String _resolveRelayUrl() {
+    final override = Uri.base.queryParameters['relay'];
+    if (override != null && override.isNotEmpty) {
+      return override;
+    }
+    final configured = PlaygroundBridgeConfig.relayUrl;
+    if (configured.startsWith('ws://') &&
+        html.window.location.protocol == 'https:') {
+      return configured.replaceFirst('ws://', 'wss://');
+    }
+    return configured;
+  }
 
   // Metrics
   String _metricDistance = '---';
   String _metricTime = '---';
   String _metricStops = '---';
+
   String _metricAlarm = '---';
+  String _metricDebug = '---';
 
   // Advanced Features State
   bool _gpsEnabled = true;
@@ -90,6 +133,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _broadcastPosition();
       }
     });
+
+    // Connection health monitoring (check every 30 seconds)
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (_lastPingReceived != null) {
+        final timeSinceLastPing = DateTime.now().difference(_lastPingReceived!);
+        if (timeSinceLastPing.inSeconds > 90 && _connected) {
+          // No ping received for 90 seconds, trigger reconnection
+          _logEvent(
+            'Connection timeout (no ping for ${timeSinceLastPing.inSeconds}s)',
+          );
+          setState(() {
+            _connected = false;
+            _status = 'Timeout';
+          });
+          _socket?.close();
+        }
+      }
+    });
   }
 
   void _logEvent(String message) {
@@ -103,19 +164,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _loopTimer?.cancel();
+    _reconnectTimer?.cancel();
     _socket?.close();
     super.dispose();
   }
 
   void _connectToRelay() {
+    if (_socket != null && _socket!.readyState == html.WebSocket.OPEN) return;
+
     try {
-      _socket = html.WebSocket('ws://localhost:8080');
+      _socket = html.WebSocket(_resolveRelayUrl());
+
       _socket!.onOpen.listen((_) {
         setState(() {
           _connected = true;
-          _status = 'Connected to Relay';
+          _status = 'Connected';
+          _reconnectAttempts = 0; // Reset on successful connection
+          _lastPingReceived = DateTime.now();
         });
         _logEvent('Connected to Relay Server');
+        _reconnectTimer?.cancel(); // Cancel any pending reconnect
       });
 
       _socket!.onMessage.listen((event) {
@@ -128,16 +196,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _status = 'Disconnected';
         });
         _logEvent('Disconnected from Relay');
+        _scheduleReconnect();
+      });
+
+      _socket!.onError.listen((error) {
+        setState(() {
+          _connected = false;
+          _status = 'Error: $error';
+        });
+        _logEvent('Connection Error: $error');
+        _scheduleReconnect();
       });
     } catch (e) {
       setState(() => _status = 'Error: $e');
       _logEvent('Connection Error: $e');
+      _scheduleReconnect();
     }
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+
+    // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
+    final delay = Duration(seconds: (1 << _reconnectAttempts).clamp(1, 30));
+
+    _logEvent('Reconnecting in ${delay.inSeconds}s...');
+    _reconnectTimer = Timer(delay, () {
+      _reconnectAttempts++;
+      _connectToRelay();
+    });
   }
 
   void _handleMessage(String data) {
     try {
       final json = jsonDecode(data);
+
+      // Handle ping from server
+      if (json['type'] == 'ping') {
+        _lastPingReceived = DateTime.now();
+        // Send pong response
+        if (_socket != null && _socket!.readyState == html.WebSocket.OPEN) {
+          _socket!.send(
+            jsonEncode({
+              'type': 'pong',
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            }),
+          );
+        }
+        return;
+      }
 
       if (json['type'] == 'route_update') {
         final List<dynamic> pointsJson = json['points'];
@@ -148,33 +255,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             (json['segments'] as List?)?.cast<Map<String, dynamic>>();
         final switchPoints =
             (json['switch_points'] as List?)?.cast<Map<String, dynamic>>();
+        final events = (json['events'] as List?)?.cast<Map<String, dynamic>>();
 
         final destName = json['destinationName'] as String?;
         _currentDestinationName = destName;
+        final sig = _computeRouteSignature(points, destName);
 
         _logEvent(
-          'Route received: ${points.length} pts, ${segments?.length} segs',
+          'RX Route: ${points.length} pts, ${segments?.length} segs, ${switchPoints?.length} switches',
         );
+        _logEvent('Keys: ${json.keys.toList()}'); // Debug keys
+        final isSameRoute = _lastRouteSignature == sig;
 
         setState(() {
-          _engine.loadRoute(points);
-          _updateMapRoute(
-            points,
-            segments: segments,
-            switchPoints: switchPoints,
-          );
-          // Move camera to start
-          if (points.isNotEmpty) {
-            _mapController?.animateCamera(
-              CameraUpdate.newLatLngZoom(points.first, 14),
-            );
-          }
+          _segments = segments; // Store for alarm updates
+          _routeEvents = events;
 
-          // Reroute Latency Check
-          if (_rerouteStartTime != null) {
-            _rerouteLatencyMs =
-                DateTime.now().difference(_rerouteStartTime!).inMilliseconds;
-            _rerouteStartTime = null; // Reset
+          if (!isSameRoute) {
+            _engine.loadRoute(points);
+            _updateMapRoute(
+              points,
+              segments: segments,
+              switchPoints: switchPoints,
+              routeEvents: events,
+            );
+            _lastRouteSignature = sig;
+
+            // Move camera to start only when the route actually changes.
+            if (points.isNotEmpty) {
+              _mapController?.animateCamera(
+                CameraUpdate.newLatLngZoom(points.first, 14),
+              );
+            }
+
+            // Reroute Latency Check
+            if (_rerouteStartTime != null) {
+              _rerouteLatencyMs =
+                  DateTime.now().difference(_rerouteStartTime!).inMilliseconds;
+              _rerouteStartTime = null; // Reset
+            }
+          } else {
+            // Same route rebroadcast: just refresh alarms/segments without resetting camera.
+            _updateAlarmMarkers();
           }
         });
       } else if (json['type'] == 'app_state') {
@@ -190,7 +312,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
 
           if (json['alarm_mode'] != null) {
+            _currentAlarmMode = json['alarm_mode'] as String;
+            _currentAlarmValue = (json['alarm_value'] as num).toDouble();
             _metricAlarm = '${json['alarm_mode']} (${json['alarm_value']})';
+            _updateAlarmMarkers();
+          }
+
+          if (json['remaining_stops'] != null) {
+            final double stops = (json['remaining_stops'] as num).toDouble();
+            _metricStops = stops.toStringAsFixed(1);
           }
 
           if (json['alarm_fired'] == true) {
@@ -200,6 +330,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Timer(const Duration(seconds: 5), () {
               if (mounted) setState(() => _alarmTriggered = false);
             });
+          }
+
+          if (json['debug_info'] != null) {
+            final info = json['debug_info'] as Map<String, dynamic>;
+            _metricDebug =
+                'Bounds: ${info['stepBounds']}, Stops: ${info['stepStops']}, Events: ${info['routeEvents']}';
           }
         });
       }
@@ -225,6 +361,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _broadcastAlarmReset() {
+    dev.log(
+      'DEBUG: main_dashboard - _broadcastAlarmReset called',
+      name: 'MainDashboard',
+    );
+    if (_socket != null && _socket!.readyState == html.WebSocket.OPEN) {
+      final msg = jsonEncode({
+        'type': 'reset_alarm_state',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+      _socket!.send(msg);
+      dev.log(
+        'DEBUG: main_dashboard - Sent alarm state reset message',
+        name: 'MainDashboard',
+      );
+      // Also reset local alarm triggered flag
+      setState(() => _alarmTriggered = false);
+    } else {
+      dev.log(
+        'DEBUG: main_dashboard - WebSocket not connected, cannot send reset',
+        name: 'MainDashboard',
+      );
+    }
+  }
+
   void _saveCurrentRoute() {
     if (_engine.route.isEmpty) return;
     final points = _engine.route;
@@ -240,17 +401,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
 
-    final routeData = {
+    final routeData = <String, dynamic>{
       'name': name,
       'points':
           points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
+      // Save alarm parameters for re-running simulations with same settings
+      if (_currentAlarmMode != null) 'alarmMode': _currentAlarmMode,
+      if (_currentAlarmValue != null) 'alarmValue': _currentAlarmValue,
+      // Save segments for consistent visual display when loading
+      if (_segments != null && _segments!.isNotEmpty) 'segments': _segments,
+      // Save route events for alarm position markers
+      if (_routeEvents != null && _routeEvents!.isNotEmpty)
+        'events': _routeEvents,
     };
 
     setState(() {
       _savedRoutes.add(routeData);
     });
     html.window.localStorage['saved_routes'] = jsonEncode(_savedRoutes);
-    _logEvent('Route saved: $name');
+    _logEvent(
+      'Route saved: $name (mode: $_currentAlarmMode, value: $_currentAlarmValue)',
+    );
   }
 
   void _deleteRoute(int index) {
@@ -279,16 +450,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final List<dynamic> pointsJson = routeData['points'];
     final List<LatLng> points =
         pointsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
+
+    // Restore saved segments if available
+    final segments =
+        (routeData['segments'] as List?)?.cast<Map<String, dynamic>>();
+    final events = (routeData['events'] as List?)?.cast<Map<String, dynamic>>();
+
+    // Restore saved alarm parameters if available
+    final savedAlarmMode = routeData['alarmMode'] as String?;
+    final savedAlarmValue = routeData['alarmValue'] as num?;
+
     setState(() {
       _engine.loadRoute(points);
-      _updateMapRoute(points);
+      _segments = segments;
+      _routeEvents = events;
+
+      // Restore alarm display
+      if (savedAlarmMode != null && savedAlarmValue != null) {
+        _currentAlarmMode = savedAlarmMode;
+        _currentAlarmValue = savedAlarmValue.toDouble();
+        _metricAlarm = '$savedAlarmMode ($savedAlarmValue)';
+      }
+
+      _updateMapRoute(points, segments: segments, routeEvents: events);
       if (points.isNotEmpty) {
         _mapController?.animateCamera(
           CameraUpdate.newLatLngZoom(points.first, 14),
         );
       }
     });
-    _logEvent('Loaded saved route: ${routeData['name']}');
+    _logEvent(
+      'Loaded saved route: ${routeData['name']} (mode: $savedAlarmMode, value: $savedAlarmValue)',
+    );
   }
 
   void _forceDeviation() {
@@ -350,10 +543,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<LatLng> points, {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
+    List<Map<String, dynamic>>? routeEvents,
   }) {
     setState(() {
+      _segments = segments;
+      _routeEvents = routeEvents;
       _polylines.clear();
-      _markers.removeWhere((m) => m.markerId.value.startsWith('switch_'));
+      _polylines.clear();
+      // Keep alarm markers, clear route markers?
+      // Rebuild specific markers below
+      _markers.removeWhere((m) => !m.markerId.value.startsWith('alarm_pred_'));
 
       // Draw Deviation Route (Grey Dashed) if exists
       if (_deviationRoute.isNotEmpty) {
@@ -370,10 +569,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       if (segments != null && segments.isNotEmpty) {
-        int transitIndex = 0;
+        final transitColorMap = <String, Color>{};
+        const transitColors = <Color>[Colors.green, Colors.purple];
+        int transitColorIndex = 0;
+        int transitIndexFallback = 0;
         for (int i = 0; i < segments.length; i++) {
           final seg = segments[i];
           final mode = seg['mode'] as String;
+          print(
+            'Dash: Drawing seg $i mode=$mode pts=${(seg['points'] as List).length}',
+          );
           final segPoints =
               (seg['points'] as List)
                   .map((p) => LatLng(p['lat'], p['lng']))
@@ -389,9 +594,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               patterns = []; // Solid
               break;
             case 'transit':
-              // Alternate Green/Purple for Metro lines
-              color = transitIndex % 2 == 0 ? Colors.green : Colors.purple;
-              transitIndex++;
+              // Deterministic mapping by transit line label (aligns with app intent)
+              final rawLine = seg['transit_line'];
+              final line = rawLine is String ? rawLine.trim() : '';
+              if (line.isNotEmpty) {
+                if (!transitColorMap.containsKey(line)) {
+                  transitColorMap[line] =
+                      transitColors[transitColorIndex % transitColors.length];
+                  transitColorIndex++;
+                }
+                color = transitColorMap[line]!;
+              } else {
+                // Fallback: alternate when no line label is available
+                color =
+                    transitIndexFallback % 2 == 0
+                        ? Colors.green
+                        : Colors.purple;
+                transitIndexFallback++;
+              }
               patterns = []; // Solid
               break;
             case 'walking':
@@ -433,14 +653,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
               markerId: MarkerId('switch_$i'),
               position: LatLng(sp['lat'], sp['lng']),
               icon: BitmapDescriptor.defaultMarkerWithHue(
-                sp['type'] == 'boarding'
-                    ? BitmapDescriptor.hueOrange
-                    : BitmapDescriptor.hueViolet,
+                BitmapDescriptor
+                    .hueBlue, // User requested Blue for switch points
               ),
-              infoWindow: InfoWindow(title: sp['label']),
+              infoWindow: InfoWindow(title: sp['label'] ?? 'Switch Point'),
             ),
           );
         }
+      }
+
+      // Add Start and End Markers (Red)
+      if (points.isNotEmpty) {
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('route_start'),
+            position: points.first,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+            infoWindow: const InfoWindow(title: 'Start'),
+          ),
+        );
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('route_end'),
+            position: points.last,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+            infoWindow: const InfoWindow(title: 'Destination'),
+          ),
+        );
       }
     });
   }
@@ -453,8 +696,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Marker(
           markerId: const MarkerId('ghost'),
           position: _engine.currentPosition!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueYellow,
+          ), // Yellow for user
           infoWindow: const InfoWindow(title: 'Simulated User'),
+          zIndex: 10, // Ensure user is on top
         ),
       );
     });
@@ -469,7 +715,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GeoWake Playground'),
+        title: const Text('GeoWake Dashboard v2 (Active)'),
         actions: [
           Center(
             child: Padding(
@@ -486,225 +732,317 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Left Panel: Controls
           Container(
             width: 300,
             color: Colors.grey[900],
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Simulation Controls',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        _engine.isPlaying ? Icons.pause : Icons.play_arrow,
-                      ),
-                      onPressed: () {
-                        setState(() => _engine.isPlaying = !_engine.isPlaying);
-                        _logEvent(
-                          _engine.isPlaying
-                              ? 'Simulation Resumed'
-                              : 'Simulation Paused',
-                        );
-                      },
-                    ),
-                    Expanded(
-                      child: Slider(
-                        value: _engine.speedMultiplier,
-                        min: 1.0,
-                        max: 200.0, // Increased to 200x for 2hr -> 1min
-                        divisions: 199,
-                        label: '${_engine.speedMultiplier.toStringAsFixed(0)}x',
-                        onChanged:
-                            (v) => setState(() => _engine.speedMultiplier = v),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Progress Control
-                const Text('Progress'),
-                Slider(
-                  value: _engine.progress,
-                  onChanged: (v) {
-                    setState(() {
-                      _engine.seek(v);
-                      _updateGhostMarker();
-                      _broadcastPosition();
-                    });
-                  },
-                  onChangeStart: (_) {
-                    // Optional: Pause while scrubbing
-                    _wasPlayingBeforeScrub = _engine.isPlaying;
-                    setState(() => _engine.isPlaying = false);
-                  },
-                  onChangeEnd: (_) {
-                    if (_wasPlayingBeforeScrub) {
-                      setState(() => _engine.isPlaying = true);
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                // Chaos Controls
-                const Text(
-                  'Chaos Engineering',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('GPS Signal'),
-                    Switch(
-                      value: _gpsEnabled,
-                      onChanged: (v) {
-                        setState(() => _gpsEnabled = v);
-                        _logEvent('GPS Signal ${v ? "Restored" : "Lost"}');
-                      },
-                      activeColor: Colors.green,
-                      inactiveThumbColor: Colors.red,
-                    ),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: _forceDeviation,
-                  icon: const Icon(Icons.fork_right),
-                  label: const Text('Force Deviation'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Simulation Controls',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _engine.isPlaying ? Icons.pause : Icons.play_arrow,
+                        ),
+                        onPressed: () {
+                          setState(
+                            () => _engine.isPlaying = !_engine.isPlaying,
+                          );
+                          _logEvent(
+                            _engine.isPlaying
+                                ? 'Simulation Resumed'
+                                : 'Simulation Paused',
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          setState(() {
+                            _engine.currentPosition = null;
+                            _engine.seek(0.0);
+                            _engine.isPlaying = false;
+                            // Clear ghosts and alarm markers
+                            _markers.removeWhere(
+                              (m) =>
+                                  m.markerId.value == 'ghost' ||
+                                  m.markerId.value.startsWith('alarm_'),
+                            );
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Speed Control
+                  const Text('Speed Multiplier'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: _engine.speedMultiplier,
+                          min: 1.0,
+                          max: 200.0, // Increased to 200x for 2hr -> 1min
+                          divisions: 199,
+                          label:
+                              '${_engine.speedMultiplier.toStringAsFixed(0)}x',
+                          onChanged:
+                              (v) =>
+                                  setState(() => _engine.speedMultiplier = v),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Progress Control
+                  const Text('Progress'),
+                  Slider(
+                    value: _engine.progress,
+                    onChanged: (v) {
+                      final oldProgress = _engine.progress;
+                      setState(() {
+                        _engine.seek(v);
+                        _updateGhostMarker();
+                        _broadcastPosition();
+                      });
+                      // If progress moved backwards significantly, request alarm state reset
+                      if (v < oldProgress - 0.05) {
+                        _broadcastAlarmReset();
+                      }
+                    },
+                    onChangeStart: (_) {
+                      // Optional: Pause while scrubbing
+                      _wasPlayingBeforeScrub = _engine.isPlaying;
+                      setState(() => _engine.isPlaying = false);
+                    },
+                    onChangeEnd: (_) {
+                      if (_wasPlayingBeforeScrub) {
+                        setState(() => _engine.isPlaying = true);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // Chaos Controls
+                  const Text(
+                    'Chaos Engineering',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('GPS Signal'),
+                      Switch(
+                        value: _gpsEnabled,
+                        onChanged: (v) {
+                          setState(() => _gpsEnabled = v);
+                          _logEvent('GPS Signal ${v ? "Restored" : "Lost"}');
+                        },
+                        activeColor: Colors.green,
+                        inactiveThumbColor: Colors.red,
+                      ),
+                    ],
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _forceDeviation,
+                    icon: const Icon(Icons.fork_right),
+                    label: const Text('Force Deviation'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                  ),
 
-                const SizedBox(height: 20),
-                // Route Management
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Route Management',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 20),
+                  // Route Management
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Route Management',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.save),
+                        onPressed: _saveCurrentRoute,
+                        tooltip: 'Save Current Route',
+                      ),
+                    ],
+                  ),
+                  if (_savedRoutes.isNotEmpty)
+                    SizedBox(
+                      height: 150,
+                      child: ListView.builder(
+                        itemCount: _savedRoutes.length,
+                        itemBuilder: (ctx, i) {
+                          final route = _savedRoutes[i];
+                          return ListTile(
+                            dense: true,
+                            title: Text(route['name']),
+                            // Play = Load as Active
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _deleteRoute(i),
+                                  tooltip: 'Delete Route',
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.fork_right,
+                                    size: 16,
+                                    color: Colors.orange,
+                                  ),
+                                  onPressed: () => _loadDeviationRoute(route),
+                                  tooltip: 'Load as Deviation',
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.play_arrow,
+                                    size: 16,
+                                    color: Colors.green,
+                                  ),
+                                  onPressed: () => _loadRoute(route),
+                                  tooltip: 'Load as Active',
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.save),
-                      onPressed: _saveCurrentRoute,
-                      tooltip: 'Save Current Route',
+
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Alarm Metrics',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Divider(),
+                  _buildMetric('Distance', _metricDistance),
+                  _buildMetric('Time', _metricTime),
+                  _buildMetric('Stops', _metricStops),
+
+                  _buildMetric('Alarm', _metricAlarm),
+                  _buildMetric('Debug', _metricDebug),
+                  if (_rerouteLatencyMs != null)
+                    _buildMetric('Reroute Latency', '${_rerouteLatencyMs}ms'),
+
+                  if (_alarmTriggered)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.red,
+                      child: const Text(
+                        'ALARM TRIGGERED!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ],
-                ),
-                if (_savedRoutes.isNotEmpty)
+
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Event Log',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Divider(),
+                  // Fixed height event log
                   SizedBox(
-                    height: 150,
+                    height: 200,
                     child: ListView.builder(
-                      itemCount: _savedRoutes.length,
+                      itemCount: _eventLogs.length,
                       itemBuilder: (ctx, i) {
-                        final route = _savedRoutes[i];
-                        return ListTile(
-                          dense: true,
-                          title: Text(route['name']),
-                          // Play = Load as Active
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  size: 16,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () => _deleteRoute(i),
-                                tooltip: 'Delete Route',
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.fork_right,
-                                  size: 16,
-                                  color: Colors.orange,
-                                ),
-                                onPressed: () => _loadDeviationRoute(route),
-                                tooltip: 'Load as Deviation',
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.play_arrow,
-                                  size: 16,
-                                  color: Colors.green,
-                                ),
-                                onPressed: () => _loadRoute(route),
-                                tooltip: 'Load as Active',
-                              ),
-                            ],
+                        return Text(
+                          _eventLogs[i],
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
                           ),
                         );
                       },
                     ),
                   ),
-
-                const SizedBox(height: 20),
-                const Text(
-                  'Alarm Metrics',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                _buildMetric('Distance', _metricDistance),
-                _buildMetric('Time', _metricTime),
-                _buildMetric('Stops', _metricStops),
-                _buildMetric('Alarm', _metricAlarm),
-                if (_rerouteLatencyMs != null)
-                  _buildMetric('Reroute Latency', '${_rerouteLatencyMs}ms'),
-
-                if (_alarmTriggered)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: Colors.red,
-                    child: const Text(
-                      'ALARM TRIGGERED!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-
-                const Spacer(),
-                const Text(
-                  'Event Log',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _eventLogs.length,
-                    itemBuilder: (ctx, i) {
-                      return Text(
-                        _eventLogs[i],
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // Right Panel: Map
           Expanded(
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _demoRoute.first,
-                zoom: 14,
-              ),
-              onMapCreated: (ctrl) => _mapController = ctrl,
-              markers: _markers,
-              polylines: _polylines,
+            child: Stack(
+              children: [
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _demoRoute.first,
+                    zoom: 14,
+                  ),
+                  onMapCreated: (ctrl) => _mapController = ctrl,
+                  markers: _markers,
+                  polylines: _polylines,
+                ),
+                // Route legend overlay (match MapTrackingScreen)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  right: 12,
+                  child: Material(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 6,
+                            alignment: WrapAlignment.start,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: const [
+                              _LegendItem(
+                                color: Colors.blue,
+                                dashed: false,
+                                label: 'Driving',
+                              ),
+                              _LegendItem(
+                                color: Colors.blue,
+                                dashed: true,
+                                label: 'Walking',
+                              ),
+                              _LegendItem(
+                                color: Colors.green,
+                                dashed: false,
+                                label: 'Metro Line A',
+                              ),
+                              _LegendItem(
+                                color: Colors.purple,
+                                dashed: false,
+                                label: 'Metro Line B',
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -727,4 +1065,195 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  // --- Helper Methods ---
+
+  void _updateAlarmMarkers() {
+    setState(() {
+      _markers.removeWhere((m) => m.markerId.value.startsWith('alarm_pred_'));
+    });
+    if (_currentAlarmMode == null ||
+        _currentAlarmValue == null ||
+        _routeEvents == null) {
+      // Fallback for purely distance based legacy/test routes without events
+      if ((_routeEvents == null || _routeEvents!.isEmpty) &&
+          _segments != null) {
+        // Keep existing segment-based fallback or just return?
+        // Let's keep a minimal fallback for walking start
+      }
+      if (_routeEvents == null) return;
+    }
+
+    print(
+      'DashDebug: Updating Alarm Markers with ${_routeEvents!.length} events',
+    );
+
+    for (int i = 0; i < _routeEvents!.length; i++) {
+      final ev = _routeEvents![i];
+      final type = ev['type'];
+      final label = ev['label'];
+      final lat = ev['lat'];
+      final lng = ev['lng'];
+
+      if (lat == null || lng == null) continue;
+
+      String title = 'Alarm Point';
+      String snippet = label ?? '';
+      String triggerNote = '';
+
+      // Logic for Marker Title based on Alarm Mode & Event Type
+      if (_currentAlarmMode == 'distance') {
+        // Distance mode: Everything is "N km before"
+        title = type == 'transfer' ? 'Transfer Point' : 'Switch Point';
+        triggerNote = 'Alarm triggers ${_currentAlarmValue}km before';
+      } else if (_currentAlarmMode == 'stops') {
+        // Stops mode
+        if (type == 'transfer') {
+          title = 'Transfer Point';
+          triggerNote =
+              'Alarm triggers ${_currentAlarmValue?.toInt()} stops before';
+        } else if (type == 'mode_change') {
+          if (label.toString().contains('Board')) {
+            // Walking -> Transit: use distance fallback
+            title = 'Boarding Point';
+            triggerNote =
+                'Alarm triggers ~500m × ${_currentAlarmValue?.toInt()} before';
+          } else if (label.toString().contains('Start walking')) {
+            // Transit -> Walk (Alight)
+            title = 'Alight Point';
+            triggerNote =
+                'Alarm triggers ${_currentAlarmValue?.toInt()} stops before';
+          } else {
+            title = 'Switch Point';
+            triggerNote = 'Alarm triggers before this point';
+          }
+        }
+      } else {
+        // Time mode or unknown
+        title = type == 'transfer' ? 'Transfer Point' : 'Switch Point';
+        triggerNote = 'Alarm triggers before this point';
+      }
+
+      // Combine label and trigger note in snippet
+      if (snippet.isNotEmpty && triggerNote.isNotEmpty) {
+        snippet = '$snippet\n$triggerNote';
+      } else if (triggerNote.isNotEmpty) {
+        snippet = triggerNote;
+      }
+
+      _addPredictedMarker(
+        LatLng(lat, lng),
+        title,
+        idSuffix: '_ev_$i',
+        snippet: snippet,
+        hue: BitmapDescriptor.hueViolet,
+      );
+    }
+
+    // Always add a "Final Destination" distance alarm marker if purely walking/driving?
+    // StopLogicEngine handles the logical triggering.
+    // Dashboard just needs to show WHERE the trigger happens.
+    // For "Switch Alarm", the marker is AT the switch point.
+    // The "trigger" happens before it.
+    // The previous logic calculated the "trigger point" (1km before).
+    // The user wants to see the "Predicted Alarm Marker".
+    // If it's 1km before, I should calculate it along the path.
+    // But I don't have the path easily map-able to events here without complex logic.
+    // The previous logic `_getPointAtDistanceFromEnd` worked on segments.
+    // But segments were missing.
+
+    // COMPROMISE: Place the marker AT the Switch Point (Violet),
+    // but label it "Alarm triggers 1km before" or "N stops before".
+    // This is clearer than guessing a point on a line that might be wrong.
+    // User feedback: "translucent marker... only shows up for the first one".
+    // If I place it AT the station, they know that's the target.
+    // (Previously I tried to place it 1km BEFORE).
+
+    // Let's stick to placing it AT the target for now, as calculating "1km back from event N"
+    // requires mapping Event N to a specific Polyline Segment and traversing back.
+    // Given the segment alignment issues, placing at Target is safer/robust.
+  }
+
+  void _addPredictedMarker(
+    LatLng pos,
+    String title, {
+    String idSuffix = '',
+    String? snippet,
+    double hue = BitmapDescriptor.hueYellow,
+  }) {
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: MarkerId('alarm_pred$idSuffix'),
+          position: pos,
+          icon: BitmapDescriptor.defaultMarkerWithHue(hue),
+          alpha: 0.7,
+          infoWindow: InfoWindow(title: title, snippet: snippet),
+        ),
+      );
+    });
+  }
+
+  // Add state variables
+  String? _currentAlarmMode;
+  double? _currentAlarmValue;
+}
+
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final bool dashed;
+  final String label;
+  const _LegendItem({
+    required this.color,
+    required this.dashed,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomPaint(
+          painter: _LineSamplePainter(color: color, dashed: dashed),
+          size: const Size(28, 6),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+      ],
+    );
+  }
+}
+
+class _LineSamplePainter extends CustomPainter {
+  final Color color;
+  final bool dashed;
+  _LineSamplePainter({required this.color, required this.dashed});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = color
+          ..strokeWidth = 4
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
+    final y = size.height / 2;
+    if (!dashed) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    } else {
+      const double dashWidth = 8.0;
+      const double dashSpace = 6.0;
+      double x = 0.0;
+      while (x < size.width) {
+        final double x2 =
+            (x + dashWidth) > size.width ? size.width : (x + dashWidth);
+        canvas.drawLine(Offset(x, y), Offset(x2, y), paint);
+        x += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

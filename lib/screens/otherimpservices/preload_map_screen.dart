@@ -16,9 +16,16 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
   bool _isMapReady = false;
   Timer? _handoffTimer;
 
+  String get _nextRoute =>
+      (widget.arguments['nextRoute'] as String?) ?? '/mapTracking';
+  Object? get _nextArgs => widget.arguments['nextArgs'];
+
   @override
   Widget build(BuildContext context) {
-    dev.log("PreloadMapScreen arguments: ${widget.arguments.toString()}", name: "PreloadMapScreen");
+    dev.log(
+      "PreloadMapScreen arguments: ${widget.arguments.toString()}",
+      name: "PreloadMapScreen",
+    );
     return Scaffold(
       body: Stack(
         children: [
@@ -37,18 +44,36 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
               if (!_isMapReady) {
                 if (!mounted) return;
                 setState(() => _isMapReady = true);
-                dev.log("PreloadMapScreen: Map is ready.", name: "PreloadMapScreen");
-                _handoffTimer = Timer(const Duration(milliseconds: 700), () async {
-                  if (!mounted) return;
-                  Navigator.pushReplacementNamed(context, '/mapTracking', arguments: widget.arguments);
-                });
+                dev.log(
+                  "PreloadMapScreen: Map is ready.",
+                  name: "PreloadMapScreen",
+                );
+                _handoffTimer = Timer(
+                  const Duration(milliseconds: 700),
+                  () async {
+                    if (!mounted) return;
+
+                    // Default behavior remains: hand off to MapTracking with the same args.
+                    if (_nextRoute == '/mapTracking' && _nextArgs == null) {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        _nextRoute,
+                        arguments: widget.arguments,
+                      );
+                    } else {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        _nextRoute,
+                        arguments: _nextArgs,
+                      );
+                    }
+                  },
+                );
               }
             },
             myLocationEnabled: false,
-            zoomControlsEnabled: false,
           ),
-          if (!_isMapReady)
-            const Center(child: CircularProgressIndicator()),
+          if (!_isMapReady) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );

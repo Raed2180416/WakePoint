@@ -16,6 +16,8 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:geowake2/services/api_client.dart';
 // import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
+import 'package:geowake2/services/transfer_utils.dart';
+import 'package:geowake2/services/tracking_state_store.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -452,7 +454,179 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
       }
 
+      // Stops-mode validation: block invalid values before tracking starts.
+      // Rule: stops threshold must be strictly less than the stops to the next switch point.
+      if (_metroMode && alarmMode == 'stops') {
+        dev.log(
+          'DEBUG: homescreen - validating stops threshold: $alarmValue',
+          name: 'HomeScreen',
+        );
+        try {
+          final events = TransferUtils.buildRouteEvents(directions);
+          final nextSwitch =
+              events
+                  .where(
+                    (e) =>
+                        (e.type == 'transfer' || e.type == 'mode_change') &&
+                        e.meters > 1.0,
+                  )
+                  .toList()
+                ..sort((a, b) => a.meters.compareTo(b.meters));
+
+          if (nextSwitch.isNotEmpty) {
+            final nextEvMeters = nextSwitch.first.meters;
+
+            // Compute "virtual stops" to next switch:
+            // - TRANSIT: use num_stops
+            // - Non-transit: ~500m == 1 stop (for realistic non-metro legs)
+            double stopsToNext = 0.0;
+            try {
+              final routes = (directions['routes'] as List?) ?? const [];
+              if (routes.isNotEmpty) {
+                final route = routes.first as Map<String, dynamic>;
+                final legs = (route['legs'] as List?) ?? const [];
+                double cumM = 0.0;
+                for (final leg in legs) {
+                  final steps =
+                      (leg as Map<String, dynamic>)['steps'] as List? ??
+                      const [];
+                  for (final s in steps) {
+                    final step = s as Map<String, dynamic>;
+                    final dist =
+                        ((step['distance'] as Map<String, dynamic>?)?['value'])
+                            as num?;
+                    final stepMeters = (dist ?? 0).toDouble();
+                    final mode = step['travel_mode']?.toString().toUpperCase();
+
+                    final nextCum = cumM + stepMeters;
+                    final cutMeters =
+                        (nextEvMeters <= nextCum)
+                            ? (nextEvMeters - cumM).clamp(0.0, stepMeters)
+                            : stepMeters;
+
+                    if (cutMeters > 0.0) {
+                      if (mode == 'TRANSIT') {
+                        final td =
+                            step['transit_details'] as Map<String, dynamic>?;
+                        final ns = td != null ? td['num_stops'] as num? : null;
+                        if (ns != null && stepMeters > 0.0) {
+                          // Scale stops proportionally if we cut inside the step.
+                          stopsToNext +=
+                              ns.toDouble() * (cutMeters / stepMeters);
+                        }
+                      } else {
+                        stopsToNext += cutMeters / 500.0;
+                      }
+                    }
+
+                    cumM = nextCum;
+                    if (cumM >= nextEvMeters) break;
+                  }
+                  if (cumM >= nextEvMeters) break;
+                }
+              }
+            } catch (_) {}
+
+            if (stopsToNext.isFinite && alarmValue >= stopsToNext) {
+              dev.log(
+                'DEBUG: homescreen - stops validation failed: value $alarmValue >= stopsToNext $stopsToNext',
+                name: 'HomeScreen',
+              );
+              _showErrorDialog(
+                'Invalid stops setting',
+                'Your stops value must be less than the stops to the next switch point (≈${stopsToNext.toStringAsFixed(1)}).',
+              );
+              setState(() {
+                _isTracking = false;
+                _isLoading = false;
+              });
+              return;
+            }
+          } else {
+            // No switch event found - validate against total stops in route
+            double totalStops = 0.0;
+            try {
+              final routes = (directions['routes'] as List?) ?? const [];
+              if (routes.isNotEmpty) {
+                final route = routes.first as Map<String, dynamic>;
+                final legs = (route['legs'] as List?) ?? const [];
+                for (final leg in legs) {
+                  final steps =
+                      (leg as Map<String, dynamic>)['steps'] as List? ??
+                      const [];
+                  for (final s in steps) {
+                    final step = s as Map<String, dynamic>;
+                    final dist =
+                        ((step['distance'] as Map<String, dynamic>?)?['value'])
+                            as num?;
+                    final stepMeters = (dist ?? 0).toDouble();
+                    final mode = step['travel_mode']?.toString().toUpperCase();
+
+                    if (mode == 'TRANSIT') {
+                      final td =
+                          step['transit_details'] as Map<String, dynamic>?;
+                      final ns = td != null ? td['num_stops'] as num? : null;
+                      if (ns != null) {
+                        totalStops += ns.toDouble();
+                      }
+                    } else {
+                      totalStops += stepMeters / 500.0;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+
+            if (totalStops.isFinite &&
+                totalStops > 0 &&
+                alarmValue >= totalStops) {
+              dev.log(
+                'DEBUG: homescreen - total stops validation failed: value $alarmValue >= totalStops $totalStops',
+                name: 'HomeScreen',
+              );
+              _showErrorDialog(
+                'Invalid stops setting',
+                'Your stops value (${alarmValue.toStringAsFixed(0)}) must be less than the total stops in route (≈${totalStops.toStringAsFixed(1)}).',
+              );
+              setState(() {
+                _isTracking = false;
+                _isLoading = false;
+              });
+              return;
+            }
+          }
+        } catch (e) {
+          dev.log(
+            'Stops-mode validation failed (non-blocking): $e',
+            name: 'HomeScreen',
+          );
+        }
+      }
+
       // 1. Start Tracking (Ensure service is running)
+      try {
+        await TrackingStateStore.setActive(true);
+        await TrackingStateStore.setAlarmFired(false);
+        await TrackingStateStore.setNotificationsMuted(false);
+        await TrackingStateStore.saveSnapshot(
+          TrackingSnapshot(
+            destinationName:
+                _selectedLocation?['description'] ?? 'Your Destination',
+            destinationLat: destLat,
+            destinationLng: destLng,
+            alarmMode: alarmMode,
+            alarmValue: alarmValue,
+            metroMode: _metroMode,
+            userLat: userLat,
+            userLng: userLng,
+            createdAt: DateTime.now(),
+            directions: directions, // Save directions for app restore
+          ),
+        );
+      } catch (e) {
+        dev.log('Failed to persist tracking snapshot: $e', name: 'HomeScreen');
+      }
+
       await trackingService.startTracking(
         destination: LatLng(destLat, destLng),
         destinationName:
@@ -462,8 +636,10 @@ class HomeScreenState extends State<HomeScreen> {
       );
 
       // 2. Register Route (Now service is running, invoke will work)
+      // IMPORTANT: Must await to ensure background service receives route events
+      // before alarm checks run - otherwise _routeEvents will be empty!
       try {
-        trackingService.registerRouteFromDirections(
+        await trackingService.registerRouteFromDirections(
           directions: directions,
           origin: LatLng(userLat, userLng),
           destination: LatLng(destLat, destLng),

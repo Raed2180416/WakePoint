@@ -16,17 +16,30 @@ class MetroStopService {
         location: '${location.latitude},${location.longitude}',
         radius: radius.toString(),
       );
-      
-      dev.log("Transit stops API response: Found ${results.length} stops", name: "MetroStopService");
-      
-      return results.map((place) => TransitStop(
-        name: place['name'],
-        location: LatLng(
-          place['geometry']['location']['lat'],
-          place['geometry']['location']['lng'],
-        ),
-        placeId: place['place_id'],
-      )).toList();
+
+      dev.log(
+        "Transit stops API response: Found ${results.length} stops for loc: $location",
+        name: "MetroStopService",
+      );
+      if (results.isEmpty) {
+        dev.log(
+          "WARNING: No stops found. Radius: $radius",
+          name: "MetroStopService",
+        );
+      }
+
+      return results
+          .map(
+            (place) => TransitStop(
+              name: place['name'],
+              location: LatLng(
+                place['geometry']['location']['lat'],
+                place['geometry']['location']['lng'],
+              ),
+              placeId: place['place_id'],
+            ),
+          )
+          .toList();
     } catch (e) {
       dev.log("Error fetching transit stops: $e", name: "MetroStopService");
       return [];
@@ -88,19 +101,28 @@ class MetroStopService {
     required LatLng destination,
     double maxRadius = 500,
   }) async {
+    dev.log(
+      "Validating metro route from $startLocation to $destination",
+      name: "MetroStopService",
+    );
+
     // Validate destination transit stops.
     DestinationValidationResult destValidation = await validateDestination(
       destination: destination,
       maxRadius: maxRadius,
     );
     if (!destValidation.isValid) {
+      dev.log(
+        "Destination validation failed: ${destValidation.errorMessage}",
+        name: "MetroStopService",
+      );
       return DestinationValidationResult(
         isValid: false,
         errorMessage: "Destination is not near any metro stops.",
       );
     }
     TransitStop destStop = destValidation.closestStop!;
-    
+
     // Get nearby transit stops for the user's start location.
     List<TransitStop> startStops = await getNearbyTransitStops(
       location: startLocation,
@@ -110,16 +132,29 @@ class MetroStopService {
       // Find the closest stop for the start location.
       TransitStop startStop = startStops.reduce((current, next) {
         double currentDistance = Geolocator.distanceBetween(
-            startLocation.latitude, startLocation.longitude, current.location.latitude, current.location.longitude);
+          startLocation.latitude,
+          startLocation.longitude,
+          current.location.latitude,
+          current.location.longitude,
+        );
         double nextDistance = Geolocator.distanceBetween(
-            startLocation.latitude, startLocation.longitude, next.location.latitude, next.location.longitude);
+          startLocation.latitude,
+          startLocation.longitude,
+          next.location.latitude,
+          next.location.longitude,
+        );
         return currentDistance < nextDistance ? current : next;
       });
       // If the start transit stop is the same as the destination transit stop, reject the route.
       if (startStop.placeId == destStop.placeId) {
+        dev.log(
+          "Start and destination stops are the same: ${startStop.name}",
+          name: "MetroStopService",
+        );
         return DestinationValidationResult(
           isValid: false,
-          errorMessage: "Destination metro stop is the same as your current transit stop. No metro route available.",
+          errorMessage:
+              "Destination metro stop is the same as your current transit stop. No metro route available.",
         );
       }
     }

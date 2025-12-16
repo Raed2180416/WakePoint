@@ -29,14 +29,14 @@ class RouteEntry {
     int usageCount = 0,
     int? lastSnapIndex,
     double? lastProgressMeters,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        lastUsed = lastUsed ?? DateTime.now(),
-        usageCount = usageCount,
-        bbox = _computeBounds(points),
-    lengthMeters = _computeLength(points),
-    cumMeters = _computeCum(points),
-        lastSnapIndex = lastSnapIndex,
-        lastProgressMeters = lastProgressMeters;
+  }) : createdAt = createdAt ?? DateTime.now(),
+       lastUsed = lastUsed ?? DateTime.now(),
+       usageCount = usageCount,
+       bbox = _computeBounds(points),
+       lengthMeters = _computeLength(points),
+       cumMeters = _computeCum(points),
+       lastSnapIndex = lastSnapIndex,
+       lastProgressMeters = lastProgressMeters;
 
   static LatLngBounds _computeBounds(List<LatLng> pts) {
     if (pts.isEmpty) {
@@ -76,17 +76,34 @@ class RouteEntry {
     const metersPerDegLat = 110540.0;
     final latPad = radiusMeters / metersPerDegLat;
     final midLat = (bbox.southwest.latitude + bbox.northeast.latitude) * 0.5;
-    final metersPerDegLng = 111320.0 * (cos(midLat * 3.141592653589793 / 180.0)).abs();
+    final metersPerDegLng =
+        111320.0 * (cos(midLat * 3.141592653589793 / 180.0)).abs();
     final lngPad = radiusMeters / metersPerDegLng;
-    final sw = LatLng(bbox.southwest.latitude - latPad, bbox.southwest.longitude - lngPad);
-    final ne = LatLng(bbox.northeast.latitude + latPad, bbox.northeast.longitude + lngPad);
-    if (p.latitude < sw.latitude || p.latitude > ne.latitude || p.longitude < sw.longitude || p.longitude > ne.longitude) {
+    final sw = LatLng(
+      bbox.southwest.latitude - latPad,
+      bbox.southwest.longitude - lngPad,
+    );
+    final ne = LatLng(
+      bbox.northeast.latitude + latPad,
+      bbox.northeast.longitude + lngPad,
+    );
+    if (p.latitude < sw.latitude ||
+        p.latitude > ne.latitude ||
+        p.longitude < sw.longitude ||
+        p.longitude > ne.longitude) {
       return false;
     }
     // Fallback precise distance to bbox center
-    final c = LatLng((bbox.southwest.latitude + bbox.northeast.latitude) / 2,
-        (bbox.southwest.longitude + bbox.northeast.longitude) / 2);
-    final d = Geolocator.distanceBetween(p.latitude, p.longitude, c.latitude, c.longitude);
+    final c = LatLng(
+      (bbox.southwest.latitude + bbox.northeast.latitude) / 2,
+      (bbox.southwest.longitude + bbox.northeast.longitude) / 2,
+    );
+    final d = Geolocator.distanceBetween(
+      p.latitude,
+      p.longitude,
+      c.latitude,
+      c.longitude,
+    );
     return d <= radiusMeters * _bboxCenterDistanceFactor;
   }
 
@@ -108,12 +125,14 @@ class RouteEntry {
     if (pts.isEmpty) return const <double>[];
     final list = List<double>.filled(pts.length, 0.0);
     for (var i = 1; i < pts.length; i++) {
-      list[i] = list[i - 1] + Geolocator.distanceBetween(
-        pts[i - 1].latitude,
-        pts[i - 1].longitude,
-        pts[i].latitude,
-        pts[i].longitude,
-      );
+      list[i] =
+          list[i - 1] +
+          Geolocator.distanceBetween(
+            pts[i - 1].latitude,
+            pts[i - 1].longitude,
+            pts[i].latitude,
+            pts[i].longitude,
+          );
     }
     return list;
   }
@@ -124,15 +143,30 @@ class RouteRegistry {
   final int capacity;
   final Map<String, RouteEntry> _entries = {};
 
-  List<RouteEntry> get entries => _entries.values.toList()..sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
+  void clear() {
+    _entries.clear();
+  }
+
+  List<RouteEntry> get entries =>
+      _entries.values.toList()
+        ..sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
 
   void upsert(RouteEntry entry) {
-    if (_entries.containsKey(entry.key)) {
-      final existing = _entries[entry.key]!;
-      existing.lastUsed = DateTime.now();
-      existing.usageCount += 1;
-      existing.lastSnapIndex = entry.lastSnapIndex ?? existing.lastSnapIndex;
-      existing.lastProgressMeters = entry.lastProgressMeters ?? existing.lastProgressMeters;
+    final existing = _entries[entry.key];
+    if (existing != null) {
+      // Replace geometry/derived metrics when the key is reused to avoid stale routes.
+      _entries[entry.key] = RouteEntry(
+        key: entry.key,
+        mode: entry.mode,
+        destinationName: entry.destinationName,
+        points: entry.points,
+        createdAt: existing.createdAt,
+        lastUsed: DateTime.now(),
+        usageCount: existing.usageCount + 1,
+        lastSnapIndex: entry.lastSnapIndex ?? existing.lastSnapIndex,
+        lastProgressMeters:
+            entry.lastProgressMeters ?? existing.lastProgressMeters,
+      );
     } else {
       _entries[entry.key] = entry;
       _evictIfNeeded();
@@ -147,7 +181,11 @@ class RouteRegistry {
     }
   }
 
-  void updateSessionState(String key, {int? lastSnapIndex, double? lastProgressMeters}) {
+  void updateSessionState(
+    String key, {
+    int? lastSnapIndex,
+    double? lastProgressMeters,
+  }) {
     final e = _entries[key];
     if (e != null) {
       if (lastSnapIndex != null) e.lastSnapIndex = lastSnapIndex;
@@ -165,7 +203,11 @@ class RouteRegistry {
     }
   }
 
-  List<RouteEntry> candidatesNear(LatLng p, {double radiusMeters = 1200, int maxCandidates = 3}) {
+  List<RouteEntry> candidatesNear(
+    LatLng p, {
+    double radiusMeters = 1200,
+    int maxCandidates = 3,
+  }) {
     final list = <RouteEntry>[];
     for (final e in entries) {
       if (e.isNear(p, radiusMeters)) list.add(e);

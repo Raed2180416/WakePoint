@@ -1,0 +1,1837 @@
+00:00 +0: loading D:/GeoWake/test/active_route_manager_complex_test.dart
+00:00 +0: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.001)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.001)
+DEBUG: ARM: emitting state progress=111.31949079327357
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: emitting state progress=166.97923608818078
+00:00 +0: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+
+===== ActiveRouteManager: A -> B -> A with hysteresis =====
+??????  Active set to A
+??????  Move along A near (0, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.003)
+DEBUG: ARM: emitting state progress=333.95847237982065
+00:00 +0: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: emitting state progress=166.97923608818078
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+00:00 +0: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.004)
+00:00 +0: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: emitting state progress=166.97923608818078
+00:00 +0: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.004)
+DEBUG: ARM: emitting state progress=445.2779631730943
+00:00 +0: D:/GeoWake/test/alarm_logic_test.dart: StopLogicEngine Integration Tests calculateRemainingStops returns correct values
+DEBUG: StopLogic: progress=500.0m target=2000.0m
+DEBUG: StopLogic: progressStops=1.00 targetStops=5.00
+00:00 +1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:00 +1: D:/GeoWake/test/alarm_logic_test.dart: StopLogicEngine Integration Tests calculateRemainingStops handles switch points
+DEBUG: StopLogic: progress=500.0m target=1500.0m
+DEBUG: StopLogic: progressStops=1.00 targetStops=3.50
+00:00 +2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.002)
+DEBUG: ARM: emitting state progress=166.97923608818078
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0021)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0021)
+DEBUG: ARM: emitting state progress=178.1111851607261
+00:00 +2: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+??????  Deviate towards B corridor and sustain
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.005)
+DEBUG: ARM: emitting state progress=111.31949079327357
+00:00 +2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: emitting state progress=244.90287974520186
+00:00 +2: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: Test: Setup testGpsStream Hash=893178155
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=893178155
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: Test: Waiting for GPS listener...
+DEBUG: Test: GPS hasListener=true
+DEBUG: Test: Adding GPS point 1
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0015,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0015, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0015, 0.0)
+DEBUG: ARM: emitting state progress=166.97923618991035
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: Test: State received
+00:00 +2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: emitting state progress=244.90287974520186
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0022)
+DEBUG: ARM: emitting state progress=244.90287974520186
+00:00 +2: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=166.97923618991035
+DEBUG: StopLogic: progress=167.0m target=1100.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=1.8660415276201794, Dest=12.0, Alarm=2.0, Target=Metro Stn 1
+DEBUG: ALARM TRIGGERED: Metro Stn 1 (1.9 stops left)
+00:00 +2: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.003, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.003, 0.005)
+DEBUG: ARM: emitting state progress=333.9584723798207
+00:00 +2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0023)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0023)
+DEBUG: ARM: emitting state progress=256.0348288245292
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: emitting state progress=278.2987268136347
+00:00 +2: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: TS: listener ENTRY 0.03,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.03, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.03, 0.0)
+DEBUG: ARM: emitting state progress=3339.584723798207
+00:00 +2: D:/GeoWake/test/deviation_decision_tree_test.dart: Deviation thresholds: <100m ignored, 100???150m switch, >150m reroute possible
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=886273769
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0008,-0.008
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0008, -0.008)
+DEBUG: ARM: ingestPosition LatLng(0.0008, -0.008)
+DEBUG: ARM: emitting state progress=222.6389815526373
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:00 +2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: emitting state progress=278.2987268136347
+00:00 +2: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.004, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.004, 0.005)
+DEBUG: ARM: emitting state progress=445.2779631730943
+00:00 +2: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=3339.584723798207
+DEBUG: StopLogic: progress=3339.6m target=4400.0m
+DEBUG: StopLogic: progressStops=4.07 targetStops=6.00
+DEBUG: Stop Mode Calc: Remaining=1.9280277749123513, Dest=7.928027774912351, Alarm=2.0, Target=Metro Stn 2
+DEBUG: ALARM TRIGGERED: Metro Stn 2 (1.9 stops left)
+00:00 +3: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:00 +4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +4: D:/GeoWake/test/deviation_decision_tree_test.dart: Deviation thresholds: <100m ignored, 100???150m switch, >150m reroute possible
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 2250m / 5000.0m
+DEBUG: ALARM TRIGGERED: D
+00:01 +4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: emitting state progress=278.2987268136347
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.003)
+DEBUG: ARM: emitting state progress=278.2987268136347
+00:01 +4: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: TS: listener ENTRY 0.041,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.041, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.041, 0.0)
+DEBUG: ARM: emitting state progress=4564.099122524216
+DEBUG: TS: _onStop called
+DEBUG: TS: _onStop called
+00:01 +5: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +5: D:/GeoWake/test/complex_route_alarm_test.dart: Conflict Resolution: Destination beats Switch
+DEBUG: Test: Setup testGpsStream Hash=589940674
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=589940674
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: Test: Waiting for GPS listener...
+DEBUG: Test: GPS hasListener=true
+DEBUG: Test: Adding GPS point conflict
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0081,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0081, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0081, 0.0)
+DEBUG: ARM: emitting state progress=901.6878754255158
+00:01 +5: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0031)
+00:01 +5: D:/GeoWake/test/complex_route_alarm_test.dart: Conflict Resolution: Destination beats Switch
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: Test: State received
+00:01 +5: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0031)
+DEBUG: ARM: emitting state progress=289.43067588618
+00:01 +5: D:/GeoWake/test/complex_route_alarm_test.dart: Complex Route Alarm Logic: Switch vs Destination Conflict
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=1, stops=1, events=1, progress=901.6878754255158
+DEBUG: StopLogic: progress=901.7m target=1000.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=0.19662424914896837, Dest=0.6966242491489684, Alarm=2.0, Target=Switch Point
+DEBUG: ALARM TRIGGERED: Final Home
+00:01 +5: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: emitting state progress=356.2223705384754
+00:01 +5: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.0045, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.0045, 0.005)
+DEBUG: ARM: emitting state progress=500.93770856973094
+00:01 +5: D:/GeoWake/test/complex_route_alarm_test.dart: Conflict Resolution: Destination beats Switch
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=1, stops=1, events=1, progress=901.6878754255158
+DEBUG: StopLogic: progress=901.7m target=1000.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=0.19662424914896837, Dest=0.6966242491489684, Alarm=2.0, Target=Switch Point
+00:01 +5: D:/GeoWake/test/deviation_decision_tree_test.dart: Deviation thresholds: <100m ignored, 100???150m switch, >150m reroute possible
+DEBUG: TS: listener ENTRY 0.0011,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0011, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0011, 0.0)
+DEBUG: ARM: emitting state progress=1113.1949077631864
+00:01 +5: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+??? Switched from A to B after sustain
+00:01 +5: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: emitting state progress=356.2223705384754
+00:01 +6: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +7: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +8: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +9: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +10: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +10: D:/GeoWake/test/deviation_decision_tree_test.dart: Deviation thresholds: <100m ignored, 100???150m switch, >150m reroute possible
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1490m / 5000.0m
+00:01 +10: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0032)
+DEBUG: ARM: emitting state progress=356.2223705384754
+00:01 +10: D:/GeoWake/test/complex_route_alarm_test.dart: Conflict Resolution: Destination beats Switch
+Conflict Alarms: [{title: Wake Up!, body: Approaching: Final Home, allow: true, ts: 2025-12-10T21:28:53.732207}]
+DEBUG: TS: _onStop called
+DEBUG: TS: _onStop called
+00:01 +11: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0033)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0033)
+DEBUG: ARM: emitting state progress=367.3543196178028
+00:01 +12: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +13: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +14: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +15: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: emitting state progress=389.6182175390885
+00:01 +15: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+??????  Move back near A and wait to switch back
+DEBUG: ARM: ingestPosition LatLng(0.0005, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.0005, 0.006)
+DEBUG: ARM: emitting state progress=667.9169447596414
+00:01 +15: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: emitting state progress=389.6182175390885
+00:01 +16: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:01 +17: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: emitting state progress=389.6182175390885
+00:01 +17: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.007)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.007)
+DEBUG: ARM: emitting state progress=779.236435552915
+00:01 +17: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.004)
+DEBUG: ARM: emitting state progress=389.6182175390885
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0041)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0041)
+DEBUG: ARM: emitting state progress=400.7501666116339
+00:01 +17: D:/GeoWake/test/event_alarm_overlap_test.dart: Event alarm uses active route progress on overlapping routes
+DEBUG: ARM: ingestPosition LatLng(32.00015, 2.0)
+DEBUG: ARM: ingestPosition LatLng(32.00015, 2.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:01 +18: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: emitting state progress=467.54186133174903
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: emitting state progress=467.54186133174903
+00:02 +18 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:02 +18 -1: D:/GeoWake/test/deviation_decision_tree_test.dart: Deviation thresholds: <100m ignored, 100???150m switch, >150m reroute possible [E]
+  Expected: true
+    Actual: <false>
+  100???150m should switch locally
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\deviation_decision_tree_test.dart 83:7         main.<fn>
+  
+00:02 +18 -1: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0075)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0075)
+DEBUG: ARM: emitting state progress=834.8961809495518
+00:02 +18 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004200000000000001)
+DEBUG: ARM: emitting state progress=467.54186133174903
+00:02 +18 -1: D:/GeoWake/test/active_route_manager_test.dart: ActiveRouteManager switching Switch from A to B then back to A with hysteresis
+??? Switched from B back to A
+00:02 +19 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:02 +19 -1: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=179396260
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0,-0.01
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.01)
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.01)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:02 +19 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004300000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.004300000000000001)
+DEBUG: ARM: emitting state progress=478.6738104110765
+00:02 +19 -1: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold)
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 2226m / 500.0m
+DEBUG: TS: listener ENTRY 0.0,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+00:02 +20 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: emitting state progress=500.9377082645424
+00:02 +21 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: emitting state progress=500.9377082645424
+00:02 +21 -1: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold)
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 1113m / 500.0m
+DEBUG: TS: listener ENTRY 0.0058,0.0058
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0058, 0.0058)
+DEBUG: ARM: ingestPosition LatLng(0.0058, 0.0058)
+DEBUG: ARM: emitting state progress=0.0
+00:02 +21 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: emitting state progress=500.9377082645424
+00:02 +21 -1: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold)
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 797m / 500.0m
+00:02 +21 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=938281669
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY -0.004,-0.004
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(-0.004, -0.004)
+DEBUG: ARM: ingestPosition LatLng(-0.004, -0.004)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:02 +21 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.005)
+DEBUG: ARM: emitting state progress=500.9377082645424
+00:02 +21 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=3021.691224954738
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=3021.691224954738
+DEBUG: StopLogic: progress=3021.7m target=6800.0m
+DEBUG: StopLogic: progressStops=5.22 targetStops=9.00
+DEBUG: Stop Mode Calc: Remaining=3.7783087750452617, Dest=3.7783087750452617, Alarm=2.0, Target=Destination
+00:02 +21 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0051)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0051)
+DEBUG: ARM: emitting state progress=512.0696573370877
+00:02 +22 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:02 +22 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: listener ENTRY -0.003,-0.003
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(-0.003, -0.003)
+DEBUG: ARM: ingestPosition LatLng(-0.003, -0.003)
+DEBUG: ARM: emitting state progress=0.0
+00:02 +22 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: emitting state progress=578.8613521250224
+00:02 +22 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=3179.1207584431904
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=3179.1207584431904
+DEBUG: StopLogic: progress=3179.1m target=6800.0m
+DEBUG: StopLogic: progressStops=5.38 targetStops=9.00
+DEBUG: Stop Mode Calc: Remaining=3.6208792415568096, Dest=3.6208792415568096, Alarm=2.0, Target=Destination
+00:02 +22 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: emitting state progress=578.8613521250224
+00:02 +22 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: listener ENTRY -0.002,-0.002
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(-0.002, -0.002)
+DEBUG: ARM: ingestPosition LatLng(-0.002, -0.002)
+DEBUG: ARM: emitting state progress=0.0
+00:02 +22 -1: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0052)
+DEBUG: ARM: emitting state progress=578.8613521250224
+00:02 +22 -1: D:/GeoWake/test/mixed_mode_alarm_test.dart: Mixed Mode: Alarm fires 1km (2 stops) before boarding
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=767282064
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:02 +22 -1: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=3336.5502920035747
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=3336.5502920035747
+DEBUG: StopLogic: progress=3336.6m target=6800.0m
+DEBUG: StopLogic: progressStops=5.54 targetStops=9.00
+DEBUG: Stop Mode Calc: Remaining=3.4634497079964257, Dest=3.4634497079964257, Alarm=2.0, Target=Destination
+00:02 +22 -1: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold)
+DEBUG: Recorded alarms in event test: []
+00:02 +22 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:02 +22 -2: D:/GeoWake/test/event_alarm_progress_source_test.dart: Event alarm uses manager progress (transfer within distance threshold) [E]
+  Expected: true
+    Actual: <false>
+  Expected an upcoming event alarm based on progress threshold
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\event_alarm_progress_source_test.dart 181:7    main.<fn>
+  
+00:02 +22 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0053)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.0053)
+DEBUG: ARM: emitting state progress=589.9933012043499
+00:02 +22 -2: D:/GeoWake/test/mixed_mode_alarm_test.dart: Mixed Mode: Alarm fires 1km (2 stops) before boarding
+DEBUG: TS: listener ENTRY 0.006,0.006
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.006, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.006, 0.006)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=2, stops=2, events=1, progress=0.0
+DEBUG: StopLogic: progress=0.0m target=1571.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=3.142, Dest=3.0, Alarm=2.0, Target=Board transit
+00:02 +22 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: emitting state progress=612.2571989899963
+00:02 +22 -2: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: listener ENTRY -0.001,-0.001
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(-0.001, -0.001)
+DEBUG: ARM: ingestPosition LatLng(-0.001, -0.001)
+DEBUG: ARM: emitting state progress=0.0
+00:02 +22 -2: D:/GeoWake/test/mixed_mode_regression_test.dart: Mixed Mode Regression Test: Walk -> Metro -> Transfer
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+00:03 +22 -2: D:/GeoWake/test/mixed_mode_alarm_test.dart: Mixed Mode: Alarm fires 1km (2 stops) before boarding
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=937.986560198914
+DEBUG: TS: passing bounds=2, stops=2, events=1, progress=937.986560198914
+DEBUG: StopLogic: progress=938.0m target=1571.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=1.2660268796021719, Dest=3.0, Alarm=2.0, Target=Board transit
+DEBUG: ALARM TRIGGERED: Board transit (1.3 stops left)
+00:03 +22 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: emitting state progress=612.2571989899963
+00:03 +22 -2: D:/GeoWake/test/mixed_mode_regression_test.dart: Mixed Mode Regression Test: Walk -> Metro -> Transfer
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? false Hash=null
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:03 +22 -2: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=3493.9798256119147
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=3493.9798256119147
+DEBUG: StopLogic: progress=3494.0m target=6800.0m
+DEBUG: StopLogic: progressStops=5.69 targetStops=9.00
+DEBUG: Stop Mode Calc: Remaining=3.3060201743880855, Dest=3.3060201743880855, Alarm=2.0, Target=Destination
+00:03 +23 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +24 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: emitting state progress=612.2571989899963
+00:03 +25 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +26 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +27 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +28 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +29 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +30 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.006)
+DEBUG: ARM: emitting state progress=612.2571989899963
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0061)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0061)
+DEBUG: ARM: emitting state progress=623.3891480625416
+00:03 +31 -2: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: emitting state progress=690.1808429182962
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: emitting state progress=690.1808429182962
+00:03 +31 -2: D:/GeoWake/test/mixed_mode_alarm_test.dart: Mixed Mode: Alarm fires 1km (2 stops) before boarding
+DEBUG: Recorded Alarms: [{title: Wake Up!, body: Approaching: Board transit (1.3 stops left), allow: true, ts: 2025-12-10T21:28:55.541189}]
+00:03 +31 -3: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +31 -3: D:/GeoWake/test/mixed_mode_alarm_test.dart: Mixed Mode: Alarm fires 1km (2 stops) before boarding [E]
+  Expected: true
+    Actual: <false>
+  Alarm should fire ~600m (1.2 stops) before boarding Station A
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\mixed_mode_alarm_test.dart 179:7               main.<fn>
+  
+00:03 +31 -3: D:/GeoWake/test/offline_coordinator_test.dart: OfflineCoordinator Online uses network provider and emits network source
+
+===== OfflineCoordinator: online fetch path =====
+??? Fetched via network and returned OK
+00:03 +32 -3: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +32 -3: D:/GeoWake/test/offline_coordinator_test.dart: OfflineCoordinator Offline returns cached when available and never calls network
+
+===== OfflineCoordinator: offline uses cache =====
+??? Served from cache without network
+00:03 +33 -3: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +33 -3: D:/GeoWake/test/offline_coordinator_test.dart: OfflineCoordinator Offline without cache throws
+
+===== OfflineCoordinator: offline no cache -> error =====
+??? Threw as expected due to no cache while offline
+00:03 +34 -3: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006200000000000001)
+DEBUG: ARM: emitting state progress=690.1808429182962
+00:03 +34 -3: D:/GeoWake/test/mixed_mode_regression_test.dart: Mixed Mode Regression Test: Walk -> Metro -> Transfer
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: passing bounds=2, stops=2, events=2, progress=0.0
+DEBUG: StopLogic: progress=0.0m target=1113.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=2.226, Dest=5.0, Alarm=2.0, Target=Metro Station 1
+DEBUG: checkAlarm running. Mode=stops Value=2.0
+DEBUG: TS: Used Fallback Progress=199.2056358314785
+DEBUG: TS: passing bounds=2, stops=2, events=2, progress=199.2056358314785
+DEBUG: StopLogic: progress=199.2m target=1113.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=1.827588728337043, Dest=5.0, Alarm=2.0, Target=Metro Station 1
+DEBUG: ALARM TRIGGERED: Metro Station 1 (1.8 stops left)
+00:03 +34 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +34 -4: D:/GeoWake/test/mixed_mode_regression_test.dart: Mixed Mode Regression Test: Walk -> Metro -> Transfer [E]
+  Expected: <true>
+    Actual: <false>
+  Should fire when walking within 1000m of boarding
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\mixed_mode_regression_test.dart 154:5          main.<fn>
+  
+00:03 +34 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006300000000000001)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.006300000000000001)
+DEBUG: ARM: emitting state progress=701.3127919976235
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: emitting state progress=890.5559263461886
+00:03 +35 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: emitting state progress=890.5559263461886
+00:03 +36 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: ingestPosition LatLng(0.0002, 0.008)
+DEBUG: ARM: emitting state progress=890.5559263461886
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.0085)
+DEBUG: ARM: ingestPosition LatLng(0.0001, 0.0085)
+DEBUG: ARM: emitting state progress=946.2156717428254
+00:03 +37 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +38 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:03 +39 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: emitting state progress=968.4470509317737
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: emitting state progress=968.4470509317737
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: emitting state progress=968.4470509317737
+00:04 +39 -4: D:/GeoWake/test/power_policy_tracking_test.dart: TrackingService uses testing power policy cadence without errors
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=1000762496
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0,0.0
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1574m / 5000.0m
+DEBUG: ALARM TRIGGERED: D
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:04 +39 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: ingestPosition LatLng(0.001, 0.009)
+DEBUG: ARM: emitting state progress=968.4470509317737
+00:04 +39 -4: D:/GeoWake/test/power_policy_tracking_test.dart: TrackingService uses testing power policy cadence without errors
+DEBUG: TS: listener ENTRY 0.001,0.001
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1417m / 5000.0m
+DEBUG: ALARM TRIGGERED: D
+00:04 +39 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=29589232
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 12.96,77.585
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.585)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.585)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:04 +39 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0095)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0095)
+DEBUG: ARM: emitting state progress=969.144203871122
+00:04 +39 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: listener ENTRY 12.96,77.58505
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58505)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58505)
+DEBUG: ARM: emitting state progress=5.424191762328208
+DEBUG: TS: listener ENTRY 12.96,77.5851
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5851)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5851)
+DEBUG: ARM: emitting state progress=10.848383524656416
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 140m / 500.0m
+DEBUG: ALARM TRIGGERED: WeaveDest
+00:04 +39 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.01)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.01)
+DEBUG: ARM: emitting state progress=1019.0672241963962
+00:04 +39 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 136m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58515
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58515)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58515)
+DEBUG: ARM: emitting state progress=16.272575286984626
+00:04 +39 -4: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=9433783
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.0, 0.0)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:04 +39 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 131m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.5852
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5852)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5852)
+DEBUG: ARM: emitting state progress=21.696767049312832
+00:04 +39 -4: D:/GeoWake/test/power_policy_tracking_test.dart: TrackingService uses testing power policy cadence without errors
+DEBUG: TS: _onStop called
+00:04 +40 -4: D:/GeoWake/test/active_route_manager_complex_test.dart: ActiveRouteManager complex deviations and merge Five deviations, merge back to route1, then deviate again to route2
+00:04 +41 -4: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+00:04 +41 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 127m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58524999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58524999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58524999999999)
+DEBUG: ARM: emitting state progress=27.12095881164104
+00:04 +41 -4: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point
+DEBUG: TS: listener ENTRY 0.01,0.01
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.01, 0.01)
+DEBUG: ARM: ingestPosition LatLng(0.01, 0.01)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=1.0
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=0.0
+DEBUG: StopLogic: progress=0.0m target=1500.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=3.0, Dest=6.0, Alarm=1.0, Target=Board transit
+00:04 +41 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 123m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58529999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58529999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58529999999999)
+DEBUG: ARM: emitting state progress=32.54515057396925
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 119m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58534999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58534999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58534999999999)
+DEBUG: ARM: emitting state progress=37.96934233475581
+00:04 +41 -4: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point
+DEBUG: TS: listener ENTRY 0.02,0.02
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.02, 0.02)
+DEBUG: ARM: ingestPosition LatLng(0.02, 0.02)
+DEBUG: ARM: emitting state progress=0.0
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=1.0
+DEBUG: TS: Used Fallback Progress=1351.4094311778995
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=1351.4094311778995
+DEBUG: StopLogic: progress=1351.4m target=1500.0m
+DEBUG: StopLogic: progressStops=0.00 targetStops=0.00
+DEBUG: Stop Mode Calc: Remaining=0.29718113764420107, Dest=6.0, Alarm=1.0, Target=Board transit
+DEBUG: ALARM TRIGGERED: Board transit (0.3 stops left)
+00:04 +41 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 115m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58539999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58539999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58539999999999)
+DEBUG: ARM: emitting state progress=43.393534097084014
+00:04 +42 -4: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+00:04 +42 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 111m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58545
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58545)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58545)
+DEBUG: ARM: emitting state progress=48.81772585941222
+00:04 +42 -4: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=stops Value=1.0
+DEBUG: TS: Used Fallback Progress=2925.7047395668365
+DEBUG: TS: passing bounds=3, stops=3, events=2, progress=2925.7047395668365
+DEBUG: StopLogic: progress=2925.7m target=3000.0m
+DEBUG: StopLogic: progressStops=2.85 targetStops=3.00
+DEBUG: Stop Mode Calc: Remaining=0.14859052086632696, Dest=3.148590520866327, Alarm=1.0, Target=Station B (Transfer)
+DEBUG: ALARM TRIGGERED: Station B (Transfer) (0.1 stops left)
+00:04 +42 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 108m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.5855
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5855)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5855)
+DEBUG: ARM: emitting state progress=54.24191762174043
+00:04 +43 -4: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+00:04 +43 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 104m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58555
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58555)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58555)
+DEBUG: ARM: emitting state progress=59.66610938406863
+00:04 +44 -4: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert
+00:04 +44 -4: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 101m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.5856
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5856)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5856)
+DEBUG: ARM: emitting state progress=65.09030114639684
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 98m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58564999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58564999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58564999999999)
+DEBUG: ARM: emitting state progress=70.5144929071834
+00:05 +44 -5: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:05 +44 -5: D:/GeoWake/test/metro_stops_prior_test.dart: Metro: pre-boarding 1km alert then stops-prior transfer alert [E]
+  Expected: true
+    Actual: <false>
+  Pre-boarding alert should fire around 1km
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\metro_stops_prior_test.dart 195:9              main.<fn>
+  
+00:05 +44 -5: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 95m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58569999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58569999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58569999999999)
+DEBUG: ARM: emitting state progress=75.9386846695116
+00:05 +45 -5: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 92m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58574999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58574999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58574999999999)
+DEBUG: ARM: emitting state progress=81.36287643183981
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 90m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58579999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58579999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58579999999999)
+DEBUG: ARM: emitting state progress=86.78706819416801
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 88m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58585
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58585)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58585)
+DEBUG: ARM: emitting state progress=92.21125995649622
+00:05 +45 -5: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point
+DEBUG: Recorded Alarms: [{title: Wake Up!, body: Approaching: Board transit (0.3 stops left), allow: true, ts: 2025-12-10T21:28:57.190403}, {title: Wake Up!, body: Approaching: Station B (Transfer) (0.1 stops left), allow: true, ts: 2025-12-10T21:28:57.290210}]
+00:05 +45 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:05 +45 -6: D:/GeoWake/test/reproduce_stop_alarm_overshoot_test.dart: Reproduce Overshoot: Alarm skipped when arriving at switch point [E]
+  Expected: true
+    Actual: <false>
+  Alarm should fire for Station B transfer even if we arrive exactly at it
+  
+  package:matcher                                      expect
+  package:flutter_test/src/widget_tester.dart 474:18   expect
+  test\reproduce_stop_alarm_overshoot_test.dart 207:7  main.<fn>
+  
+00:05 +46 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 86m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.5859
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5859)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.5859)
+DEBUG: ARM: emitting state progress=97.63545171882443
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 84m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.58595
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58595)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.58595)
+DEBUG: ARM: emitting state progress=103.05964348115263
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 83m / 500.0m
+DEBUG: TS: listener ENTRY 12.96,77.586
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.586)
+DEBUG: ARM: ingestPosition LatLng(12.96, 77.586)
+DEBUG: ARM: emitting state progress=108.48383524348084
+00:05 +46 -6: D:/GeoWake/test/route_registry_test.dart: RouteRegistry candidate filtering by proximity and recency
+
+===== RouteRegistry candidate filtering =====
+??????  Candidates near approximate origin: [C, A]
+??? Near list contains A and C, excludes distant B
+00:05 +47 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 82m / 500.0m
+DEBUG: TS: listener ENTRY 12.960030000000001,77.58605
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960030000000001, 77.58605)
+DEBUG: ARM: ingestPosition LatLng(12.960030000000001, 77.58605)
+DEBUG: ARM: emitting state progress=113.90802700580905
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 81m / 500.0m
+DEBUG: TS: listener ENTRY 12.96006,77.5861
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96006, 77.5861)
+DEBUG: ARM: ingestPosition LatLng(12.96006, 77.5861)
+DEBUG: ARM: emitting state progress=119.3322187665956
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 78m / 500.0m
+DEBUG: TS: listener ENTRY 12.960090000000001,77.58615
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960090000000001, 77.58615)
+DEBUG: ARM: ingestPosition LatLng(12.960090000000001, 77.58615)
+DEBUG: ARM: emitting state progress=124.75641052892381
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 75m / 500.0m
+DEBUG: TS: listener ENTRY 12.960120000000002,77.5862
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960120000000002, 77.5862)
+DEBUG: ARM: ingestPosition LatLng(12.960120000000002, 77.5862)
+DEBUG: ARM: emitting state progress=130.18060229125203
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 72m / 500.0m
+DEBUG: TS: listener ENTRY 12.96015,77.58624999999999
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96015, 77.58624999999999)
+DEBUG: ARM: ingestPosition LatLng(12.96015, 77.58624999999999)
+DEBUG: ARM: emitting state progress=135.60479405203859
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 70m / 500.0m
+DEBUG: TS: listener ENTRY 12.960180000000001,77.5863
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960180000000001, 77.5863)
+DEBUG: ARM: ingestPosition LatLng(12.960180000000001, 77.5863)
+DEBUG: ARM: emitting state progress=141.0289858143668
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 68m / 500.0m
+DEBUG: TS: listener ENTRY 12.96021,77.58635
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96021, 77.58635)
+DEBUG: ARM: ingestPosition LatLng(12.96021, 77.58635)
+DEBUG: ARM: emitting state progress=146.453177576695
+00:05 +47 -6: D:/GeoWake/test/simplified_polyline_present_test.dart: DirectionService injects simplified_polyline into directions
+
+===== DirectionService: simplified_polyline injection =====
+00:05 +47 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 67m / 500.0m
+DEBUG: TS: listener ENTRY 12.96024,77.5864
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96024, 77.5864)
+DEBUG: ARM: ingestPosition LatLng(12.96024, 77.5864)
+DEBUG: ARM: emitting state progress=151.8773693421065
+00:05 +47 -6: D:/GeoWake/test/simplified_polyline_present_test.dart: DirectionService injects simplified_polyline into directions
+??? simplified_polyline present in response
+00:05 +48 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 66m / 500.0m
+DEBUG: TS: listener ENTRY 12.960270000000001,77.58645
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960270000000001, 77.58645)
+DEBUG: ARM: ingestPosition LatLng(12.960270000000001, 77.58645)
+DEBUG: ARM: emitting state progress=85.7160079109373
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 66m / 500.0m
+DEBUG: TS: listener ENTRY 12.961,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.961, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.961, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 67m / 500.0m
+DEBUG: TS: listener ENTRY 12.96101,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96101, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96101, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:05 +48 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=776852541
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 12.96,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 247m / 1000.0m
+DEBUG: ALARM TRIGGERED: TestDest
+TEST-HOOK: showWakeUpAlarm -> Wake Up! | Approaching: TestDest | allow=false
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: TS: listener ENTRY 12.96005,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 251m / 1000.0m
+DEBUG: ALARM TRIGGERED: TestDest
+TEST-HOOK: showWakeUpAlarm -> Wake Up! | Approaching: TestDest | allow=false
+00:05 +48 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 57m / 500.0m
+DEBUG: TS: listener ENTRY 12.96102,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96102, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96102, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:05 +48 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9601,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 256m / 1000.0m
+00:05 +48 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 58m / 500.0m
+DEBUG: TS: listener ENTRY 12.961030000000001,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.961030000000001, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.961030000000001, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:05 +48 -6: D:/GeoWake/test/snap_to_route_test.dart: SnapToRouteEngine Snaps near first segment with small lateral offset
+
+===== SnapToRoute: basic projection =====
+??????  Segment index=0, offset???55.7 m, progress???556.6 m
+00:05 +49 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:05 +49 -6: D:/GeoWake/test/snap_to_route_test.dart: SnapToRouteEngine Respects hintIndex to keep continuity
+??????  r1.progress???556.6 m -> r2.progress???667.9 m
+00:06 +50 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:06 +50 -6: D:/GeoWake/test/snap_to_route_test.dart: SnapToRouteEngine Snaps to second segment once past the corner
+??????  Segment index=1, offset???22.3 m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96015,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 261m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 59m / 500.0m
+DEBUG: TS: listener ENTRY 12.96104,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96104, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96104, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9602,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 265m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 59m / 500.0m
+DEBUG: TS: listener ENTRY 12.96105,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96105, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96105, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96025,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 270m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 60m / 500.0m
+DEBUG: TS: listener ENTRY 12.96106,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96106, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96106, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9603,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 275m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 60m / 500.0m
+DEBUG: TS: listener ENTRY 12.96107,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96107, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96107, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+DEBUG: TS: Calling checkAlarm...
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96035,77.5855
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 280m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: Distance Check: 61m / 500.0m
+DEBUG: TS: listener ENTRY 12.96108,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96108, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96108, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/stop_end_tracking_vm_test.dart: Stop and End tracking flows cancel notifications and stop alarms
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=528137157
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 12.96,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 50m / 500.0m
+DEBUG: ALARM TRIGGERED: StopFlowDest
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+DEBUG: TS: listener ENTRY 12.9598,77.5856
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 25m / 500.0m
+DEBUG: ALARM TRIGGERED: StopFlowDest
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 62m / 500.0m
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960400000000002,77.5855
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: listener ENTRY 12.96109,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96109, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.96109, 77.5865)
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 285m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/stop_end_tracking_vm_test.dart: Stop and End tracking flows cancel notifications and stop alarms
+DEBUG: TS: listener ENTRY 12.9596,77.5857
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 0m / 500.0m
+00:06 +51 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 62m / 500.0m
+DEBUG: TS: listener ENTRY 12.961,77.5865
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.961, 77.5865)
+DEBUG: ARM: ingestPosition LatLng(12.961, 77.5865)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +51 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960450000000002,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 289m / 1000.0m
+00:06 +51 -6: D:/GeoWake/test/stop_logic_engine_test.dart: StopLogicEngine Tests calculateRemainingStops - Before Switch
+DEBUG: StopLogic: progress=500.0m target=1500.0m
+DEBUG: StopLogic: progressStops=1.00 targetStops=3.50
+00:06 +52 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:06 +52 -6: D:/GeoWake/test/stop_logic_engine_test.dart: StopLogicEngine Tests calculateRemainingStops - After Switch
+DEBUG: StopLogic: progress=1800.0m target=3000.0m
+DEBUG: StopLogic: progressStops=4.40 targetStops=8.00
+00:06 +53 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:06 +54 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:06 +55 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 63m / 500.0m
+DEBUG: TS: listener ENTRY 12.96097,77.58645
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96097, 77.58645)
+DEBUG: ARM: ingestPosition LatLng(12.96097, 77.58645)
+DEBUG: ARM: emitting state progress=161.41326165006828
+00:06 +55 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960500000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 294m / 1000.0m
+00:06 +55 -6: D:/GeoWake/test/stop_end_tracking_vm_test.dart: Stop and End tracking flows cancel notifications and stop alarms
+DEBUG: TS: _onStop called
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 57m / 500.0m
+DEBUG: TS: listener ENTRY 12.96094,77.5864
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96094, 77.5864)
+DEBUG: ARM: ingestPosition LatLng(12.96094, 77.5864)
+DEBUG: ARM: emitting state progress=160.30006674237544
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960550000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 299m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 51m / 500.0m
+DEBUG: TS: listener ENTRY 12.96091,77.58635
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96091, 77.58635)
+DEBUG: ARM: ingestPosition LatLng(12.96091, 77.58635)
+DEBUG: ARM: emitting state progress=156.96048201850593
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960600000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 304m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 45m / 500.0m
+DEBUG: TS: listener ENTRY 12.96088,77.5863
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96088, 77.5863)
+DEBUG: ARM: ingestPosition LatLng(12.96088, 77.5863)
+DEBUG: ARM: emitting state progress=153.6208972946364
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960650000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 309m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=762905286
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 12.96,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=time Value=3.0
+DEBUG: Time Check: 7s / 180.0s
+DEBUG: ALARM TRIGGERED: TimeDest
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 38m / 500.0m
+DEBUG: TS: listener ENTRY 12.96085,77.58625
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96085, 77.58625)
+DEBUG: ARM: ingestPosition LatLng(12.96085, 77.58625)
+DEBUG: ARM: emitting state progress=150.28131257116235
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960700000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 314m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold
+DEBUG: TS: listener ENTRY 12.9598,77.5856
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=time Value=3.0
+DEBUG: Time Check: 5s / 180.0s
+DEBUG: ALARM TRIGGERED: TimeDest
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 32m / 500.0m
+DEBUG: TS: listener ENTRY 12.96082,77.5862
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96082, 77.5862)
+DEBUG: ARM: ingestPosition LatLng(12.96082, 77.5862)
+DEBUG: ARM: emitting state progress=146.94172784709508
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96075,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 319m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold
+DEBUG: TS: listener ENTRY 12.9596,77.5857
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=time Value=3.0
+DEBUG: Time Check: 3s / 180.0s
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 25m / 500.0m
+DEBUG: TS: listener ENTRY 12.960790000000001,77.58615
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.960790000000001, 77.58615)
+DEBUG: ARM: ingestPosition LatLng(12.960790000000001, 77.58615)
+DEBUG: ARM: emitting state progress=143.6021431234233
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9608,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 324m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=790649422
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:06 +56 -6: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold
+DEBUG: TS: listener ENTRY 12.9594,77.5858
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=time Value=3.0
+DEBUG: Time Check: 2s / 180.0s
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 19m / 500.0m
+DEBUG: TS: listener ENTRY 12.96076,77.5861
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96076, 77.5861)
+DEBUG: ARM: ingestPosition LatLng(12.96076, 77.5861)
+DEBUG: ARM: emitting state progress=140.26255839975153
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96085,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 329m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold
+DEBUG: TS: listener ENTRY 12.9592,77.5859
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=time Value=3.0
+DEBUG: Time Check: 0s / 180.0s
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 13m / 500.0m
+DEBUG: TS: listener ENTRY 12.96073,77.58605
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(12.96073, 77.58605)
+DEBUG: ARM: ingestPosition LatLng(12.96073, 77.58605)
+DEBUG: ARM: emitting state progress=136.92297367568426
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9609,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 334m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 6m / 500.0m
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96095,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 339m / 1000.0m
+00:06 +56 -6: D:/GeoWake/test/tracking_service_connectivity_test.dart: TrackingService Connectivity Simulation Activates sensor fusion after GPS dropout and stops when GPS resumes
+
+===== TrackingService: GPS dropout -> sensor fusion =====
+??????  Emit initial GPS update
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=758495379
+DEBUG: TS: Subscribed to stream. paused=false
+DEBUG: TS: listener ENTRY 37.422,-122.084
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=100.0
+DEBUG: Distance Check: 0m / 100000.0m
+DEBUG: ALARM TRIGGERED: Test Destination
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:06 +56 -6: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=0.5
+DEBUG: Distance Check: 0m / 500.0m
+00:06 +56 -6: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 344m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96105,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 349m / 1000.0m
+DEBUG: TS: listener ENTRY 12.9611,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 354m / 1000.0m
+DEBUG: TS: listener ENTRY 12.961150000000002,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 359m / 1000.0m
+00:07 +56 -7: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:07 +56 -7: D:/GeoWake/test/time_alarm_vm_test.dart: Time-based alarm triggers after eligibility and ETA drops below threshold [E]
+  Expected: a value less than or equal to <1>
+    Actual: <2>
+     Which: is not a value less than or equal to <1>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 474:18  expect
+  test\time_alarm_vm_test.dart 52:5                   main.<fn>
+  
+00:07 +56 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+
+===== Scenario: sustained deviation and route switch =====
+??????  Registering two cached routes r1 (E-W) and r2 (N-S)
+??????  Starting tracking (test mode, accelerated timers)
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart.handleStartTracking (package:geowake2/services/trackingservice.dart:706:7)|#2      _onStart (package:geowake2/services/trackingservice.dart:712:5)
+DEBUG: TS: Using testGpsStream? true Hash=849564729
+DEBUG: TS: Subscribed to stream. paused=false
+??????  Feeding GPS near r1, then crossing to r2 zone
+DEBUG: TS: handleStartTracking ignored (already started)
+DEBUG: TS: listener ENTRY 0.0,-0.008
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.008)
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.008)
+DEBUG: ARM: emitting state progress=222.63898158654712
+DEBUG: TS: startLocationStream called. Stack: #0      startLocationStream (package:geowake2/services/trackingservice.dart:1055:65)|#1      _onStart (package:geowake2/services/trackingservice.dart:1049:5)|<asynchronous suspension>
+DEBUG: TS: startLocationStream ignored (already active)
+00:07 +56 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961200000000002,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 365m / 1000.0m
+DEBUG: TS: listener ENTRY 12.961250000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 370m / 1000.0m
+00:07 +56 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 2292m / 5000.0m
+DEBUG: ALARM TRIGGERED: Dest
+00:07 +56 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961300000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 375m / 1000.0m
+00:07 +56 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: listener ENTRY 0.0,-0.004
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.004)
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.004)
+DEBUG: ARM: emitting state progress=667.9169447596413
+00:07 +57 -7: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:07 +57 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.96,77.5855
+00:07 +58 -7: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:07 +58 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 957m / 1000.0m
+DEBUG: ALARM TRIGGERED: Lalbagh Botanical Garden
+00:07 +58 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961350000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 380m / 1000.0m
+00:07 +58 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.9588,77.5858
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 820m / 1000.0m
+00:07 +58 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961400000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 385m / 1000.0m
+00:07 +58 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1915m / 5000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961450000000001,77.5855
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 390m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: listener ENTRY 0.0,-0.0005
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.0005)
+DEBUG: ARM: ingestPosition LatLng(0.0, -0.0005)
+DEBUG: ARM: emitting state progress=1057.5351625360986
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.9578,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 707m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.962,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 426m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96208,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 435m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1614m / 5000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.9569,77.5862
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 605m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.962159999999999,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 444m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: listener ENTRY 0.002,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.002, 0.0)
+DEBUG: ARM: emitting state progress=1335.8338895192826
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96224,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 453m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.9559,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 491m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96232,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 462m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1426m / 5000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9624,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: listener ENTRY 0.006,0.0
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: Distance Check: 471m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.006, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.006, 0.0)
+DEBUG: ARM: emitting state progress=1781.1118526923772
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: listener ENTRY 12.9515,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 0m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96248,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 480m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1199m / 5000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96256,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 489m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96264,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 498m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96272,77.5865
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 506m / 1000.0m
+00:07 +58 ~1 -7: D:/GeoWake/test/tracking_service_connectivity_test.dart: TrackingService Connectivity Simulation Activates sensor fusion after GPS dropout and stops when GPS resumes
+??????  Wait past dropout buffer to trigger fusion
+00:07 +58 ~1 -7: D:/GeoWake/test/rapid_deviations_vm_test.dart: Rapid many deviations stress route-switch hysteresis
+DEBUG: TS: _onStop called
+00:07 +59 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.961,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 326m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96096,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 321m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96092,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 317m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96088,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 313m / 1000.0m
+DEBUG: TS: listener ENTRY 12.960840000000001,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 309m / 1000.0m
+DEBUG: TS: listener ENTRY 12.9608,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 304m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96076,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 300m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96072,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 296m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96068,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 292m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96064,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 287m / 1000.0m
+DEBUG: TS: listener ENTRY 12.9606,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 283m / 1000.0m
+DEBUG: TS: listener ENTRY 12.960560000000001,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 279m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96052,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 275m / 1000.0m
+00:08 +59 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+??????  Triggering an extra GPS update to finalize switching
+DEBUG: TS: listener ENTRY 0.008,0.0
+DEBUG: TS: listener received update. Manager=true
+DEBUG: ARM: ingestPosition LatLng(0.008, 0.0)
+DEBUG: ARM: ingestPosition LatLng(0.008, 0.0)
+DEBUG: ARM: emitting state progress=2003.7508342789242
+00:08 +59 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.96048,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 270m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96044,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 266m / 1000.0m
+00:08 +59 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=5.0
+DEBUG: Distance Check: 1135m / 5000.0m
+00:08 +59 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.9604,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 262m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96036,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 258m / 1000.0m
+00:08 +59 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+??????  Switches observed: [r1->r2]
+00:08 +59 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960320000000001,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 254m / 1000.0m
+00:08 +59 ~1 -7: D:/GeoWake/test/tracking_service_reroute_integration_test.dart: TrackingService deviation/reroute + manager integration Triggers sustained deviation and emits reroute decision; manager switches to nearby cached route
+??????  Reroute decisions: []
+??? Manager switched or reroute policy fired as expected
+DEBUG: TS: _onStop called
+00:08 +60 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+00:08 +60 ~1 -7: D:/GeoWake/test/tracking_alarm_test.dart: Alarm should trigger when mock location enters the distance threshold
+DEBUG: TS: _onStop called
+00:08 +61 ~1 -7: D:/GeoWake/test/simulated_route_integration_test.dart: Simulated fast route with deviations triggers alarm and notifications
+DEBUG: TS: listener ENTRY 12.960280000000001,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 249m / 1000.0m
+DEBUG: TS: listener ENTRY 12.96024,77.586
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 245m / 1000.0m
+DEBUG: TS: listener ENTRY 12.958,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 20m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95802,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 18m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95804,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 16m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95806,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 13m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95808,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 11m / 1000.0m
+DEBUG: TS: listener ENTRY 12.9581,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 9m / 1000.0m
+DEBUG: TS: listener ENTRY 12.958120000000001,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 7m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95814,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 4m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95816,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 2m / 1000.0m
+DEBUG: TS: listener ENTRY 12.95818,77.5868
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=1.0
+DEBUG: Distance Check: 0m / 1000.0m
+DEBUG: TS: _onStop called
+00:10 +62 ~1 -7: D:/GeoWake/test/tracking_service_connectivity_test.dart: TrackingService Connectivity Simulation Activates sensor fusion after GPS dropout and stops when GPS resumes
+??????  GPS resumes; fusion should stop
+DEBUG: TS: listener ENTRY 37.423,-122.083
+DEBUG: TS: listener received update. Manager=false
+DEBUG: TS: Calling checkAlarm...
+DEBUG: checkAlarm running. Mode=distance Value=100.0
+DEBUG: Distance Check: 142m / 100000.0m
+DEBUG: ALARM TRIGGERED: Test Destination
+DEBUG: TS: _onStop called
+00:11 +63 ~1 -7: Some tests failed.

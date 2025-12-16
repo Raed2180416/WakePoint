@@ -1,0 +1,310 @@
+﻿[ +241 ms] Found 1 files which will be executed as Widget Tests.
+[   +6 ms] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[   +1 ms] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[  +31 ms] Artifact Instance of 'MaterialFonts' is not required, skipping update.
+[        ] Artifact Instance of 'GradleWrapper' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidGenSnapshotArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'AndroidInternalBuildArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterWebSdk' is not required, skipping update.
+[        ] Artifact Instance of 'LegacyCanvasKitRemover' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterSdk' is not required, skipping update.
+[        ] Artifact Instance of 'WindowsEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxEngineArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'LinuxFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'MacOSFuchsiaSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerSDKArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FlutterRunnerDebugSymbols' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'IosUsbArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'FontSubsetArtifacts' is not required, skipping update.
+[        ] Artifact Instance of 'PubDependencies' is not required, skipping update.
+[  +33 ms] Skipping pub get: version match.
+[  +17 ms] Found plugin android_intent_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\android_intent_plus-6.0.0\
+[   +6 ms] Found plugin app_settings at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\app_settings-6.1.1\
+[   +5 ms] Found plugin audioplayers at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers-6.5.1\
+[   +1 ms] Found plugin audioplayers_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_android-5.2.1\
+[   +1 ms] Found plugin audioplayers_darwin at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_darwin-6.3.0\
+[   +1 ms] Found plugin audioplayers_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_linux-4.2.1\
+[   +3 ms] Found plugin audioplayers_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_web-5.1.1\
+[   +2 ms] Found plugin audioplayers_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_windows-4.2.1\
+[   +2 ms] Found plugin battery_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\battery_plus-7.0.0\
+[  +11 ms] Found plugin connectivity_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\connectivity_plus-7.0.0\
+[   +8 ms] Found plugin device_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-12.1.0\
+[  +10 ms] Found plugin flutter_background_service at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service-5.1.0\
+[   +1 ms] Found plugin flutter_background_service_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_android-6.3.1\
+[   +1 ms] Found plugin flutter_background_service_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_ios-5.0.3\
+[   +7 ms] Found plugin flutter_local_notifications at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-19.4.2\
+[   +1 ms] Found plugin flutter_local_notifications_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_linux-6.0.0\
+[   +3 ms] Found plugin flutter_local_notifications_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_windows-1.0.3\
+[   +1 ms] Found plugin flutter_native_splash at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_native_splash-2.4.6\
+[   +1 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.30\
+[   +1 ms] Found plugin geolocator at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator-14.0.1\
+[   +1 ms] Found plugin geolocator_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\
+[   +1 ms] Found plugin geolocator_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_apple-2.3.13\
+[   +1 ms] Found plugin geolocator_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_web-4.1.3\
+[        ] Found plugin geolocator_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_windows-0.2.5\
+[   +2 ms] Found plugin google_maps_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter-2.13.1\
+[   +1 ms] Found plugin google_maps_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.18.2\
+[   +1 ms] Found plugin google_maps_flutter_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_ios-2.15.5\
+[   +2 ms] Found plugin google_maps_flutter_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_web-0.5.14+2\
+[   +1 ms] Found plugin google_mobile_ads at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_mobile_ads-6.0.0\
+[   +5 ms] Found plugin in_app_purchase at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase-3.2.3\
+[   +1 ms] Found plugin in_app_purchase_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_android-0.4.0+4\
+[   +1 ms] Found plugin in_app_purchase_storekit at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_storekit-0.4.4\
+[   +8 ms] Found plugin package_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\
+[   +2 ms] Found plugin path_provider at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[   +1 ms] Found plugin path_provider_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.18\
+[        ] Found plugin path_provider_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.4.2\
+[   +1 ms] Found plugin path_provider_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[   +1 ms] Found plugin permission_handler at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler-12.0.1\
+[        ] Found plugin permission_handler_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\
+[        ] Found plugin permission_handler_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_apple-9.4.7\
+[        ] Found plugin permission_handler_html at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_html-0.1.3+5\
+[   +1 ms] Found plugin permission_handler_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_windows-0.2.1\
+[   +4 ms] Found plugin sensors_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\sensors_plus-7.0.0\
+[   +1 ms] Found plugin shared_preferences at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences-2.5.3\
+[        ] Found plugin shared_preferences_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.12\
+[        ] Found plugin shared_preferences_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_foundation-2.5.4\
+[        ] Found plugin shared_preferences_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_linux-2.4.1\
+[   +1 ms] Found plugin shared_preferences_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_web-2.4.3\
+[        ] Found plugin shared_preferences_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_windows-2.4.1\
+[  +11 ms] Found plugin webview_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter-4.13.0\
+[   +1 ms] Found plugin webview_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_android-4.10.1\
+[   +1 ms] Found plugin webview_flutter_wkwebview at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_wkwebview-3.23.0\
+[  +12 ms] Found plugin integration_test at C:\dev\flutter\packages\integration_test\
+[  +21 ms] Found plugin android_intent_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\android_intent_plus-6.0.0\
+[   +2 ms] Found plugin app_settings at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\app_settings-6.1.1\
+[   +4 ms] Found plugin audioplayers at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers-6.5.1\
+[   +1 ms] Found plugin audioplayers_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_android-5.2.1\
+[   +1 ms] Found plugin audioplayers_darwin at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_darwin-6.3.0\
+[   +1 ms] Found plugin audioplayers_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_linux-4.2.1\
+[   +2 ms] Found plugin audioplayers_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_web-5.1.1\
+[   +1 ms] Found plugin audioplayers_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_windows-4.2.1\
+[   +1 ms] Found plugin battery_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\battery_plus-7.0.0\
+[   +6 ms] Found plugin connectivity_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\connectivity_plus-7.0.0\
+[   +3 ms] Found plugin device_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-12.1.0\
+[   +5 ms] Found plugin flutter_background_service at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service-5.1.0\
+[        ] Found plugin flutter_background_service_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_android-6.3.1\
+[   +1 ms] Found plugin flutter_background_service_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_ios-5.0.3\
+[   +3 ms] Found plugin flutter_local_notifications at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-19.4.2\
+[        ] Found plugin flutter_local_notifications_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_linux-6.0.0\
+[   +1 ms] Found plugin flutter_local_notifications_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_windows-1.0.3\
+[   +1 ms] Found plugin flutter_native_splash at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_native_splash-2.4.6\
+[   +1 ms] Found plugin flutter_plugin_android_lifecycle at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.30\
+[        ] Found plugin geolocator at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator-14.0.1\
+[        ] Found plugin geolocator_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\
+[        ] Found plugin geolocator_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_apple-2.3.13\
+[   +1 ms] Found plugin geolocator_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_web-4.1.3\
+[   +1 ms] Found plugin geolocator_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_windows-0.2.5\
+[   +2 ms] Found plugin google_maps_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter-2.13.1\
+[   +1 ms] Found plugin google_maps_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.18.2\
+[   +1 ms] Found plugin google_maps_flutter_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_ios-2.15.5\
+[   +1 ms] Found plugin google_maps_flutter_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_web-0.5.14+2\
+[   +1 ms] Found plugin google_mobile_ads at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_mobile_ads-6.0.0\
+[   +5 ms] Found plugin in_app_purchase at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase-3.2.3\
+[        ] Found plugin in_app_purchase_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_android-0.4.0+4\
+[   +1 ms] Found plugin in_app_purchase_storekit at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_storekit-0.4.4\
+[   +6 ms] Found plugin package_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\
+[   +1 ms] Found plugin path_provider at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[        ] Found plugin path_provider_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.18\
+[        ] Found plugin path_provider_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.4.2\
+[        ] Found plugin path_provider_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[        ] Found plugin permission_handler at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler-12.0.1\
+[        ] Found plugin permission_handler_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\
+[        ] Found plugin permission_handler_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_apple-9.4.7\
+[        ] Found plugin permission_handler_html at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_html-0.1.3+5\
+[   +1 ms] Found plugin permission_handler_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_windows-0.2.1\
+[   +5 ms] Found plugin sensors_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\sensors_plus-7.0.0\
+[   +1 ms] Found plugin shared_preferences at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences-2.5.3\
+[        ] Found plugin shared_preferences_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.12\
+[        ] Found plugin shared_preferences_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_foundation-2.5.4\
+[        ] Found plugin shared_preferences_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_linux-2.4.1\
+[   +1 ms] Found plugin shared_preferences_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_web-2.4.3\
+[        ] Found plugin shared_preferences_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_windows-2.4.1\
+[  +13 ms] Found plugin webview_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter-4.13.0\
+[        ] Found plugin webview_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_android-4.10.1\
+[   +1 ms] Found plugin webview_flutter_wkwebview at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_wkwebview-3.23.0\
+[   +8 ms] Found plugin integration_test at C:\dev\flutter\packages\integration_test\
+[  +13 ms] Found plugin android_intent_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\android_intent_plus-6.0.0\
+[   +1 ms] Found plugin app_settings at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\app_settings-6.1.1\
+[   +3 ms] Found plugin audioplayers at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers-6.5.1\
+[   +1 ms] Found plugin audioplayers_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_android-5.2.1\
+[        ] Found plugin audioplayers_darwin at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_darwin-6.3.0\
+[        ] Found plugin audioplayers_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_linux-4.2.1\
+[   +1 ms] Found plugin audioplayers_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_web-5.1.1\
+[        ] Found plugin audioplayers_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_windows-4.2.1\
+[        ] Found plugin battery_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\battery_plus-7.0.0\
+[   +4 ms] Found plugin connectivity_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\connectivity_plus-7.0.0\
+[   +4 ms] Found plugin device_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-12.1.0\
+[   +4 ms] Found plugin flutter_background_service at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service-5.1.0\
+[        ] Found plugin flutter_background_service_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_android-6.3.1\
+[        ] Found plugin flutter_background_service_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_ios-5.0.3\
+[   +2 ms] Found plugin flutter_local_notifications at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-19.4.2\
+[        ] Found plugin flutter_local_notifications_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_linux-6.0.0\
+[   +1 ms] Found plugin flutter_local_notifications_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_windows-1.0.3\
+[        ] Found plugin flutter_native_splash at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_native_splash-2.4.6\
+[        ] Found plugin flutter_plugin_android_lifecycle at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.30\
+[        ] Found plugin geolocator at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator-14.0.1\
+[        ] Found plugin geolocator_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\
+[        ] Found plugin geolocator_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_apple-2.3.13\
+[   +1 ms] Found plugin geolocator_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_web-4.1.3\
+[        ] Found plugin geolocator_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_windows-0.2.5\
+[   +1 ms] Found plugin google_maps_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter-2.13.1\
+[   +1 ms] Found plugin google_maps_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.18.2\
+[   +1 ms] Found plugin google_maps_flutter_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_ios-2.15.5\
+[   +1 ms] Found plugin google_maps_flutter_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_web-0.5.14+2\
+[        ] Found plugin google_mobile_ads at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_mobile_ads-6.0.0\
+[   +4 ms] Found plugin in_app_purchase at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase-3.2.3\
+[        ] Found plugin in_app_purchase_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_android-0.4.0+4\
+[   +1 ms] Found plugin in_app_purchase_storekit at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_storekit-0.4.4\
+[   +6 ms] Found plugin package_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\
+[   +1 ms] Found plugin path_provider at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[        ] Found plugin path_provider_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.18\
+[        ] Found plugin path_provider_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.4.2\
+[        ] Found plugin path_provider_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[        ] Found plugin permission_handler at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler-12.0.1\
+[        ] Found plugin permission_handler_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\
+[        ] Found plugin permission_handler_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_apple-9.4.7\
+[        ] Found plugin permission_handler_html at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_html-0.1.3+5\
+[   +1 ms] Found plugin permission_handler_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_windows-0.2.1\
+[   +4 ms] Found plugin sensors_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\sensors_plus-7.0.0\
+[   +1 ms] Found plugin shared_preferences at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences-2.5.3\
+[        ] Found plugin shared_preferences_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.12\
+[        ] Found plugin shared_preferences_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_foundation-2.5.4\
+[        ] Found plugin shared_preferences_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_linux-2.4.1\
+[   +1 ms] Found plugin shared_preferences_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_web-2.4.3\
+[        ] Found plugin shared_preferences_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_windows-2.4.1\
+[  +11 ms] Found plugin webview_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter-4.13.0\
+[        ] Found plugin webview_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_android-4.10.1\
+[   +1 ms] Found plugin webview_flutter_wkwebview at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_wkwebview-3.23.0\
+[   +7 ms] Found plugin integration_test at C:\dev\flutter\packages\integration_test\
+[   +7 ms] Generating D:\GeoWake\android\app\src\main\java\io\flutter\plugins\GeneratedPluginRegistrant.java
+[ +100 ms] No packages with native assets. Skipping native assets compilation.
+[   +1 ms] Writing native assets json to file:///D:/GeoWake/build/native_assets/windows/native_assets.json.
+[   +1 ms] Writing D:\GeoWake\build\native_assets\windows\native_assets.json done.
+[ +157 ms] Manifest contained wildcard assets. Inserting missing file into build graph to force rerun. for more information see #56466.
+[  +15 ms] running test package with arguments: [--no-color, --chain-stack-traces, --, file:///D:/GeoWake/test/complex_route_alarm_test.dart?]
+00:00 +0: loading D:/GeoWake/test/complex_route_alarm_test.dart
+[ +140 ms] test 0: starting test D:/GeoWake/test/complex_route_alarm_test.dart
+[   +3 ms] Discovered flutter_test_config.dart in D:\GeoWake\test
+[   +3 ms] Compiler will use the following file as its incremental dill file: C:\Users\thisi\AppData\Local\Temp\flutter_tools.6929db2d\flutter_test_compiler.215c43db\output.dill
+[        ] Listening to compiler controller...
+[   +4 ms] Compiling file:///C:/Users/thisi/AppData/Local/Temp/flutter_tools.6929db2d/flutter_test_listener.7dfe8752/listener.dart
+[   +6 ms] Found plugin android_intent_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\android_intent_plus-6.0.0\
+[   +1 ms] Found plugin app_settings at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\app_settings-6.1.1\
+[   +2 ms] Found plugin audioplayers at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers-6.5.1\
+[        ] Found plugin audioplayers_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_android-5.2.1\
+[        ] Found plugin audioplayers_darwin at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_darwin-6.3.0\
+[        ] Found plugin audioplayers_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_linux-4.2.1\
+[   +1 ms] Found plugin audioplayers_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_web-5.1.1\
+[        ] Found plugin audioplayers_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\audioplayers_windows-4.2.1\
+[        ] Found plugin battery_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\battery_plus-7.0.0\
+[   +4 ms] Found plugin connectivity_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\connectivity_plus-7.0.0\
+[   +3 ms] Found plugin device_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\device_info_plus-12.1.0\
+[   +4 ms] Found plugin flutter_background_service at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service-5.1.0\
+[        ] Found plugin flutter_background_service_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_android-6.3.1\
+[        ] Found plugin flutter_background_service_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_background_service_ios-5.0.3\
+[   +2 ms] Found plugin flutter_local_notifications at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications-19.4.2\
+[        ] Found plugin flutter_local_notifications_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_linux-6.0.0\
+[   +1 ms] Found plugin flutter_local_notifications_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_local_notifications_windows-1.0.3\
+[        ] Found plugin flutter_native_splash at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_native_splash-2.4.6\
+[        ] Found plugin flutter_plugin_android_lifecycle at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\flutter_plugin_android_lifecycle-2.0.30\
+[        ] Found plugin geolocator at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator-14.0.1\
+[        ] Found plugin geolocator_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_android-5.0.2\
+[   +1 ms] Found plugin geolocator_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_apple-2.3.13\
+[   +1 ms] Found plugin geolocator_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_web-4.1.3\
+[        ] Found plugin geolocator_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\geolocator_windows-0.2.5\
+[   +1 ms] Found plugin google_maps_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter-2.13.1\
+[        ] Found plugin google_maps_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_android-2.18.2\
+[        ] Found plugin google_maps_flutter_ios at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_ios-2.15.5\
+[   +1 ms] Found plugin google_maps_flutter_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_maps_flutter_web-0.5.14+2\
+[        ] Found plugin google_mobile_ads at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\google_mobile_ads-6.0.0\
+[   +4 ms] Found plugin in_app_purchase at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase-3.2.3\
+[        ] Found plugin in_app_purchase_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_android-0.4.0+4\
+[   +1 ms] Found plugin in_app_purchase_storekit at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\in_app_purchase_storekit-0.4.4\
+[   +5 ms] Found plugin package_info_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\package_info_plus-9.0.0\
+[   +1 ms] Found plugin path_provider at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider-2.1.5\
+[        ] Found plugin path_provider_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_android-2.2.18\
+[        ] Found plugin path_provider_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_foundation-2.4.2\
+[        ] Found plugin path_provider_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_linux-2.2.1\
+[   +1 ms] Found plugin path_provider_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\path_provider_windows-2.3.0\
+[        ] Found plugin permission_handler at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler-12.0.1\
+[        ] Found plugin permission_handler_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\
+[        ] Found plugin permission_handler_apple at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_apple-9.4.7\
+[        ] Found plugin permission_handler_html at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_html-0.1.3+5\
+[   +1 ms] Found plugin permission_handler_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_windows-0.2.1\
+[   +4 ms] Found plugin sensors_plus at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\sensors_plus-7.0.0\
+[   +1 ms] Found plugin shared_preferences at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences-2.5.3\
+[        ] Found plugin shared_preferences_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.12\
+[        ] Found plugin shared_preferences_foundation at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_foundation-2.5.4\
+[        ] Found plugin shared_preferences_linux at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_linux-2.4.1\
+[   +1 ms] Found plugin shared_preferences_web at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_web-2.4.3\
+[  +21 ms] Found plugin shared_preferences_windows at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_windows-2.4.1\
+[  +14 ms] Found plugin webview_flutter at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter-4.13.0\
+[   +1 ms] Found plugin webview_flutter_android at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_android-4.10.1\
+[   +1 ms] Found plugin webview_flutter_wkwebview at C:\Users\thisi\AppData\Local\Pub\Cache\hosted\pub.dev\webview_flutter_wkwebview-3.23.0\
+[   +6 ms] Found plugin integration_test at C:\dev\flutter\packages\integration_test\
+[   +6 ms] C:\dev\flutter\bin\cache\dart-sdk\bin\dartaotruntime.exe C:\dev\flutter\bin\cache\dart-sdk\bin\snapshots\frontend_server_aot.dart.snapshot --sdk-root C:\dev\flutter\bin\cache\artifacts\engine\common\flutter_patched_sdk/ --incremental --no-print-incremental-dependencies --target=flutter --experimental-emit-debug-metadata --output-dill C:\Users\thisi\AppData\Local\Temp\flutter_tools.6929db2d\flutter_test_compiler.215c43db\output.dill --packages D:\GeoWake\.dart_tool\package_config.json -Ddart.vm.profile=false -Ddart.vm.product=false --enable-asserts --track-widget-creation --initialize-from-dill D:\GeoWake\build\test_cache\build\cache.dill.track.dill --verbosity=error
+[   +6 ms] <- compile file:///C:/Users/thisi/AppData/Local/Temp/flutter_tools.6929db2d/flutter_test_listener.7dfe8752/listener.dart
+[  +56 ms] killing pid 21868
+[   +1 ms] test 0: cleaning up...
+[        ] test 0: deleting temporary directory
+[   +1 ms] test 0: waiting for controller sink to close
+00:00 +0 -1: loading D:/GeoWake/test/complex_route_alarm_test.dart [E]
+  Failed to load "D:/GeoWake/test/complex_route_alarm_test.dart":
+  Compilation failed for testPath=D:/GeoWake/test/complex_route_alarm_test.dart: lib/services/trackingservice.dart:727:44: Error: Too many positional arguments: 0 allowed, but 1 found.
+  Try removing the extra positional arguments.
+            _simulationClient!.broadcastState({
+                                             ^
+  lib/services/notification_service.dart:91:33: Error: The method 'muteJourneyNotifications' isn't defined for the class 'TrackingService'.
+   - 'TrackingService' is from 'package:geowake2/services/trackingservice.dart' ('lib/services/trackingservice.dart').
+  Try correcting the name to the name of an existing method, or defining a method named 'muteJourneyNotifications'.
+          await TrackingService().muteJourneyNotifications();
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^
+  lib/services/notification_service.dart:105:33: Error: The method 'resumeFromNotification' isn't defined for the class 'TrackingService'.
+   - 'TrackingService' is from 'package:geowake2/services/trackingservice.dart' ('lib/services/trackingservice.dart').
+  Try correcting the name to the name of an existing method, or defining a method named 'resumeFromNotification'.
+          await TrackingService().resumeFromNotification();
+                                  ^^^^^^^^^^^^^^^^^^^^^^
+  lib/services/notification_service.dart:113:33: Error: The method 'completeEndTracking' isn't defined for the class 'TrackingService'.
+   - 'TrackingService' is from 'package:geowake2/services/trackingservice.dart' ('lib/services/trackingservice.dart').
+  Try correcting the name to the name of an existing method, or defining a method named 'completeEndTracking'.
+          await TrackingService().completeEndTracking();
+                                  ^^^^^^^^^^^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
+[   +8 ms] Deleting C:\Users\thisi\AppData\Local\Temp\flutter_tools.6929db2d\flutter_test_compiler.215c43db...
+[   +4 ms] killing pid 21868
+[  +14 ms] Compiling file:///C:/Users/thisi/AppData/Local/Temp/flutter_tools.6929db2d/flutter_test_listener.7dfe8752/listener.dart took 1178ms
+[   +1 ms] test package returned with exit code 1
+[        ] Runtime for phase TestRunner: Wall-clock: 0:00:01.339052; combined: 0:00:01.339066.
+[        ] Runtime for phase Compile: Wall-clock: 0:00:01.178505; combined: 0:00:01.178519.
+[        ] Runtime for phase Run: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase CoverageTotal: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase CoverageCollect: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase CoverageParseJson: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase CoverageAddHitmap: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase CoverageDataCollect: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[        ] Runtime for phase WatcherFinishedTest: Wall-clock: 0:00:00.000000; combined: 0:00:00.000000.
+[   +4 ms] "flutter test" took 2,169ms.
+[        ] Running 3 shutdown hooks
+[   +1 ms] Shutdown hooks complete
+[ +262 ms] exiting with code 1

@@ -1,18 +1,314 @@
 // lib/services/notification_service.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';  // For MethodChannel
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geowake2/services/navigation_service.dart';
-import 'package:geowake2/screens/alarm_fullscreen.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/trackingservice.dart';
+import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:vibration/vibration.dart';
+import 'package:meta/meta.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
 import 'dart:developer' as dev;
+import 'dart:io';
+
+enum NotificationActionOutcome {
+  muteJourney,
+  cancelAlarm,
+  resumeTracking,
+  endTracking,
+  stopAlarm,
+  dismissAlarm,
+  none,
+}
 
 class NotificationService {
+  static const String _stopAlarmRequestKey = 'gw_stop_alarm_request_v1';
+  static const String _endTrackingRequestKey = 'gw_end_tracking_request_v1';
+  static const String _muteJourneyRequestKey = 'gw_mute_journey_request_v1';
+
+  // File-based flags for reliable cross-isolate communication
+  static const String _stopAlarmFileName = '.gw_stop_alarm_flag';
+  static const String _endTrackingFileName = '.gw_end_tracking_flag';
+  static const String _muteJourneyFileName = '.gw_mute_journey_flag';
+
+  static Future<String?> _getFlagDir() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      return dir.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // File-based flag write - more reliable across isolates than SharedPreferences
+  static Future<void> _writeFlag(String fileName) async {
+    try {
+      final dirPath = await _getFlagDir();
+      if (dirPath == null) return;
+      final file = File('$dirPath/$fileName');
+      await file.writeAsString(DateTime.now().toIso8601String());
+    } catch (e) {
+      dev.log(
+        'Failed to write flag $fileName: $e',
+        name: 'NotificationService',
+      );
+    }
+  }
+
+  // File-based flag read and delete - atomic check-and-consume
+  static Future<bool> _consumeFlag(String fileName) async {
+    try {
+      final dirPath = await _getFlagDir();
+      if (dirPath == null) return false;
+      final file = File('$dirPath/$fileName');
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      dev.log(
+        'Failed to consume flag $fileName: $e',
+        name: 'NotificationService',
+      );
+      return false;
+    }
+  }
+
+  static Future<void> requestStopAlarmForService() async {
+    // Write file-based flag first (most reliable)
+    await _writeFlag(_stopAlarmFileName);
+    // Also set SharedPreferences as backup
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_stopAlarmRequestKey, true);
+      await prefs.setInt(
+        '${_stopAlarmRequestKey}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (_) {}
+  }
+
+  static Future<void> requestEndTrackingForService() async {
+    // Write file-based flag first (most reliable)
+    await _writeFlag(_endTrackingFileName);
+    // Also set SharedPreferences as backup
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_endTrackingRequestKey, true);
+      await prefs.setInt(
+        '${_endTrackingRequestKey}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (_) {}
+  }
+
+  static Future<void> requestMuteJourneyForService() async {
+    // Write file-based flag first (most reliable)
+    await _writeFlag(_muteJourneyFileName);
+    // Also set SharedPreferences as backup
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_muteJourneyRequestKey, true);
+      await prefs.setInt(
+        '${_muteJourneyRequestKey}_ts',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (_) {}
+  }
+
+  static Future<bool> consumeStopAlarmRequest() async {
+    // Check file-based flag first (most reliable)
+    final fileFlag = await _consumeFlag(_stopAlarmFileName);
+    if (fileFlag) return true;
+    // Fallback to SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload(); // Ensure freshness across isolates
+      final v = prefs.getBool(_stopAlarmRequestKey) ?? false;
+      if (!v) return false;
+      await prefs.remove(_stopAlarmRequestKey);
+      await prefs.remove('${_stopAlarmRequestKey}_ts');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> consumeEndTrackingRequest() async {
+    // Check file-based flag first (most reliable)
+    final fileFlag = await _consumeFlag(_endTrackingFileName);
+    if (fileFlag) return true;
+    // Fallback to SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload(); // Ensure freshness across isolates
+      final v = prefs.getBool(_endTrackingRequestKey) ?? false;
+      if (!v) return false;
+      await prefs.remove(_endTrackingRequestKey);
+      await prefs.remove('${_endTrackingRequestKey}_ts');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> consumeMuteJourneyRequest() async {
+    // Check file-based flag first (most reliable)
+    final fileFlag = await _consumeFlag(_muteJourneyFileName);
+    if (fileFlag) return true;
+    // Fallback to SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload(); // Ensure freshness across isolates
+      final v = prefs.getBool(_muteJourneyRequestKey) ?? false;
+      if (!v) return false;
+      await prefs.remove(_muteJourneyRequestKey);
+      await prefs.remove('${_muteJourneyRequestKey}_ts');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @visibleForTesting
+  static NotificationActionOutcome classifyAction(
+    String? actionId,
+    String? payload,
+  ) {
+    if (actionId == null || actionId.isEmpty) {
+      return NotificationActionOutcome.none;
+    }
+
+    dev.log(
+      'Classifying action: $actionId, payload: $payload',
+      name: 'NotificationService',
+    );
+
+    switch (actionId) {
+      case 'IGNORE':
+        if (payload != null && payload.startsWith('journey')) {
+          return NotificationActionOutcome.muteJourney;
+        }
+        return NotificationActionOutcome.cancelAlarm;
+      case 'RESUME_TRACKING':
+        return NotificationActionOutcome.resumeTracking;
+      case 'END_TRACKING':
+        return NotificationActionOutcome.endTracking;
+      case 'STOP_ALARM':
+        return NotificationActionOutcome.stopAlarm;
+      case 'DISMISS_ALARM':
+        return NotificationActionOutcome.dismissAlarm;
+      default:
+        return NotificationActionOutcome.none;
+    }
+  }
+
+  Future<void> handleNotificationResponse(
+    NotificationResponse response, {
+    bool allowNavigation = true,
+  }) async {
+    // If user tapped the notification itself (no action ID)
+    if ((response.actionId == null || response.actionId!.isEmpty) &&
+        allowNavigation) {
+      // If tracking is paused, tapping the notification should resume.
+      if (response.payload == 'tracking_paused' ||
+          response.payload == 'journey_paused') {
+        try {
+          await TrackingService().resumeFromNotification();
+        } catch (_) {}
+      }
+
+      final nav = NavigationService.navigatorKey.currentState;
+      if (nav != null) {
+        nav.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
+      }
+      return;
+    }
+
+    await _handleNotificationAction(
+      actionId: response.actionId,
+      payload: response.payload,
+      allowNavigation: allowNavigation,
+    );
+  }
+
+  Future<void> _handleNotificationAction({
+    required String? actionId,
+    required String? payload,
+    required bool allowNavigation,
+  }) async {
+    final outcome = NotificationService.classifyAction(actionId, payload);
+    switch (outcome) {
+      case NotificationActionOutcome.muteJourney:
+        dev.log(
+          'GW_NOTIF_ACTION_IGNORE_JOURNEY: user muted journey notification',
+          name: 'NotificationService',
+        );
+        await TrackingService().muteJourneyNotifications();
+        await cancelJourneyProgress();
+        return;
+      case NotificationActionOutcome.cancelAlarm:
+        dev.log(
+          'GW_NOTIF_ACTION_IGNORE_ALARM: user silenced alarm without ending tracking',
+          name: 'NotificationService',
+        );
+        await cancelAlarm();
+        return;
+      case NotificationActionOutcome.resumeTracking:
+        dev.log(
+          'GW_NOTIF_ACTION_RESUME: User tapped Resume Tracking',
+          name: 'NotificationService',
+        );
+        await TrackingService().resumeFromNotification();
+        if (allowNavigation) {
+          try {
+            final nav = NavigationService.navigatorKey.currentState;
+            nav?.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
+          } catch (_) {}
+        }
+        return;
+      case NotificationActionOutcome.endTracking:
+        dev.log(
+          'GW_NOTIF_ACTION_END: User tapped End Tracking',
+          name: 'NotificationService',
+        );
+        // Ensure the running background service isolate receives the stop.
+        try {
+          FlutterBackgroundService().invoke('stopTracking', {'stopSelf': true});
+        } catch (_) {}
+
+        await cancelTrackingPaused();
+        await TrackingService().completeEndTracking();
+        return;
+      case NotificationActionOutcome.stopAlarm:
+        dev.log(
+          'GW_NOTIF_ACTION_STOP_ALARM: User tapped Stop Alarm button',
+          name: 'NotificationService',
+        );
+        // Stops only the alarm, tracking continues
+        await cancelAlarm();
+        return;
+      case NotificationActionOutcome.dismissAlarm:
+        dev.log(
+          'GW_NOTIF_ACTION_DISMISS: User dismissed final alarm',
+          name: 'NotificationService',
+        );
+        await cancelAlarm();
+        return;
+      case NotificationActionOutcome.none:
+        dev.log(
+          'GW_NOTIF_ACTION_NOOP: No handler for action=$actionId payload=$payload',
+          name: 'NotificationService',
+        );
+        return;
+    }
+  }
+
   // Singleton pattern to ensure only one instance of this service
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -26,61 +322,179 @@ class NotificationService {
   // Recorded alarm events for assertions in tests (title/body/allow)
   static final List<Map<String, dynamic>> testRecordedAlarms = [];
 
+  // Optional hooks for unit tests to observe notification behavior without
+  // requiring platform channels.
+  @visibleForTesting
+  static Future<void> Function(
+    int id,
+    String? title,
+    String? body,
+    String? payload,
+  )?
+  testOnShowNotification;
+
+  @visibleForTesting
+  static Future<void> Function(int id)? testOnCancelNotification;
+
+  @visibleForTesting
+  static final List<Map<String, dynamic>> testRecordedNotifications = [];
+
+  @visibleForTesting
+  static final List<int> testRecordedCancels = [];
+
   static void clearTestRecordedAlarms() => testRecordedAlarms.clear();
 
-  // Method channel to communicate with native Android code
-  static const _alarmMethodChannel = MethodChannel('com.example.geowake2/alarm');
+  static void clearTestRecordedNotifications() {
+    testRecordedNotifications.clear();
+    testRecordedCancels.clear();
+  }
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   static const int _alarmNotificationId = 0;
   static const int _progressNotificationId = 888;
-  
-  // Native method to directly launch the AlarmActivity
-  Future<void> _launchNativeAlarmActivity({
-    required String title,
-    required String body,
-    required bool allowContinueTracking,
-  }) async {
+  static const int _pausedNotificationId = 889;
+
+  // Flag to prevent duplicate alarm overlays
+  bool _alarmCurrentlyShowing = false;
+
+  bool _alarmVibrationLoopActive = false;
+
+  Future<void> _clearPendingAlarmPrefs() async {
     try {
-      await _alarmMethodChannel.invokeMethod('launchAlarmActivity', {
-        'title': title,
-        'body': body,
-        'allowContinue': allowContinueTracking,
-      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_alarm_flag');
+      await prefs.remove('pending_alarm_title');
+      await prefs.remove('pending_alarm_body');
+      await prefs.remove('pending_alarm_allow');
+    } catch (_) {}
+  }
+
+  Future<void> _startAlarmVibrationLoop() async {
+    if (_alarmVibrationLoopActive) return;
+    _alarmVibrationLoopActive = true;
+
+    try {
+      final hasVibrator = await Vibration.hasVibrator();
+      if (hasVibrator != true) {
+        _alarmVibrationLoopActive = false;
+        return;
+      }
+
+      // Loop a strong vibration pattern until cancelled.
+      // repeat: 0 repeats from the start of the pattern indefinitely.
+      // The pattern [0, 500, 250, 500, 250, 1000, 500] takes about 3 seconds.
+      // This will keep vibrating until Vibration.cancel() is called.
+      await Vibration.vibrate(
+        pattern: const [0, 500, 250, 500, 250, 1000, 500],
+        repeat: 0,
+      );
     } catch (e) {
-      dev.log('Failed to launch native alarm activity: $e', name: 'NotificationService');
-      throw e;
+      // MissingPluginException / platform limitations.
+      _alarmVibrationLoopActive = false;
+      dev.log(
+        'Alarm vibration loop failed to start: $e',
+        name: 'NotificationService',
+      );
     }
   }
-  
-  // Stop native vibration
-  Future<void> stopVibration() async {
+
+  Future<void> _stopAlarmVibrationLoop() async {
+    _alarmVibrationLoopActive = false;
     try {
-      await _alarmMethodChannel.invokeMethod('stopVibration');
+      await Vibration.cancel();
+      // Call cancel multiple times for reliability on some devices
+      await Future.delayed(const Duration(milliseconds: 50));
+      await Vibration.cancel();
+    } catch (_) {
+      // Ignore: plugin might not be available in unit tests.
+    }
+  }
+
+  Future<void> stopVibration() async {
+    await _stopAlarmVibrationLoop();
+    // Break the loop: specific method for stopping vibration/notification only
+    await _cancelAlarmNotificationOnly();
+    try {
+      await TrackingStateStore.setAlarmFired(false);
+    } catch (_) {}
+    await _clearPendingAlarmPrefs();
+    await restoreJourneyProgressIfActive();
+  }
+
+  Future<void> restoreJourneyProgressIfActive() async {
+    try {
+      final active = await TrackingStateStore.isActive();
+      if (!active) return;
+      final paused = await TrackingStateStore.isPaused();
+      if (paused) return;
+      if (await TrackingStateStore.notificationsMuted()) return;
+
+      final payload = await TrackingStateStore.loadProgressPayload();
+      if (payload != null && payload.isTracking) {
+        await showJourneyProgress(
+          title: payload.title,
+          subtitle: payload.subtitle,
+          progress0to1: payload.progress,
+          isTracking: true,
+        );
+      }
+    } catch (_) {}
+  }
+
+  // Internal helper to just kill the notification overlay
+  Future<void> _cancelAlarmNotificationOnly() async {
+    _alarmCurrentlyShowing = false;
+    try {
+      await _notificationsPlugin.cancel(_alarmNotificationId);
     } catch (e) {
-      dev.log('Failed to stop vibration: $e', name: 'NotificationService');
+      dev.log(
+        'Cancel alarm notification failed: $e',
+        name: 'NotificationService',
+      );
     }
   }
 
   // Public helper to cancel active alarm: stop sound, vibration, and clear notification
-  Future<void> cancelAlarm() async {
-    try { await AlarmPlayer.stop(); } catch (e) {
+  Future<void> cancelAlarm({bool restoreJourney = true}) async {
+    await _stopAlarmVibrationLoop();
+
+    // Ensure the background isolate stops the alarm as well.
+    try {
+      FlutterBackgroundService().invoke('stopAlarm');
+    } catch (_) {}
+
+    // 1. Stop audio (this internally calls stopVibration -> _cancelAlarmNotificationOnly)
+    try {
+      await AlarmPlayer.stop();
+    } catch (e) {
       dev.log('AlarmPlayer.stop failed: $e', name: 'NotificationService');
     }
-    try { await stopVibration(); } catch (_) {}
-    try { await _notificationsPlugin.cancel(_alarmNotificationId); } catch (e) {
-      dev.log('Cancel alarm notification failed: $e', name: 'NotificationService');
+    // 2. Ensure notification is gone (redundant safety)
+    await _cancelAlarmNotificationOnly();
+
+    try {
+      await TrackingStateStore.setAlarmFired(false);
+    } catch (_) {}
+    await _clearPendingAlarmPrefs();
+    if (restoreJourney) {
+      await restoreJourneyProgressIfActive();
     }
   }
 
   // Initialize the notification service
   Future<void> initialize() async {
-    dev.log('NotificationService.initialize() start', name: 'NotificationService');
+    dev.log(
+      'NotificationService.initialize() start',
+      name: 'NotificationService',
+    );
     // Settings for Android initialization
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
     // Settings for iOS initialization
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings();
 
     const InitializationSettings settings = InitializationSettings(
       android: androidSettings,
@@ -90,77 +504,81 @@ class NotificationService {
     await _notificationsPlugin.initialize(
       settings,
       onDidReceiveNotificationResponse: (response) async {
-        dev.log('Notification response: actionId=${response.actionId}, payload=${response.payload}', name: 'NotificationService');
-        if (response.actionId == 'STOP_ALARM') {
-          try { await AlarmPlayer.stop(); } catch (_) {}
-          try { FlutterBackgroundService().invoke('stopAlarm'); } catch (_) {}
-          return;
-        }
-        if (response.actionId == 'END_TRACKING') {
-          try { await AlarmPlayer.stop(); } catch (_) {}
-          try { await TrackingService().stopTracking(); } catch (_) {}
-          return;
-        }
-        if (response.payload != null && response.payload!.startsWith('open_alarm')) {
-          bool allow = true;
-          final parts = response.payload!.split(':');
-          if (parts.length > 1) {
-            allow = parts[1] == '1';
-          }
-          final nav = NavigationService.navigatorKey.currentState;
-          if (nav != null) {
-            nav.push(MaterialPageRoute(
-              builder: (_) => AlarmFullscreen(
-                title: 'Wake Up!',
-                body: 'Approaching your target',
-                allowContinueTracking: allow,
-              ),
-            ));
-          }
-        }
+        dev.log(
+          'Notification response: actionId=${response.actionId}, payload=${response.payload}',
+          name: 'NotificationService',
+        );
+
+        await handleNotificationResponse(response);
       },
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
     // Explicitly request Android notification permission (Android 13+)
     try {
-      final androidImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl =
+          _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
       await androidImpl?.requestNotificationsPermission();
     } catch (e) {
-      dev.log('Android notification permission request failed: $e', name: 'NotificationService');
+      dev.log(
+        'Android notification permission request failed: $e',
+        name: 'NotificationService',
+      );
     }
 
     // Create/ensure channels exist (alarm + tracking + bg service channel used by flutter_background_service)
     try {
-      final androidImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final androidImpl =
+          _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
       if (androidImpl != null) {
-        await androidImpl.createNotificationChannel(const AndroidNotificationChannel(
-          'geowake_alarm_channel_v2',
-          'GeoWake Alarms',
-          description: 'Channel for GeoWake wake-up alarms',
-          importance: Importance.max,
-        ));
-        await androidImpl.createNotificationChannel(const AndroidNotificationChannel(
-          'geowake_tracking_channel_v2',
-          'GeoWake Tracking',
-          description: 'Ongoing tracking status',
-          importance: Importance.defaultImportance,
-        ));
+        // Note: We disable notification channel vibration because we use manual
+        // Vibration.vibrate() for better sync with the alarm sound.
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'geowake_alarm_channel_v3',
+            'GeoWake Alarms (High Priority)',
+            description: 'Channel for urgent GeoWake wake-up alarms',
+            importance: Importance.max,
+            enableVibration:
+                false, // Vibration handled via Vibration plugin for sync
+            playSound: false, // We'll use our AlarmPlayer instead
+          ),
+        );
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'geowake_tracking_channel_v2',
+            'GeoWake Tracking',
+            description: 'Ongoing tracking status',
+            importance: Importance.defaultImportance,
+          ),
+        );
         // Also ensure legacy/background service channel exists as configured in TrackingService
-        await androidImpl.createNotificationChannel(const AndroidNotificationChannel(
-          'geowake_tracking_channel',
-          'GeoWake Tracking (Service)',
-          description: 'Foreground service notifications',
-          importance: Importance.defaultImportance,
-        ));
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            'geowake_tracking_channel',
+            'GeoWake Tracking (Service)',
+            description: 'Foreground service notifications',
+            importance: Importance.defaultImportance,
+          ),
+        );
       }
     } catch (e) {
-      dev.log('Creating notification channels failed: $e', name: 'NotificationService');
+      dev.log(
+        'Creating notification channels failed: $e',
+        name: 'NotificationService',
+      );
     }
 
-    dev.log('NotificationService.initialize() done', name: 'NotificationService');
+    dev.log(
+      'NotificationService.initialize() done',
+      name: 'NotificationService',
+    );
   }
 
   // This is the main function to trigger the alarm
@@ -172,7 +590,9 @@ class NotificationService {
     // Test-mode observability: always record, and call optional hook when present
     if (isTestMode || testOnShowWakeUpAlarm != null) {
       if (testOnShowWakeUpAlarm != null) {
-        try { await testOnShowWakeUpAlarm!(title, body, allowContinueTracking); } catch (_) {}
+        try {
+          await testOnShowWakeUpAlarm!(title, body, allowContinueTracking);
+        } catch (_) {}
       }
       try {
         testRecordedAlarms.add({
@@ -188,8 +608,25 @@ class NotificationService {
     if (isTestMode) {
       return;
     }
-    dev.log('ALARM TRIGGER: Showing wake-up alarm with title: "$title", body: "$body"', name: 'NotificationService');
-    
+    dev.log(
+      'DEBUG: ALARM TRIGGER: Showing wake-up alarm with title: "$title", body: "$body"',
+      name: 'NotificationService',
+    );
+
+    // Prevent duplicate overlays
+    if (_alarmCurrentlyShowing) {
+      dev.log(
+        'Alarm already showing, skipping duplicate trigger',
+        name: 'NotificationService',
+      );
+      return;
+    }
+    _alarmCurrentlyShowing = true;
+
+    try {
+      await TrackingStateStore.setAlarmFired(true);
+    } catch (_) {}
+
     // 1. Store alarm info in SharedPreferences to recover if needed
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('pending_alarm_flag', true);
@@ -197,62 +634,54 @@ class NotificationService {
     await prefs.setString('pending_alarm_body', body);
     await prefs.setBool('pending_alarm_allow', allowContinueTracking);
 
-    // 2. Create high-priority alarm notification channel with vibration pattern
-    try {
-      final androidImpl = _notificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidImpl != null) {
-        // A strong vibration pattern for alarm-like feel
-        // Format: [delay, vibrate, sleep, vibrate, sleep, ...]
-        // Enhanced vibration pattern that more closely matches Android's native alarm pattern
-      // This includes varying vibration durations to create a more attention-grabbing pattern
-      final vibrationPattern = Int64List.fromList([0, 500, 250, 500, 250, 1000, 500]);
-        
-        await androidImpl.createNotificationChannel(AndroidNotificationChannel(
-          'geowake_alarm_channel_v3',
-          'GeoWake Alarms (High Priority)',
-          description: 'Channel for urgent GeoWake wake-up alarms',
-          importance: Importance.max,
-          enableVibration: true,
-          vibrationPattern: vibrationPattern,
-          playSound: false, // We'll use our AlarmPlayer instead
-        ));
-        
-        // Request permission to show notifications on Android 13+
-        try {
-          await androidImpl.requestNotificationsPermission();
-        } catch (e) {
-          dev.log('Failed to request notification permission: $e', name: 'NotificationService');
-        }
-      }
-    } catch (e) {
-      dev.log('Failed to create/update alarm channel: $e', name: 'NotificationService');
-    }
+    // 2. Define the Android notification details
+    // Note: Vibration is handled manually via Vibration.vibrate() for better sync with audio.
 
-    // 3. Define the Android notification details, including vibration pattern
-    // Enhanced vibration pattern that more closely matches Android's native alarm pattern
-    // This includes varying vibration durations to create a more attention-grabbing pattern
-    final vibrationPattern = Int64List.fromList([0, 500, 250, 500, 250, 1000, 500]);
-    
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final AndroidNotificationDetails
+    androidDetails = AndroidNotificationDetails(
       'geowake_alarm_channel_v3',
       'GeoWake Alarms (High Priority)',
       channelDescription: 'Channel for GeoWake wake-up alarms',
       importance: Importance.max,
       priority: Priority.max,
       playSound: false, // Use AlarmPlayer for the custom sound
-      fullScreenIntent: true,  // This is critical for lockscreen appearance
+      fullScreenIntent: true, // This is critical for lockscreen appearance
       visibility: NotificationVisibility.public,
       category: AndroidNotificationCategory.alarm,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       ongoing: true, // Make it ongoing so it can't be dismissed
       autoCancel: false,
-      enableVibration: true,
-      vibrationPattern: vibrationPattern,
+      // IMPORTANT: Disable notification vibration - we use manual Vibration.vibrate() loop
+      // for better sync with audio. Double vibration (notification + manual) causes
+      // desync issues where vibration doesn't match alarm sound timing.
+      enableVibration: false,
+      // FLAG_INSISTENT = 4: Makes any notification sound/vibration loop until cancelled
+      // FLAG_NO_CLEAR = 32: Prevents notification from being cleared by "Clear All"
+      // Combined with ongoing:true and autoCancel:false, this ensures the notification
+      // persists until explicitly dismissed via Stop Alarm or End Tracking buttons.
+      additionalFlags: Int32List.fromList([4, 32]),
       ticker: 'Destination alarm active',
-      actions: <AndroidNotificationAction>[
-        AndroidNotificationAction('STOP_ALARM', 'Stop Alarm', showsUserInterface: false),
-        AndroidNotificationAction('END_TRACKING', 'End Tracking', showsUserInterface: true),
-      ],
+      actions:
+          allowContinueTracking
+              ? <AndroidNotificationAction>[
+                AndroidNotificationAction(
+                  'STOP_ALARM',
+                  'Stop Alarm',
+                  showsUserInterface: false,
+                ),
+                AndroidNotificationAction(
+                  'END_TRACKING',
+                  'End Tracking',
+                  showsUserInterface: true,
+                ),
+              ]
+              : <AndroidNotificationAction>[
+                AndroidNotificationAction(
+                  'END_TRACKING',
+                  'End Tracking',
+                  showsUserInterface: true,
+                ),
+              ],
     );
 
     // Define iOS notification details (sound name should be included in the app bundle)
@@ -261,118 +690,396 @@ class NotificationService {
     );
 
     // Full-screen intent to bring app UI to foreground (lockscreen included).
-    final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
-    // 3. Show the notification and trigger alarm UI, sound, and vibration
+    // 3. Show the notification, trigger alarm sound, and start vibration all at once for sync
     try {
-      dev.log('Showing alarm notification with fullScreenIntent: "$title" - "$body"', name: 'NotificationService');
-      
-      // First show the notification
-      await _notificationsPlugin.show(
+      dev.log(
+        'Showing alarm notification with fullScreenIntent: "$title" - "$body"',
+        name: 'NotificationService',
+      );
+
+      // Start sound, vibration, and notification in parallel for better sync
+      dev.log(
+        'DEBUG: Starting alarm sound, vibration, and notification in parallel',
+        name: 'NotificationService',
+      );
+      final soundFuture = AlarmPlayer.playSelected().catchError((e) {
+        dev.log(
+          'DEBUG: Failed to play alarm sound: $e',
+          name: 'NotificationService',
+        );
+      });
+
+      // Start vibration loop in sync with sound
+      dev.log('DEBUG: Starting vibration loop', name: 'NotificationService');
+      final vibrationFuture = _startAlarmVibrationLoop();
+
+      final notifFuture = _notificationsPlugin.show(
         _alarmNotificationId,
         title,
         body,
         details,
         payload: 'open_alarm:${allowContinueTracking ? '1' : '0'}',
       );
-      
-      // Also directly launch the AlarmActivity via our native method channel
-      try {
-        await _launchNativeAlarmActivity(
-          title: title,
-          body: body,
-          allowContinueTracking: allowContinueTracking,
-        );
-      } catch (e) {
-        dev.log('Failed to launch native AlarmActivity: $e', name: 'NotificationService');
-        
-        // Fallback: Present the UI directly if we're in the foreground
-        final nav = NavigationService.navigatorKey.currentState;
-        if (nav != null) {
-          dev.log('Fallback: presenting AlarmFullscreen UI directly', name: 'NotificationService');
-          nav.push(MaterialPageRoute(
-            builder: (_) => AlarmFullscreen(
-              title: title,
-              body: body,
-              allowContinueTracking: allowContinueTracking,
-            ),
-          ));
-        }
-      }
-      
-      // Start playing the ringtone
-      try {
-        await AlarmPlayer.playSelected();
-      } catch (e) {
-        dev.log('Failed to play alarm sound: $e', name: 'NotificationService');
-      }
-      
+
+      await Future.wait([soundFuture, vibrationFuture, notifFuture]);
     } catch (e) {
-      dev.log('Failed to show alarm notification: $e', name: 'NotificationService');
+      dev.log(
+        'Failed to show alarm notification: $e',
+        name: 'NotificationService',
+      );
+      // If platform notification/vibration/audio fails (common on web/desktop or
+      // if plugins aren't initialized), don't permanently block future alarms.
+      _alarmCurrentlyShowing = false;
     }
   }
 
-  // Ongoing journey progress notification (non-dismissible)
+  // Ongoing journey progress notification with dynamic buttons
   Future<void> showJourneyProgress({
     required String title,
     required String subtitle,
     required double progress0to1,
+    bool isTracking = true,
   }) async {
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    if (isTracking) {
+      // If the app is in a paused-after-swipe state, the paused notification is
+      // the single source of truth. Avoid re-showing journey progress.
+      try {
+        final paused = await TrackingStateStore.isPaused();
+        if (paused) {
+          dev.log(
+            'Tracking is paused; suppressing journey notification update.',
+            name: 'NotificationService',
+          );
+          return;
+        }
+      } catch (_) {}
+
+      final muted = await TrackingStateStore.notificationsMuted();
+      if (muted) {
+        dev.log(
+          'Journey notification muted by user; skipping update.',
+          name: 'NotificationService',
+        );
+        return;
+      }
+    }
+
+    // In unit tests, avoid plugin calls but still persist payload.
+    if (isTestMode) {
+      try {
+        testRecordedNotifications.add({
+          'id': _progressNotificationId,
+          'title': title,
+          'body': subtitle,
+          'payload': isTracking ? 'journey_active' : 'journey_paused',
+          'ts': DateTime.now().toIso8601String(),
+        });
+      } catch (_) {}
+      if (testOnShowNotification != null) {
+        try {
+          await testOnShowNotification!(
+            _progressNotificationId,
+            title,
+            subtitle,
+            isTracking ? 'journey_active' : 'journey_paused',
+          );
+        } catch (_) {}
+      }
+      try {
+        await TrackingStateStore.saveProgressPayload(
+          TrackingProgressPayload(
+            title: title,
+            subtitle: subtitle,
+            progress: progress0to1,
+            isTracking: isTracking,
+          ),
+        );
+      } catch (_) {}
+      return;
+    }
+
+    final AndroidNotificationDetails
+    androidDetails = AndroidNotificationDetails(
       'geowake_tracking_channel_v2',
       'GeoWake Tracking',
       channelDescription: 'Ongoing tracking status',
       importance: Importance.defaultImportance,
       priority: Priority.defaultPriority,
-      ongoing: true,
+
+      // Let user swipe; resurrection handled by restoreJourneyProgressIfActive unless muted/end.
+      ongoing: false,
       autoCancel: false,
       showProgress: true,
       maxProgress: 1000,
       progress: (progress0to1.clamp(0.0, 1.0) * 1000).round(),
       onlyAlertOnce: true,
       visibility: NotificationVisibility.public,
+      actions:
+          isTracking
+              ? <AndroidNotificationAction>[
+                AndroidNotificationAction(
+                  'IGNORE',
+                  'Ignore',
+                  showsUserInterface: false,
+                ),
+                AndroidNotificationAction(
+                  'END_TRACKING',
+                  'End Tracking',
+                  showsUserInterface: true,
+                ),
+              ]
+              : <AndroidNotificationAction>[
+                AndroidNotificationAction(
+                  'RESUME_TRACKING',
+                  'Resume Tracking',
+                  showsUserInterface: true,
+                ),
+                AndroidNotificationAction(
+                  'END_TRACKING',
+                  'End Tracking',
+                  showsUserInterface: true,
+                ),
+              ],
     );
-    final NotificationDetails details = NotificationDetails(android: androidDetails);
+    final NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+    );
     try {
-      dev.log('Updating progress notification: progress=${(progress0to1 * 100).toStringAsFixed(1)}%', name: 'NotificationService');
+      dev.log(
+        'Updating progress notification: progress=${(progress0to1 * 100).toStringAsFixed(1)}%, isTracking=$isTracking',
+        name: 'NotificationService',
+      );
       await _notificationsPlugin.show(
         _progressNotificationId,
         title,
         subtitle,
         details,
+        payload: isTracking ? 'journey_active' : 'journey_paused',
+      );
+      await TrackingStateStore.saveProgressPayload(
+        TrackingProgressPayload(
+          title: title,
+          subtitle: subtitle,
+          progress: progress0to1,
+          isTracking: isTracking,
+        ),
       );
     } catch (e) {
-      dev.log('Failed to show progress notification: $e', name: 'NotificationService');
+      dev.log(
+        'Failed to show progress notification: $e',
+        name: 'NotificationService',
+      );
     }
+  }
+
+  Future<void> showTrackingPaused({String? destinationName}) async {
+    // Mark state paused so other subsystems (e.g., progress updates) don't
+    // fight this notification.
+    try {
+      await TrackingStateStore.setPaused(true);
+    } catch (_) {}
+
+    // Ensure the journey progress notification is not visible while paused.
+    try {
+      await cancelJourneyProgress();
+    } catch (_) {}
+
+    final title = 'Tracking paused';
+    final subtitle =
+        destinationName != null && destinationName.trim().isNotEmpty
+            ? 'Resume to continue to $destinationName'
+            : 'Resume to continue';
+
+    // In unit tests, avoid plugin calls but still persist payload.
+    if (isTestMode) {
+      try {
+        testRecordedNotifications.add({
+          'id': _pausedNotificationId,
+          'title': title,
+          'body': subtitle,
+          'payload': 'tracking_paused',
+          'ts': DateTime.now().toIso8601String(),
+        });
+      } catch (_) {}
+      if (testOnShowNotification != null) {
+        try {
+          await testOnShowNotification!(
+            _pausedNotificationId,
+            title,
+            subtitle,
+            'tracking_paused',
+          );
+        } catch (_) {}
+      }
+      try {
+        await TrackingStateStore.saveProgressPayload(
+          TrackingProgressPayload(
+            title: title,
+            subtitle: subtitle,
+            progress: 0,
+            isTracking: false,
+          ),
+        );
+      } catch (_) {}
+      return;
+    }
+
+    final AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'geowake_tracking_channel_v2',
+          'GeoWake Tracking',
+          channelDescription: 'Tracking paused (requires foreground)',
+          importance: Importance.high,
+          priority: Priority.high,
+          ongoing: true,
+          autoCancel: false,
+          onlyAlertOnce: true,
+          visibility: NotificationVisibility.public,
+          actions: <AndroidNotificationAction>[
+            AndroidNotificationAction(
+              'RESUME_TRACKING',
+              'Resume Tracking',
+              showsUserInterface: true,
+            ),
+            AndroidNotificationAction(
+              'END_TRACKING',
+              'End Tracking',
+              showsUserInterface: true,
+            ),
+          ],
+        );
+
+    final details = NotificationDetails(android: androidDetails);
+    try {
+      await _notificationsPlugin.show(
+        _pausedNotificationId,
+        title,
+        subtitle,
+        details,
+        payload: 'tracking_paused',
+      );
+      await TrackingStateStore.saveProgressPayload(
+        TrackingProgressPayload(
+          title: title,
+          subtitle: subtitle,
+          progress: 0,
+          isTracking: false,
+        ),
+      );
+    } catch (e) {
+      dev.log(
+        'Failed to show paused notification: $e',
+        name: 'NotificationService',
+      );
+    }
+  }
+
+  Future<void> cancelTrackingPaused() async {
+    if (isTestMode) {
+      try {
+        testRecordedCancels.add(_pausedNotificationId);
+      } catch (_) {}
+      if (testOnCancelNotification != null) {
+        try {
+          await testOnCancelNotification!(_pausedNotificationId);
+        } catch (_) {}
+      }
+      return;
+    }
+    try {
+      await _notificationsPlugin.cancel(_pausedNotificationId);
+    } catch (_) {}
   }
 
   Future<void> cancelJourneyProgress() async {
-    if (isTestMode) return;
+    // Clear payload regardless so end/ignore flows don't leave stale state.
+    try {
+      await TrackingStateStore.clearProgressPayload();
+    } catch (_) {}
+
+    if (isTestMode) {
+      try {
+        testRecordedCancels.add(_progressNotificationId);
+      } catch (_) {}
+      if (testOnCancelNotification != null) {
+        try {
+          await testOnCancelNotification!(_progressNotificationId);
+        } catch (_) {}
+      }
+      return;
+    }
+
     await _notificationsPlugin.cancel(_progressNotificationId);
   }
 
-  // When app comes to foreground via full-screen intent, ensure the alarm screen shows
-  Future<void> showPendingAlarmScreenIfAny() async {
+  /// Cancel all notifications (journey progress + alarm)
+  Future<void> cancelAllNotifications() async {
+    _alarmCurrentlyShowing = false;
+
+    // Always clear persisted state, even in tests.
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final has = prefs.getBool('pending_alarm_flag') ?? false;
-      if (!has) return;
-      final title = prefs.getString('pending_alarm_title') ?? 'Wake Up!';
-      final body = prefs.getString('pending_alarm_body') ?? 'Approaching your target';
-      final allow = prefs.getBool('pending_alarm_allow') ?? true;
-      await prefs.remove('pending_alarm_flag');
-      await prefs.remove('pending_alarm_title');
-      await prefs.remove('pending_alarm_body');
-      await prefs.remove('pending_alarm_allow');
-      final nav = NavigationService.navigatorKey.currentState;
-      if (nav != null) {
-        nav.push(MaterialPageRoute(
-          builder: (_) => AlarmFullscreen(title: title, body: body, allowContinueTracking: allow),
-        ));
-      }
-    } catch (e) {
-      dev.log('Failed to present pending alarm screen: $e', name: 'NotificationService');
+      await TrackingStateStore.clearProgressPayload();
+      await TrackingStateStore.setAlarmFired(false);
+    } catch (_) {}
+    await _clearPendingAlarmPrefs();
+
+    if (isTestMode) {
+      // Best-effort: record cancels for assertions.
+      try {
+        testRecordedCancels.addAll([
+          _alarmNotificationId,
+          _progressNotificationId,
+          _pausedNotificationId,
+        ]);
+      } catch (_) {}
+      return;
     }
+
+    try {
+      // Stop alarm side-effects first (audio/vibration) even if notification IDs drift.
+      await cancelAlarm(restoreJourney: false);
+
+      await _notificationsPlugin.cancel(_alarmNotificationId);
+      await _notificationsPlugin.cancel(_progressNotificationId);
+      await _notificationsPlugin.cancel(_pausedNotificationId);
+      // Cancel any other potential IDs just in case
+      await _notificationsPlugin.cancel(8888);
+      dev.log(
+        'All notifications cancelled (ID: 0, 888, 889, 8888)',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'Error cancelling all notifications: $e',
+        name: 'NotificationService',
+      );
+    }
+  }
+
+  /// Cancel the journey progress notification
+  Future<void> cancelNotification() async {
+    try {
+      await TrackingStateStore.clearProgressPayload();
+    } catch (_) {}
+
+    if (isTestMode) {
+      try {
+        testRecordedCancels.add(_progressNotificationId);
+      } catch (_) {}
+      if (testOnCancelNotification != null) {
+        try {
+          await testOnCancelNotification!(_progressNotificationId);
+        } catch (_) {}
+      }
+      return;
+    }
+
+    await _notificationsPlugin.cancel(_progressNotificationId);
   }
 }
 
@@ -381,15 +1088,202 @@ void notificationTapBackground(NotificationResponse response) async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
   } catch (_) {}
-  dev.log('BG notification response: actionId=${response.actionId}, payload=${response.payload}', name: 'NotificationService');
-  if (response.actionId == 'STOP_ALARM') {
-    try { await AlarmPlayer.stop(); } catch (_) {}
-    try { FlutterBackgroundService().invoke('stopAlarm'); } catch (_) {}
+  dev.log(
+    'BG notification response: actionId=${response.actionId}, payload=${response.payload}',
+    name: 'NotificationService',
+  );
+
+  // Critical reliability: when invoked from the plugin background isolate,
+  // FlutterBackgroundService.invoke() is not guaranteed to be available.
+  // Persist requests so the running tracking service isolate can consume them.
+  final actionId = response.actionId;
+  final payload = response.payload;
+
+  if (actionId == 'STOP_ALARM') {
+    dev.log(
+      'BG_STOP_ALARM: Stopping alarm from background callback',
+      name: 'NotificationService',
+    );
+    // Persist first so the tracking isolate can consume even if immediate stops fail.
+    await NotificationService.requestStopAlarmForService();
+
+    // Cancel the alarm notification immediately - this should always work.
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancel(0);
+      dev.log(
+        'BG_STOP_ALARM: Cancelled notification ID 0',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'BG_STOP_ALARM: Failed to cancel notification: $e',
+        name: 'NotificationService',
+      );
+    }
+
+    // Try to stop vibration - platform call should work from bg isolate.
+    try {
+      await Vibration.cancel();
+      // Call cancel multiple times for reliability on some devices
+      await Future.delayed(const Duration(milliseconds: 50));
+      await Vibration.cancel();
+      dev.log(
+        'BG_STOP_ALARM: Cancelled vibration',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'BG_STOP_ALARM: Failed to cancel vibration: $e',
+        name: 'NotificationService',
+      );
+    }
+
+    // Best-effort: invoke stopAlarm on the background service.
+    // This tells the tracking isolate to call AlarmPlayer.stop() which actually stops the sound.
+    try {
+      FlutterBackgroundService().invoke('stopAlarm');
+      dev.log(
+        'BG_STOP_ALARM: Invoked stopAlarm on service',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'BG_STOP_ALARM: Failed to invoke stopAlarm: $e',
+        name: 'NotificationService',
+      );
+    }
+
+    // Best-effort: try stopping audio directly (may fail in bg isolate).
+    try {
+      await AlarmPlayer.stop();
+      dev.log(
+        'BG_STOP_ALARM: Stopped AlarmPlayer',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'BG_STOP_ALARM: AlarmPlayer.stop failed (expected in bg isolate): $e',
+        name: 'NotificationService',
+      );
+    }
     return;
   }
-  if (response.actionId == 'END_TRACKING') {
-    try { await AlarmPlayer.stop(); } catch (_) {}
-    try { await TrackingService().stopTracking(); } catch (_) {}
+
+  if (actionId == 'IGNORE') {
+    dev.log(
+      'BG_IGNORE: Ignoring notification from background callback, payload=$payload',
+      name: 'NotificationService',
+    );
+    // For journey notifications, mute persistence.
+    if (payload != null && payload.startsWith('journey')) {
+      await NotificationService.requestMuteJourneyForService();
+      // Cancel the journey notification (ID 888) immediately.
+      try {
+        final plugin = FlutterLocalNotificationsPlugin();
+        await plugin.cancel(888);
+      } catch (_) {}
+    } else {
+      // Ignore on alarm: just stop the alarm.
+      await NotificationService.requestStopAlarmForService();
+      try {
+        await AlarmPlayer.stop();
+      } catch (_) {}
+      try {
+        await Vibration.cancel();
+      } catch (_) {}
+      try {
+        final plugin = FlutterLocalNotificationsPlugin();
+        await plugin.cancel(0);
+      } catch (_) {}
+    }
     return;
   }
+
+  if (actionId == 'END_TRACKING') {
+    dev.log(
+      'BG_END_TRACKING: Ending tracking from background callback',
+      name: 'NotificationService',
+    );
+    await NotificationService.requestEndTrackingForService();
+    // Best-effort immediate stop to reduce "button does nothing" perception.
+    // Full cleanup is performed by the tracking isolate when it consumes the request.
+    try {
+      FlutterBackgroundService().invoke('stopTracking', {'stopSelf': true});
+    } catch (_) {}
+    // Cancel all notifications immediately.
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancel(0);
+      await plugin.cancel(888);
+      await plugin.cancel(889);
+    } catch (_) {}
+    return;
+  }
+
+  if (actionId == 'RESUME_TRACKING') {
+    dev.log(
+      'DEBUG: BG_RESUME_TRACKING: Resuming tracking from background callback',
+      name: 'NotificationService',
+    );
+    // Mark tracking as no longer paused
+    try {
+      await TrackingStateStore.setPaused(false);
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Set paused to false',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Failed to set paused: $e',
+        name: 'NotificationService',
+      );
+    }
+    // Cancel the paused notification
+    try {
+      final plugin = FlutterLocalNotificationsPlugin();
+      await plugin.cancel(889); // Paused notification ID
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Cancelled paused notification',
+        name: 'NotificationService',
+      );
+    } catch (e) {
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Failed to cancel notification: $e',
+        name: 'NotificationService',
+      );
+    }
+    // Invoke startTracking to resume the background service with stored snapshot
+    try {
+      final snapshot = await TrackingStateStore.loadSnapshot();
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Loaded snapshot: ${snapshot != null}',
+        name: 'NotificationService',
+      );
+      if (snapshot != null) {
+        FlutterBackgroundService().invoke('startTracking', {
+          'destinationLat': snapshot.destinationLat,
+          'destinationLng': snapshot.destinationLng,
+          'destinationName': snapshot.destinationName,
+          'alarmMode': snapshot.alarmMode,
+          'alarmValue': snapshot.alarmValue,
+        });
+        dev.log(
+          'DEBUG: BG_RESUME_TRACKING: Invoked startTracking',
+          name: 'NotificationService',
+        );
+      }
+    } catch (e) {
+      dev.log(
+        'DEBUG: BG_RESUME_TRACKING: Failed to invoke startTracking: $e',
+        name: 'NotificationService',
+      );
+    }
+    return;
+  }
+
+  await NotificationService().handleNotificationResponse(
+    response,
+    allowNavigation: false,
+  );
 }
