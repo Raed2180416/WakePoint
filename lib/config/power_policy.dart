@@ -16,12 +16,12 @@ class PowerPolicy {
   });
 
   static PowerPolicy testing() => const PowerPolicy(
-        accuracy: LocationAccuracy.high,
-        distanceFilterMeters: 5,
-        gpsDropoutBuffer: Duration(seconds: 2),
-        notificationTick: Duration(milliseconds: 50),
-        rerouteCooldown: Duration(seconds: 2),
-      );
+    accuracy: LocationAccuracy.high,
+    distanceFilterMeters: 5,
+    gpsDropoutBuffer: Duration(seconds: 2),
+    notificationTick: Duration(milliseconds: 50),
+    rerouteCooldown: Duration(seconds: 2),
+  );
 }
 
 class PowerPolicyManager {
@@ -30,7 +30,7 @@ class PowerPolicyManager {
     if (levelPercent > 50) {
       return const PowerPolicy(
         accuracy: LocationAccuracy.high,
-        distanceFilterMeters: 20,
+        distanceFilterMeters: 5, // Smoother updates
         gpsDropoutBuffer: Duration(seconds: 25),
         notificationTick: Duration(seconds: 1),
         rerouteCooldown: Duration(seconds: 20),
@@ -40,7 +40,7 @@ class PowerPolicyManager {
     if (levelPercent > 20) {
       return const PowerPolicy(
         accuracy: LocationAccuracy.medium,
-        distanceFilterMeters: 35,
+        distanceFilterMeters: 15, // Better balance
         gpsDropoutBuffer: Duration(seconds: 30),
         notificationTick: Duration(seconds: 2),
         rerouteCooldown: Duration(seconds: 25),

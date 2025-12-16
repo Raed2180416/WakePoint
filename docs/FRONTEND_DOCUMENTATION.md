@@ -1307,6 +1307,18 @@ Shows ongoing tracking status:
 Critical alarm when destination is near:
 
 
+### Notification Action Matrix
+
+| Action Button | Surfaces | Runtime Behavior |
+| --- | --- | --- |
+| **Ignore** | Journey progress (active + paused) | Active journeys: call `TrackingService.muteJourneyNotifications()` so progress updates pause. Alarm payloads instead route through `NotificationService.cancelAlarm()` which silences audio plus vibration via the native method channel. |
+| **Resume Tracking** | Paused journey progress | Invokes `TrackingService.resumeFromNotification()` and clears the mute flag before pushing `MapTrackingScreen` with `NavigationService`. |
+| **End Tracking** | Journey progress + alarm notification | Calls `NotificationService.cancelAlarm()` and then `TrackingService.completeEndTracking()` so alarms/vibration stop before the tracking isolate, foreground UI, and persisted snapshot are torn down. |
+| **Stop Alarm / I'm Awake** | Alarm notification & AlarmActivity | Executes `NotificationService.cancelAlarm()` to halt the alarm player, instructs the method channel to cancel vibration, and leaves the tracking session active so the user can resume manually. |
+
+> **State Persistence:** Button presses are idempotent because the destination snapshot, mute flag, and progress payload are written through `TrackingStateStore`. Android background taps are routed through the same Dart logic (see `NotificationService.classifyAction`) ensuring consistent behavior even when the Flutter UI is not in memory.
+
+
 
 ---
 

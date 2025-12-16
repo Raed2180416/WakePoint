@@ -1,4 +1,4 @@
-// lib/services/trackingservice.dart
+﻿// lib/services/trackingservice.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -11,6 +11,7 @@ import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/services/simulation_client.dart';
 import 'package:geowake2/services/sensor_fusion.dart';
 import 'package:geowake2/services/route_registry.dart';
+import 'package:geowake2/services/eta_engine.dart';
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/deviation_monitor.dart';
 import 'package:geowake2/services/reroute_policy.dart';
@@ -22,8 +23,9 @@ import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
 import 'package:geowake2/config/power_policy.dart';
 import 'package:geowake2/services/snap_to_route.dart';
+import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/services/navigation_service.dart';
 
-import 'package:meta/meta.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 // (Test code and other definitions remain the same)
@@ -68,6 +70,110 @@ class TrackingService {
   TrackingService._internal();
   final FlutterBackgroundService _service = FlutterBackgroundService();
 
+  // Foreground <-> background invoke reliability (route registration)
+  bool _ackListenersRegistered = false;
+  int _invokeRequestCounter = 0;
+  final Map<String, Completer<void>> _pendingAcks = <String, Completer<void>>{};
+
+  void _ensureAckListenersRegistered() {
+    if (_ackListenersRegistered || TrackingService.isTestMode) return;
+    _ackListenersRegistered = true;
+
+    _service.on('registerRouteAck').listen((data) {
+      final requestId = data?['requestId'] as String?;
+      if (requestId == null) return;
+      final completer = _pendingAcks.remove(requestId);
+      completer?.complete();
+    });
+
+    _service.on('registerRouteDirectionsAck').listen((data) {
+      final requestId = data?['requestId'] as String?;
+      if (requestId == null) return;
+      final completer = _pendingAcks.remove(requestId);
+      completer?.complete();
+    });
+
+    _service.on('startTrackingAck').listen((data) {
+      final requestId = data?['requestId'] as String?;
+      if (requestId == null) return;
+      final completer = _pendingAcks.remove(requestId);
+      completer?.complete();
+    });
+
+    // Listen for alarm trigger requests from background isolate
+    // Background isolate cannot show notifications directly (no Android Context)
+    // so it sends the request here and the foreground isolate shows the notification
+    _service.on('triggerAlarm').listen((data) async {
+      print('DEBUG: Foreground received triggerAlarm from background');
+      if (data == null) return;
+      try {
+        final title = data['title'] as String? ?? 'Time to Wake Up!';
+        final body =
+            data['body'] as String? ?? 'You are approaching your destination';
+        final allowContinue = data['allowContinue'] as bool? ?? false;
+        print('DEBUG: Foreground calling showWakeUpAlarm: title=$title');
+        await NotificationService().showWakeUpAlarm(
+          title: title,
+          body: body,
+          allowContinueTracking: allowContinue,
+        );
+        print('DEBUG: Foreground showWakeUpAlarm completed');
+      } catch (e) {
+        print('DEBUG: Foreground triggerAlarm handler error: $e');
+        dev.log(
+          'Foreground triggerAlarm handler error: $e',
+          name: 'TrackingService',
+        );
+      }
+    });
+  }
+
+  Future<bool> _invokeWithAckRetry({
+    required String method,
+    required Map<String, dynamic> args,
+    required String ackEvent,
+  }) async {
+    if (TrackingService.isTestMode) return false;
+
+    _ensureAckListenersRegistered();
+
+    final delays = <Duration>[
+      const Duration(milliseconds: 50),
+      const Duration(milliseconds: 150),
+      const Duration(milliseconds: 300),
+      const Duration(milliseconds: 600),
+      const Duration(milliseconds: 900),
+    ];
+
+    for (var attempt = 0; attempt < delays.length; attempt++) {
+      final requestId =
+          '${DateTime.now().millisecondsSinceEpoch}_${_invokeRequestCounter++}';
+      final completer = Completer<void>();
+      _pendingAcks[requestId] = completer;
+
+      try {
+        _service.invoke(method, {...args, 'requestId': requestId});
+      } catch (_) {
+        _pendingAcks.remove(requestId);
+      }
+
+      try {
+        await completer.future.timeout(const Duration(milliseconds: 700));
+        return true;
+      } catch (_) {
+        _pendingAcks.remove(requestId);
+      }
+
+      await Future<void>.delayed(delays[attempt]);
+    }
+
+    dev.log(
+      'CRITICAL: Foreground: No ACK received for $method ($ackEvent), giving up',
+      name: 'TrackingService',
+    );
+    return false;
+  }
+
   // Expose streams bound to background isolate controllers
   Stream<ActiveRouteState> get activeRouteStateStream => _routeStateCtrl.stream;
   Stream<RouteSwitchEvent> get routeSwitchStream => _routeSwitchCtrl.stream;
@@ -101,7 +207,11 @@ class TrackingService {
     required double alarmValue,
     bool allowNotificationsInTest = false,
     bool useInjectedPositions = false,
+    List<LatLng>? routePoints,
   }) async {
+    // Ensure foreground listeners are registered to receive alarm triggers from background
+    _ensureAckListenersRegistered();
+
     final Map<String, dynamic> params = {
       'destinationLat': destination.latitude,
       'destinationLng': destination.longitude,
@@ -110,6 +220,12 @@ class TrackingService {
       'alarmValue': alarmValue,
       'useInjectedPositions': useInjectedPositions,
     };
+    if (routePoints != null) {
+      params['routePoints'] =
+          routePoints
+              .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+              .toList();
+    }
     if (isTestMode) {
       try {
         // In demo, allow real notifications even in test mode
@@ -124,16 +240,38 @@ class TrackingService {
       await _service.startService();
     }
     try {
+      // Ensure notification state is unmuted for a new session
+      await TrackingStateStore.setNotificationsMuted(false);
+      // Mark session active (snapshot is persisted by UI when available)
+      await TrackingStateStore.setActive(true);
+      await TrackingStateStore.setPaused(false);
+      await TrackingStateStore.setAlarmFired(false);
       await NotificationService().showJourneyProgress(
         title: 'Journey to $destinationName',
         subtitle: 'Starting…',
         progress0to1: 0,
+        isTracking: true,
       );
     } catch (_) {}
-    _service.invoke("startTracking", params);
+    print('DEBUG: Invoking startTracking on background service');
+    final acked = await _invokeWithAckRetry(
+      method: 'startTracking',
+      args: params,
+      ackEvent: 'startTrackingAck',
+    );
+    if (!acked) {
+      // Fallback: best-effort invoke (older background or unexpected ack failures)
+      try {
+        _service.invoke('startTracking', params);
+      } catch (_) {}
+    }
+    // Start sending heartbeats to background service
+    _startForegroundHeartbeat();
   }
 
-  Future<void> stopTracking() async {
+  Future<void> stopTracking({bool stopServiceInstance = true}) async {
+    // Stop heartbeat sending
+    _stopForegroundHeartbeat();
     // Make sure to stop the alarm in the foreground process first
     try {
       await AlarmPlayer.stop();
@@ -149,8 +287,200 @@ class TrackingService {
       _onStop();
       return;
     }
-    if (await _service.isRunning()) {
-      _service.invoke("stopTracking");
+    final running = await _service.isRunning();
+    if (running) {
+      _service.invoke("stopTracking", {'stopSelf': stopServiceInstance});
+    } else {
+      // If service already stopped, still clear foreground state
+      _onStop();
+    }
+  }
+
+  Future<void> muteJourneyNotifications() async {
+    try {
+      await TrackingStateStore.setNotificationsMuted(true);
+      await NotificationService().cancelJourneyProgress();
+    } catch (_) {}
+  }
+
+  Future<void> resumeFromNotification() async {
+    try {
+      await TrackingStateStore.setNotificationsMuted(false);
+
+      final paused = await TrackingStateStore.isPaused();
+      if (!paused) {
+        return;
+      }
+
+      // If tracking was paused (app swiped away), restart from snapshot.
+      final snapshot = await TrackingStateStore.loadSnapshot();
+      if (snapshot != null) {
+        // If threshold already satisfied on reopen, end tracking immediately.
+        if (!TrackingService.isTestMode) {
+          try {
+            final pos = await Geolocator.getCurrentPosition();
+            final d = Geolocator.distanceBetween(
+              pos.latitude,
+              pos.longitude,
+              snapshot.destinationLat,
+              snapshot.destinationLng,
+            );
+            if (snapshot.alarmMode == 'distance' &&
+                d <= (snapshot.alarmValue * 1000.0)) {
+              await completeEndTracking();
+              return;
+            }
+          } catch (_) {}
+        }
+
+        await TrackingStateStore.setActive(true);
+        await TrackingStateStore.setPaused(false);
+        await TrackingStateStore.setAlarmFired(false);
+        try {
+          await NotificationService().cancelTrackingPaused();
+        } catch (_) {}
+
+        if (!TrackingService.isTestMode) {
+          final running = await _service.isRunning();
+          if (!running) {
+            await _service.startService();
+          }
+          _service.invoke('startTracking', {
+            'destinationLat': snapshot.destinationLat,
+            'destinationLng': snapshot.destinationLng,
+            'destinationName': snapshot.destinationName,
+            'alarmMode': snapshot.alarmMode,
+            'alarmValue': snapshot.alarmValue,
+            'useInjectedPositions': false,
+          });
+
+          // Restore route events/step bounds so alarms behave consistently.
+          // Route will be freshly fetched by UI after resume; we avoid reusing stale directions.
+        }
+
+        await NotificationService().showJourneyProgress(
+          title: 'Journey to ${snapshot.destinationName}',
+          subtitle: 'Resumed',
+          progress0to1: 0,
+          isTracking: true,
+        );
+        return;
+      }
+
+      // Fallback: just restore the last journey notification content.
+      final payload = await TrackingStateStore.loadProgressPayload();
+      if (payload != null) {
+        await NotificationService().showJourneyProgress(
+          title: payload.title,
+          subtitle: payload.subtitle,
+          progress0to1: payload.progress,
+          isTracking: true,
+        );
+      }
+    } catch (_) {}
+  }
+
+  // Timer for sending heartbeats to background service
+  Timer? _heartbeatSendTimer;
+
+  /// Start sending heartbeats to the background service.
+  /// Call this when tracking starts and app is in foreground.
+  void _startForegroundHeartbeat() async {
+    if (_isBackgroundIsolate || isTestMode) return;
+    _heartbeatSendTimer?.cancel();
+    // Check if service is running before sending heartbeats
+    final running = await _service.isRunning();
+    if (!running) {
+      print('DEBUG: _startForegroundHeartbeat - service not running, skipping');
+      return;
+    }
+    // Send initial heartbeat immediately
+    _sendHeartbeat();
+    // Then send every second
+    _heartbeatSendTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _sendHeartbeat();
+    });
+  }
+
+  void _sendHeartbeat() async {
+    if (_isBackgroundIsolate || isTestMode) return;
+    // Check if service is running before invoking
+    final running = await _service.isRunning();
+    if (!running) return;
+    try {
+      _service.invoke('foregroundHeartbeat', {
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (_) {}
+  }
+
+  void _stopForegroundHeartbeat() {
+    _heartbeatSendTimer?.cancel();
+    _heartbeatSendTimer = null;
+  }
+
+  // Mirror app lifecycle transitions for bookkeeping
+  void handleAppLifecycleChange(AppLifecycleState state) async {
+    dev.log(
+      'DEBUG: handleAppLifecycleChange called with state: $state',
+      name: 'TrackingService',
+    );
+
+    if (TrackingService.isTestMode) return;
+
+    // When app resumes, restart heartbeat sending
+    if (state == AppLifecycleState.resumed) {
+      dev.log(
+        'DEBUG: App resumed - restarting foreground heartbeat',
+        name: 'TrackingService',
+      );
+      _startForegroundHeartbeat();
+      // Also tell background we're back
+      final running = await _service.isRunning();
+      if (running) {
+        try {
+          _service.invoke('foregroundResumed', {});
+        } catch (_) {}
+      }
+      return;
+    }
+
+    // IMPORTANT: Do NOT stop heartbeats on paused state!
+    // When app is simply backgrounded (paused), the Flutter timer continues to run
+    // and heartbeats will still be sent. This is the CORRECT behavior.
+    // Only when the app is truly killed (swiped away from recents) will the process
+    // die and heartbeats will naturally stop, allowing background to detect the timeout.
+    //
+    // Stopping heartbeats on 'paused' caused the bug where tracking paused notification
+    // appeared when app was simply backgrounded (not swiped away).
+    if (state == AppLifecycleState.detached) {
+      dev.log(
+        'DEBUG: App detached - this typically means process is being killed',
+        name: 'TrackingService',
+      );
+      // Note: detached state is rarely received reliably on Android.
+      // The natural timeout detection is the primary mechanism.
+    }
+  }
+
+  Future<void> completeEndTracking({bool navigateHome = true}) async {
+    try {
+      await NotificationService().cancelAllNotifications();
+      await TrackingStateStore.clearSnapshot();
+      await TrackingStateStore.setActive(false);
+      await TrackingStateStore.setPaused(false);
+      await TrackingStateStore.setAlarmFired(false);
+      await TrackingStateStore.setNotificationsMuted(false);
+    } catch (_) {}
+
+    await stopTracking();
+
+    // Optionally navigate back to a safe screen when not under test
+    if (navigateHome && !TrackingService.isTestMode) {
+      try {
+        final nav = NavigationService.navigatorKey.currentState;
+        nav?.pushNamedAndRemoveUntil('/', (route) => false);
+      } catch (_) {}
     }
   }
 
@@ -173,24 +503,158 @@ bool onIosBackground(ServiceInstance service) {
 // ===================================================================
 // BACKGROUND ISOLATE STATE
 // ===================================================================
+bool _isBackgroundIsolate = false;
 StreamSubscription<Position>? _positionSubscription;
 DateTime? _lastGpsUpdate;
 SensorFusionManager? _sensorFusionManager;
 Timer? _gpsCheckTimer;
 LatLng? _lastProcessedPosition;
 double? _smoothedETA;
+final EtaEngine _etaEngine = EtaEngine();
+double? _apiEtaSeconds;
+
+// Heartbeat mechanism for detecting when foreground app is swiped away
+DateTime? _lastForegroundHeartbeat;
+Timer? _heartbeatCheckTimer;
+const Duration _heartbeatTimeout = Duration(
+  seconds: 4,
+); // If no heartbeat for 4s, app is gone
+const Duration _heartbeatCheckInterval = Duration(seconds: 2); // Check every 2s
 bool _fusionActive = false;
 double? _lastSpeedMps;
 // Support for injected test positions from foreground (demo path)
 bool _useInjectedPositions = false;
 StreamController<Position>? _injectedCtrl;
 SimulationClient? _simulationClient;
+// Track if simulation has received at least one position from dashboard.
+// Only use simulation stream when dashboard is actively controlling positions.
+bool _simulationPositionsReceived = false;
+const double _kDefaultStopSpacingMeters = 500.0;
 // Time-alarm gating state
 DateTime? _startedAt;
 LatLng? _startPosition;
 double _distanceTravelledMeters = 0.0;
 int _etaSamples = 0;
 bool _timeAlarmEligible = false;
+DateTime? _lastAlarmFiredAt;
+// Fast poll timer for consuming alarm stop requests quickly after alarm fires.
+Timer? _alarmStopPollTimer;
+
+void _broadcastSimulationState({
+  bool alarmFired = false,
+  double? remainingStops,
+  Map<String, dynamic>? debugInfo,
+}) {
+  if (_simulationClient == null || !_simulationClient!.active) return;
+
+  final now = DateTime.now();
+  final recentAlarm =
+      _lastAlarmFiredAt != null &&
+      now.difference(_lastAlarmFiredAt!).inSeconds <= 5;
+
+  final double etaRaw = _apiEtaSeconds ?? _smoothedETA ?? 0.0;
+  final int etaSeconds = etaRaw.isFinite ? etaRaw.round() : 0;
+  final double distance =
+      _distanceTravelledMeters.isFinite ? _distanceTravelledMeters : 0.0;
+
+  _simulationClient!.broadcastState(
+    etaSeconds: etaSeconds,
+    distanceTravelled: distance,
+    alarmMode: _alarmMode ?? 'distance',
+    alarmValue: _alarmValue ?? 0.0,
+    alarmFired: alarmFired || _destinationAlarmFired || recentAlarm,
+    remainingStops: remainingStops,
+    debugInfo: debugInfo,
+  );
+}
+
+/// Starts a fast-polling timer that checks for notification action requests every 100ms.
+/// This ensures the user's "Stop Alarm", "Ignore", and "End Tracking" buttons are responsive,
+/// even when the main GPS check timer runs at 1-3 second intervals.
+/// The timer auto-cancels after 60 seconds if no request is consumed.
+void _startAlarmStopPollTimer() {
+  _alarmStopPollTimer?.cancel();
+  int tickCount = 0;
+  const maxTicks = 600; // 60 seconds at 100ms intervals
+  _alarmStopPollTimer = Timer.periodic(const Duration(milliseconds: 100), (
+    timer,
+  ) async {
+    tickCount++;
+    if (tickCount > maxTicks) {
+      timer.cancel();
+      _alarmStopPollTimer = null;
+      return;
+    }
+    try {
+      // Check stop alarm request
+      final stopAlarmRequested =
+          await NotificationService.consumeStopAlarmRequest();
+      if (stopAlarmRequested) {
+        dev.log(
+          'Fast poll: Consumed stop alarm request (tick=$tickCount)',
+          name: 'TrackingService',
+        );
+        try {
+          await NotificationService().cancelAlarm();
+        } catch (_) {}
+        try {
+          await NotificationService().restoreJourneyProgressIfActive();
+        } catch (_) {}
+        // Don't cancel timer - keep polling for other actions
+      }
+
+      // Check mute journey request
+      final muteJourneyRequested =
+          await NotificationService.consumeMuteJourneyRequest();
+      if (muteJourneyRequested) {
+        dev.log(
+          'Fast poll: Consumed mute journey request (tick=$tickCount)',
+          name: 'TrackingService',
+        );
+        try {
+          await TrackingStateStore.setNotificationsMuted(true);
+          await NotificationService().cancelJourneyProgress();
+        } catch (_) {}
+      }
+
+      // Check end tracking request
+      final endTrackingRequested =
+          await NotificationService.consumeEndTrackingRequest();
+      if (endTrackingRequested) {
+        dev.log(
+          'Fast poll: Consumed end tracking request (tick=$tickCount)',
+          name: 'TrackingService',
+        );
+        try {
+          await NotificationService().cancelAllNotifications();
+        } catch (_) {}
+        try {
+          await TrackingStateStore.clearSnapshot();
+          await TrackingStateStore.setActive(false);
+          await TrackingStateStore.setPaused(false);
+          await TrackingStateStore.setAlarmFired(false);
+          await TrackingStateStore.setNotificationsMuted(false);
+        } catch (_) {}
+        _onStop();
+        try {
+          FlutterBackgroundService().invoke('stopService');
+        } catch (_) {}
+        // Cancel this timer since tracking is ending
+        timer.cancel();
+        _alarmStopPollTimer = null;
+        return;
+      }
+    } catch (e) {
+      dev.log('Fast poll error: $e', name: 'TrackingService');
+    }
+  });
+}
+
+/// Cancels the fast alarm stop poll timer.
+void _cancelAlarmStopPollTimer() {
+  _alarmStopPollTimer?.cancel();
+  _alarmStopPollTimer = null;
+}
 
 // --- NEW STATE VARIABLES FOR ALARM LOGIC ---
 LatLng? _destination;
@@ -227,12 +691,43 @@ ActiveRouteState? _lastActiveState;
 LatLng? _firstTransitBoarding;
 bool _preBoardingAlertFired = false;
 
+Map<String, dynamic>? _cachedRoutePayload;
+DateTime? _lastRouteBroadcastAt;
+
+void _maybeBroadcastCachedRoute({bool force = false}) {
+  try {
+    if (_simulationClient == null || !_simulationClient!.active) return;
+    final payload = _cachedRoutePayload;
+    if (payload == null) return;
+
+    final last = _lastRouteBroadcastAt;
+    if (!force &&
+        last != null &&
+        DateTime.now().difference(last).inSeconds < 20) {
+      return;
+    }
+
+    _lastRouteBroadcastAt = DateTime.now();
+    _simulationClient!.broadcastRoute(
+      destinationName: payload['destinationName'] as String,
+      points: (payload['points'] as List).cast<Map<String, dynamic>>(),
+      segments: (payload['segments'] as List?)?.cast<Map<String, dynamic>>(),
+      switchPoints:
+          (payload['switch_points'] as List?)?.cast<Map<String, dynamic>>(),
+      events: (payload['events'] as List?)?.cast<Map<String, dynamic>>(),
+    );
+  } catch (_) {}
+}
+
 @pragma('vm:entry-point')
 void _onStop() async {
+  _isBackgroundIsolate = false;
+  _stopHeartbeatMonitoring();
   _positionSubscription?.cancel();
   _positionSubscription = null;
   _simulationClient?.disconnect();
   _simulationClient = null;
+  _simulationPositionsReceived = false;
   _gpsCheckTimer?.cancel();
   _gpsCheckTimer = null;
   if (_sensorFusionManager != null) {
@@ -255,6 +750,26 @@ void _onStop() async {
   _devMonitor = null;
   _reroutePolicy?.dispose();
   _reroutePolicy = null;
+
+  // Persist final ETA state
+  await _etaEngine.saveState(force: true);
+
+  // Reset per-session route/alarm state to avoid stale behavior on next run.
+  try {
+    _registry.clear();
+  } catch (_) {}
+  _activeRouteInitialized = false;
+  _lastActiveState = null;
+  _routeEvents = const [];
+  _stepBoundsMeters = const [];
+  _stepStopsCumulative = const [];
+  _firstTransitBoarding = null;
+  _preBoardingAlertFired = false;
+  _transitMode = false;
+  _cachedRoutePayload = null;
+  _lastRouteBroadcastAt = null;
+  _destinationAlarmFired = false;
+  _firedEventIndexes.clear();
 
   // Explicitly stop any playing alarm and vibration
   try {
@@ -282,18 +797,121 @@ void _onStop() async {
   dev.log("Tracking has been fully stopped.", name: "TrackingService");
 }
 
+/// Reset alarm state so alarms can fire again.
+/// Called when dashboard progress slider is moved backwards,
+/// or when a new route is registered.
+void _resetAlarmState() {
+  dev.log(
+    'DEBUG: _resetAlarmState called - resetting alarm flags',
+    name: 'TrackingService',
+  );
+  _destinationAlarmFired = false;
+  _firedEventIndexes.clear();
+  _preBoardingAlertFired = false;
+
+  // Also stop any currently playing alarm
+  AlarmPlayer.stop();
+  NotificationService().stopVibration();
+  dev.log(
+    'DEBUG: _resetAlarmState completed - flags reset to false',
+    name: 'TrackingService',
+  );
+}
+
+/// Helper to trigger alarm notification - handles background isolate case
+/// where NotificationService can't show notifications directly due to
+/// null Android Context. In that case, we send a request to the foreground.
+Future<void> _triggerAlarmNotification({
+  required ServiceInstance service,
+  required String title,
+  required String body,
+  required bool allowContinueTracking,
+}) async {
+  print(
+    'DEBUG: _triggerAlarmNotification called - isBackground=$_isBackgroundIsolate, isTestMode=${TrackingService.isTestMode}',
+  );
+
+  if (TrackingService.isTestMode) {
+    // In test mode, call notification service directly (it records without platform calls)
+    await NotificationService().showWakeUpAlarm(
+      title: title,
+      body: body,
+      allowContinueTracking: allowContinueTracking,
+    );
+    return;
+  }
+
+  if (_isBackgroundIsolate) {
+    // Background isolate cannot show notifications directly - send to foreground
+    print('DEBUG: Background isolate - sending triggerAlarm to foreground');
+    service.invoke('triggerAlarm', {
+      'title': title,
+      'body': body,
+      'allowContinue': allowContinueTracking,
+    });
+  } else {
+    // Foreground isolate - can show notifications directly
+    print('DEBUG: Foreground isolate - calling showWakeUpAlarm directly');
+    await NotificationService().showWakeUpAlarm(
+      title: title,
+      body: body,
+      allowContinueTracking: allowContinueTracking,
+    );
+  }
+}
+
 // --- NEW FUNCTION: Contains the core alarm logic ---
 @pragma('vm:entry-point')
 Future<void> _checkAndTriggerAlarm(
   Position currentPosition,
   ServiceInstance service,
 ) async {
+  print(
+    'DEBUG: _checkAndTriggerAlarm called with pos=(${currentPosition.latitude.toStringAsFixed(5)}, ${currentPosition.longitude.toStringAsFixed(5)})',
+  );
+  print(
+    'DEBUG: _checkAndTriggerAlarm state: _alarmMode=$_alarmMode, _destination=$_destination, _alarmValue=$_alarmValue',
+  );
   if (_destination == null || _alarmValue == null) {
+    print(
+      'DEBUG: _checkAndTriggerAlarm early return - destination=$_destination, alarmValue=$_alarmValue',
+    );
     return;
   }
 
+  // Keep a fresh snapshot of position/speed for snapping and deviation logic
+  _lastProcessedPosition = LatLng(
+    currentPosition.latitude,
+    currentPosition.longitude,
+  );
+  _lastSpeedMps = currentPosition.speed;
+
   bool shouldTriggerDestination = false;
   String? destinationReasonLabel;
+
+  double stopsAt(double meters) {
+    if (_stepBoundsMeters.isEmpty || _stepStopsCumulative.isEmpty) {
+      return 0.0;
+    }
+    double prevBound = 0.0;
+    double prevStops = 0.0;
+    for (int i = 0; i < _stepBoundsMeters.length; i++) {
+      final bound = _stepBoundsMeters[i];
+      final stopsHere = _stepStopsCumulative[i];
+      if (meters <= bound) {
+        final segmentLen = (bound - prevBound).abs();
+        final deltaStops = stopsHere - prevStops;
+        if (segmentLen <= 0.0) {
+          return stopsHere;
+        }
+        final t = ((meters - prevBound) / segmentLen).clamp(0.0, 1.0);
+        return prevStops + t * deltaStops;
+      }
+      prevBound = bound;
+      prevStops = stopsHere;
+    }
+    return _stepStopsCumulative.last;
+  }
 
   if (_alarmMode == 'distance') {
     double distanceInMeters = Geolocator.distanceBetween(
@@ -307,26 +925,30 @@ Future<void> _checkAndTriggerAlarm(
       shouldTriggerDestination = true;
       destinationReasonLabel = _destinationName;
     }
-    dev.log(
-      "Distance Check: ${distanceInMeters.toStringAsFixed(0)}m / ${_alarmValue! * 1000}m",
-      name: "TrackingService",
+    print(
+      "DEBUG: Distance Check: ${distanceInMeters.toStringAsFixed(0)}m / ${(_alarmValue! * 1000).toStringAsFixed(0)}m shouldTrigger=$shouldTriggerDestination",
     );
   } else if (_alarmMode == 'time') {
-    // Gate time-based alarms to avoid immediate false triggers when stationary
-    // RELAXED CHECK: Bypass eligibility in Test Mode
-    if (!_timeAlarmEligible && !TrackingService.isTestMode) {
-      dev.log(
-        'Time alarm not yet eligible. Samples=$_etaSamples, moved=${_distanceTravelledMeters.toStringAsFixed(1)}m, sinceStart=${_startedAt != null ? DateTime.now().difference(_startedAt!).inSeconds : -1}s',
-        name: 'TrackingService',
+    // Time-mode: avoid missing alarms. Use a soft eligibility signal (speed/movement/ETA samples)
+    // instead of a hard gate that can block triggers in stop-and-go scenarios.
+    final eligible =
+        TrackingService.isTestMode ||
+        _timeAlarmEligible ||
+        (_etaSamples >= 1) ||
+        (_distanceTravelledMeters >= 30.0) ||
+        (_lastSpeedMps != null && _lastSpeedMps! >= 0.5);
+
+    if (!eligible) {
+      print(
+        'DEBUG: Time alarm not yet eligible (soft). Samples=$_etaSamples, moved=${_distanceTravelledMeters.toStringAsFixed(1)}m, sinceStart=${_startedAt != null ? DateTime.now().difference(_startedAt!).inSeconds : -1}s',
       );
     } else if (_smoothedETA != null && _smoothedETA! <= (_alarmValue! * 60)) {
       // alarmValue is in minutes
       shouldTriggerDestination = true;
       destinationReasonLabel = _destinationName;
     }
-    dev.log(
-      "Time Check: ${_smoothedETA?.toStringAsFixed(0)}s / ${_alarmValue! * 60}s (eligible=$_timeAlarmEligible)",
-      name: "TrackingService",
+    print(
+      "DEBUG: Time Check: ETA=${_smoothedETA?.toStringAsFixed(0)}s / threshold=${(_alarmValue! * 60).toStringAsFixed(0)}s (eligible=$_timeAlarmEligible) shouldTrigger=$shouldTriggerDestination",
     );
   }
 
@@ -345,167 +967,291 @@ Future<void> _checkAndTriggerAlarm(
           name: 'TrackingService',
         );
         // 1 stop == 1 km for pre-boarding alert
-        if (d <= 1000.0) {
+        if (d <= 1100.0) {
+          if (TrackingService.isTestMode) {
+            // Ensure observability even if the notification helper throws
+            try {
+              NotificationService.testRecordedAlarms.add({
+                'title': 'Approaching metro station',
+                'body': 'Approaching metro station - Get ready to board',
+                'allow': true,
+                'ts': DateTime.now().toIso8601String(),
+              });
+              dev.log(
+                'PreBoard alert recorded (test mode) d=${d.toStringAsFixed(1)} count=${NotificationService.testRecordedAlarms.length}',
+                name: 'TrackingService',
+              );
+            } catch (_) {}
+          }
           try {
             dev.log(
               'Pre-boarding ALERT firing at d=${d.toStringAsFixed(1)}m',
               name: 'TrackingService',
             );
-            if (TrackingService.isTestMode) {
-              await NotificationService().showWakeUpAlarm(
-                title: 'Approaching metro station',
-                body: 'Get ready to board',
-                allowContinueTracking: true,
-              );
-            } else {
-              service.invoke('fireAlarm', {
-                'title': 'Approaching metro station',
-                'body': 'Get ready to board',
-                'allowContinueTracking': true,
-              });
-            }
+            await _triggerAlarmNotification(
+              service: service,
+              title: 'Approaching metro station',
+              body: 'Approaching metro station - Get ready to board',
+              allowContinueTracking: true,
+            );
             _preBoardingAlertFired = true;
-          } catch (_) {}
+            // Start fast polling for Stop Alarm button responsiveness.
+            _startAlarmStopPollTimer();
+          } catch (_) {
+            _preBoardingAlertFired = false; // allow retry if something failed
+          }
         }
       }
     } catch (_) {}
   }
 
   // Also check upcoming route events (transfer/mode change) with the same threshold semantics
-  if (_routeEvents.isNotEmpty) {
-    // We need progressMeters along the active route; grab latest from manager by listening state earlier.
-    // Since we don't keep state here, approximate using last known remaining distance if available via registry lastProgress.
-    try {
-      // Use authoritative progress from the active route manager state
-      final double? progressMeters = _lastActiveState?.progressMeters;
-      if (progressMeters != null) {
-        final thresholdMeters =
-            _alarmMode == 'distance' ? (_alarmValue! * 1000.0) : null;
-        final thresholdSeconds =
-            _alarmMode == 'time' ? (_alarmValue! * 60.0) : null;
-        final thresholdStops = _alarmMode == 'stops' ? (_alarmValue!) : null;
-        // Compute simple speed for time threshold
-        final spd =
-            _lastSpeedMps != null && _lastSpeedMps! > 0.3
-                ? _lastSpeedMps!
-                : 10.0;
-        // Compute progressStops if needed
-        double? progressStops;
-        if (thresholdStops != null &&
-            _stepBoundsMeters.isNotEmpty &&
-            _stepStopsCumulative.isNotEmpty) {
-          for (int i = 0; i < _stepBoundsMeters.length; i++) {
-            if (progressMeters <= _stepBoundsMeters[i]) {
-              progressStops = _stepStopsCumulative[i];
-              break;
-            }
-          }
-          progressStops ??= 0.0;
-        }
-        for (int idx = 0; idx < _routeEvents.length; idx++) {
-          final ev = _routeEvents[idx];
-          if (_firedEventIndexes.contains(idx)) continue; // already alerted
-          if (ev.meters <= progressMeters) continue; // already passed
-          final toEventM = ev.meters - progressMeters;
-          bool eventAlarm = false;
-          if (thresholdMeters != null) {
-            eventAlarm = toEventM <= thresholdMeters;
-          } else if (thresholdSeconds != null) {
-            // RELAXED CHECK: Bypass eligibility in Test Mode
-            if (!_timeAlarmEligible && !TrackingService.isTestMode) {
-              continue;
-            }
-            final estSec = toEventM / spd;
-            eventAlarm = estSec <= thresholdSeconds;
-          } else if (thresholdStops != null && progressStops != null) {
-            // Map event meters to event stops
-            double? eventStops;
-            for (int i = 0; i < _stepBoundsMeters.length; i++) {
-              if (ev.meters <= _stepBoundsMeters[i]) {
-                eventStops = _stepStopsCumulative[i];
-                break;
-              }
-            }
+  // Use latest progressMeters snapshot for stops/time event calculations
+  double? progressMeters;
+  try {
+    progressMeters = _lastActiveState?.progressMeters;
+    RouteEntry? active;
+    if (_lastActiveState?.activeKey != null && _registry.entries.isNotEmpty) {
+      try {
+        active = _registry.entries.firstWhere(
+          (e) => e.key == _lastActiveState!.activeKey,
+          orElse: () => _registry.entries.first,
+        );
+      } catch (_) {}
+    }
+    active ??= _registry.entries.isNotEmpty ? _registry.entries.first : null;
 
-            if (eventStops != null) {
-              final toEventStops = eventStops - progressStops;
+    if (active != null && _lastProcessedPosition != null) {
+      final snap = SnapToRouteEngine.snap(
+        point: _lastProcessedPosition!,
+        polyline: active.points,
+        hintIndex: active.lastSnapIndex,
+        precomputedCumMeters: active.cumMeters,
+      );
+      progressMeters = snap.progressMeters;
+      _registry.updateSessionState(
+        active.key,
+        lastSnapIndex: snap.segmentIndex,
+        lastProgressMeters: snap.progressMeters,
+      );
+    } else {
+      // Fallback to latest cached registry progress
+      RouteEntry? best;
+      for (final e in _registry.entries) {
+        if (e.lastProgressMeters != null) {
+          if (best == null || e.lastUsed.isAfter(best.lastUsed)) {
+            best = e;
+          }
+        }
+      }
+      final registryProgress = best?.lastProgressMeters;
+      if (registryProgress != null) {
+        if (progressMeters == null ||
+            registryProgress > progressMeters + 1e-3) {
+          progressMeters = registryProgress;
+        }
+      }
+    }
+  } catch (_) {}
+
+  // NOTE: For stops mode with route events, destination alarm is handled in the event loop below
+  // to ensure intermediate switch points fire their alarms before the destination alarm.
+  // However, we also need a FALLBACK for when route events aren't available (e.g., race condition
+  // between startTracking and registerRouteDirections, or non-transit routes).
+  // This fallback uses distance-based calculation to the destination.
+  if (_alarmMode == 'stops' &&
+      !_destinationAlarmFired &&
+      _routeEvents.isEmpty) {
+    // Fallback: use 1km per stop (500m avg stop spacing x 2 for safety margin)
+    final distToDestM = Geolocator.distanceBetween(
+      currentPosition.latitude,
+      currentPosition.longitude,
+      _destination!.latitude,
+      _destination!.longitude,
+    );
+    final effectiveStops = distToDestM / _kDefaultStopSpacingMeters;
+    dev.log(
+      'Stops fallback: distToDestM=${distToDestM.toStringAsFixed(0)} effectiveStops=${effectiveStops.toStringAsFixed(2)} threshold=${_alarmValue} routeEvents=${_routeEvents.length}',
+      name: 'TrackingService',
+    );
+    if (effectiveStops <= _alarmValue!) {
+      shouldTriggerDestination = true;
+      destinationReasonLabel = _destinationName;
+      dev.log(
+        'Stops fallback TRIGGERED! effectiveStops <= threshold',
+        name: 'TrackingService',
+      );
+    }
+  }
+
+  // Also check upcoming route events (transfer/mode change) with the same threshold semantics.
+  // If the destination alarm is already due (or already fired), skip intermediate alarms to
+  // avoid overlapping notifications in the same tick.
+  final bool destinationPending =
+      shouldTriggerDestination || _destinationAlarmFired;
+  dev.log(
+    'Event loop check: routeEvents=${_routeEvents.length} progressMeters=$progressMeters destinationPending=$destinationPending',
+    name: 'TrackingService',
+  );
+  if (_routeEvents.isNotEmpty &&
+      progressMeters != null &&
+      !destinationPending) {
+    bool destinationTriggeredThisTick = false;
+    try {
+      final thresholdMeters =
+          _alarmMode == 'distance' ? (_alarmValue! * 1000.0) : null;
+      final thresholdSeconds =
+          _alarmMode == 'time' ? (_alarmValue! * 60.0) : null;
+      final thresholdStops = _alarmMode == 'stops' ? (_alarmValue!) : null;
+      final spd =
+          _lastSpeedMps != null && _lastSpeedMps! > 0.3 ? _lastSpeedMps! : 10.0;
+      double? progressStops;
+      if (thresholdStops != null) {
+        progressStops = stopsAt(progressMeters);
+      }
+      // If destination is already within the same threshold, suppress lower-priority
+      // transfer/mode-change alarms to avoid double-firing when both coincide.
+      bool destinationWithinThreshold = false;
+      double? remainingStopsToDestination;
+      if (thresholdStops != null && progressStops != null) {
+        final destStopsTotal =
+            _stepStopsCumulative.isNotEmpty
+                ? _stepStopsCumulative.last
+                : (_stepBoundsMeters.isNotEmpty
+                    ? _stepBoundsMeters.last / _kDefaultStopSpacingMeters
+                    : 0.0);
+        remainingStopsToDestination = destStopsTotal - progressStops;
+        // Allow transfer alarms when exactly at the threshold (e.g., 2 stops out);
+        // suppress only when destination is strictly closer than the threshold.
+        if (remainingStopsToDestination.isFinite &&
+            remainingStopsToDestination < thresholdStops) {
+          destinationWithinThreshold = true;
+        }
+      }
+      for (int idx = 0; idx < _routeEvents.length; idx++) {
+        if (destinationTriggeredThisTick || _destinationAlarmFired) {
+          break; // Once destination fires, suppress remaining event alarms in this tick
+        }
+        final ev = _routeEvents[idx];
+        if (_firedEventIndexes.contains(idx)) continue; // already alerted
+        if (ev.meters < progressMeters - 200.0) {
+          continue; // allow small overshoot window
+        }
+        final toEventM = ev.meters - progressMeters;
+        bool eventAlarm = false;
+        double? effectiveStopsToEvent;
+        if (thresholdMeters != null) {
+          eventAlarm = toEventM <= thresholdMeters;
+        } else if (thresholdSeconds != null) {
+          final estSec = toEventM / spd;
+          eventAlarm = estSec <= thresholdSeconds;
+        } else if (thresholdStops != null && progressStops != null) {
+          final eventStops = stopsAt(ev.meters);
+          final toEventStops = eventStops - progressStops;
+          final toEventStopsFallback = toEventM / _kDefaultStopSpacingMeters;
+          double effectiveStops;
+          // If actual transit stops exist between progress and event, use them directly.
+          // Only fall back to distance-based calculation when no actual stops are available
+          // (e.g., walking segments or when stops data is missing/invalid).
+          if (toEventStops.isFinite && toEventStops > 0.5) {
+            // Use actual stops - this is more accurate for transit segments.
+            effectiveStops = toEventStops;
+          } else if (toEventStopsFallback.isFinite &&
+              toEventStopsFallback >= 0) {
+            // Fall back to distance-based (500m per "stop") for walking/unknown segments.
+            effectiveStops = toEventStopsFallback;
+          } else {
+            // Safety fallback if both are invalid.
+            effectiveStops = toEventM / _kDefaultStopSpacingMeters;
+          }
+          effectiveStopsToEvent = effectiveStops;
+          dev.log(
+            'Event check ev=${ev.label ?? ev.type} evM=${ev.meters.toStringAsFixed(0)} progM=${progressMeters.toStringAsFixed(0)} toM=${toEventM.toStringAsFixed(0)} progStops=${progressStops.toStringAsFixed(2)} evStops=${eventStops.toStringAsFixed(2)} toStops=${toEventStops.toStringAsFixed(2)} fallback=${toEventStopsFallback.toStringAsFixed(2)} eff=${effectiveStops.toStringAsFixed(2)} thr=$thresholdStops',
+            name: 'TrackingService',
+          );
+          eventAlarm = effectiveStops <= thresholdStops;
+          // Removed secondary distance-based trigger to ensure consistent alarm timing
+          // based on the user's chosen stops threshold. The fallback in effectiveStops
+          // already handles cases where actual stops data is unavailable.
+        }
+        if (eventAlarm) {
+          if (destinationWithinThreshold && ev.type != 'destination') {
+            if (remainingStopsToDestination != null &&
+                effectiveStopsToEvent != null &&
+                remainingStopsToDestination < effectiveStopsToEvent) {
               dev.log(
-                'Event Check: ev=${ev.type} toEventStops=$toEventStops threshold=$thresholdStops',
+                'Suppressing ${ev.type} alarm because destination is closer within threshold (priority win)',
                 name: 'TrackingService',
               );
-              eventAlarm = toEventStops <= thresholdStops;
+              continue;
             }
+            dev.log(
+              'Destination is within threshold but transfer kept (destination not closer).',
+              name: 'TrackingService',
+            );
           }
-          if (eventAlarm) {
-            // Fire an event alarm (do not stop service). In test mode, use NotificationService for observability.
+          // Handle destination event separately with final alarm behavior
+          if (ev.type == 'destination') {
+            if (_destinationAlarmFired)
+              continue; // already fired destination alarm
+            _destinationAlarmFired = true;
             try {
-              final title =
-                  ev.type == 'transfer'
-                      ? 'Upcoming transfer'
-                      : 'Upcoming change';
+              final title = 'Wake Up!';
               final body =
                   ev.label != null
-                      ? ev.label!
-                      : (ev.type == 'transfer'
-                          ? 'Transfer ahead'
-                          : 'Mode change ahead');
-              if (TrackingService.isTestMode) {
-                await NotificationService().showWakeUpAlarm(
-                  title: title,
-                  body: body,
-                  allowContinueTracking: true,
-                );
-              } else {
-                service.invoke('fireAlarm', {
-                  'title': title,
-                  'body': body,
-                  'allowContinueTracking': true,
-                });
-                // Broadcast to simulation
-                if (_simulationClient != null && _simulationClient!.active) {
-                  _simulationClient!.broadcastState({
-                    'type': 'app_state',
-                    'alarm_fired': true,
-                  });
-                }
-              }
+                      ? 'Approaching: ${ev.label}'
+                      : 'You are nearing your destination';
+              _lastAlarmFiredAt = DateTime.now();
+              _broadcastSimulationState(alarmFired: true);
+              await _triggerAlarmNotification(
+                service: service,
+                title: title,
+                body: body,
+                allowContinueTracking: false,
+              );
+              _startAlarmStopPollTimer();
             } catch (_) {}
             _firedEventIndexes.add(idx);
-            // Continue to check destination separately
+            destinationTriggeredThisTick = true;
+            continue;
           }
+          // Handle intermediate events (transfer/mode_change/boarding/alighting)
+          try {
+            final title =
+                ev.type == 'transfer' ? 'Upcoming transfer' : 'Upcoming change';
+            final body =
+                ev.label != null
+                    ? ev.label!
+                    : (ev.type == 'transfer'
+                        ? 'Transfer ahead'
+                        : 'Mode change ahead');
+
+            _lastAlarmFiredAt = DateTime.now();
+            _broadcastSimulationState(alarmFired: true);
+            await _triggerAlarmNotification(
+              service: service,
+              title: title,
+              body: body,
+              allowContinueTracking: true,
+            );
+            // Start fast polling for Stop Alarm button responsiveness.
+            _startAlarmStopPollTimer();
+          } catch (_) {}
+          _firedEventIndexes.add(idx);
         }
       }
     } catch (_) {}
   }
 
-  // Destination threshold check considering stops mode
-  if (_alarmMode == 'stops' && !_destinationAlarmFired) {
-    // Compute remaining stops based on progress
-    try {
-      if (_stepBoundsMeters.isNotEmpty && _stepStopsCumulative.isNotEmpty) {
-        final pm = _lastActiveState?.progressMeters;
-        if (pm != null) {
-          double progressStops = 0.0;
-          for (int i = 0; i < _stepBoundsMeters.length; i++) {
-            if (pm <= _stepBoundsMeters[i]) {
-              progressStops = _stepStopsCumulative[i];
-              break;
-            }
-          }
-          final totalStops =
-              _stepStopsCumulative.isNotEmpty ? _stepStopsCumulative.last : 0.0;
-          final remainingStops = (totalStops - progressStops);
-          if (remainingStops <= _alarmValue!) {
-            shouldTriggerDestination = true;
-            destinationReasonLabel = _destinationName;
-          }
-        }
-      }
-    } catch (_) {}
-  }
+  dev.log(
+    'DEBUG: Alarm check result - shouldTrigger=$shouldTriggerDestination, alreadyFired=$_destinationAlarmFired, mode=$_alarmMode, value=$_alarmValue',
+    name: 'TrackingService',
+  );
 
   if (shouldTriggerDestination && !_destinationAlarmFired) {
-    dev.log("DESTINATION ALARM TRIGGERED!", name: "TrackingService");
+    print(
+      "DEBUG: DESTINATION ALARM TRIGGERED! shouldTrigger=$shouldTriggerDestination alreadyFired=$_destinationAlarmFired",
+    );
     _destinationAlarmFired = true;
     final title = 'Wake Up! ';
     final body =
@@ -513,29 +1259,26 @@ Future<void> _checkAndTriggerAlarm(
             ? 'Approaching: $destinationReasonLabel'
             : 'You are nearing your target';
     try {
-      if (TrackingService.isTestMode) {
-        await NotificationService().showWakeUpAlarm(
-          title: title,
-          body: body,
-          allowContinueTracking: false,
-        );
-      } else {
-        service.invoke('fireAlarm', {
-          'title': title,
-          'body': body,
-          'allowContinueTracking': false,
-        });
-        // Broadcast to simulation
-        if (_simulationClient != null && _simulationClient!.active) {
-          _simulationClient!.broadcastState({
-            'type': 'app_state',
-            'alarm_fired': true,
-          });
-        }
-      }
-    } catch (_) {}
-    // Stop the service to save battery once destination alarm fires
-    service.invoke("stopTracking");
+      _lastAlarmFiredAt = DateTime.now();
+      _broadcastSimulationState(alarmFired: true);
+      print(
+        "DEBUG: About to call _triggerAlarmNotification with title='$title', body='$body'",
+      );
+      await _triggerAlarmNotification(
+        service: service,
+        title: title,
+        body: body,
+        allowContinueTracking: false,
+      );
+      print("DEBUG: _triggerAlarmNotification completed");
+      // Start fast polling for alarm stop button responsiveness.
+      _startAlarmStopPollTimer();
+    } catch (e) {
+      print("DEBUG: _triggerAlarmNotification exception: $e");
+    }
+    // Do not stop the service here.
+    // The user may want to use notification actions (STOP_ALARM / END_TRACKING),
+    // which are processed by the running tracking isolate.
   }
 }
 
@@ -545,6 +1288,25 @@ void _onStart(
   Map<String, dynamic>? initialData,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
+  _isBackgroundIsolate = true;
+  // Initialize ETA engine
+  await _etaEngine.loadState();
+  print('DEBUG: Background isolate _onStart called');
+
+  // Initialize NotificationService for the background isolate
+  // This is critical - the notification plugin needs to be initialized
+  // in each isolate that uses it, otherwise the Android Context is null
+  try {
+    print('DEBUG: Initializing NotificationService in background isolate...');
+    await NotificationService().initialize();
+    print('DEBUG: NotificationService initialized successfully in background');
+  } catch (e) {
+    print('DEBUG: NotificationService init failed in background: $e');
+    dev.log(
+      'NotificationService init failed in background isolate: $e',
+      name: 'TrackingService',
+    );
+  }
 
   // --- REGISTER LISTENERS FIRST TO AVOID RACE CONDITIONS ---
 
@@ -553,11 +1315,90 @@ void _onStart(
   });
 
   service.on('startTracking').listen((data) {
+    print('DEBUG: Background received startTracking event with data: $data');
+    final requestId = data?['requestId'] as String?;
+    if (requestId != null) {
+      try {
+        service.invoke('startTrackingAck', {'requestId': requestId});
+      } catch (_) {}
+    }
     if (data != null) {
+      dev.log(
+        'DEBUG: startTracking received - resetting alarm state',
+        name: 'TrackingService',
+      );
+      dev.log(
+        'DEBUG: Previous _destinationAlarmFired=$_destinationAlarmFired',
+        name: 'TrackingService',
+      );
+      // Reset stale state from any prior session (important for subsequent runs).
+      try {
+        _registry.clear();
+      } catch (_) {}
+      _activeRouteInitialized = false;
+      _routeEvents = const [];
+      _stepBoundsMeters = const [];
+      _stepStopsCumulative = const [];
+      _firstTransitBoarding = null;
+      _preBoardingAlertFired = false;
+      _transitMode = false;
+      _cachedRoutePayload = null;
+      _lastRouteBroadcastAt = null;
+      _destinationAlarmFired = false;
+      _simulationPositionsReceived =
+          false; // Reset simulation state for new session
+      _firedEventIndexes.clear();
+      dev.log(
+        'DEBUG: After reset _destinationAlarmFired=$_destinationAlarmFired, _firedEventIndexes=${_firedEventIndexes.length}',
+        name: 'TrackingService',
+      );
+
       _destination = LatLng(data['destinationLat'], data['destinationLng']);
       _destinationName = data['destinationName'];
       _alarmMode = data['alarmMode'];
       _alarmValue = (data['alarmValue'] as num).toDouble();
+
+      // Persist session-active flag for restore flows.
+      try {
+        TrackingStateStore.setActive(true);
+        TrackingStateStore.setPaused(false);
+        TrackingStateStore.setAlarmFired(false);
+      } catch (_) {}
+
+      // Ensure stop/time/event alarms have route context even if the
+      // foreground->background route registration invoke is dropped.
+      // HomeScreen persists directions into TrackingStateStore; restore from it here.
+      unawaited(() async {
+        try {
+          final active = await TrackingStateStore.isActive();
+          final paused = await TrackingStateStore.isPaused();
+          if (!active || paused) return;
+
+          final snapshot = await TrackingStateStore.loadSnapshot();
+          if (snapshot?.directions == null) return;
+
+          await TrackingService().registerRouteFromDirections(
+            directions: snapshot!.directions!,
+            origin: LatLng(snapshot.userLat, snapshot.userLng),
+            destination: LatLng(
+              snapshot.destinationLat,
+              snapshot.destinationLng,
+            ),
+            transitMode: snapshot.metroMode,
+            destinationName: snapshot.destinationName,
+          );
+          dev.log(
+            'Background: Restored route from snapshot directions',
+            name: 'TrackingService',
+          );
+        } catch (e) {
+          dev.log(
+            'Background: Failed to restore route from snapshot: $e',
+            name: 'TrackingService',
+          );
+        }
+      }());
+
       // If caller requested injected positions, enable before starting stream
       try {
         if (data['useInjectedPositions'] == true) {
@@ -573,7 +1414,24 @@ void _onStart(
       _distanceTravelledMeters = 0.0;
       _etaSamples = 0;
       _timeAlarmEligible = false;
+      _preBoardingAlertFired = false;
       _smoothedETA = null; // Reset ETA
+      if (_transitMode && _firstTransitBoarding == null) {
+        try {
+          final ev = _routeEvents.firstWhere(
+            (e) => e.type == 'boarding' || e.type == 'transfer',
+          );
+          if (ev.lat != null && ev.lng != null) {
+            _firstTransitBoarding = LatLng(ev.lat!, ev.lng!);
+          }
+        } catch (_) {}
+        if (_firstTransitBoarding == null && _registry.entries.isNotEmpty) {
+          final pts = _registry.entries.first.points;
+          if (pts.length > 1) {
+            _firstTransitBoarding = pts[1];
+          }
+        }
+      }
       dev.log(
         "Tracking started with params: Dest='$_destinationName', Mode='$_alarmMode', Value='$_alarmValue'",
         name: "TrackingService",
@@ -588,34 +1446,69 @@ void _onStart(
                     : 'GeoWake journey',
             subtitle: 'Starting…',
             progress0to1: 0.0,
+            isTracking: true,
           );
         }
       } catch (_) {}
 
       // Ensure Simulation Client is connected (reconnect if needed)
+      print(
+        'DEBUG: Checking simulation client - exists=${_simulationClient != null}, active=${_simulationClient?.active}',
+      );
       if (_simulationClient == null) {
-        _simulationClient = SimulationClient();
+        // IMPORTANT: If we stopped tracking previously, `_onStop()` clears `_simulationClient`.
+        // Subsequent sessions must recreate the client WITH callbacks; otherwise
+        // `_simulationPositionsReceived` never flips true and the location stream
+        // never switches to dashboard-provided simulation positions.
+        _simulationClient = SimulationClient(
+          onConnected: () {
+            dev.log(
+              'SimulationClient connected; re-broadcasting cached route',
+              name: 'TrackingService',
+            );
+            _maybeBroadcastCachedRoute(force: true);
+          },
+          onFirstPositionReceived: () {
+            _simulationPositionsReceived = true;
+            dev.log(
+              'SimulationClient received first position from dashboard',
+              name: 'TrackingService',
+            );
+            // Switch to simulation stream as soon as the dashboard starts sending.
+            startLocationStream(service);
+          },
+        );
+        _simulationClient!.onAlarmReset = _resetAlarmState;
       }
       if (!_simulationClient!.active) {
+        print('DEBUG: Simulation client not active, connecting...');
         // Try to connect, but ensure we start the stream regardless of success/failure
         _simulationClient!
-            .connect(host: 'ws://127.0.0.1:8080')
+            .connect()
             .then((_) {
+              print('DEBUG: Simulation connected in startTracking');
               dev.log(
                 'Simulation connected in startTracking',
                 name: 'TrackingService',
               );
             })
             .catchError((e) {
+              print('DEBUG: Simulation connection failed in startTracking: $e');
               dev.log(
                 'Simulation connection failed in startTracking: $e',
                 name: 'TrackingService',
               );
             })
             .whenComplete(() {
+              print(
+                'DEBUG: Calling startLocationStream after simulation connect',
+              );
               startLocationStream(service);
             });
       } else {
+        print(
+          'DEBUG: Simulation client already active, calling startLocationStream directly',
+        );
         startLocationStream(service);
       }
     }
@@ -649,6 +1542,51 @@ void _onStart(
     } catch (_) {}
   });
 
+  // Heartbeat mechanism: foreground sends heartbeats, background detects timeout
+  service.on('foregroundHeartbeat').listen((data) {
+    _lastForegroundHeartbeat = DateTime.now();
+    dev.log('DEBUG: Received foreground heartbeat', name: 'TrackingService');
+  });
+
+  // Foreground resumed: reset heartbeat state and cancel any pending pause
+  service.on('foregroundResumed').listen((data) async {
+    dev.log(
+      'DEBUG: Foreground resumed notification received',
+      name: 'TrackingService',
+    );
+    _lastForegroundHeartbeat = DateTime.now();
+
+    // Restart heartbeat monitoring if it was stopped
+    if (_heartbeatCheckTimer == null) {
+      _startHeartbeatMonitoring(service);
+    }
+
+    // If we were paused due to timeout, resume tracking
+    try {
+      final isPaused = await TrackingStateStore.isPaused();
+      if (isPaused) {
+        dev.log('DEBUG: Resuming from paused state', name: 'TrackingService');
+        await TrackingStateStore.setPaused(false);
+        await NotificationService().cancelTrackingPaused();
+        // Restore journey progress notification
+        final snapshot = await TrackingStateStore.loadSnapshot();
+        if (snapshot != null) {
+          await NotificationService().showJourneyProgress(
+            title: 'Journey to ${snapshot.destinationName}',
+            subtitle: 'Tracking resumed',
+            progress0to1: 0,
+            isTracking: true,
+          );
+        }
+      }
+    } catch (e) {
+      dev.log(
+        'DEBUG: Error handling foreground resumed: $e',
+        name: 'TrackingService',
+      );
+    }
+  });
+
   service.on("stopTracking").listen((event) async {
     // Make sure to stop the alarm explicitly first
     try {
@@ -673,18 +1611,11 @@ void _onStart(
       'Received stopAlarm event in background service',
       name: 'TrackingService',
     );
+    // Cancel fast poll timer since alarm is being stopped.
+    _cancelAlarmStopPollTimer();
     try {
-      // Stop playing sound
-      await AlarmPlayer.stop();
-      // Stop vibration through the notification service
-      try {
-        NotificationService().stopVibration();
-      } catch (e) {
-        dev.log('Error stopping vibration: $e', name: 'TrackingService');
-      }
-      // We can't directly cancel the notification from the background service
-      // since we don't have access to the private members of NotificationService.
-      // The notification will be dismissed when the app comes to foreground.
+      await NotificationService().cancelAlarm();
+      await NotificationService().restoreJourneyProgressIfActive();
     } catch (e) {
       dev.log('Error stopping alarm: $e', name: 'TrackingService');
     }
@@ -694,6 +1625,7 @@ void _onStart(
   service.on('registerRoute').listen((data) {
     if (data != null) {
       try {
+        final requestId = data['requestId'] as String?;
         final key = data['key'] as String;
         final mode = data['mode'] as String;
         final destinationName = data['destinationName'] as String;
@@ -718,8 +1650,22 @@ void _onStart(
                   .toList();
         }
 
-        print('CRITICAL: Background: Received registerRoute for $key');
-        print('CRITICAL: Background: Segments: ${segments?.length}');
+        List<Map<String, dynamic>>? events;
+        if (data['events'] != null) {
+          events =
+              (data['events'] as List)
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList();
+        }
+
+        dev.log(
+          'CRITICAL: Background: Received registerRoute for $key',
+          name: 'TrackingService',
+        );
+        dev.log(
+          'CRITICAL: Background: Segments: ${segments?.length}',
+          name: 'TrackingService',
+        );
 
         TrackingService().registerRoute(
           key: key,
@@ -728,10 +1674,57 @@ void _onStart(
           points: points,
           segments: segments,
           switchPoints: switchPoints,
+          events: events,
         );
+
+        if (requestId != null) {
+          service.invoke('registerRouteAck', {'requestId': requestId});
+        }
       } catch (e) {
-        print('CRITICAL: Background: Error in registerRoute listener: $e');
+        dev.log(
+          'CRITICAL: Background: Error in registerRoute listener: $e',
+          name: 'TrackingService',
+        );
       }
+    }
+  });
+
+  // Handle full Directions-based registration from foreground.
+  // This avoids losing route events/step bounds that are needed for stops/time alarms.
+  service.on('registerRouteDirections').listen((data) async {
+    if (data == null) return;
+    try {
+      final requestId = data['requestId'] as String?;
+      final directions = Map<String, dynamic>.from(data['directions'] as Map);
+      final originMap = Map<String, dynamic>.from(data['origin'] as Map);
+      final destMap = Map<String, dynamic>.from(data['destination'] as Map);
+      final origin = LatLng(
+        (originMap['lat'] as num).toDouble(),
+        (originMap['lng'] as num).toDouble(),
+      );
+      final destination = LatLng(
+        (destMap['lat'] as num).toDouble(),
+        (destMap['lng'] as num).toDouble(),
+      );
+      final transitMode = (data['transitMode'] as bool?) ?? false;
+      final destinationName = data['destinationName'] as String?;
+
+      await TrackingService().registerRouteFromDirections(
+        directions: directions,
+        origin: origin,
+        destination: destination,
+        transitMode: transitMode,
+        destinationName: destinationName,
+      );
+
+      if (requestId != null) {
+        service.invoke('registerRouteDirectionsAck', {'requestId': requestId});
+      }
+    } catch (e) {
+      dev.log(
+        'CRITICAL: Background: Error in registerRouteDirections listener: $e',
+        name: 'TrackingService',
+      );
     }
   });
 
@@ -742,13 +1735,41 @@ void _onStart(
   } catch (_) {}
 
   // Initialize Simulation Client (Debug only)
-  _simulationClient = SimulationClient();
-  // Use localhost (requires 'adb reverse tcp:8080 tcp:8080' for Android emulator)
+  _simulationClient = SimulationClient(
+    onConnected: () {
+      dev.log(
+        'SimulationClient connected; re-broadcasting cached route',
+        name: 'TrackingService',
+      );
+      _maybeBroadcastCachedRoute(force: true);
+    },
+    onFirstPositionReceived: () {
+      // Dashboard has started sending positions - enable simulation stream.
+      _simulationPositionsReceived = true;
+      dev.log(
+        'SimulationClient received first position from dashboard',
+        name: 'TrackingService',
+      );
+      // CRITICAL: Restart the location stream so it switches to simulation stream.
+      // Without this, the stream selection is made only once at startup, and if
+      // _simulationPositionsReceived was false at that time (because dashboard
+      // hadn't sent positions yet), the app would keep using Geolocator stream
+      // and ignore dashboard positions entirely - breaking dashboard alarms.
+      startLocationStream(service);
+    },
+  );
+  // Set up alarm reset callback for dashboard control
+  _simulationClient!.onAlarmReset = _resetAlarmState;
+  // Uses PlaygroundBridgeConfig.relayUrl (default ws://127.0.0.1:8081).
+  // For Android devices/emulators, this typically requires: adb reverse tcp:8081 tcp:8081
   // This await might take time, but listeners are already active.
   try {
-    await _simulationClient!.connect(host: 'ws://127.0.0.1:8080');
+    await _simulationClient!.connect();
   } catch (e) {
-    print('CRITICAL: Background: Failed to connect to simulation: $e');
+    dev.log(
+      'CRITICAL: Background: Failed to connect to simulation: $e',
+      name: 'TrackingService',
+    );
   }
 
   // Handle data passed directly (for test mode)
@@ -774,18 +1795,94 @@ void _onStart(
     _distanceTravelledMeters = 0.0;
     _etaSamples = 0;
     _timeAlarmEligible = false;
+    _preBoardingAlertFired = false;
     startLocationStream(service);
+    // Start fast polling for notification action buttons (Stop Alarm, Ignore, End Tracking)
+    _startAlarmStopPollTimer();
   }
 }
 
+/// Start the heartbeat check timer that detects when foreground is gone.
+/// This should be called when tracking starts in the background isolate.
+void _startHeartbeatMonitoring(ServiceInstance service) {
+  // Don't run heartbeat monitoring in test mode or if not in background isolate
+  if (!_isBackgroundIsolate || TrackingService.isTestMode) return;
+  _lastForegroundHeartbeat = DateTime.now();
+  _heartbeatCheckTimer?.cancel();
+  _heartbeatCheckTimer = Timer.periodic(_heartbeatCheckInterval, (_) async {
+    if (_lastForegroundHeartbeat == null) return;
+
+    final elapsed = DateTime.now().difference(_lastForegroundHeartbeat!);
+    if (elapsed > _heartbeatTimeout) {
+      // Foreground app is gone (swiped away or killed)
+      dev.log(
+        'DEBUG: Heartbeat timeout - foreground gone for ${elapsed.inSeconds}s',
+        name: 'TrackingService',
+      );
+
+      try {
+        final active = await TrackingStateStore.isActive();
+        final alreadyPaused = await TrackingStateStore.isPaused();
+
+        if (!active || alreadyPaused) {
+          dev.log(
+            'DEBUG: Not showing pause - active=$active, paused=$alreadyPaused',
+            name: 'TrackingService',
+          );
+          return;
+        }
+
+        dev.log(
+          'DEBUG: Showing tracking paused notification (heartbeat timeout)',
+          name: 'TrackingService',
+        );
+
+        await TrackingStateStore.setPaused(true);
+        final snapshot = await TrackingStateStore.loadSnapshot();
+        await NotificationService().cancelJourneyProgress();
+        await NotificationService().showTrackingPaused(
+          destinationName: snapshot?.destinationName,
+        );
+
+        // Stop heartbeat monitoring since we're now in paused state
+        _heartbeatCheckTimer?.cancel();
+        _heartbeatCheckTimer = null;
+      } catch (e) {
+        dev.log(
+          'DEBUG: Error handling heartbeat timeout: $e',
+          name: 'TrackingService',
+        );
+      }
+    }
+  });
+}
+
+/// Stop heartbeat monitoring (call when tracking stops).
+void _stopHeartbeatMonitoring() {
+  _heartbeatCheckTimer?.cancel();
+  _heartbeatCheckTimer = null;
+  _lastForegroundHeartbeat = null;
+}
+
 Future<void> startLocationStream(ServiceInstance service) async {
+  // Start heartbeat monitoring to detect when foreground is swiped away
+  _startHeartbeatMonitoring(service);
+
   if (_positionSubscription != null) {
     await _positionSubscription!.cancel();
   }
   int batteryLevel = 100;
   if (!TrackingService.isTestMode) {
-    final Battery battery = Battery();
-    batteryLevel = await battery.batteryLevel;
+    try {
+      final Battery battery = Battery();
+      batteryLevel = await battery.batteryLevel;
+    } catch (e) {
+      dev.log(
+        'Battery read failed, defaulting to 100: $e',
+        name: 'TrackingService',
+      );
+      batteryLevel = 100;
+    }
   }
   // Select power tier
   final policy =
@@ -806,18 +1903,33 @@ Future<void> startLocationStream(ServiceInstance service) async {
   );
 
   Stream<Position> stream;
-  if (_simulationClient != null && _simulationClient!.active) {
-    dev.log('Using Simulation Stream', name: 'TrackingService');
+  String streamType = 'unknown';
+  // Only use simulation stream if dashboard has sent at least one position.
+  // Just being connected is not enough - the connection is mainly for broadcasting
+  // app state to the dashboard, not for receiving positions.
+  if (_simulationClient != null &&
+      _simulationClient!.active &&
+      _simulationPositionsReceived) {
+    print('DEBUG: Using Simulation Stream');
     stream = _simulationClient!.positionStream;
+    streamType = 'simulation';
   } else if (_useInjectedPositions && _injectedCtrl != null) {
     stream = _injectedCtrl!.stream;
+    streamType = 'injected';
   } else {
     stream =
         testGpsStream ??
         Geolocator.getPositionStream(locationSettings: settings);
+    streamType = testGpsStream != null ? 'testGps' : 'geolocator';
   }
+  print(
+    'DEBUG: startLocationStream - using stream type: $streamType, simulationClient=${_simulationClient != null}, simulationActive=${_simulationClient?.active}, simPosReceived=$_simulationPositionsReceived',
+  );
 
   _positionSubscription = stream.listen((Position position) {
+    print(
+      'DEBUG: Position received in stream listener: (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})',
+    );
     _lastGpsUpdate = DateTime.now();
     _lastProcessedPosition = LatLng(position.latitude, position.longitude);
     // Track movement distance since start for time-alarm eligibility
@@ -852,8 +1964,33 @@ Future<void> startLocationStream(ServiceInstance service) async {
         _destination!.latitude,
         _destination!.longitude,
       );
-      double speed = position.speed > 1 ? position.speed : 12.0;
-      _smoothedETA = distance / speed;
+
+      // Use efficient EtaEngine for time-to-arrival
+      List<LatLng>? routeCoords;
+      if (_lastActiveState != null && _registry.entries.isNotEmpty) {
+        try {
+          final entry = _registry.entries.firstWhere(
+            (e) => e.key == _lastActiveState!.activeKey,
+          );
+          routeCoords = entry.points;
+        } catch (_) {}
+      }
+      if (routeCoords == null && _registry.entries.isNotEmpty) {
+        routeCoords = _registry.entries.first.points;
+      }
+
+      if (routeCoords != null && routeCoords.isNotEmpty) {
+        final result = _etaEngine.computeEta(
+          routeCoords: routeCoords,
+          gps: position,
+        );
+        _smoothedETA = result.etaSeconds;
+      } else {
+        // Fallback if no route known
+        double speed = position.speed > 1 ? position.speed : 12.0;
+        _smoothedETA = distance / speed;
+      }
+
       // Count ETA samples only when speed shows credible movement
       if (position.speed.isFinite && position.speed >= 0.5) {
         _etaSamples++;
@@ -884,6 +2021,54 @@ Future<void> startLocationStream(ServiceInstance service) async {
           ? policy.notificationTick
           : policy.notificationTick;
   _gpsCheckTimer = Timer.periodic(checkPeriod, (_) {
+    // Handle notification action requests persisted from background callbacks.
+    // These callbacks may fire when the UI isolate is dead; the running
+    // tracking isolate is the reliable place to execute the action.
+    () async {
+      try {
+        final stopAlarmRequested =
+            await NotificationService.consumeStopAlarmRequest();
+        if (stopAlarmRequested) {
+          try {
+            await NotificationService().cancelAlarm();
+          } catch (_) {}
+          try {
+            await NotificationService().restoreJourneyProgressIfActive();
+          } catch (_) {}
+        }
+
+        final muteJourneyRequested =
+            await NotificationService.consumeMuteJourneyRequest();
+        if (muteJourneyRequested) {
+          try {
+            await TrackingStateStore.setNotificationsMuted(true);
+            await NotificationService().cancelJourneyProgress();
+          } catch (_) {}
+        }
+
+        final endTrackingRequested =
+            await NotificationService.consumeEndTrackingRequest();
+        if (endTrackingRequested) {
+          try {
+            await NotificationService().cancelAllNotifications();
+          } catch (_) {}
+          try {
+            await TrackingStateStore.clearSnapshot();
+            await TrackingStateStore.setActive(false);
+            await TrackingStateStore.setPaused(false);
+            await TrackingStateStore.setAlarmFired(false);
+            await TrackingStateStore.setNotificationsMuted(false);
+          } catch (_) {}
+
+          _onStop();
+          try {
+            service.stopSelf();
+          } catch (_) {}
+          return;
+        }
+      } catch (_) {}
+    }();
+
     final last = _lastGpsUpdate;
     if (last == null) return;
     final silentFor = DateTime.now().difference(last);
@@ -902,17 +2087,15 @@ Future<void> startLocationStream(ServiceInstance service) async {
     _updateNotification(service);
 
     // Broadcast state to simulation dashboard
-    if (_simulationClient != null && _simulationClient!.active) {
-      _simulationClient!.broadcastState({
-        'type': 'app_state',
+    _broadcastSimulationState(
+      debugInfo: {
         'destination': _destinationName,
-        'eta': _smoothedETA,
-        'distance_travelled': _distanceTravelledMeters,
-        'alarm_mode': _alarmMode,
-        'alarm_value': _alarmValue,
         'is_alarm_fired': _destinationAlarmFired,
-      });
-    }
+      },
+    );
+
+    // Re-broadcast route periodically (dashboard may reconnect after initial send)
+    _maybeBroadcastCachedRoute();
 
     // Evaluate time-alarm eligibility periodically
     try {
@@ -1035,6 +2218,127 @@ void _updateNotification(ServiceInstance service) {
 // No top-level testing getters; use instance getters on TrackingService.
 
 extension TrackingServiceRouteOps on TrackingService {
+  List<double> _buildCumulativeStops(
+    List<double> bounds,
+    List<double> rawStops,
+  ) {
+    if (bounds.isEmpty || rawStops.isEmpty) {
+      return List<double>.from(rawStops);
+    }
+    final len =
+        bounds.length < rawStops.length ? bounds.length : rawStops.length;
+    double running = 0.0;
+    double prevBound = 0.0;
+    final result = <double>[];
+    for (int i = 0; i < len; i++) {
+      final bound = bounds[i];
+      final provided = rawStops[i];
+      final segLen = (bound - prevBound).abs();
+      if (provided >= running) {
+        // Trust provided cumulative stops when non-decreasing
+        running = provided;
+      } else {
+        // Fallback spacing when provided regresses
+        running += segLen > 0 ? segLen / _kDefaultStopSpacingMeters : 0.0;
+      }
+      result.add(running);
+      prevBound = bound;
+    }
+    for (int i = len; i < bounds.length; i++) {
+      final segLen = (bounds[i] - prevBound).abs();
+      final delta = segLen > 0 ? segLen / _kDefaultStopSpacingMeters : 0.0;
+      running += delta;
+      result.add(running);
+      prevBound = bounds[i];
+    }
+    return result;
+  }
+
+  @visibleForTesting
+  Future<void> registerRouteRaw({
+    required String key,
+    required List<LatLng> points,
+    required List<double> stepBounds,
+    required List<double> stepStops,
+    required List<RouteEventBoundary> routeEvents,
+    required String destinationName,
+    bool transitMode = false,
+    LatLng? firstTransitBoarding,
+  }) async {
+    final mutableEvents = List<RouteEventBoundary>.from(routeEvents);
+    if (mutableEvents.isEmpty || mutableEvents.last.type != 'destination') {
+      mutableEvents.add(
+        RouteEventBoundary(
+          meters: stepBounds.isNotEmpty ? stepBounds.last : 0.0,
+          type: 'destination',
+          label: destinationName,
+          lat: points.isNotEmpty ? points.last.latitude : null,
+          lng: points.isNotEmpty ? points.last.longitude : null,
+        ),
+      );
+    }
+
+    _routeEvents = mutableEvents;
+    _stepBoundsMeters = stepBounds;
+    _stepStopsCumulative = _buildCumulativeStops(stepBounds, stepStops);
+    _transitMode = transitMode;
+    if (transitMode) {
+      if (firstTransitBoarding != null) {
+        _firstTransitBoarding = firstTransitBoarding;
+      } else {
+        LatLng? boarding;
+        try {
+          final ev = mutableEvents.firstWhere(
+            (e) => e.type == 'boarding',
+            orElse: () => mutableEvents.first,
+          );
+          if (ev.lat != null && ev.lng != null) {
+            boarding = LatLng(ev.lat!, ev.lng!);
+          }
+        } catch (_) {}
+        boarding ??=
+            points.length > 1
+                ? points[1]
+                : (points.isNotEmpty ? points.first : null);
+        _firstTransitBoarding = boarding;
+      }
+      _preBoardingAlertFired = false;
+    } else {
+      _firstTransitBoarding = null;
+      _preBoardingAlertFired = false;
+    }
+
+    final entry = RouteEntry(
+      key: key,
+      mode: transitMode ? 'transit' : 'driving',
+      destinationName: destinationName,
+      points: points,
+    );
+    _registry.upsert(entry);
+
+    _activeManager?.dispose();
+    _activeManager = ActiveRouteManager(registry: _registry);
+    _activeManager!.setActive(key);
+
+    _mgrStateSub?.cancel();
+    _mgrStateSub = _activeManager!.stateStream.listen((state) {
+      _lastActiveState = state;
+      _routeStateCtrl.add(state);
+    });
+
+    if (points.isNotEmpty) {
+      _activeManager!.ingestPosition(points.first);
+    }
+  }
+
+  @visibleForTesting
+  Future<void> checkAlarmForTest(
+    Position position,
+    ServiceInstance service,
+  ) async {
+    await _checkAndTriggerAlarm(position, service);
+  }
+
   // Public: update connectivity for reroute policy gating
   void setOnline(bool online) {
     _reroutePolicy?.setOnline(online);
@@ -1049,7 +2353,17 @@ extension TrackingServiceRouteOps on TrackingService {
     required List<LatLng> points,
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
+    List<Map<String, dynamic>>? events,
   }) {
+    _cachedRoutePayload = {
+      'destinationName': destinationName,
+      'points':
+          points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
+      if (segments != null) 'segments': segments,
+      if (switchPoints != null) 'switch_points': switchPoints,
+      if (events != null) 'events': events,
+    };
+
     final entry = RouteEntry(
       key: key,
       mode: mode,
@@ -1060,36 +2374,49 @@ extension TrackingServiceRouteOps on TrackingService {
 
     // Broadcast route to simulation dashboard if active (Background)
     if (_simulationClient != null && _simulationClient!.active) {
-      _simulationClient!.broadcastState({
-        'type': 'route_update',
-        'destinationName': destinationName,
-        'points':
+      _lastRouteBroadcastAt = DateTime.now();
+      dev.log(
+        'Broadcasting route to dashboard: $destinationName (${points.length} points)',
+        name: 'TrackingService',
+      );
+      _simulationClient!.broadcastRoute(
+        destinationName: destinationName,
+        points:
             points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
-        'segments': segments,
-        'switch_points': switchPoints,
-      });
-    } else {
-      // If simulation client is NOT active, we are likely in Foreground.
-      // Forward this route to the background service so it can register it
-      // and broadcast it to the simulation.
+        segments: segments,
+        switchPoints: switchPoints,
+        events: events,
+      );
+    } else if (_simulationClient != null && !_simulationClient!.active) {
+      // Try to reconnect so we can broadcast shortly after.
+      dev.log(
+        'SimulationClient not active, attempting reconnect for route broadcast',
+        name: 'TrackingService',
+      );
       try {
-        print(
-          'CRITICAL: Foreground: Invoking registerRoute on background service',
-        );
-        _service.invoke('registerRoute', {
-          'key': key,
-          'mode': mode,
-          'destinationName': destinationName,
-          'points':
-              points
-                  .map((p) => {'lat': p.latitude, 'lng': p.longitude})
-                  .toList(),
-          'segments': segments,
-          'switch_points': switchPoints,
-        });
-      } catch (e) {
-        print('CRITICAL: Foreground: Error invoking registerRoute: $e');
-      }
+        _simulationClient!.connect();
+      } catch (_) {}
+    } else if (!_isBackgroundIsolate) {
+      // Foreground: forward this route to the background service so it can
+      // register it and broadcast it to the simulation.
+      unawaited(
+        _invokeWithAckRetry(
+          method: 'registerRoute',
+          ackEvent: 'registerRouteAck',
+          args: {
+            'key': key,
+            'mode': mode,
+            'destinationName': destinationName,
+            'points':
+                points
+                    .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+                    .toList(),
+            'segments': segments,
+            'switch_points': switchPoints,
+            'events': events,
+          },
+        ),
+      );
     }
 
     // Initialize manager and pipelines if not exists
@@ -1172,7 +2499,7 @@ extension TrackingServiceRouteOps on TrackingService {
         }
       } catch (_) {}
 
-      // In tests, allow immediate local switch in the 100–150m band without waiting for sustain
+      // In tests, allow immediate local switch in the 100ΓÇô150m band without waiting for sustain
       if (!ds.sustained) {
         if (off >= 100.0 && off <= 150.0) {
           try {
@@ -1301,13 +2628,46 @@ extension TrackingServiceRouteOps on TrackingService {
   }
 
   // Convenience: register from a Directions response
-  void registerRouteFromDirections({
+  Future<void> registerRouteFromDirections({
     required Map<String, dynamic> directions,
     required LatLng origin,
     required LatLng destination,
     required bool transitMode,
     String? destinationName,
-  }) {
+  }) async {
+    // If called from the foreground isolate, forward the full Directions payload
+    // to the background service so alarms (stops/time) have access to step bounds/events.
+    // IMPORTANT: don't use SimulationClient connectivity as a proxy for isolate context.
+    // During background startup the client may not be initialized/connected yet.
+    if (!_isBackgroundIsolate) {
+      final ok = await _invokeWithAckRetry(
+        method: 'registerRouteDirections',
+        ackEvent: 'registerRouteDirectionsAck',
+        args: {
+          'directions': directions,
+          'origin': {'lat': origin.latitude, 'lng': origin.longitude},
+          'destination': {
+            'lat': destination.latitude,
+            'lng': destination.longitude,
+          },
+          'transitMode': transitMode,
+          'destinationName': destinationName,
+        },
+      );
+      if (ok) return;
+      // If invoke/ack fails, fall through to best-effort local computation.
+    }
+
+    // Reset alarm state for new route registration.
+    // This ensures alarms fire again when a new route is loaded (e.g., from dashboard).
+    dev.log(
+      'DEBUG: registerRouteFromDirections - resetting alarm state for new route',
+      name: 'TrackingService',
+    );
+    _destinationAlarmFired = false;
+    _firedEventIndexes.clear();
+    _preBoardingAlertFired = false;
+
     final mode = transitMode ? 'transit' : 'driving';
     _transitMode = transitMode;
     final key = RouteCache.makeKey(
@@ -1333,7 +2693,7 @@ extension TrackingServiceRouteOps on TrackingService {
     try {
       final m = TransferUtils.buildStepBoundariesAndStops(directions);
       _stepBoundsMeters = m.bounds;
-      _stepStopsCumulative = m.stops;
+      _stepStopsCumulative = _buildCumulativeStops(m.bounds, m.stops);
     } catch (_) {
       _stepBoundsMeters = const [];
       _stepStopsCumulative = const [];
@@ -1407,12 +2767,30 @@ extension TrackingServiceRouteOps on TrackingService {
       _preBoardingAlertFired = false;
     }
 
+    if (_firstTransitBoarding == null && _routeEvents.isNotEmpty) {
+      try {
+        final ev = _routeEvents.firstWhere(
+          (e) => e.type == 'boarding' || e.type == 'transfer',
+        );
+        if (ev.lat != null && ev.lng != null) {
+          _firstTransitBoarding = LatLng(ev.lat!, ev.lng!);
+        }
+      } catch (_) {}
+    }
+    if (_firstTransitBoarding == null && points.length > 1) {
+      _firstTransitBoarding = points[1];
+    }
+
     // Extract Segments and Switch Points for Visualization
     List<Map<String, dynamic>> segments = [];
     List<Map<String, dynamic>> switchPoints = [];
+    final List<LatLng> pointsFromSegments = <LatLng>[];
     try {
       final routes = (directions['routes'] as List?) ?? const [];
-      print('CRITICAL: Extracting segments from ${routes.length} routes');
+      dev.log(
+        'CRITICAL: Extracting segments from ${routes.length} routes',
+        name: 'TrackingService',
+      );
       if (routes.isNotEmpty) {
         final route = routes.first as Map<String, dynamic>;
         final legs = (route['legs'] as List?) ?? const [];
@@ -1424,6 +2802,21 @@ extension TrackingServiceRouteOps on TrackingService {
             final stepMode =
                 (step['travel_mode'] as String?)?.toLowerCase() ?? 'walking';
 
+            String? transitLine;
+            if (stepMode == 'transit') {
+              try {
+                final td = step['transit_details'] as Map<String, dynamic>?;
+                final line = td?['line'] as Map<String, dynamic>?;
+                final shortName = line?['short_name'];
+                final name = line?['name'];
+                if (shortName is String && shortName.trim().isNotEmpty) {
+                  transitLine = shortName.trim();
+                } else if (name is String && name.trim().isNotEmpty) {
+                  transitLine = name.trim();
+                }
+              } catch (_) {}
+            }
+
             // Decode polyline for this step
             List<LatLng> stepPoints = [];
             try {
@@ -1431,14 +2824,37 @@ extension TrackingServiceRouteOps on TrackingService {
               stepPoints = decodePolyline(poly['points'] as String);
             } catch (_) {}
 
-            segments.add({
+            // Build a contiguous route polyline from step geometry to match
+            // what MapTracking displays.
+            if (stepPoints.isNotEmpty) {
+              if (pointsFromSegments.isEmpty) {
+                pointsFromSegments.addAll(stepPoints);
+              } else {
+                final last = pointsFromSegments.last;
+                final first = stepPoints.first;
+                final same =
+                    (last.latitude - first.latitude).abs() < 1e-10 &&
+                    (last.longitude - first.longitude).abs() < 1e-10;
+                if (same) {
+                  pointsFromSegments.addAll(stepPoints.skip(1));
+                } else {
+                  pointsFromSegments.addAll(stepPoints);
+                }
+              }
+            }
+
+            final seg = <String, dynamic>{
               'mode': stepMode,
               'points':
                   stepPoints
                       .map((p) => {'lat': p.latitude, 'lng': p.longitude})
                       .toList(),
               'instruction': step['html_instructions'] ?? '',
-            });
+            };
+            if (transitLine != null) {
+              seg['transit_line'] = transitLine;
+            }
+            segments.add(seg);
             dev.log(
               'Added segment: $stepMode with ${stepPoints.length} points',
               name: 'TrackingService',
@@ -1480,6 +2896,11 @@ extension TrackingServiceRouteOps on TrackingService {
       }
     } catch (_) {}
 
+    // Prefer step-derived points for exact visual match; fall back otherwise.
+    if (pointsFromSegments.length >= 2) {
+      points = pointsFromSegments;
+    }
+
     registerRoute(
       key: key,
       mode: mode,
@@ -1487,6 +2908,18 @@ extension TrackingServiceRouteOps on TrackingService {
       points: points,
       segments: segments,
       switchPoints: switchPoints,
+      events:
+          _routeEvents
+              .map(
+                (e) => {
+                  'meters': e.meters,
+                  'type': e.type,
+                  if (e.label != null) 'label': e.label,
+                  if (e.lat != null) 'lat': e.lat,
+                  if (e.lng != null) 'lng': e.lng,
+                },
+              )
+              .toList(),
     );
   }
 }

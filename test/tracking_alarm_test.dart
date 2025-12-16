@@ -55,56 +55,6 @@ class TestRoutes {
   ];
 }
 
-// A simple flag we can check to see if the alarm was triggered.
-// In a real test suite, you'd use a more advanced mocking library like Mockito.
-bool mockAlarmWasTriggered = false;
-
-/// A fake NotificationService that overrides the real one for testing.
-/// Instead of showing a real notification, it just sets our flag to true.
-class MockableNotificationService implements NotificationService {
-  @override
-  Future<void> cancelAlarm() async {
-    // No-op for tests
-  }
-  @override
-  Future<void> stopVibration() async {
-    // No-op for tests
-  }
-  
-  @override
-  Future<void> showWakeUpAlarm({
-    required String title,
-    required String body,
-    bool allowContinueTracking = true,
-  }) async {
-    mockAlarmWasTriggered = true;
-  }
-
-  @override
-  Future<void> initialize() async {
-    // Mock implementation
-  }
-
-  @override
-  Future<void> showJourneyProgress({
-    required String title,
-    required String subtitle,
-    required double progress0to1,
-  }) async {
-    // Mock implementation
-  }
-
-  @override
-  Future<void> cancelJourneyProgress() async {
-    // Mock implementation
-  }
-
-  @override
-  Future<void> showPendingAlarmScreenIfAny() async {
-    // Mock implementation
-  }
-}
-
 //##############################################################################
 //# SECTION 2: THE MAIN TEST
 //##############################################################################
@@ -112,64 +62,74 @@ class MockableNotificationService implements NotificationService {
 void main() {
   // Use `setUp` to reset state before each test.
   setUp(() {
-    mockAlarmWasTriggered = false; // Reset the alarm flag
+    NotificationService.clearTestRecordedAlarms(); // Reset recorded alarms
     // This is a special setup for tests to handle native code.
     TestWidgetsFlutterBinding.ensureInitialized();
     // Prepare fake device storage.
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('Alarm should trigger when mock location enters the distance threshold', () async {
-    // --- SETUP ---
-    
-    // 1. Create instances of our test tools.
-    final mockLocationProvider = MockLocationProvider();
+  test(
+    'Alarm should trigger when mock location enters the distance threshold',
+    () async {
+      // --- SETUP ---
 
-    // 2. This is the crucial part. We are telling the TrackingService to
-    //    use our fake NotificationService instead of the real one.
-    //    This is conceptual. The actual verification will be checking the flag.
-    //    For a fully isolated test, you would use a dependency injection framework.
-    //    For now, we will modify the TrackingService slightly to allow this.
-    
-    // Let's assume a way to inject our mock service
-    // This test structure is designed to work with a slight modification to TrackingService
-    // to accept a NotificationService instance.
-    // However, we can test it visually by checking the print log.
+      // 1. Create instances of our test tools.
+      final mockLocationProvider = MockLocationProvider();
 
-  // 3. Initialize service in test mode and silence notifications.
-  TrackingService.isTestMode = true;
-  NotificationService.isTestMode = true;
-  final trackingService = TrackingService();
-    
-    // --- DEFINE TEST PARAMETERS ---
-    
-    final destination = TestRoutes.majesticToLalbagh.last;
-    final destinationName = "Lalbagh Botanical Garden";
-    final alarmDistanceKm = 1.0; // Trigger alarm 1km before arrival.
+      // 2. Initialize service in test mode and silence notifications.
+      TrackingService.isTestMode = true;
+      NotificationService.isTestMode = true;
+      final trackingService = TrackingService();
 
-    // --- EXECUTION ---
+      // --- DEFINE TEST PARAMETERS ---
 
-    // 1. Inject our fake GPS stream into the TrackingService before start.
-    testGpsStream = mockLocationProvider.positionStream;
-    // 2. Start the tracking service with our test parameters.
-    await trackingService.startTracking(
-      destination: destination,
-      destinationName: destinationName,
-      alarmMode: 'distance',
-      alarmValue: alarmDistanceKm,
-    );
-    
-    // 3. "Play" the fake route, which feeds coordinates to the service.
-  await mockLocationProvider.playRoute(TestRoutes.majesticToLalbagh);
-  await Future.delayed(const Duration(milliseconds: 100));
+      final destination = TestRoutes.majesticToLalbagh.last;
+      final destinationName = "Lalbagh Botanical Garden";
+      final alarmDistanceKm = 1.0; // Trigger alarm 1km before arrival.
 
-    // --- VERIFICATION ---
-    
-  // 5. Verify alarm logic without plugins.
-  expect(trackingService.alarmTriggered, isTrue);
+      // --- EXECUTION ---
 
-    // --- CLEANUP ---
-    await trackingService.stopTracking();
-    mockLocationProvider.dispose();
-  });
+      // 1. Inject our fake GPS stream into the TrackingService before start.
+      testGpsStream = mockLocationProvider.positionStream;
+      // 2. Start the tracking service with our test parameters.
+      // 2. Start the tracking service with our test parameters.
+      await trackingService.startTracking(
+        destination: destination,
+        destinationName: destinationName,
+        alarmMode: 'distance',
+        alarmValue: alarmDistanceKm,
+      );
+
+      // Allow service initialization to complete (async _onStart)
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // 3. "Play" the fake route, which feeds coordinates to the service.
+      await mockLocationProvider.playRoute(TestRoutes.majesticToLalbagh);
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      // --- VERIFICATION ---
+
+      // 4. Verify alarm logic via NotificationService hooks
+      expect(
+        NotificationService.testRecordedAlarms.isNotEmpty,
+        isTrue,
+        reason: "Alarm should have been recorded",
+      );
+
+      // Optional: Verify details of the alarm
+      if (NotificationService.testRecordedAlarms.isNotEmpty) {
+        final alarm = NotificationService.testRecordedAlarms.last;
+        expect(alarm['title'], contains('Wake Up'));
+        expect(
+          alarm['allow'],
+          isFalse,
+        ); // Should be false for destination alarm
+      }
+
+      // --- CLEANUP ---
+      await trackingService.stopTracking();
+      mockLocationProvider.dispose();
+    },
+  );
 }

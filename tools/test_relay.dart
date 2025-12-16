@@ -5,11 +5,11 @@ void main() async {
   print('Starting Relay Server Test...');
 
   // 1. Connect Client A
-  final clientA = await WebSocket.connect('ws://localhost:8080');
+  final clientA = await WebSocket.connect('ws://localhost:8081');
   print('Client A connected');
 
   // 2. Connect Client B
-  final clientB = await WebSocket.connect('ws://localhost:8080');
+  final clientB = await WebSocket.connect('ws://localhost:8081');
   print('Client B connected');
 
   final completer = Completer<void>();

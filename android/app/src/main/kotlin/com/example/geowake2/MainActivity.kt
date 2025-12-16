@@ -8,15 +8,11 @@ import android.os.Build
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import com.example.geowake2.AlarmMethodChannelHandler
 
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         createNotificationChannel()
-        
-        // Register the method channel for alarm interactions
-        AlarmMethodChannelHandler.registerWith(flutterEngine, this)
     }
 
     private fun createNotificationChannel() {
