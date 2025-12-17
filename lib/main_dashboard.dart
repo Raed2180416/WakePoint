@@ -63,7 +63,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // WebSocket
   html.WebSocket? _socket;
   bool _connected = false;
-  String _status = 'Disconnected';
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
   DateTime? _lastPingReceived;
@@ -147,7 +146,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
           setState(() {
             _connected = false;
-            _status = 'Timeout';
           });
           _socket?.close();
         }
@@ -180,7 +178,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _socket!.onOpen.listen((_) {
         setState(() {
           _connected = true;
-          _status = 'Connected';
           _reconnectAttempts = 0; // Reset on successful connection
           _lastPingReceived = DateTime.now();
         });
@@ -195,7 +192,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _socket!.onClose.listen((_) {
         setState(() {
           _connected = false;
-          _status = 'Disconnected';
         });
         _logEvent('Disconnected from Relay');
         _scheduleReconnect();
@@ -204,13 +200,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _socket!.onError.listen((error) {
         setState(() {
           _connected = false;
-          _status = 'Error: $error';
         });
         _logEvent('Connection Error: $error');
         _scheduleReconnect();
       });
     } catch (e) {
-      setState(() => _status = 'Error: $e');
+      // setState(() => _status = 'Error: $e');
       _logEvent('Connection Error: $e');
       _scheduleReconnect();
     }
@@ -780,12 +775,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                _status,
-                style: TextStyle(
-                  color: _connected ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                children: [
+                  Icon(
+                    _connected ? Icons.link : Icons.link_off,
+                    color: _connected ? Colors.greenAccent : Colors.redAccent,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _connected
+                        ? 'Connected: Ready to Mirror'
+                        : 'Disconnected: Routes will not sync',
+                    style: TextStyle(
+                      color: _connected ? Colors.greenAccent : Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

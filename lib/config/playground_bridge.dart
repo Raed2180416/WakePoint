@@ -7,11 +7,11 @@ import 'platform_test_flag_stub.dart'
 /// what relay endpoint should be used for WebSocket mirroring.
 class PlaygroundBridgeConfig {
   /// Toggle to force-enable or disable the bridge in non-debug builds.
-  /// Defaults to enabled so release/profile builds can drive the playground
-  /// unless explicitly disabled via `--dart-define`.
+  /// Defaults to disabled so release builds don't attempt localhost WebSocket
+  /// connections (which can stall startup if no relay is present).
   static const bool _bridgeEnabledFlag = bool.fromEnvironment(
     'PLAYGROUND_BRIDGE_ENABLED',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static const bool _bridgeDisabledFlag = bool.fromEnvironment(

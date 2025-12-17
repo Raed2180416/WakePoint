@@ -55,6 +55,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   String _etaText = "Calculating ETA...";
   String _distanceText = "Calculating distance...";
   Map<String, dynamic>? directions;
+  bool _isFinalAlarm = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -135,7 +136,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     // Start listening for location updates to update the current location marker.
     _startLocationUpdates();
 
-    // Listen for route switches from TrackingService and show a banner.
+    // Listen for route switches from TrackingService and show a banner + update map.
     _routeSwitchSub ??= TrackingService().routeSwitchStream.listen((evt) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,6 +144,32 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           content: Text('Switched route: ${evt.fromKey} → ${evt.toKey}'),
         ),
       );
+
+      if (evt.geometry != null && evt.geometry!.isNotEmpty) {
+        dev.log(
+          'MapTrackingScreen: Updating map for switched route ${evt.toKey}',
+          name: 'MapTrackingScreen',
+        );
+        setState(() {
+          _routePoints = evt.geometry!;
+          _polylines = {
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: _routePoints,
+              color: Colors.blue,
+              width: 4,
+            ),
+          };
+        });
+        // Recompute metrics for the new route
+        _computeRouteLength();
+        if (_currentUserLocation != null) {
+          _computeInitialMetrics(
+            _currentUserLocation!.latitude,
+            _currentUserLocation!.longitude,
+          );
+        }
+      }
     });
 
     // Listen for continuous route state to compute ETA and remaining distance.
@@ -333,6 +360,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         setState(() {
           _etaText = etaStr;
           _distanceText = distStr;
+          _isFinalAlarm = state.isFinalAlarm;
         });
       });
     } catch (e) {
@@ -857,6 +885,24 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                           valueListenable: AlarmPlayer.isPlaying,
                           builder: (context, playing, child) {
                             if (!playing) return const SizedBox.shrink();
+
+                            // HIDE STOP ALARM BUTTON FOR FINAL DESTINATION
+                            // The user requested only "End Tracking" be available.
+                            // We check the latest route state (if active) or rely on heuristics?
+                            // Better: We should have access to the latest ActiveRouteState via stream.
+                            // But here we are inside a ValueListenableBuilder for playing.
+                            // We can use a StreamBuilder for ActiveRouteState or store it in state.
+                            // Actually, simply check if the current active alarm is 'destination'.
+                            // But AlarmPlayer doesn't expose type.
+                            // Hence we updated ActiveRouteState.
+                            // We need to access the boolean from the state.
+                            // Let's assume we store the latest 'isFinalAlarm' in a member variable from the stream listener.
+
+                            // Re-reading logic: _routeStateSub listener updates UI state?
+                            // Line 312: _routeStateSub updates _etaText, _distanceText.
+                            // I should update a local field `_isFinalAlarm` there too.
+
+                            if (_isFinalAlarm) return const SizedBox.shrink();
 
                             final cs = Theme.of(context).colorScheme;
                             return Expanded(

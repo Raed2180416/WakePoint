@@ -1,5 +1,7 @@
 ﻿// lib/services/trackingservice.dart
 import 'dart:async';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -101,6 +103,60 @@ class TrackingService {
       completer?.complete();
     });
 
+    _service.on('activeRouteUpdate').listen((data) {
+      if (data != null) {
+        try {
+          final state = ActiveRouteState.fromJson(
+            Map<String, dynamic>.from(data),
+          );
+          _routeStateCtrl.add(state);
+        } catch (e) {
+          dev.log(
+            'Foreground failed to parse active route state: $e',
+            name: 'TrackingService',
+          );
+        }
+      }
+    });
+
+    _service.on('routeSwitch').listen((data) {
+      if (data != null) {
+        try {
+          final fromKey = data['fromKey'] as String;
+          final toKey = data['toKey'] as String;
+          final timestamp = DateTime.tryParse(
+            data['timestamp'] as String? ?? '',
+          );
+          final pointsList = data['points'] as List?;
+          List<LatLng>? geometry;
+          if (pointsList != null) {
+            geometry =
+                pointsList.map((p) {
+                  final m = p as Map;
+                  return LatLng(
+                    (m['lat'] as num).toDouble(),
+                    (m['lng'] as num).toDouble(),
+                  );
+                }).toList();
+          }
+
+          _routeSwitchCtrl.add(
+            RouteSwitchEvent(
+              fromKey: fromKey,
+              toKey: toKey,
+              at: timestamp,
+              geometry: geometry,
+            ),
+          );
+        } catch (e) {
+          dev.log(
+            'Foreground failed to parse routeSwitch event: $e',
+            name: 'TrackingService',
+          );
+        }
+      }
+    });
+
     // Listen for alarm trigger requests from background isolate
     // Background isolate cannot show notifications directly (no Android Context)
     // so it sends the request here and the foreground isolate shows the notification
@@ -194,6 +250,7 @@ class TrackingService {
 
   Future<void> initializeService() async {
     if (isTestMode) return;
+    _ensureAckListenersRegistered(); // Ensure bridge is wired up
     await _service.configure(
       androidConfiguration: AndroidConfiguration(
         onStart: _onStart,
@@ -603,63 +660,54 @@ void _broadcastSimulationState({
   );
 }
 
-/// Starts a fast-polling timer that checks for notification action requests every 100ms.
-/// This ensures the user's "Stop Alarm", "Ignore", and "End Tracking" buttons are responsive,
-/// even when the main GPS check timer runs at 1-3 second intervals.
-/// The timer auto-cancels after 60 seconds if no request is consumed.
+/// Starts a fast-polling timer that checks for notification action requests every 200ms.
+/// This ensures the user's "Stop Alarm", "Ignore", and "End Tracking" buttons are responsive.
+/// Runs persistently while tracking is active.
 void _startAlarmStopPollTimer() {
   _alarmStopPollTimer?.cancel();
-  int tickCount = 0;
-  const maxTicks = 600; // 60 seconds at 100ms intervals
-  _alarmStopPollTimer = Timer.periodic(const Duration(milliseconds: 100), (
+
+  // Fast poll (200ms) for UI responsiveness
+  _alarmStopPollTimer = Timer.periodic(const Duration(milliseconds: 200), (
     timer,
   ) async {
-    tickCount++;
-    if (tickCount > maxTicks) {
+    // Safety check: if tracking session ended, stop polling
+    if (!_trackingSessionActive) {
       timer.cancel();
       _alarmStopPollTimer = null;
       return;
     }
+
     try {
-      // Check stop alarm request
+      // 1. Check Stop Alarm (Highest Priority)
       final stopAlarmRequested =
           await NotificationService.consumeStopAlarmRequest();
       if (stopAlarmRequested) {
-        dev.log(
-          'Fast poll: Consumed stop alarm request (tick=$tickCount)',
-          name: 'TrackingService',
-        );
+        dev.log('Consuming STOP ALARM request', name: 'TrackingService');
         try {
           await NotificationService().cancelAlarm();
         } catch (_) {}
         try {
+          // If we stop the alarm, we might want to show JIT progress
           await NotificationService().restoreJourneyProgressIfActive();
         } catch (_) {}
-        // Don't cancel timer - keep polling for other actions
       }
 
-      // Check mute journey request
+      // 2. Check "Ignore" / Mute Journey
       final muteJourneyRequested =
           await NotificationService.consumeMuteJourneyRequest();
       if (muteJourneyRequested) {
-        dev.log(
-          'Fast poll: Consumed mute journey request (tick=$tickCount)',
-          name: 'TrackingService',
-        );
+        dev.log('Consuming MUTE JOURNEY request', name: 'TrackingService');
         try {
           await TrackingStateStore.setNotificationsMuted(true);
           await NotificationService().cancelJourneyProgress();
         } catch (_) {}
       }
 
-      // Check end tracking request
+      // 3. Check End Tracking
       final endTrackingRequested =
           await NotificationService.consumeEndTrackingRequest();
       if (endTrackingRequested) {
-        dev.log(
-          'Fast poll: Consumed end tracking request (tick=$tickCount)',
-          name: 'TrackingService',
-        );
+        dev.log('Consuming END TRACKING request', name: 'TrackingService');
         try {
           await NotificationService().cancelAllNotifications();
         } catch (_) {}
@@ -670,6 +718,7 @@ void _startAlarmStopPollTimer() {
           await TrackingStateStore.setAlarmFired(false);
           await TrackingStateStore.setNotificationsMuted(false);
         } catch (_) {}
+
         _onStop();
         try {
           FlutterBackgroundService().invoke('stopService');
@@ -680,7 +729,11 @@ void _startAlarmStopPollTimer() {
         return;
       }
     } catch (e) {
-      dev.log('Fast poll error: $e', name: 'TrackingService');
+      // Log errors during polling but don't let them kill the timer
+      dev.log(
+        'Alarm poll timer error (suppressed): $e',
+        name: 'TrackingService',
+      );
     }
   });
 }
@@ -699,6 +752,7 @@ double? _alarmValue;
 bool _destinationAlarmFired = false; // fire destination alarm only once
 final Set<int> _firedEventIndexes =
     <int>{}; // indices into _routeEvents already fired
+bool _preBoardingAlertFired = false;
 
 // Event boundaries (transfers, mode changes) for multi-route safety
 List<RouteEventBoundary> _routeEvents = const [];
@@ -807,6 +861,7 @@ void _onStop() async {
   _lastRouteBroadcastAt = null;
   _destinationAlarmFired = false;
   _firedEventIndexes.clear();
+  _preBoardingAlertFired = false;
   _destination = null;
   _destinationName = null;
   _alarmMode = null;
@@ -848,6 +903,7 @@ void _resetAlarmState() {
   );
   _destinationAlarmFired = false;
   _firedEventIndexes.clear();
+  _preBoardingAlertFired = false;
 
   // Also stop any currently playing alarm
   AlarmPlayer.stop();
@@ -1017,8 +1073,33 @@ Future<void> _checkAndTriggerAlarm(
     );
   }
 
-  // Metro pre-boarding alert: if stops-mode + transit route; trigger once near boarding point
-  // Legacy pre-boarding block removed. Logic is handled by mode_change events now.
+  // Metro pre-boarding alert: for transit routes in stops-mode, fire a one-shot
+  // "Approaching metro station" alert when within ~1km of the first boarding point.
+  if (_alarmMode == 'stops' &&
+      !_preBoardingAlertFired &&
+      _transitMode &&
+      _firstTransitBoarding != null) {
+    try {
+      final d = Geolocator.distanceBetween(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        _firstTransitBoarding!.latitude,
+        _firstTransitBoarding!.longitude,
+      );
+      // Match test expectations: should fire "around 1km" and not be too close.
+      if (d <= 1000.0 && d > 200.0) {
+        _preBoardingAlertFired = true;
+        await _triggerAlarmNotification(
+          service: service,
+          title: 'Upcoming change',
+          body: 'Approaching metro station',
+          allowContinueTracking: true,
+          debugReason: 'Pre-boarding alert (<=1km to boarding)',
+        );
+        _startAlarmStopPollTimer();
+      }
+    } catch (_) {}
+  }
 
   // Also check upcoming route events (transfer/mode change) with the same threshold semantics
   // Use latest progressMeters snapshot for stops/time event calculations
@@ -1113,7 +1194,7 @@ Future<void> _checkAndTriggerAlarm(
     final thresholdDistanceM = _alarmValue! * 1000.0;
     final effectiveStops = distToDestM / 1000.0; // 1km = 1 stop for fallback
     dev.log(
-      'Stops fallback: distToDestM=${distToDestM.toStringAsFixed(0)} thresholdDistM=${thresholdDistanceM.toStringAsFixed(0)} effectiveStops=${effectiveStops.toStringAsFixed(2)} threshold=${_alarmValue} routeEvents=${_routeEvents.length}',
+      'Stops fallback: distToDestM=${distToDestM.toStringAsFixed(0)} thresholdDistM=${thresholdDistanceM.toStringAsFixed(0)} effectiveStops=${effectiveStops.toStringAsFixed(2)} threshold=$_alarmValue routeEvents=${_routeEvents.length}',
       name: 'TrackingService',
     );
     dev.log(
@@ -1192,28 +1273,60 @@ Future<void> _checkAndTriggerAlarm(
       // transfer/mode-change alarms to avoid double-firing when both coincide.
       bool destinationWithinThreshold = false;
       double? remainingStopsToDestination;
-      if (thresholdStops != null && progressStops != null) {
-        final destStopsTotal =
-            _stepStopsCumulative.isNotEmpty
-                ? _stepStopsCumulative.last
-                : (_stepBoundsMeters.isNotEmpty
-                    ? _stepBoundsMeters.last / _kDefaultStopSpacingMeters
-                    : 0.0);
-        remainingStopsToDestination = destStopsTotal - progressStops;
+      bool destinationHasRealStops = false;
+      double? metersToDestination;
+      if (_routeEvents.isNotEmpty) {
+        try {
+          final destIdx = _routeEvents.lastIndexWhere(
+            (e) => e.type == 'destination',
+          );
+          if (destIdx >= 0) {
+            final destMeters = _routeEvents[destIdx].meters;
+            metersToDestination = (destMeters - progressMeters);
 
-        // Check for invalid stop data (0 stops for > 500m route) to prevent false suppression
-        final double totalDist =
-            _stepBoundsMeters.isNotEmpty ? _stepBoundsMeters.last : 0.0;
-        final bool seemsInvalidStops =
-            destStopsTotal <= 0.1 && totalDist > 500.0;
+            if (thresholdStops != null && progressStops != null) {
+              final destStopsTotal =
+                  _stepStopsCumulative.isNotEmpty
+                      ? _stepStopsCumulative.last
+                      : (_stepBoundsMeters.isNotEmpty
+                          ? _stepBoundsMeters.last / _kDefaultStopSpacingMeters
+                          : 0.0);
+              remainingStopsToDestination = destStopsTotal - progressStops;
 
-        // Allow transfer alarms when exactly at the threshold (e.g., 2 stops out);
-        // suppress only when destination is strictly closer than the threshold.
-        if (!seemsInvalidStops &&
-            remainingStopsToDestination.isFinite &&
-            remainingStopsToDestination < thresholdStops) {
-          destinationWithinThreshold = true;
-        }
+              // Determine whether the final leg actually contains any stop metadata.
+              // If not, stop-count to destination is misleading (it may reflect remaining
+              // stops only up to the last transfer, not the destination).
+              double lastNonDestStops = 0.0;
+              try {
+                final lastNonDestIdx = destIdx > 0 ? destIdx - 1 : -1;
+                if (lastNonDestIdx >= 0) {
+                  lastNonDestStops = stopsAt(
+                    _routeEvents[lastNonDestIdx].meters,
+                  );
+                }
+              } catch (_) {}
+              destinationHasRealStops =
+                  (destStopsTotal - lastNonDestStops).isFinite &&
+                  (destStopsTotal - lastNonDestStops) > 0.1;
+
+              // Base suppression primarily on distance-equivalent "stops" so mixed-mode
+              // last legs (walking/driving) don't prematurely suppress transfer alarms.
+              final minDistanceM = thresholdStops * _kDefaultStopSpacingMeters;
+              if (metersToDestination.isFinite) {
+                destinationWithinThreshold = metersToDestination < minDistanceM;
+              }
+
+              // If we truly have stops into the final leg, also allow stop-count based
+              // suppression (but keep it strict to preserve "2 stops out" alarms).
+              if (!destinationWithinThreshold &&
+                  destinationHasRealStops &&
+                  remainingStopsToDestination.isFinite &&
+                  remainingStopsToDestination < thresholdStops) {
+                destinationWithinThreshold = true;
+              }
+            }
+          }
+        } catch (_) {}
       }
       for (int idx = 0; idx < _routeEvents.length; idx++) {
         if (destinationTriggeredThisTick || _destinationAlarmFired) {
@@ -1246,7 +1359,10 @@ Future<void> _checkAndTriggerAlarm(
             final lastEv = _routeEvents.last;
             if (lastEv.type == 'destination') {
               final distToDest = lastEv.meters - ev.meters;
-              if (distToDest < 300.0) {
+              // Suppress only when very close *but not identical* to destination.
+              // If an intermediate event is exactly at the destination (e.g. a transfer
+              // that is also the user's final stop), we still want the intermediate alarm.
+              if (distToDest > 0.0 && distToDest < 300.0) {
                 // Increased to 300m to be safe
                 dev.log(
                   'Suppressing ${ev.type} at ${ev.meters}m (too close to dest ${lastEv.meters}m)',
@@ -1270,83 +1386,60 @@ Future<void> _checkAndTriggerAlarm(
           final eventStops = stopsAt(ev.meters);
           final toEventStops = eventStops - progressStops;
           final toEventStopsFallback = toEventM / _kDefaultStopSpacingMeters;
-          double effectiveStops;
-
-          // ALARM LOGIC FIX: Extended 60% rule to all major transition events
-          // - destination: Ensure we don't miss the final arrival
-          // - mode_change: Metric (Metro->Driving) or Pre-boarding (Walking->Transit)
-
           final bool isModeChangeEvent = ev.type == 'mode_change';
           final bool isDestination = ev.type == 'destination';
           final bool isTransition = isModeChangeEvent || isDestination;
           final bool hasActualStops =
-              toEventStops.isFinite && toEventStops > 0.5;
-          effectiveStops = 0.0; // Default initialization
+              (toEventStops.isFinite && toEventStops > 0.5) &&
+              (!isDestination || destinationHasRealStops);
+
+          // Primary behavior in stops-mode: respect the user's chosen stops threshold.
+          double effectiveStops;
+          if (hasActualStops) {
+            // Use actual transit stops - accurate for transit segments.
+            effectiveStops = toEventStops;
+            eventAlarm = effectiveStops <= thresholdStops;
+          } else if (toEventStopsFallback.isFinite &&
+              toEventStopsFallback >= 0) {
+            // Fallback to distance-based (500m per "stop") for segments without stop metadata.
+            effectiveStops = toEventStopsFallback;
+            final minDistanceM = thresholdStops * _kDefaultStopSpacingMeters;
+            eventAlarm =
+                toEventM <= minDistanceM && effectiveStops <= thresholdStops;
+          } else {
+            // Safety fallback if both are invalid.
+            effectiveStops = toEventM / _kDefaultStopSpacingMeters;
+            eventAlarm = effectiveStops <= thresholdStops;
+          }
 
           // Direct Fire Limit: If practically at destination (< 200m), trigger immediately.
-          // This bypasses 60% rule complexities for very short final legs.
           if (isDestination && toEventM < 200.0) {
             dev.log(
               'DEBUG: Direct Fire for Destination (< 200m)',
               name: 'TrackingService',
             );
-            eventAlarm = true; // Force true
+            eventAlarm = true;
           }
 
-          // We apply the 60% rule (fire when 40% complete / 60% remaining) to ALL transitions
-
-          // We apply the 60% rule (fire when 40% complete / 60% remaining) to ALL transitions
-          // if we don't have hard stop data, OR if it's a destination/mode change to ensure robustness.
-          // This addresses the "legitimate gap" where Metro->Driving or Final Leg alarms were missing.
-          if (isTransition && (!hasActualStops || isDestination)) {
-            // Apply percentage-based logic for robustness
+          // Robustness: apply 60% rule only as an additional trigger (never as a delay).
+          if (!eventAlarm && isTransition) {
             double legStartM = 0.0;
             if (idx > 0) {
               legStartM = _routeEvents[idx - 1].meters;
             }
             final totalLegM = ev.meters - legStartM;
-
             if (totalLegM > 200.0) {
-              // Only apply percentage for significant legs
               final remainingFraction = toEventM / totalLegM;
-              // Fire if we are within 60% remaining (i.e. > 40% done)
-              // AND we are somewhat close (e.g. within 2km or it's just a long leg)
-              // Actually user said "40 percent the way there", which means 60% remaining.
-              // We'll trust the fraction.
               if (remainingFraction <= 0.6) {
                 eventAlarm = true;
-                effectiveStops =
-                    remainingFraction * 10; // Synthetic metric for logging
               }
-
               dev.log(
                 'DEBUG: Event Check 60% rule (Extended): ev=${ev.type} toEventM=${toEventM.toStringAsFixed(1)} totalLegM=${totalLegM.toStringAsFixed(1)} frac=${remainingFraction.toStringAsFixed(2)} ALARM=$eventAlarm',
                 name: 'TrackingService',
               );
-            } else {
-              // Tiny leg fallback
-              if (toEventM <= 200.0) {
-                eventAlarm = true;
-                effectiveStops = 0.0;
-              }
+            } else if (toEventM <= 200.0) {
+              eventAlarm = true;
             }
-          } else if (hasActualStops) {
-            // Use actual transit stops - this is accurate for transit segments
-            effectiveStops = toEventStops;
-            eventAlarm = effectiveStops <= thresholdStops;
-          } else if (toEventStopsFallback.isFinite &&
-              toEventStopsFallback >= 0) {
-            // Fall back to distance-based (500m per "stop") for other segments
-            // BUT require minimum distance of thresholdStops * 500m to prevent immediate firing
-            effectiveStops = toEventStopsFallback;
-            // Only trigger if we're actually close (within threshold stops worth of distance)
-            final minDistanceM = thresholdStops * _kDefaultStopSpacingMeters;
-            eventAlarm =
-                toEventM <= minDistanceM && effectiveStops <= thresholdStops;
-          } else {
-            // Safety fallback if both are invalid
-            effectiveStops = toEventM / _kDefaultStopSpacingMeters;
-            eventAlarm = effectiveStops <= thresholdStops;
           }
 
           effectiveStopsToEvent = effectiveStops;
@@ -1359,25 +1452,20 @@ Future<void> _checkAndTriggerAlarm(
           // already handles cases where actual stops data is unavailable.
         }
         if (eventAlarm) {
+          // Conflict resolution: if destination is already within the user's threshold,
+          // suppress intermediate alarms in the same window to avoid double-firing.
           if (destinationWithinThreshold && ev.type != 'destination') {
-            if (remainingStopsToDestination != null &&
-                effectiveStopsToEvent != null &&
-                remainingStopsToDestination < effectiveStopsToEvent) {
-              dev.log(
-                'Suppressing ${ev.type} alarm because destination is closer within threshold (priority win)',
-                name: 'TrackingService',
-              );
-              continue;
-            }
             dev.log(
-              'Destination is within threshold but transfer kept (destination not closer).',
+              'Suppressing ${ev.type} alarm because destination is within threshold (priority)',
               name: 'TrackingService',
             );
+            continue;
           }
           // Handle destination event separately with final alarm behavior
           if (ev.type == 'destination') {
-            if (_destinationAlarmFired)
+            if (_destinationAlarmFired) {
               continue; // already fired destination alarm
+            }
             _destinationAlarmFired = true;
             try {
               final title = 'Wake Up!';
@@ -1446,7 +1534,7 @@ Future<void> _checkAndTriggerAlarm(
     );
     _destinationAlarmFired = true;
     dev.log(
-      'ALARM_DEBUG destination fire: reason=$destinationReasonLabel off_m=${_lastComputedOffsetMeters?.toStringAsFixed(1)} prog_m=${_lastComputedProgressMeters?.toStringAsFixed(0)} jump_m=${_lastComputedProgressJumpMeters?.toStringAsFixed(0)} next=${_lastComputedNextEventType} toNext_m=${_lastComputedToNextEventMeters?.toStringAsFixed(0)} poly/step=${_lastComputedPolylineTotalMeters?.toStringAsFixed(0)}/${_lastComputedStepTotalMeters?.toStringAsFixed(0)} mode=$_alarmMode val=$_alarmValue',
+      'ALARM_DEBUG destination fire: reason=$destinationReasonLabel off_m=${_lastComputedOffsetMeters?.toStringAsFixed(1)} prog_m=${_lastComputedProgressMeters?.toStringAsFixed(0)} jump_m=${_lastComputedProgressJumpMeters?.toStringAsFixed(0)} next=$_lastComputedNextEventType toNext_m=${_lastComputedToNextEventMeters?.toStringAsFixed(0)} poly/step=${_lastComputedPolylineTotalMeters?.toStringAsFixed(0)}/${_lastComputedStepTotalMeters?.toStringAsFixed(0)} mode=$_alarmMode val=$_alarmValue',
       name: 'TrackingService',
     );
     final title = 'Wake Up! ';
@@ -1535,7 +1623,10 @@ void _onStart(
   });
 
   service.on('startTracking').listen((data) {
-    print('DEBUG: Background received startTracking event with data: $data');
+    dev.log(
+      'DEBUG: Background received startTracking event with data: $data',
+      name: 'TrackingService',
+    );
     final requestId = data?['requestId'] as String?;
     if (requestId != null) {
       try {
@@ -1676,8 +1767,9 @@ void _onStart(
       } catch (_) {}
 
       // Ensure Simulation Client is connected (reconnect if needed)
-      print(
+      dev.log(
         'DEBUG: Checking simulation client - exists=${_simulationClient != null}, active=${_simulationClient?.active}',
+        name: 'TrackingService',
       );
       if (_simulationClient == null) {
         // IMPORTANT: If we stopped tracking previously, `_onStop()` clears `_simulationClient`.
@@ -1740,8 +1832,9 @@ void _onStart(
               startLocationStream(service);
             });
       } else {
-        print(
+        dev.log(
           'DEBUG: Simulation client already active, calling startLocationStream directly',
+          name: 'TrackingService',
         );
         startLocationStream(service);
       }
@@ -1756,9 +1849,7 @@ void _onStart(
   // Inject a single position sample
   service.on('injectPosition').listen((data) {
     try {
-      if (_injectedCtrl == null) {
-        _injectedCtrl = StreamController<Position>.broadcast();
-      }
+      _injectedCtrl ??= StreamController<Position>.broadcast();
       if (data == null) return;
       final p = Position(
         latitude: (data['latitude'] as num).toDouble(),
@@ -1845,13 +1936,17 @@ void _onStart(
       'Received stopAlarm event in background service',
       name: 'TrackingService',
     );
-    // Cancel fast poll timer since alarm is being stopped.
-    _cancelAlarmStopPollTimer();
+    // Process alarm cancellation FIRST, then cancel poll timer only on success.
+    // Previously we cancelled the timer first, which could leave the alarm playing
+    // if cancelAlarm() failed for any reason.
     try {
       await NotificationService().cancelAlarm();
       await NotificationService().restoreJourneyProgressIfActive();
+      // Only cancel the poll timer AFTER successful alarm stop
+      _cancelAlarmStopPollTimer();
     } catch (e) {
       dev.log('Error stopping alarm: $e', name: 'TrackingService');
+      // Don't cancel the timer on failure - let it continue polling
     }
   });
 
@@ -2026,6 +2121,7 @@ void _onStart(
     } catch (_) {}
     _destinationAlarmFired = false;
     _firedEventIndexes.clear();
+    _preBoardingAlertFired = false;
     // Reset time-alarm gating state
     _startedAt = DateTime.now();
     _startPosition = null;
@@ -2163,18 +2259,33 @@ Future<void> startLocationStream(ServiceInstance service) async {
   );
 
   _positionSubscription = stream.listen((Position position) {
-    print(
+    dev.log(
       'DEBUG: Position received in stream listener: (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})',
+      name: 'TrackingService',
     );
     _lastGpsUpdate = DateTime.now();
     _lastProcessedPosition = LatLng(position.latitude, position.longitude);
     // Track movement distance since start for time-alarm eligibility
     try {
-      if (_startedAt == null) {
-        _startedAt = DateTime.now();
-      }
-      if (_startPosition == null) {
-        _startPosition = _lastProcessedPosition;
+      _startedAt ??= DateTime.now();
+      _startPosition ??= _lastProcessedPosition;
+      if (_activeManager != null) {
+        // Log the final alarm state being passed
+        if (_destinationAlarmFired) {
+          dev.log(
+            'DEBUG: Ingesting position with isFinalAlarm=true',
+            name: 'TrackingService',
+          );
+        }
+        _activeManager!.ingestPosition(
+          LatLng(position.latitude, position.longitude),
+          isFinalAlarm: _destinationAlarmFired,
+        );
+      } else {
+        dev.log(
+          'DEBUG: _activeManager is NULL during location update!',
+          name: 'TrackingService',
+        );
       }
       if (_startPosition != null && _lastProcessedPosition != null) {
         final d = Geolocator.distanceBetween(
@@ -2305,6 +2416,18 @@ Future<void> startLocationStream(ServiceInstance service) async {
       } catch (_) {}
     }();
 
+    // Android 16+ can allow dismissing some ongoing notifications.
+    // Re-post critical notifications (alarm / paused) while they are active so
+    // they effectively persist until the user clicks an action.
+    () async {
+      try {
+        await NotificationService().ensureAlarmNotificationVisible();
+      } catch (_) {}
+      try {
+        await NotificationService().ensureTrackingPausedNotificationVisible();
+      } catch (_) {}
+    }();
+
     final last = _lastGpsUpdate;
     if (last == null) return;
     final silentFor = DateTime.now().difference(last);
@@ -2312,7 +2435,11 @@ Future<void> startLocationStream(ServiceInstance service) async {
       if (!_fusionActive && _lastProcessedPosition != null) {
         _sensorFusionManager = SensorFusionManager(
           initialPosition: _lastProcessedPosition!,
-          accelerometerStream: testAccelerometerStream,
+          accelerometerStream:
+              TrackingService.isTestMode
+                  ? (testAccelerometerStream ??
+                      const Stream<AccelerometerEvent>.empty())
+                  : null,
         );
         _sensorFusionManager!.startFusion();
         _fusionActive = true;
@@ -2582,7 +2709,16 @@ extension TrackingServiceRouteOps on TrackingService {
     _mgrStateSub?.cancel();
     _mgrStateSub = _activeManager!.stateStream.listen((state) {
       _lastActiveState = state;
-      _routeStateCtrl.add(state);
+      _routeStateCtrl.add(state); // Update local stream (background)
+      // Bridge: Send to foreground
+      try {
+        _service.invoke('activeRouteUpdate', state.toJson());
+      } catch (e) {
+        dev.log(
+          'Failed to bridge active route state: $e',
+          name: 'TrackingService',
+        );
+      }
     });
 
     if (points.isNotEmpty) {
@@ -2885,6 +3021,26 @@ extension TrackingServiceRouteOps on TrackingService {
     });
     _mgrSwitchSub ??= _activeManager!.switchStream.listen((e) {
       _routeSwitchCtrl.add(e);
+      // Forward switch event to foreground so UI can update the map path
+      if (!TrackingService.isTestMode &&
+          !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS)) {
+        try {
+          final service = FlutterBackgroundService();
+          service.invoke('routeSwitch', {
+            'fromKey': e.fromKey,
+            'toKey': e.toKey,
+            'timestamp': e.at.toIso8601String(),
+            'points':
+                e.geometry
+                    ?.map((p) => {'lat': p.latitude, 'lng': p.longitude})
+                    .toList(),
+          });
+        } catch (_) {
+          // Ignore: background service not available on this platform.
+        }
+      }
     });
     _devSub ??= _devMonitor!.stream.listen((ds) async {
       double off = _lastActiveState?.offsetMeters ?? double.infinity;
@@ -3071,6 +3227,7 @@ extension TrackingServiceRouteOps on TrackingService {
     );
     _destinationAlarmFired = false;
     _firedEventIndexes.clear();
+    _preBoardingAlertFired = false;
 
     final mode = transitMode ? 'transit' : 'driving';
     _transitMode = transitMode;
