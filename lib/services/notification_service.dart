@@ -614,12 +614,23 @@ class NotificationService {
     );
 
     // Prevent duplicate overlays
+    // Prevent duplicate overlays
     if (_alarmCurrentlyShowing) {
-      dev.log(
-        'Alarm already showing, skipping duplicate trigger',
-        name: 'NotificationService',
-      );
-      return;
+      if (allowContinueTracking) {
+        dev.log(
+          'Alarm already showing, skipping duplicate trigger',
+          name: 'NotificationService',
+        );
+        return;
+      } else {
+        dev.log(
+          'Alarm already showing, but Destination alarm takes priority. Overriding.',
+          name: 'NotificationService',
+        );
+        // Force cancel existing alarm to make way for this one
+        await cancelAlarm(restoreJourney: false);
+        // Fall through...
+      }
     }
     _alarmCurrentlyShowing = true;
 

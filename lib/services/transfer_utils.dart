@@ -127,16 +127,25 @@ class TransferUtils {
 
           // Mode change event recorded at the boundary between steps (before adding current step distance)
           if (prevMode != null && mode != null && mode != prevMode) {
-            final label = _modeLabel(mode);
-            events.add(
-              RouteEventBoundary(
-                meters: cum,
-                type: 'mode_change',
-                label: label,
-                lat: startLat,
-                lng: startLng,
-              ),
-            );
+            // Filter trivial Walking <-> Driving changes per user request
+            final pm = prevMode.toUpperCase();
+            final cm = mode.toUpperCase();
+            final isWalkingDriving =
+                (pm == 'WALKING' && cm == 'DRIVING') ||
+                (pm == 'DRIVING' && cm == 'WALKING');
+
+            if (!isWalkingDriving) {
+              final label = _modeLabel(mode);
+              events.add(
+                RouteEventBoundary(
+                  meters: cum,
+                  type: 'mode_change',
+                  label: label,
+                  lat: startLat,
+                  lng: startLng,
+                ),
+              );
+            }
           }
           if (dist != null) cum += dist.toDouble();
 
@@ -220,12 +229,13 @@ class TransferUtils {
     } catch (e) {
       dev.log('Failed to compute route events: $e', name: 'TransferUtils');
     }
-    // Deduplicate close events
+    // Deduplicate close events (within 400m radius)
+    // User requirement: "if switch points are way too close ... under 400 m ... first point ... is given precidence"
     events.sort((a, b) => a.meters.compareTo(b.meters));
     final dedup = <RouteEventBoundary>[];
     double? lastM;
     for (final ev in events) {
-      if (lastM == null || (ev.meters - lastM).abs() > 1.0) {
+      if (lastM == null || (ev.meters - lastM).abs() > 400.0) {
         dedup.add(ev);
         lastM = ev.meters;
       }

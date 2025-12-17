@@ -96,6 +96,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int? _rerouteLatencyMs;
   List<Map<String, dynamic>> _savedRoutes = [];
   List<LatLng> _deviationRoute = []; // Secondary route for testing deviation
+  bool _transitMode =
+      false; // Track if current route is transit mode (for segment coloring)
 
   // Simulation Engine
   final SimulationEngine _engine = SimulationEngine();
@@ -256,13 +258,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final switchPoints =
             (json['switch_points'] as List?)?.cast<Map<String, dynamic>>();
         final events = (json['events'] as List?)?.cast<Map<String, dynamic>>();
+        final transitMode = json['transit_mode'] as bool? ?? false;
 
         final destName = json['destinationName'] as String?;
         _currentDestinationName = destName;
         final sig = _computeRouteSignature(points, destName);
 
         _logEvent(
-          'RX Route: ${points.length} pts, ${segments?.length} segs, ${switchPoints?.length} switches',
+          'RX Route: ${points.length} pts, ${segments?.length} segs, ${switchPoints?.length} switches, transitMode=$transitMode',
         );
         _logEvent('Keys: ${json.keys.toList()}'); // Debug keys
         final isSameRoute = _lastRouteSignature == sig;
@@ -270,6 +273,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() {
           _segments = segments; // Store for alarm updates
           _routeEvents = events;
+          _transitMode = transitMode; // Store transit mode for save/load
 
           if (!isSameRoute) {
             _engine.loadRoute(points);
@@ -278,6 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               segments: segments,
               switchPoints: switchPoints,
               routeEvents: events,
+              transitMode: transitMode,
             );
             _lastRouteSignature = sig;
 
@@ -334,8 +339,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           if (json['debug_info'] != null) {
             final info = json['debug_info'] as Map<String, dynamic>;
-            _metricDebug =
-                'Bounds: ${info['stepBounds']}, Stops: ${info['stepStops']}, Events: ${info['routeEvents']}';
+            // Keep this lightweight; it's a diagnostics pane.
+            final parts = <String>[];
+            if (info['destination'] != null)
+              parts.add('dest=${info['destination']}');
+            if (info['active_key'] != null)
+              parts.add('key=${info['active_key']}');
+            if (info['snap_offset_m'] != null)
+              parts.add('off=${info['snap_offset_m']}m');
+            if (info['progress_m'] != null)
+              parts.add('prog=${info['progress_m']}m');
+            if (info['progress_jump_m'] != null)
+              parts.add('jump=${info['progress_jump_m']}m');
+            if (info['next_event_type'] != null)
+              parts.add('next=${info['next_event_type']}');
+            if (info['to_next_event_m'] != null)
+              parts.add('toNext=${info['to_next_event_m']}m');
+            if (info['poly_total_m'] != null && info['step_total_m'] != null) {
+              parts.add(
+                'poly/step=${info['poly_total_m']}/${info['step_total_m']}',
+              );
+            }
+            // Backwards-compat with older debug keys.
+            if (info['stepBounds'] != null)
+              parts.add('Bounds:${info['stepBounds']}');
+            if (info['stepStops'] != null)
+              parts.add('Stops:${info['stepStops']}');
+            if (info['routeEvents'] != null)
+              parts.add('Events:${info['routeEvents']}');
+            _metricDebug = parts.join(' | ');
           }
         });
       }
@@ -413,6 +445,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Save route events for alarm position markers
       if (_routeEvents != null && _routeEvents!.isNotEmpty)
         'events': _routeEvents,
+      // Save transit mode for correct segment coloring
+      'transitMode': _transitMode,
     };
 
     setState(() {
@@ -420,7 +454,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     html.window.localStorage['saved_routes'] = jsonEncode(_savedRoutes);
     _logEvent(
-      'Route saved: $name (mode: $_currentAlarmMode, value: $_currentAlarmValue)',
+      'Route saved: $name (mode: $_currentAlarmMode, value: $_currentAlarmValue, transit: $_transitMode)',
     );
   }
 
@@ -455,6 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final segments =
         (routeData['segments'] as List?)?.cast<Map<String, dynamic>>();
     final events = (routeData['events'] as List?)?.cast<Map<String, dynamic>>();
+    final savedTransitMode = routeData['transitMode'] as bool? ?? false;
 
     // Restore saved alarm parameters if available
     final savedAlarmMode = routeData['alarmMode'] as String?;
@@ -464,6 +499,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _engine.loadRoute(points);
       _segments = segments;
       _routeEvents = events;
+      _transitMode = savedTransitMode;
 
       // Restore alarm display
       if (savedAlarmMode != null && savedAlarmValue != null) {
@@ -472,7 +508,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _metricAlarm = '$savedAlarmMode ($savedAlarmValue)';
       }
 
-      _updateMapRoute(points, segments: segments, routeEvents: events);
+      _updateMapRoute(
+        points,
+        segments: segments,
+        routeEvents: events,
+        transitMode: savedTransitMode,
+      );
       if (points.isNotEmpty) {
         _mapController?.animateCamera(
           CameraUpdate.newLatLngZoom(points.first, 14),
@@ -480,7 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
     _logEvent(
-      'Loaded saved route: ${routeData['name']} (mode: $savedAlarmMode, value: $savedAlarmValue)',
+      'Loaded saved route: ${routeData['name']} (mode: $savedAlarmMode, value: $savedAlarmValue, transit: $savedTransitMode)',
     );
   }
 
@@ -544,6 +585,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? routeEvents,
+    bool transitMode = false,
   }) {
     setState(() {
       _segments = segments;
@@ -572,7 +614,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final transitColorMap = <String, Color>{};
         const transitColors = <Color>[Colors.green, Colors.purple];
         int transitColorIndex = 0;
-        int transitIndexFallback = 0;
         for (int i = 0; i < segments.length; i++) {
           final seg = segments[i];
           final mode = seg['mode'] as String;
@@ -587,35 +628,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Color color;
           List<PatternItem> patterns = [];
 
-          // Match App Styling (DirectionService.dart)
+          // Match App Styling (DirectionService.dart):
+          // - Driving/Walking are non_transit: blue (walking is dashed)
+          // - Transit in transitMode with SUBWAY/HEAVY_RAIL/RAIL: green/purple
+          // - Other transit types (BUS etc.) or transit when transitMode=false: blue
           switch (mode) {
             case 'driving':
               color = Colors.blue;
               patterns = []; // Solid
               break;
             case 'transit':
-              // Deterministic mapping by transit line label (aligns with app intent)
-              final rawLine = seg['transit_line'];
-              final line = rawLine is String ? rawLine.trim() : '';
-              if (line.isNotEmpty) {
-                if (!transitColorMap.containsKey(line)) {
-                  transitColorMap[line] =
-                      transitColors[transitColorIndex % transitColors.length];
-                  transitColorIndex++;
+              // Check if this is a metro-type transit (SUBWAY, HEAVY_RAIL, RAIL)
+              // Only apply green/purple coloring if transitMode is true AND vehicle is metro type
+              final vehicleType = seg['vehicle_type'] as String?;
+              final isMetroTransit =
+                  transitMode &&
+                  (vehicleType == 'SUBWAY' ||
+                      vehicleType == 'HEAVY_RAIL' ||
+                      vehicleType == 'RAIL');
+
+              if (isMetroTransit) {
+                // Deterministic mapping by transit line label
+                final rawLine = seg['transit_line'];
+                final line = rawLine is String ? rawLine.trim() : '';
+                if (line.isNotEmpty) {
+                  if (!transitColorMap.containsKey(line)) {
+                    transitColorMap[line] =
+                        transitColors[transitColorIndex % transitColors.length];
+                    transitColorIndex++;
+                  }
+                  color = transitColorMap[line]!;
+                } else {
+                  // Fallback for metro without line label
+                  if (!transitColorMap.containsKey('_fallback_$i')) {
+                    transitColorMap['_fallback_$i'] =
+                        transitColors[transitColorIndex % transitColors.length];
+                    transitColorIndex++;
+                  }
+                  color = transitColorMap['_fallback_$i']!;
                 }
-                color = transitColorMap[line]!;
               } else {
-                // Fallback: alternate when no line label is available
-                color =
-                    transitIndexFallback % 2 == 0
-                        ? Colors.green
-                        : Colors.purple;
-                transitIndexFallback++;
+                // Non-metro transit (BUS, etc.) or not in transitMode: use blue
+                color = Colors.blue;
               }
               patterns = []; // Solid
               break;
             case 'walking':
-              color = Colors.blue; // App uses Blue for walking too
+              color = Colors.blue; // App uses Blue for walking
               patterns = [PatternItem.dash(20), PatternItem.gap(12)]; // Dashed
               break;
             default:
@@ -630,7 +689,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: color,
               width: 5,
               patterns: patterns,
-              zIndex: mode == 'transit' ? 3 : 2,
+              // Metro transit gets higher zIndex like in the app
+              zIndex: (mode == 'transit' && transitMode) ? 3 : 2,
             ),
           );
         }
@@ -697,8 +757,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           markerId: const MarkerId('ghost'),
           position: _engine.currentPosition!,
           icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueYellow,
-          ), // Yellow for user
+            BitmapDescriptor.hueBlue,
+          ), // Blue for simulated user
           infoWindow: const InfoWindow(title: 'Simulated User'),
           zIndex: 10, // Ensure user is on top
         ),
@@ -1187,7 +1247,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           markerId: MarkerId('alarm_pred$idSuffix'),
           position: pos,
           icon: BitmapDescriptor.defaultMarkerWithHue(hue),
-          alpha: 0.7,
+          alpha: 0.5, // Translucent for expected alarm markers
           infoWindow: InfoWindow(title: title, snippet: snippet),
         ),
       );
