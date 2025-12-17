@@ -5,12 +5,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geowake2/services/navigation_service.dart';
 import 'package:geowake2/services/alarm_player.dart';
+import 'package:geowake2/services/alarm_haptics.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:vibration/vibration.dart';
 import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:developer' as dev;
 import 'dart:io';
@@ -314,6 +316,13 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
+  // Android 16+ can still allow dismissal of some ongoing notifications.
+  // To enforce "persist until a button is clicked", we periodically re-post
+  // critical notifications (alarm / paused) while the underlying state says
+  // they should be visible.
+  static DateTime? _lastEnsureAlarmNotifAt;
+  static DateTime? _lastEnsurePausedNotifAt;
+
   // Allows tests to disable platform/plugin calls.
   static bool isTestMode = false;
   // Optional hook for tests to observe alarms without invoking plugins.
@@ -359,6 +368,22 @@ class NotificationService {
   bool _alarmCurrentlyShowing = false;
 
   bool _alarmVibrationLoopActive = false;
+  Timer? _alarmVibrationResyncTimer;
+
+  static const List<int> _alarmVibrationPattern = <int>[
+    0,
+    500,
+    250,
+    500,
+    250,
+    1000,
+    500,
+  ];
+
+  // Pattern duration = 3.0s (excluding the leading 0 delay).
+  static const Duration _alarmVibrationPatternPeriod = Duration(
+    milliseconds: 3000,
+  );
 
   Future<void> _clearPendingAlarmPrefs() async {
     try {
@@ -375,19 +400,25 @@ class NotificationService {
     _alarmVibrationLoopActive = true;
 
     try {
-      final hasVibrator = await Vibration.hasVibrator();
-      if (hasVibrator != true) {
-        _alarmVibrationLoopActive = false;
-        return;
-      }
+      // Prefer AlarmHaptics (native Android vibration attributes) for consistent
+      // alarm-like vibration behavior across Android versions.
+      await AlarmHaptics.start(pattern: _alarmVibrationPattern);
 
-      // Loop a strong vibration pattern until cancelled.
-      // repeat: 0 repeats from the start of the pattern indefinitely.
-      // The pattern [0, 500, 250, 500, 250, 1000, 500] takes about 3 seconds.
-      // This will keep vibrating until Vibration.cancel() is called.
-      await Vibration.vibrate(
-        pattern: const [0, 500, 250, 500, 250, 1000, 500],
-        repeat: 0,
+      // Android (especially newer versions) may stop long-running repeating
+      // vibrations. Re-trigger the pattern on a fixed cadence to keep it going
+      // for as long as the alarm is active.
+      _alarmVibrationResyncTimer?.cancel();
+      _alarmVibrationResyncTimer = Timer.periodic(
+        _alarmVibrationPatternPeriod,
+        (_) {
+          if (!_alarmVibrationLoopActive) return;
+          // Fire-and-forget; best effort.
+          () async {
+            try {
+              await AlarmHaptics.start(pattern: _alarmVibrationPattern);
+            } catch (_) {}
+          }();
+        },
       );
     } catch (e) {
       // MissingPluginException / platform limitations.
@@ -401,11 +432,10 @@ class NotificationService {
 
   Future<void> _stopAlarmVibrationLoop() async {
     _alarmVibrationLoopActive = false;
+    _alarmVibrationResyncTimer?.cancel();
+    _alarmVibrationResyncTimer = null;
     try {
-      await Vibration.cancel();
-      // Call cancel multiple times for reliability on some devices
-      await Future.delayed(const Duration(milliseconds: 50));
-      await Vibration.cancel();
+      await AlarmHaptics.stop();
     } catch (_) {
       // Ignore: plugin might not be available in unit tests.
     }
@@ -459,10 +489,10 @@ class NotificationService {
   Future<void> cancelAlarm({bool restoreJourney = true}) async {
     await _stopAlarmVibrationLoop();
 
-    // Ensure the background isolate stops the alarm as well.
-    try {
-      FlutterBackgroundService().invoke('stopAlarm');
-    } catch (_) {}
+    // NOTE: Removed FlutterBackgroundService().invoke('stopAlarm') here because:
+    // 1. cancelAlarm() is called FROM the stopAlarm service handler - circular call
+    // 2. cancelAlarm() is called FROM the poll timer - no need to re-invoke
+    // The background notification callback already invokes stopAlarm if needed.
 
     // 1. Stop audio (this internally calls stopVibration -> _cancelAlarmNotificationOnly)
     try {
@@ -678,7 +708,10 @@ class NotificationService {
                 AndroidNotificationAction(
                   'STOP_ALARM',
                   'Stop Alarm',
-                  showsUserInterface: false,
+                  // Must be true so the action is handled by the foreground isolate.
+                  // Alarm audio is started from the foreground via the 'triggerAlarm'
+                  // bridge; stopping it requires the same isolate.
+                  showsUserInterface: true,
                 ),
                 AndroidNotificationAction(
                   'END_TRACKING',
@@ -746,6 +779,151 @@ class NotificationService {
       // If platform notification/vibration/audio fails (common on web/desktop or
       // if plugins aren't initialized), don't permanently block future alarms.
       _alarmCurrentlyShowing = false;
+    }
+  }
+
+  /// Re-post the alarm notification without re-triggering sound/vibration/fullscreen.
+  /// This is used to make the alarm effectively non-dismissible on newer Android
+  /// versions that may allow dismissing ongoing notifications.
+  Future<void> ensureAlarmNotificationVisible() async {
+    if (isTestMode) return;
+
+    // Rate-limit to avoid spamming NotificationManager.
+    final now = DateTime.now();
+    final last = _lastEnsureAlarmNotifAt;
+    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastEnsureAlarmNotifAt = now;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pending = prefs.getBool('pending_alarm_flag') ?? false;
+      if (!pending) return;
+
+      final title =
+          prefs.getString('pending_alarm_title') ?? 'Time to Wake Up!';
+      final body =
+          prefs.getString('pending_alarm_body') ?? 'Approaching destination';
+      final allowContinue = prefs.getBool('pending_alarm_allow') ?? false;
+
+      final androidDetails = AndroidNotificationDetails(
+        'geowake_alarm_channel_v3',
+        'GeoWake Alarms (High Priority)',
+        channelDescription: 'Channel for GeoWake wake-up alarms',
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: false,
+        // Critical: do NOT re-fire full-screen intent during resurrection.
+        fullScreenIntent: false,
+        visibility: NotificationVisibility.public,
+        category: AndroidNotificationCategory.alarm,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        ongoing: true,
+        autoCancel: false,
+        enableVibration: false,
+        // Avoid re-alerting; we only want to keep it present.
+        onlyAlertOnce: true,
+        // Keep NO_CLEAR; omit INSISTENT so we don't re-loop notification effects.
+        additionalFlags: Int32List.fromList([32]),
+        actions:
+            allowContinue
+                ? <AndroidNotificationAction>[
+                  AndroidNotificationAction(
+                    'STOP_ALARM',
+                    'Stop Alarm',
+                    showsUserInterface: true,
+                  ),
+                  AndroidNotificationAction(
+                    'END_TRACKING',
+                    'End Tracking',
+                    showsUserInterface: true,
+                  ),
+                ]
+                : <AndroidNotificationAction>[
+                  AndroidNotificationAction(
+                    'END_TRACKING',
+                    'End Tracking',
+                    showsUserInterface: true,
+                  ),
+                ],
+      );
+
+      final details = NotificationDetails(android: androidDetails);
+      await _notificationsPlugin.show(
+        _alarmNotificationId,
+        title,
+        body,
+        details,
+        payload: 'open_alarm:${allowContinue ? '1' : '0'}',
+      );
+    } catch (e) {
+      dev.log(
+        'ensureAlarmNotificationVisible failed: $e',
+        name: 'NotificationService',
+      );
+    }
+  }
+
+  /// Re-post the paused notification while the app is in paused state.
+  /// This makes the Resume/End notification effectively non-dismissible.
+  Future<void> ensureTrackingPausedNotificationVisible() async {
+    if (isTestMode) return;
+
+    // Rate-limit; paused state can last a while.
+    final now = DateTime.now();
+    final last = _lastEnsurePausedNotifAt;
+    if (last != null && now.difference(last) < const Duration(seconds: 5)) {
+      return;
+    }
+    _lastEnsurePausedNotifAt = now;
+
+    try {
+      final paused = await TrackingStateStore.isPaused();
+      if (!paused) return;
+
+      // Re-use the last saved payload if available.
+      final payload = await TrackingStateStore.loadProgressPayload();
+      final title = payload?.title ?? 'Tracking paused';
+      final subtitle = payload?.subtitle ?? 'Resume to continue';
+
+      final androidDetails = AndroidNotificationDetails(
+        'geowake_tracking_channel_v2',
+        'GeoWake Tracking',
+        channelDescription: 'Tracking paused (requires foreground)',
+        importance: Importance.high,
+        priority: Priority.high,
+        ongoing: true,
+        autoCancel: false,
+        onlyAlertOnce: true,
+        visibility: NotificationVisibility.public,
+        actions: <AndroidNotificationAction>[
+          AndroidNotificationAction(
+            'RESUME_TRACKING',
+            'Resume Tracking',
+            showsUserInterface: true,
+          ),
+          AndroidNotificationAction(
+            'END_TRACKING',
+            'End Tracking',
+            showsUserInterface: true,
+          ),
+        ],
+      );
+
+      final details = NotificationDetails(android: androidDetails);
+      await _notificationsPlugin.show(
+        _pausedNotificationId,
+        title,
+        subtitle,
+        details,
+        payload: 'tracking_paused',
+      );
+    } catch (e) {
+      dev.log(
+        'ensureTrackingPausedNotificationVisible failed: $e',
+        name: 'NotificationService',
+      );
     }
   }
 
@@ -836,7 +1014,8 @@ class NotificationService {
                 AndroidNotificationAction(
                   'IGNORE',
                   'Ignore',
-                  showsUserInterface: false,
+                  // Must be true so the mute takes effect immediately and reliably.
+                  showsUserInterface: true,
                 ),
                 AndroidNotificationAction(
                   'END_TRACKING',
@@ -1189,6 +1368,21 @@ void notificationTapBackground(NotificationResponse response) async {
     // For journey notifications, mute persistence.
     if (payload != null && payload.startsWith('journey')) {
       await NotificationService.requestMuteJourneyForService();
+      // CRITICAL FIX: Also set the mute flag IMMEDIATELY in TrackingStateStore
+      // so that showJourneyProgress() respects it right away, without waiting
+      // for the poll timer to consume the request flag.
+      try {
+        await TrackingStateStore.setNotificationsMuted(true);
+        dev.log(
+          'BG_IGNORE: Set notifications muted immediately',
+          name: 'NotificationService',
+        );
+      } catch (e) {
+        dev.log(
+          'BG_IGNORE: Failed to set notifications muted: $e',
+          name: 'NotificationService',
+        );
+      }
       // Cancel the journey notification (ID 888) immediately.
       try {
         final plugin = FlutterLocalNotificationsPlugin();

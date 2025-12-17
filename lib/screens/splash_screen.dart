@@ -92,7 +92,14 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Ensure services are initialized before proceeding
     if (_initFuture != null) {
-      await _initFuture;
+      try {
+        await _initFuture!.timeout(const Duration(seconds: 8));
+      } catch (e) {
+        dev.log(
+          'Splash init timed out or failed (continuing): $e',
+          name: 'SplashScreen',
+        );
+      }
     }
 
     final restoreSession = await TrackingStateStore.isActive();

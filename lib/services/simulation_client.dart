@@ -140,7 +140,14 @@ class SimulationClient {
   }
 
   void _handleDisconnection() {
-    _channel?.sink.close();
+    final sink = _channel?.sink;
+    if (sink != null) {
+      try {
+        // WebSocketSink.close() returns a Future; if it completes with an error
+        // and nobody awaits/handles it, the runtime can treat it as unhandled.
+        unawaited(sink.close().catchError((_) {}));
+      } catch (_) {}
+    }
     _channel = null;
     _connectionCheckTimer?.cancel();
     _lastPingReceived = null;
@@ -167,7 +174,12 @@ class SimulationClient {
     _shouldBeConnected = false;
     _reconnectTimer?.cancel();
     _connectionCheckTimer?.cancel();
-    _channel?.sink.close();
+    final sink = _channel?.sink;
+    if (sink != null) {
+      try {
+        unawaited(sink.close().catchError((_) {}));
+      } catch (_) {}
+    }
     _channel = null;
     _lastPingReceived = null;
     _hasReceivedPosition = false;

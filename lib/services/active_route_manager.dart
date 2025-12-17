@@ -9,8 +9,14 @@ class RouteSwitchEvent {
   final String fromKey;
   final String toKey;
   final DateTime at;
-  RouteSwitchEvent({required this.fromKey, required this.toKey, DateTime? at})
-    : at = at ?? DateTime.now();
+  final List<LatLng>? geometry;
+
+  RouteSwitchEvent({
+    required this.fromKey,
+    required this.toKey,
+    DateTime? at,
+    this.geometry,
+  }) : at = at ?? DateTime.now();
 }
 
 class ActiveRouteState {
@@ -21,6 +27,7 @@ class ActiveRouteState {
   final double remainingMeters;
   final String? pendingSwitchToKey;
   final double? pendingSwitchInSeconds;
+  final bool isFinalAlarm;
   const ActiveRouteState({
     required this.activeKey,
     required this.snapped,
@@ -29,7 +36,34 @@ class ActiveRouteState {
     required this.remainingMeters,
     this.pendingSwitchToKey,
     this.pendingSwitchInSeconds,
+    this.isFinalAlarm = false,
   });
+
+  Map<String, dynamic> toJson() => {
+    'activeKey': activeKey,
+    'snapped': {'lat': snapped.latitude, 'lng': snapped.longitude},
+    'offsetMeters': offsetMeters,
+    'progressMeters': progressMeters,
+    'remainingMeters': remainingMeters,
+    'pendingSwitchToKey': pendingSwitchToKey,
+    'pendingSwitchInSeconds': pendingSwitchInSeconds,
+    'isFinalAlarm': isFinalAlarm,
+  };
+
+  factory ActiveRouteState.fromJson(Map<String, dynamic> json) {
+    final s = json['snapped'] as Map<String, dynamic>;
+    return ActiveRouteState(
+      activeKey: json['activeKey'] as String,
+      snapped: LatLng(s['lat'] as double, s['lng'] as double),
+      offsetMeters: (json['offsetMeters'] as num).toDouble(),
+      progressMeters: (json['progressMeters'] as num).toDouble(),
+      remainingMeters: (json['remainingMeters'] as num).toDouble(),
+      pendingSwitchToKey: json['pendingSwitchToKey'] as String?,
+      pendingSwitchInSeconds:
+          (json['pendingSwitchInSeconds'] as num?)?.toDouble(),
+      isFinalAlarm: json['isFinalAlarm'] as bool? ?? false,
+    );
+  }
 }
 
 class ActiveRouteManager {
@@ -69,7 +103,7 @@ class ActiveRouteManager {
         Stopwatch()..start(); // start blackout immediately on activation
   }
 
-  void ingestPosition(LatLng rawPosition) {
+  void ingestPosition(LatLng rawPosition, {bool isFinalAlarm = false}) {
     if (_activeKey == null) return;
     final active = registry.entries.firstWhere(
       (e) => e.key == _activeKey,
@@ -135,8 +169,21 @@ class ActiveRouteManager {
           _candidateTimer?.stop();
           _candidateTimer = null;
           _blackoutTimer = Stopwatch()..start();
+
+          // Fetch geometry for the event
+          List<LatLng>? points;
+          try {
+            final entry = registry.entries.firstWhere((e) => e.key == bestKey);
+            points = entry.points;
+          } catch (_) {}
+
           _switchCtrl.add(
-            RouteSwitchEvent(fromKey: fromKey, toKey: bestKey, at: now),
+            RouteSwitchEvent(
+              fromKey: fromKey,
+              toKey: bestKey,
+              at: now,
+              geometry: points,
+            ),
           );
         }
       }
@@ -198,6 +245,7 @@ class ActiveRouteManager {
         remainingMeters: remaining,
         pendingSwitchToKey: pendingKey,
         pendingSwitchInSeconds: pendingSecs,
+        isFinalAlarm: isFinalAlarm,
       ),
     );
   }
