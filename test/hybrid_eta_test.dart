@@ -172,6 +172,7 @@ void main() {
       );
       // Smoothed: 0.25*20 + 0.75*5 = 5 + 3.75 = 8.75.
       final eta3 = res.etaSeconds;
+      expect(eta2, greaterThan(eta3)); // ETA should decrease as speed ramps up
 
       // ETA should be dropping, but not fully "20m/s" efficient yet.
       // This proves it takes into account history (multiple samples).

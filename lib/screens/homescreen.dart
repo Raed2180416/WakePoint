@@ -16,7 +16,7 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:geowake2/services/api_client.dart';
 // import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
-import 'package:geowake2/services/transfer_utils.dart';
+
 import 'package:geowake2/services/tracking_state_store.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -203,6 +203,85 @@ class HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       dev.log("Error fetching country code via server: $e", name: "HomeScreen");
+    }
+  }
+
+  /// Extracts the administrative area (state/province) from a geocode result.
+  /// Returns null if not found.
+  String? _extractStateFromGeocode(Map<String, dynamic>? geocodeResult) {
+    if (geocodeResult == null) return null;
+    try {
+      final components =
+          (geocodeResult['address_components'] as List?) ?? const [];
+      final stateComponent = components
+          .cast<Map<String, dynamic>?>()
+          .firstWhere(
+            (c) =>
+                c != null &&
+                ((c['types'] as List?) ?? []).contains(
+                  'administrative_area_level_1',
+                ),
+            orElse: () => null,
+          );
+      return stateComponent?['short_name'] as String?;
+    } catch (e) {
+      dev.log('Error extracting state from geocode: $e', name: 'HomeScreen');
+      return null;
+    }
+  }
+
+  /// Validates that origin and destination are in the same state.
+  /// Returns true if validation passes, false otherwise.
+  Future<bool> _validateSameState({
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+  }) async {
+    try {
+      // Reverse geocode both origin and destination in parallel
+      final originGeocode = ApiClient.instance.geocode(
+        latlng: '$originLat,$originLng',
+      );
+      final destGeocode = ApiClient.instance.geocode(
+        latlng: '$destLat,$destLng',
+      );
+
+      final results = await Future.wait([originGeocode, destGeocode]);
+      final originState = _extractStateFromGeocode(results[0]);
+      final destState = _extractStateFromGeocode(results[1]);
+
+      dev.log(
+        'Same-state validation: origin=$originState, dest=$destState',
+        name: 'HomeScreen',
+      );
+
+      // If either state couldn't be determined, allow the route (fail-open)
+      if (originState == null || destState == null) {
+        dev.log(
+          'Same-state validation: skipping (could not determine states)',
+          name: 'HomeScreen',
+        );
+        return true;
+      }
+
+      // Check if states match (case-insensitive)
+      if (originState.toLowerCase() != destState.toLowerCase()) {
+        dev.log(
+          'Same-state validation FAILED: different states',
+          name: 'HomeScreen',
+        );
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      dev.log(
+        'Same-state validation error (allowing route): $e',
+        name: 'HomeScreen',
+      );
+      // Fail-open: if validation fails, allow the route
+      return true;
     }
   }
 
@@ -432,6 +511,26 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
 
+      // Same-state validation: ensure origin and destination are in the same state
+      final sameState = await _validateSameState(
+        originLat: userLat,
+        originLng: userLng,
+        destLat: destLat,
+        destLng: destLng,
+      );
+      if (!mounted) return;
+      if (!sameState) {
+        _showErrorDialog(
+          "Route Not Available",
+          "Routes that cross state boundaries are not supported. Please select a destination within your current state.",
+        );
+        setState(() {
+          _isTracking = false;
+          _isLoading = false;
+        });
+        return;
+      }
+
       final directions = await _fetchDirections(
         userLat,
         userLng,
@@ -454,154 +553,7 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
       }
 
-      // Stops-mode validation: block invalid values before tracking starts.
-      // Rule: stops threshold must be strictly less than the stops to the next switch point.
-      if (_metroMode && alarmMode == 'stops') {
-        dev.log(
-          'DEBUG: homescreen - validating stops threshold: $alarmValue',
-          name: 'HomeScreen',
-        );
-        try {
-          final events = TransferUtils.buildRouteEvents(directions);
-          final nextSwitch =
-              events
-                  .where(
-                    (e) =>
-                        (e.type == 'transfer' || e.type == 'mode_change') &&
-                        e.meters > 1.0,
-                  )
-                  .toList()
-                ..sort((a, b) => a.meters.compareTo(b.meters));
-
-          if (nextSwitch.isNotEmpty) {
-            final nextEvMeters = nextSwitch.first.meters;
-
-            // Compute "virtual stops" to next switch:
-            // - TRANSIT: use num_stops
-            // - Non-transit: ~500m == 1 stop (for realistic non-metro legs)
-            double stopsToNext = 0.0;
-            try {
-              final routes = (directions['routes'] as List?) ?? const [];
-              if (routes.isNotEmpty) {
-                final route = routes.first as Map<String, dynamic>;
-                final legs = (route['legs'] as List?) ?? const [];
-                double cumM = 0.0;
-                for (final leg in legs) {
-                  final steps =
-                      (leg as Map<String, dynamic>)['steps'] as List? ??
-                      const [];
-                  for (final s in steps) {
-                    final step = s as Map<String, dynamic>;
-                    final dist =
-                        ((step['distance'] as Map<String, dynamic>?)?['value'])
-                            as num?;
-                    final stepMeters = (dist ?? 0).toDouble();
-                    final mode = step['travel_mode']?.toString().toUpperCase();
-
-                    final nextCum = cumM + stepMeters;
-                    final cutMeters =
-                        (nextEvMeters <= nextCum)
-                            ? (nextEvMeters - cumM).clamp(0.0, stepMeters)
-                            : stepMeters;
-
-                    if (cutMeters > 0.0) {
-                      if (mode == 'TRANSIT') {
-                        final td =
-                            step['transit_details'] as Map<String, dynamic>?;
-                        final ns = td != null ? td['num_stops'] as num? : null;
-                        if (ns != null && stepMeters > 0.0) {
-                          // Scale stops proportionally if we cut inside the step.
-                          stopsToNext +=
-                              ns.toDouble() * (cutMeters / stepMeters);
-                        }
-                      } else {
-                        stopsToNext += cutMeters / 500.0;
-                      }
-                    }
-
-                    cumM = nextCum;
-                    if (cumM >= nextEvMeters) break;
-                  }
-                  if (cumM >= nextEvMeters) break;
-                }
-              }
-            } catch (_) {}
-
-            if (stopsToNext.isFinite && alarmValue >= stopsToNext) {
-              dev.log(
-                'DEBUG: homescreen - stops validation failed: value $alarmValue >= stopsToNext $stopsToNext',
-                name: 'HomeScreen',
-              );
-              _showErrorDialog(
-                'Invalid stops setting',
-                'Your stops value must be less than the stops to the next switch point (≈${stopsToNext.toStringAsFixed(1)}).',
-              );
-              setState(() {
-                _isTracking = false;
-                _isLoading = false;
-              });
-              return;
-            }
-          } else {
-            // No switch event found - validate against total stops in route
-            double totalStops = 0.0;
-            try {
-              final routes = (directions['routes'] as List?) ?? const [];
-              if (routes.isNotEmpty) {
-                final route = routes.first as Map<String, dynamic>;
-                final legs = (route['legs'] as List?) ?? const [];
-                for (final leg in legs) {
-                  final steps =
-                      (leg as Map<String, dynamic>)['steps'] as List? ??
-                      const [];
-                  for (final s in steps) {
-                    final step = s as Map<String, dynamic>;
-                    final dist =
-                        ((step['distance'] as Map<String, dynamic>?)?['value'])
-                            as num?;
-                    final stepMeters = (dist ?? 0).toDouble();
-                    final mode = step['travel_mode']?.toString().toUpperCase();
-
-                    if (mode == 'TRANSIT') {
-                      final td =
-                          step['transit_details'] as Map<String, dynamic>?;
-                      final ns = td != null ? td['num_stops'] as num? : null;
-                      if (ns != null) {
-                        totalStops += ns.toDouble();
-                      }
-                    } else {
-                      totalStops += stepMeters / 500.0;
-                    }
-                  }
-                }
-              }
-            } catch (_) {}
-
-            if (totalStops.isFinite &&
-                totalStops > 0 &&
-                alarmValue >= totalStops) {
-              dev.log(
-                'DEBUG: homescreen - total stops validation failed: value $alarmValue >= totalStops $totalStops',
-                name: 'HomeScreen',
-              );
-              _showErrorDialog(
-                'Invalid stops setting',
-                'Your stops value (${alarmValue.toStringAsFixed(0)}) must be less than the total stops in route (≈${totalStops.toStringAsFixed(1)}).',
-              );
-              setState(() {
-                _isTracking = false;
-                _isLoading = false;
-              });
-              return;
-            }
-          }
-        } catch (e) {
-          dev.log(
-            'Stops-mode validation failed (non-blocking): $e',
-            name: 'HomeScreen',
-          );
-        }
-      }
+      // Stops-mode validation removed per user request (allow any value).
 
       // 1. Start Tracking (Ensure service is running)
       try {
