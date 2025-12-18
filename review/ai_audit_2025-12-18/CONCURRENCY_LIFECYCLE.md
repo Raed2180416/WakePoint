@@ -1,0 +1,10 @@
+# CONCURRENCY_LIFECYCLE
+
+- **Isolates**: Foreground UI isolate owns NotificationService plugin calls and route UI; background isolate launched by flutter_background_service `_onStart` handles GPS stream, alarm logic, route registry, and sends `triggerAlarm` back to foreground. Test mode bypasses service by calling `_onStart` directly with `TestServiceInstance`.
+- **Listener ordering**: `_onStart` registers all `service.on(...)` handlers (stopService/startTracking/heartbeat/etc.) before starting location stream to avoid lost invokes. Foreground `_ensureAckListenersRegistered` is invoked during `initializeService` and `startTracking` to ensure `triggerAlarm`, `routeSwitch`, and ack listeners exist before invokes.
+- **Ack map lifecycle**: `_invokeWithAckRetry` installs a `Completer` per requestId, waits 700ms per attempt, removes entries on timeout/ack to avoid leaks.
+- **Heartbeats**: Foreground sends `foregroundHeartbeat` every second once tracking starts; background monitors with 4s timeout to mark paused. Risk: Android timer throttling/Doze could suppress heartbeats causing false pause notification; hypothesis pending device validation.
+- **Streams and disposal**: Background cancels `_positionSubscription`, heartbeat timer, deviation/reroute subscriptions, and AlarmPlayer/vibration inside `_onStop`. Foreground MapTrackingScreen cancels route switch/state/location subscriptions in `dispose` (maptracking.dart) safeguarding leaks.
+- **Persistence coherence**: TrackingStateStore caches SharedPreferences; methods like `notificationsMuted()` and consume* requests call `prefs.reload()` to avoid stale reads across isolates. File flags in NotificationService provide more reliable cross-isolate signaling than SharedPreferences alone.
+- **Lifecycle forwarding safety**: `handleAppLifecycleChange` ignores test mode, restarts heartbeat on `resumed`, and avoids stopping heartbeats on `paused` to keep timeout detection reliable.
+- **Zombie cleanup**: Splash checks `TrackingStateStore.isAlarmFired()` and calls `completeEndTracking` before routing, preventing stuck alarm state on cold start.
