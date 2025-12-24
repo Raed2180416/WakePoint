@@ -191,6 +191,7 @@ class SimulationClient {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? events,
+    List<Map<String, dynamic>>? inactiveRoutes,
     bool? transitMode,
   }) {
     if (!PlaygroundBridgeConfig.enabled || _channel == null) return;
@@ -202,6 +203,7 @@ class SimulationClient {
         'segments': segments,
         'switch_points': switchPoints,
         'events': events,
+        if (inactiveRoutes != null) 'inactive_routes': inactiveRoutes,
         if (transitMode != null) 'transit_mode': transitMode,
       };
       _channel!.sink.add(jsonEncode(state));

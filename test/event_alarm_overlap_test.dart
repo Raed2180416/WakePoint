@@ -29,15 +29,19 @@ void main() {
       String mode,
       double meters, {
       int? numStops,
-      Map<String, dynamic>? transitDetails,
+      String? lineShortName,
+      Map<String, dynamic>? extraTransitDetails,
     }) => {
       'travel_mode': mode,
       'distance': {'value': meters},
       if (mode == 'TRANSIT' && numStops != null)
         'transit_details': {
           'num_stops': numStops,
-          'line': {'short_name': 'R1'},
-          if (transitDetails != null) ...transitDetails,
+          'line': {
+            'short_name': lineShortName ?? 'R1',
+            'vehicle': {'type': 'SUBWAY'},
+          },
+          if (extraTransitDetails != null) ...extraTransitDetails,
         },
       if (mode != 'TRANSIT') 'transit_details': null,
     };
@@ -53,19 +57,12 @@ void main() {
                   'TRANSIT',
                   1000.0,
                   numStops: 3,
-                  transitDetails: {
+                  lineShortName: 'R1',
+                  extraTransitDetails: {
                     'arrival_stop': {'name': 'Xfer Station'},
-                    'line': {'short_name': 'R1'},
                   },
                 ),
-                mkStep(
-                  'TRANSIT',
-                  1000.0,
-                  numStops: 3,
-                  transitDetails: {
-                    'line': {'short_name': 'R2'},
-                  },
-                ),
+                mkStep('TRANSIT', 1000.0, numStops: 3, lineShortName: 'R2'),
                 mkStep('WALKING', 200.0),
               ],
             },

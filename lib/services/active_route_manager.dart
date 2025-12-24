@@ -10,12 +10,14 @@ class RouteSwitchEvent {
   final String toKey;
   final DateTime at;
   final List<LatLng>? geometry;
+  final List<List<LatLng>>? inactivePolylines;
 
   RouteSwitchEvent({
     required this.fromKey,
     required this.toKey,
     DateTime? at,
     this.geometry,
+    this.inactivePolylines,
   }) : at = at ?? DateTime.now();
 }
 
@@ -86,6 +88,8 @@ class ActiveRouteManager {
   Stream<ActiveRouteState> get stateStream => _stateCtrl.stream;
   Stream<RouteSwitchEvent> get switchStream => _switchCtrl.stream;
 
+  String? get activeKey => _activeKey;
+
   ActiveRouteManager({
     required this.registry,
     this.sustainDuration = const Duration(seconds: 6),
@@ -104,7 +108,7 @@ class ActiveRouteManager {
   }
 
   void ingestPosition(LatLng rawPosition, {bool isFinalAlarm = false}) {
-    if (_activeKey == null) return;
+    if (_activeKey == null || registry.entries.isEmpty) return;
     final active = registry.entries.firstWhere(
       (e) => e.key == _activeKey,
       orElse:

@@ -13,6 +13,7 @@ class DirectionService {
   final ApiClient _apiClient = ApiClient.instance;
   Map<String, dynamic>? _cachedDirections;
   DateTime? _lastFetchTime;
+  String? _cachedDirectionsKey;
   // In-memory cache for decode+simplify keyed by hash 'len:md5' of polyline+tol
   final Map<String, List<LatLng>> _polylineSimplifyCache = {};
 
@@ -22,6 +23,20 @@ class DirectionService {
   final Duration nearInterval = const Duration(minutes: 3);
 
   DirectionService();
+
+  String _makeRequestKey({
+    required LatLng origin,
+    required LatLng destination,
+    required String mode,
+    String? transitVariant,
+  }) {
+    return RouteCache.makeKey(
+      origin: origin,
+      destination: destination,
+      mode: mode,
+      transitVariant: transitVariant,
+    );
+  }
 
   /// Fetches directions using a tiered strategy through your secure API.
   Future<Map<String, dynamic>> getDirections(
@@ -74,8 +89,17 @@ class DirectionService {
       updateInterval = nearInterval;
     }
 
-    // Return in-memory cached data if available and recent.
-    if (!forceRefresh && _cachedDirections != null && _lastFetchTime != null) {
+    // Return in-memory cached data if available, recent, AND for the same request.
+    final requestKey = _makeRequestKey(
+      origin: origin,
+      destination: dest,
+      mode: mode,
+      transitVariant: transitMode ? 'rail' : null,
+    );
+    if (!forceRefresh &&
+        _cachedDirections != null &&
+        _lastFetchTime != null &&
+        _cachedDirectionsKey == requestKey) {
       final elapsed = DateTime.now().difference(_lastFetchTime!);
       if (elapsed < updateInterval) {
         return _cachedDirections!;
@@ -123,6 +147,7 @@ class DirectionService {
 
       _cachedDirections = directions;
       _lastFetchTime = DateTime.now();
+      _cachedDirectionsKey = requestKey;
 
       // Persist to RouteCache (L2)
       try {

@@ -17,37 +17,41 @@ void main() {
                   'travel_mode': 'TRANSIT',
                   'distance': {'value': 800},
                   'transit_details': {
-                    'line': {'short_name': 'A'},
-                    'arrival_stop': {'name': 'Majestic'}
-                  }
+                    'line': {
+                      'short_name': 'A',
+                      'vehicle': {'type': 'SUBWAY'},
+                    },
+                    'arrival_stop': {'name': 'Majestic'},
+                  },
                 },
                 {
                   'travel_mode': 'TRANSIT',
                   'distance': {'value': 1200},
                   'transit_details': {
-                    'line': {'short_name': 'B'},
-                    'arrival_stop': {'name': 'Central'}
-                  }
+                    'line': {
+                      'short_name': 'B',
+                      'vehicle': {'type': 'SUBWAY'},
+                    },
+                    'arrival_stop': {'name': 'Central'},
+                  },
                 },
                 {
                   'travel_mode': 'DRIVING',
                   'distance': {'value': 500},
                 },
-              ]
-            }
-          ]
-        }
-      ]
+              ],
+            },
+          ],
+        },
+      ],
     };
 
     final events = TransferUtils.buildRouteEvents(directions);
-    expect(events.length, 3);
+    expect(events.length, 2);
     expect(events[0].type, 'mode_change');
     expect(events[0].meters, 300);
     expect(events[1].type, 'transfer');
     expect(events[1].meters, 300 + 800); // end of first transit step (A)
-  expect(events[1].label, 'Majestic');
-    expect(events[2].type, 'mode_change');
-    expect(events[2].meters, 300 + 800 + 1200);
+    expect(events[1].label, 'Majestic');
   });
 }

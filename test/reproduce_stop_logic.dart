@@ -22,7 +22,10 @@ void main() {
                   'distance': {'value': 2000},
                   'transit_details': {
                     'num_stops': 5,
-                    'line': {'short_name': 'B1'},
+                    'line': {
+                      'short_name': 'B1',
+                      'vehicle': {'type': 'BUS'},
+                    },
                     'arrival_stop': {'name': 'Transfer Station'},
                   },
                 },
@@ -37,7 +40,10 @@ void main() {
                   'distance': {'value': 3000},
                   'transit_details': {
                     'num_stops': 3,
-                    'line': {'short_name': 'S1'},
+                    'line': {
+                      'short_name': 'S1',
+                      'vehicle': {'type': 'SUBWAY'},
+                    },
                     'arrival_stop': {'name': 'Final Station'},
                   },
                 },
@@ -128,7 +134,7 @@ void main() {
         stepBoundsMeters: stepData.bounds,
         stepStopsCumulative: stepData.stops,
         routeEvents: events,
-        firedEventIndexes: {},
+        firedEventIndexes: {0},
       );
       expect(result2?.remainingStops, closeTo(2.7, 0.1));
       // The target is the alighting point (switch to walking), so isDestination is false.
