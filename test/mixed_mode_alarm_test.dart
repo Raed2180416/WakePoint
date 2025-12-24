@@ -125,7 +125,7 @@ void main() {
   });
 
   test(
-    'Mixed Mode: Alarm fires 1km (2 stops) before boarding',
+    'Mixed Mode: Alarm fires when 40% of leg is covered (60% rule)',
     () async {
       final svc = TrackingService();
       final gps = StreamController<Position>();
@@ -140,7 +140,7 @@ void main() {
         destinationName: 'Station B',
       );
 
-      // Alarm set to 2 stops prior (which should be 1km for walking)
+      // Alarm set to 2 stops prior (ignored for pre-boarding now, uses 60% rule)
       await svc.startTracking(
         destination: const LatLng(0.02, 0.02),
         destinationName: 'Station B',
@@ -155,8 +155,8 @@ void main() {
       // 2. Move to ~940m from origin (0.006, 0.006)
       // Total leg = 1571m.
       // Remaining = 1571 - 940 = 631m.
-      // Stops = 631 / 500 = 1.26 stops.
-      // Alarm (2.0) should fire.
+      // Ratio = 631 / 1571 = 0.40.
+      // 0.40 <= 0.6. Alarm should fire.
       gps.add(pWithTime(0.006, 0.006));
       await Future.delayed(const Duration(milliseconds: 500));
 
@@ -179,7 +179,7 @@ void main() {
       expect(
         boardingAlarms.isNotEmpty,
         isTrue,
-        reason: 'Alarm should fire ~600m (1.2 stops) before boarding Station A',
+        reason: 'Alarm should fire when 40% of leg is covered',
       );
 
       await svc.stopTracking();

@@ -149,7 +149,7 @@ void main() {
       reason: "Should not fire at start (2.2 stops away)",
     );
 
-    // 2. Move to 200m progress. Dist to boarding = 913m. Stops = 1.82. Should FIRE!
+    // 2. Move to 200m progress. Dist to boarding = 913m. Ratio = 0.82. Should NOT fire (Ratio > 0.6).
     // 0.0018 deg lat approx 200m.
     await trackingService.testInjectPosition(
       Position(
@@ -168,9 +168,33 @@ void main() {
     );
 
     expect(
+      NotificationService.testRecordedAlarms.isEmpty,
+      true,
+      reason: "Should not fire at 200m (ratio 0.82 > 0.6)",
+    );
+
+    // 3. Move to 500m progress. Dist to boarding = 613m. Total = 1113m. Ratio = 0.55. Should FIRE (<= 0.6)!
+    // 0.0045 deg lat approx 500m.
+    await trackingService.testInjectPosition(
+      Position(
+        latitude: 0.0045,
+        longitude: 0.0,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 1.4,
+        speedAccuracy: 0,
+        altitudeAccuracy: 0,
+        headingAccuracy: 0,
+      ),
+      service,
+    );
+
+    expect(
       NotificationService.testRecordedAlarms.isNotEmpty,
       true,
-      reason: "Should fire when walking within 1000m of boarding",
+      reason: "Should fire when 40% of leg is covered (60% rule)",
     );
     dev.log(
       'Alarms fired: ${NotificationService.testRecordedAlarms}',

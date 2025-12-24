@@ -253,6 +253,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final switchPoints =
             (json['switch_points'] as List?)?.cast<Map<String, dynamic>>();
         final events = (json['events'] as List?)?.cast<Map<String, dynamic>>();
+        final inactiveRoutes =
+            (json['inactive_routes'] as List?)?.cast<Map<String, dynamic>>();
+        if (inactiveRoutes != null) {
+          print('DashDebug: Received ${inactiveRoutes.length} inactive routes');
+        }
         final transitMode = json['transit_mode'] as bool? ?? false;
 
         final destName = json['destinationName'] as String?;
@@ -277,6 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               segments: segments,
               switchPoints: switchPoints,
               routeEvents: events,
+              inactiveRoutes: inactiveRoutes,
               transitMode: transitMode,
             );
             _lastRouteSignature = sig;
@@ -580,6 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? routeEvents,
+    List<Map<String, dynamic>>? inactiveRoutes,
     bool transitMode = false,
   }) {
     setState(() {
@@ -590,6 +597,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Keep alarm markers, clear route markers?
       // Rebuild specific markers below
       _markers.removeWhere((m) => !m.markerId.value.startsWith('alarm_pred_'));
+
+      // Draw Inactive Routes (Grey)
+      if (inactiveRoutes != null) {
+        for (final route in inactiveRoutes) {
+          final ptsJson = route['points'] as List;
+          final pts = ptsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
+          final key = route['key'] ?? 'inactive_${pts.hashCode}';
+          _polylines.add(
+            Polyline(
+              polylineId: PolylineId('inactive_$key'),
+              points: pts,
+              color: Colors.grey,
+              width: 4,
+              zIndex: 0,
+            ),
+          );
+        }
+      }
 
       // Draw Deviation Route (Grey Dashed) if exists
       if (_deviationRoute.isNotEmpty) {
@@ -1059,6 +1084,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onMapCreated: (ctrl) => _mapController = ctrl,
                   markers: _markers,
                   polylines: _polylines,
+                  onTap: (pos) {
+                    setState(() {
+                      _engine.currentPosition = pos;
+                      _updateGhostMarker();
+                      _broadcastPosition();
+                    });
+                  },
                 ),
                 // Route legend overlay (match MapTrackingScreen)
                 Positioned(

@@ -18,8 +18,6 @@ import 'package:geowake2/services/eta_utils.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
-import 'package:geowake2/config/power_policy.dart';
-import 'package:battery_plus/battery_plus.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   MapTrackingScreen({Key? key}) : super(key: key);
@@ -152,14 +150,31 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         );
         setState(() {
           _routePoints = evt.geometry!;
-          _polylines = {
+          _polylines = {};
+
+          if (evt.inactivePolylines != null) {
+            for (int i = 0; i < evt.inactivePolylines!.length; i++) {
+              _polylines.add(
+                Polyline(
+                  polylineId: PolylineId('inactive_route_$i'),
+                  points: evt.inactivePolylines![i],
+                  color: Colors.grey,
+                  width: 4,
+                  zIndex: 0,
+                ),
+              );
+            }
+          }
+
+          _polylines.add(
             Polyline(
               polylineId: const PolylineId('route'),
               points: _routePoints,
               color: Colors.blue,
               width: 4,
+              zIndex: 1,
             ),
-          };
+          );
         });
         // Recompute metrics for the new route
         _computeRouteLength();
@@ -178,10 +193,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       // Remaining distance from manager
       final remainingM = state.remainingMeters;
       // Derive ETA using a fallback speed; will be replaced by fusion/dead-reckoning later
-      double etaSec;
-      final fallbackSpeed =
-          12.0; // ~43 km/h; TODO: replace with fusion when ready
-      etaSec = remainingM / fallbackSpeed;
+      final spd =
+          (_speedEmaMps != null && _speedEmaMps! > 0.5) ? _speedEmaMps! : 12.0;
+      double etaSec = remainingM / spd;
       // Format
       String etaStr;
       if (etaSec < 90) {
@@ -454,28 +468,14 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   }
 
   Future<void> _startLocationUpdates() async {
-    // Use PowerPolicy for dynamic location settings
-    final battery = Battery();
-    int batteryLevel = 100;
-    try {
-      batteryLevel = await battery.batteryLevel;
-    } catch (_) {}
-
-    final policy = PowerPolicyManager.forBatteryLevel(batteryLevel);
-
-    LocationSettings settings = LocationSettings(
-      accuracy: policy.accuracy,
-      distanceFilter: policy.distanceFilterMeters,
-    );
-
+    _locationSubscription?.cancel();
     dev.log(
-      'Starting location updates with filter: ${policy.distanceFilterMeters}m',
+      'Starting unified location updates from TrackingService',
       name: 'MapTrackingScreen',
     );
 
-    _locationSubscription = Geolocator.getPositionStream(
-      locationSettings: settings,
-    ).listen((position) {
+    // Listen to unified location stream (Real + Simulated) from TrackingService
+    _locationSubscription = TrackingService().locationStream.listen((position) {
       _currentUserLocation = LatLng(position.latitude, position.longitude);
       dev.log(
         "MapTrackingScreen: New user location: (${position.latitude}, ${position.longitude})",

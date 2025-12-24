@@ -302,16 +302,78 @@ class StopLogicEngine {
     // If there are switch points, use the first one as the limit.
     // NOTE: routeEvents are in meters, so we must use stepBoundsMeters (meters)
     // to interpolate the stop count at the switch.
+    // If there are switch points, find the first one that actually allows for stops.
+    // This handles the case of "Walk -> Train", where the first switch (Boarding)
+    // has 0 cumulative stops, which would incorrectly limit the user to 0 stops.
+    // If there are switch points, we must ensure EVERY individual transit leg
+    // has enough stops to support the user's N-stop warning threshold.
+    // Spec: "notif... should only pop up if along the metro legs on the route,
+    // the number of stops between any two switch points (metro-metro) is lesser than n."
+
     if (routeEvents.isNotEmpty &&
         stepBoundsMeters != null &&
         stepBoundsMeters.isNotEmpty) {
-      final firstSwitch = routeEvents.first;
-      final switchMeters = firstSwitch.meters;
-      maxStops = _interpolateStops(
-        switchMeters,
-        stepBoundsMeters,
-        stepStopsCumulative,
-      );
+      // We iterate through events to find pairs of [Boarding -> Alighting].
+      // For each pair, we calculate the number of stops in that leg.
+      // If any leg has fewer stops than the user's threshold, it's invalid.
+
+      double? lastBoardingStops;
+
+      for (final event in routeEvents) {
+        final currentStops = _interpolateStops(
+          event.meters,
+          stepBoundsMeters,
+          stepStopsCumulative,
+        );
+
+        // Check if this is a "Boarding" event (transition TO transit)
+        // Usually signaled by being a "switch point" at the start of a Transit leg.
+        // Or we can infer it: If we have 0 stops accumulated so far, or if previous leg was Walk.
+        // However, routeEvents are just boundaries.
+        // Let's rely on stop accumulation delta.
+
+        // Simplified Logic:
+        // Track the minimum meaningful stop-delta between any two events where the delta is > 0.
+        // If we see a jump in stops (Transit Leg), that jump must be >= userThreshold.
+
+        if (lastBoardingStops != null) {
+          final stopsInLeg = currentStops - lastBoardingStops;
+          // Only check legs that actually have stops (Transit)
+          if (stopsInLeg > 0.5) {
+            if (stopsInLeg < userThreshold) {
+              return (
+                isValid: false,
+                maxStops: stopsInLeg,
+                errorMessage:
+                    'Intermediate leg has only ${stopsInLeg.toInt()} stops. Threshold $userThreshold is too high.',
+              );
+            }
+          }
+        }
+
+        // Update "last boarding" logic
+        // This is tricky. Events are [Board, Alight, Board, Alight].
+        // But some events might be "Switch" (Transfer).
+        // Let's assume every event is potentially a start/end of a leg.
+        lastBoardingStops = currentStops;
+      }
+
+      // Also check the final leg (from last event to destination)
+      final totalStops = stepStopsCumulative.last;
+      if (lastBoardingStops != null) {
+        final finalLegStops = totalStops - lastBoardingStops;
+        if (finalLegStops > 0.5 && finalLegStops < userThreshold) {
+          return (
+            isValid: false,
+            maxStops: finalLegStops,
+            errorMessage:
+                'Final leg has only ${finalLegStops.toInt()} stops. Threshold $userThreshold is too high.',
+          );
+        }
+      }
+
+      // If we survived the loop, we are valid (or we default to the old maxStops check).
+      // The old check (maxStops = totalStops) is still a valid upper bound safety net.
     }
 
     if (userThreshold > maxStops) {

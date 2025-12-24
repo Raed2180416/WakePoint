@@ -8,6 +8,8 @@ import 'package:geowake2/services/permission_service.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
 import 'package:geowake2/services/places_service.dart';
 import 'package:geowake2/services/metro_stop_service.dart';
+import 'package:geowake2/services/stop_logic_engine.dart';
+import 'package:geowake2/services/transfer_utils.dart';
 import 'settingsdrawer.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -49,6 +51,7 @@ class HomeScreenState extends State<HomeScreen> {
   late OfflineCoordinator _offline;
 
   LatLng? _currentPosition;
+  DateTime? _lastPositionTime; // Track when position was last updated
   final Completer<GoogleMapController> _mapController = Completer();
   Set<Marker> _markers = {};
   // Tap handling state for single vs double tap on map
@@ -90,6 +93,7 @@ class HomeScreenState extends State<HomeScreen> {
       if (pos != null) {
         setState(() {
           _currentPosition = LatLng(pos.latitude, pos.longitude);
+          _lastPositionTime = DateTime.now(); // Cache position time
           _markers = {
             Marker(
               markerId: const MarkerId('currentLocation'),
@@ -471,7 +475,30 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _proceedWithDirections() async {
     try {
-      final Position? currentPosition = await _getCurrentLocation();
+      // OPTIMIZATION: Use cached position if fresh (< 30 seconds old), else get new one
+      Position? currentPosition;
+      if (_currentPosition != null && _lastPositionTime != null) {
+        final age = DateTime.now().difference(_lastPositionTime!);
+        if (age.inSeconds < 30) {
+          currentPosition = Position(
+            latitude: _currentPosition!.latitude,
+            longitude: _currentPosition!.longitude,
+            timestamp: _lastPositionTime!,
+            accuracy: 10,
+            altitude: 0,
+            altitudeAccuracy: 0,
+            heading: 0,
+            headingAccuracy: 0,
+            speed: 0,
+            speedAccuracy: 0,
+          );
+          dev.log(
+            'Using cached position (${age.inSeconds}s old)',
+            name: 'HomeScreen',
+          );
+        }
+      }
+      currentPosition ??= await _getCurrentLocation();
       if (currentPosition == null) {
         _showErrorDialog(
           "Location Error",
@@ -488,6 +515,15 @@ class HomeScreenState extends State<HomeScreen> {
       double destLng = _selectedLocation!['lng'];
       double userLat = currentPosition.latitude;
       double userLng = currentPosition.longitude;
+
+      // OPTIMIZATION: Run validations in parallel with directions fetch
+      // Start same-state validation early (fire-and-forget, check result later)
+      final sameStateFuture = _validateSameState(
+        originLat: userLat,
+        originLng: userLng,
+        destLat: destLat,
+        destLng: destLng,
+      );
 
       if (_metroMode) {
         final validationResult = await MetroStopService.validateMetroRoute(
@@ -511,13 +547,16 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      // Same-state validation: ensure origin and destination are in the same state
-      final sameState = await _validateSameState(
-        originLat: userLat,
-        originLng: userLng,
-        destLat: destLat,
-        destLng: destLng,
+      // Start fetching directions while same-state validation completes
+      final directionsFuture = _fetchDirections(
+        userLat,
+        userLng,
+        destLat,
+        destLng,
       );
+
+      // Now wait for same-state validation result
+      final sameState = await sameStateFuture;
       if (!mounted) return;
       if (!sameState) {
         _showErrorDialog(
@@ -531,12 +570,7 @@ class HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      final directions = await _fetchDirections(
-        userLat,
-        userLng,
-        destLat,
-        destLng,
-      );
+      final directions = await directionsFuture;
       final initialETA =
           directions['routes'][0]['legs'][0]['duration']['value'] as int;
 
@@ -553,13 +587,48 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue = _useDistanceMode ? _distanceSliderValue : _timeSliderValue;
       }
 
-      // Stops-mode validation removed per user request (allow any value).
+      // Stops-mode validation
+      if (alarmMode == 'stops') {
+        final stepData = TransferUtils.buildStepBoundariesAndStops(directions);
+        final events = TransferUtils.buildRouteEvents(directions);
+        // Add destination event if missing (TransferUtils might miss it if single leg)
+        if (events.isEmpty || events.last.type != 'destination') {
+           final lastBound = stepData.bounds.isNotEmpty ? stepData.bounds.last : 0.0;
+           events.add(RouteEventBoundary(meters: lastBound, type: 'destination', label: 'Destination'));
+        }
+        
+        final engine = StopLogicEngine();
+        final result = engine.validateThreshold(
+          userThreshold: alarmValue,
+          stepBoundsMeters: stepData.bounds,
+          stepStopsCumulative: stepData.stops,
+          routeEvents: events,
+        );
+
+        if (!result.isValid) {
+          _showErrorDialog(
+            "Invalid Stops Threshold",
+            result.errorMessage ?? 
+            "The number of stops ($alarmValue) is too high for the first segment of your journey. Max allowed is ${result.maxStops}.",
+          );
+          if (mounted) {
+            setState(() {
+              _isTracking = false;
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+      }
 
       // 1. Start Tracking (Ensure service is running)
+      // Parallelize state persistence for faster startup
       try {
-        await TrackingStateStore.setActive(true);
-        await TrackingStateStore.setAlarmFired(false);
-        await TrackingStateStore.setNotificationsMuted(false);
+        await Future.wait([
+          TrackingStateStore.setActive(true),
+          TrackingStateStore.setAlarmFired(false),
+          TrackingStateStore.setNotificationsMuted(false),
+        ]);
         await TrackingStateStore.saveSnapshot(
           TrackingSnapshot(
             destinationName:
@@ -587,24 +656,26 @@ class HomeScreenState extends State<HomeScreen> {
         alarmValue: alarmValue,
       );
 
-      // 2. Register Route (Now service is running, invoke will work)
-      // IMPORTANT: Must await to ensure background service receives route events
-      // before alarm checks run - otherwise _routeEvents will be empty!
-      try {
-        await trackingService.registerRouteFromDirections(
-          directions: directions,
-          origin: LatLng(userLat, userLng),
-          destination: LatLng(destLat, destLng),
-          transitMode: _metroMode,
-          destinationName:
-              _selectedLocation?['description'] ?? 'Your Destination',
-        );
-      } catch (e) {
-        dev.log(
-          'Failed to register route with TrackingService: $e',
-          name: 'HomeScreen',
-        );
-      }
+      // 2. Register Route (fire-and-forget for faster navigation)
+      // The background service will receive route events asynchronously.
+      // MapTrackingScreen will still display correctly as directions are passed via args.
+      unawaited(
+        trackingService
+            .registerRouteFromDirections(
+              directions: directions,
+              origin: LatLng(userLat, userLng),
+              destination: LatLng(destLat, destLng),
+              transitMode: _metroMode,
+              destinationName:
+                  _selectedLocation?['description'] ?? 'Your Destination',
+            )
+            .catchError((e) {
+              dev.log(
+                'Failed to register route with TrackingService: $e',
+                name: 'HomeScreen',
+              );
+            }),
+      );
 
       FlutterBackgroundService().invoke("updateRouteData", {
         "initialETA": initialETA,

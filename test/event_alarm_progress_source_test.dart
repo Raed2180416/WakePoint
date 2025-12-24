@@ -75,7 +75,7 @@ void main() {
 
       // Directions with steps totaling ~2km and a transfer after first TRANSIT segment
       // Distances: 200m (walk), 800m (transit L1), 1000m (transit L2) => transfer event at cum=1000m
-      // Transfer location set to (0.006, 0.006) to be consistent with route geometry
+      // Transfer location set ON the route geometry (lat=0), near lon=-0.001.
       final directions = {
         'status': 'OK',
         'routes': [
@@ -94,10 +94,18 @@ void main() {
                     'travel_mode': 'TRANSIT',
                     'distance': {'value': 800},
                     'transit_details': {
-                      'line': {'short_name': 'L1'},
+                      'num_stops': 2,
+                      'line': {
+                        'short_name': 'L1',
+                        'vehicle': {'type': 'SUBWAY'},
+                      },
+                      'departure_stop': {
+                        'name': 'Origin Station',
+                        'location': {'lat': 0.0, 'lng': -0.01},
+                      },
                       'arrival_stop': {
                         'name': 'Xfer Point',
-                        'location': {'lat': 0.006, 'lng': 0.006},
+                        'location': {'lat': 0.0, 'lng': -0.001},
                       },
                     },
                   },
@@ -105,7 +113,11 @@ void main() {
                     'travel_mode': 'TRANSIT',
                     'distance': {'value': 1000},
                     'transit_details': {
-                      'line': {'short_name': 'L2'},
+                      'num_stops': 3,
+                      'line': {
+                        'short_name': 'L2',
+                        'vehicle': {'type': 'SUBWAY'},
+                      },
                     },
                   },
                 ],
@@ -121,7 +133,7 @@ void main() {
 
       final svc = TrackingService();
       // Register route from directions to wire events and steps
-      svc.registerRouteFromDirections(
+      await svc.registerRouteFromDirections(
         directions: directions as Map<String, dynamic>,
         origin: origin,
         destination: dest,
@@ -143,24 +155,15 @@ void main() {
       gps.add(pWithTime(origin.latitude, origin.longitude, speed: 12));
       await Future.delayed(const Duration(milliseconds: 120));
 
-      // Mid-point
-      gps.add(
-        pWithTime(
-          (origin.latitude + dest.latitude) * 0.5,
-          (origin.longitude + dest.longitude) * 0.5,
-          speed: 12,
-        ),
-      );
+      // Advance along the route but stay before the transfer threshold.
+      gps.add(pWithTime(0.0, -0.003, speed: 12));
       await Future.delayed(const Duration(milliseconds: 120));
 
-      // Inject position just before transfer (approx 910m)
-      // Transfer is at 1000m (0.006, 0.006).
-      // (0.0058, 0.0058) is approx 910m.
-      // Distance to transfer ~ 30m. Threshold 500m.
+      // Inject position just before transfer (close to lon=-0.001)
       gps.add(
         Position(
-          longitude: 0.0058,
-          latitude: 0.0058,
+          longitude: -0.0012,
+          latitude: 0.0,
           timestamp: DateTime.now(),
           accuracy: 10,
           altitude: 0,
@@ -181,11 +184,11 @@ void main() {
       expect(
         alarms.any(
           (a) =>
-              (a['body'] as String).contains('Approaching') ||
-              (a['body'] as String).contains('Board'),
+              (a['title'] as String).contains('Upcoming transfer') &&
+              (a['body'] as String).contains('Xfer Point'),
         ),
         isTrue,
-        reason: 'Expected an upcoming event alarm based on progress threshold',
+        reason: 'Expected a transfer alarm (metro stops-mode)',
       );
 
       // Cleanup

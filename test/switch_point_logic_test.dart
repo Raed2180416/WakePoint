@@ -53,7 +53,10 @@ void main() {
                     'travel_mode': 'TRANSIT',
                     'distance': {'value': 500},
                     'transit_details': {
-                      'line': {'short_name': 'L1'},
+                      'line': {
+                        'short_name': 'L1',
+                        'vehicle': {'type': 'SUBWAY'},
+                      },
                       'arrival_stop': {
                         'name': 'Stop A',
                         'location': {'lat': 0.01, 'lng': 0.01},
@@ -72,6 +75,45 @@ void main() {
       expect(events.first.type, 'mode_change');
     });
 
+    test('Should ignore Walking -> BUS transitions', () {
+      final directions = {
+        'routes': [
+          {
+            'legs': [
+              {
+                'steps': [
+                  {
+                    'travel_mode': 'WALKING',
+                    'distance': {'value': 100},
+                  },
+                  {
+                    'travel_mode': 'TRANSIT',
+                    'distance': {'value': 500},
+                    'transit_details': {
+                      'line': {
+                        'short_name': 'B1',
+                        'vehicle': {'type': 'BUS'},
+                      },
+                      'arrival_stop': {
+                        'name': 'Bus Stop',
+                        'location': {'lat': 0.01, 'lng': 0.01},
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      final events = TransferUtils.buildRouteEvents(directions);
+
+      // BUS should never be considered a switch point / mode change.
+      expect(events.where((e) => e.type == 'mode_change'), isEmpty);
+      expect(events.where((e) => e.type == 'transfer'), isEmpty);
+    });
+
     test('Should deduplicate events within 400m', () {
       final directions = {
         'routes': [
@@ -88,7 +130,10 @@ void main() {
                     'travel_mode': 'TRANSIT',
                     'distance': {'value': 200}, // Ends at 300m
                     'transit_details': {
-                      'line': {'short_name': 'L1'},
+                      'line': {
+                        'short_name': 'L1',
+                        'vehicle': {'type': 'SUBWAY'},
+                      },
                       'arrival_stop': {
                         'name': 'Transfer A',
                         'location': {'lat': 0.0, 'lng': 0.0},
@@ -100,7 +145,10 @@ void main() {
                     'travel_mode': 'TRANSIT',
                     'distance': {'value': 500},
                     'transit_details': {
-                      'line': {'short_name': 'L2'}, // Change of line
+                      'line': {
+                        'short_name': 'L2',
+                        'vehicle': {'type': 'SUBWAY'},
+                      }, // Change of line
                       'arrival_stop': {
                         'name': 'End',
                         'location': {'lat': 0.1, 'lng': 0.1},

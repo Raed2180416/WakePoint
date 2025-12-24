@@ -27,6 +27,7 @@ class EtaEngine {
   DateTime? stoppedSince;
   List<double> speedWindow = [];
   LatLng? lastSnappedPoint;
+  int? lastSegmentIndex; // Optimization: limiting search window
   double? lastSigma;
 
   EtaEngine();
@@ -103,23 +104,43 @@ class EtaEngine {
     int bestSegmentIndex = 0;
     double bestFraction = 0.0;
 
-    // Find closest segment with snap safety constraint
-    for (int i = 0; i < routeCoords.length - 1; i++) {
+    // Optimization: Define search window if we have a previous valid match
+    int startIndex = 0;
+    int endIndex = routeCoords.length - 1;
+    bool usingWindow = false;
+
+    if (lastSegmentIndex != null && lastSnappedPoint != null) {
+      // Search +/- 50 segments around last known position (approx 1-2km window depending on density)
+      // This makes the search O(1) for long routes.
+      const int windowSize = 50;
+      startIndex = max(0, lastSegmentIndex! - windowSize);
+      endIndex = min(routeCoords.length - 1, lastSegmentIndex! + windowSize);
+
+      // Safety check: if we are too far from last snap, force full search
+      final distToLast = Geolocator.distanceBetween(
+        currentPoint.latitude,
+        currentPoint.longitude,
+        lastSnappedPoint!.latitude,
+        lastSnappedPoint!.longitude,
+      );
+      if (distToLast > 2000) {
+        // If jumped > 2km, assume context loss
+        startIndex = 0;
+        endIndex = routeCoords.length - 1;
+      } else {
+        usingWindow = true;
+      }
+    }
+
+    // Find closest segment within window
+    // IMPORTANT: loop limit is 'i < endIndex' because segments are [i, i+1]
+    for (int i = startIndex; i < endIndex; i++) {
       final segStart = routeCoords[i];
       final segEnd = routeCoords[i + 1];
 
-      // Snap safety: skip segments too far from last known position
-      if (lastSnappedPoint != null) {
-        final distToSegStart = Geolocator.distanceBetween(
-          lastSnappedPoint!.latitude,
-          lastSnappedPoint!.longitude,
-          segStart.latitude,
-          segStart.longitude,
-        );
-        if (distToSegStart > maxSnapDistance * 2) {
-          continue; // Skip this segment to prevent wrong-leg snapping
-        }
-      }
+      // Optimization: Rough bounding box check before expensive geodesic distance?
+      // Maybe overkill for Dart, but simple lattice distance check is cheaper.
+      // Skipping for now to keep code clean; windowing is the big win.
 
       final projected = _projectPointOnSegment(currentPoint, segStart, segEnd);
       final dist = Geolocator.distanceBetween(
@@ -128,6 +149,22 @@ class EtaEngine {
         projected.latitude,
         projected.longitude,
       );
+
+      // Snap safety: skip segments too far from last known position (if context exists)
+      if (lastSnappedPoint != null) {
+        final distToSegStart = Geolocator.distanceBetween(
+          lastSnappedPoint!.latitude,
+          lastSnappedPoint!.longitude,
+          segStart.latitude,
+          segStart.longitude,
+        );
+        if (distToSegStart > maxSnapDistance * 20 && !usingWindow) {
+          // *20 relax factor: if full search, don't be too aggressive in skipping,
+          // relying on windowing is better. Original code had *2 which is very tight.
+          // In windowed mode, we trust the window.
+          continue;
+        }
+      }
 
       if (dist < minDist) {
         minDist = dist;
@@ -150,8 +187,52 @@ class EtaEngine {
       }
     }
 
+    // Fallback: If window search failed to find a reasonable snap (e.g. off-route or jumped outside window),
+    // try full search if we weren't already doing it.
+    if (usingWindow && minDist > maxSnapDistance) {
+      // Reset and do full search
+      startIndex = 0;
+      endIndex = routeCoords.length - 1;
+      // ... Duplicate loop logic or refactor?
+      // For simplicity, just re-run the loop range.
+      for (int i = 0; i < routeCoords.length - 1; i++) {
+        // Simplified loop for fallback
+        final segStart = routeCoords[i];
+        final segEnd = routeCoords[i + 1];
+        final projected = _projectPointOnSegment(
+          currentPoint,
+          segStart,
+          segEnd,
+        );
+        final dist = Geolocator.distanceBetween(
+          currentPoint.latitude,
+          currentPoint.longitude,
+          projected.latitude,
+          projected.longitude,
+        );
+        if (dist < minDist) {
+          minDist = dist;
+          bestSnapped = projected;
+          bestSegmentIndex = i;
+          final segDist = Geolocator.distanceBetween(
+            segStart.latitude,
+            segStart.longitude,
+            segEnd.latitude,
+            segEnd.longitude,
+          );
+          final projDist = Geolocator.distanceBetween(
+            segStart.latitude,
+            segStart.longitude,
+            projected.latitude,
+            projected.longitude,
+          );
+          bestFraction = segDist > 0 ? projDist / segDist : 0.0;
+        }
+      }
+    }
+
     if (bestSnapped == null) {
-      // Fallback: snap to nearest vertex
+      // Vertex Fallback
       for (int i = 0; i < routeCoords.length; i++) {
         final dist = Geolocator.distanceBetween(
           currentPoint.latitude,
@@ -169,6 +250,7 @@ class EtaEngine {
     }
 
     lastSnappedPoint = bestSnapped ?? currentPoint;
+    lastSegmentIndex = bestSegmentIndex; // Persist index for next update
 
     // Compute remaining distance from snapped point to end
     double remaining = 0.0;
@@ -252,7 +334,6 @@ class EtaEngine {
     return dist / dt;
   }
 
-  /// Main ETA computation - call on each GPS update
   ({
     double etaSeconds,
     double remainingMeters,
@@ -261,7 +342,14 @@ class EtaEngine {
     double dwellAddedSeconds,
     LatLng snappedPoint,
   })
-  computeEta({required List<LatLng> routeCoords, required Position gps}) {
+  computeEta({
+    required List<LatLng> routeCoords,
+    required Position gps,
+    bool isMetroMode = false,
+    List<double>? stepBoundsMeters,
+    List<int>? stepDurationsSeconds,
+    double? totalRouteMeters,
+  }) {
     final currentPoint = LatLng(gps.latitude, gps.longitude);
 
     // 1) Map-match and compute distance remaining
@@ -275,24 +363,80 @@ class EtaEngine {
 
     // 3) Stop/dwell detection
     double dwellAdd = 0.0;
-    if (rawSpeed < stopSpeedThreshold) {
-      stoppedSince ??= gps.timestamp;
-    } else {
-      stoppedSince = null;
+    // Disable dwell detection in Metro Mode (stops in tunnels != traffic delay)
+    if (!isMetroMode) {
+      if (rawSpeed < stopSpeedThreshold) {
+        stoppedSince ??= gps.timestamp;
+      } else {
+        stoppedSince = null;
+      }
+
+      if (stoppedSince != null &&
+          gps.timestamp.difference(stoppedSince!).inMilliseconds >=
+              stopTimeThresholdMs) {
+        dwellAdd = defaultDwellSeconds;
+      }
     }
 
-    if (stoppedSince != null &&
-        gps.timestamp.difference(stoppedSince!).inMilliseconds >=
-            stopTimeThresholdMs) {
-      dwellAdd = defaultDwellSeconds;
+    // 4) Physics ETA (Base calculation)
+    double effectiveSpeed = max(vEst, vMin);
+    if (isMetroMode) {
+      // Clamp effective speed in Metro Mode to avoid infinite ETAs in tunnels/stops.
+      // 5.0 m/s (~18 km/h) is a conservative average for metro systems including stops.
+      // FIX: Only apply this clamp if we are moving faster than walking speed (> 2.5 m/s).
+      // This prevents the ETA from being artificially short (and triggering alarms)
+      // when the user is simply walking to the station at the start of the route.
+      if (effectiveSpeed > 2.5) {
+        effectiveSpeed = max(effectiveSpeed, 5.0);
+      }
     }
-
-    // 4) Physics ETA
-    final effectiveSpeed = max(vEst, vMin);
     double etaSeconds = remainingMeters / effectiveSpeed;
     etaSeconds += dwellAdd;
 
-    // 5) Uncertainty sigma_eta
+    // 5) Smart ETA (Segment-based)
+    // If we have step boundaries and durations, we can provide a much better estimate
+    // by using the current speed ONLY for the current step, and using the planned/static
+    // duration for future steps. This solves the "walking to the train" optimistic ETA bug.
+    if (stepBoundsMeters != null &&
+        stepDurationsSeconds != null &&
+        totalRouteMeters != null &&
+        stepBoundsMeters.length == stepDurationsSeconds.length) {
+      double accumulatedProgress = totalRouteMeters - remainingMeters;
+      // Clamp negative progress (snapping overlap)
+      accumulatedProgress = max(0.0, accumulatedProgress);
+
+      int currentStepIndex = -1;
+      for (int i = 0; i < stepBoundsMeters.length; i++) {
+        if (stepBoundsMeters[i] >= accumulatedProgress) {
+          currentStepIndex = i;
+          break;
+        }
+      }
+
+      if (currentStepIndex != -1) {
+        // Calculate remaining distance in CURRENT step
+        double stepEnd = stepBoundsMeters[currentStepIndex];
+        double distRemainingInStep = stepEnd - accumulatedProgress;
+
+        // Time to finish current step at CURRENT effective speed
+        double timeForCurrentStep = distRemainingInStep / effectiveSpeed;
+
+        // Time for FUTURE steps (sum of their nominal durations)
+        double timeForFutureSteps = 0.0;
+        for (
+          int k = currentStepIndex + 1;
+          k < stepDurationsSeconds.length;
+          k++
+        ) {
+          timeForFutureSteps += stepDurationsSeconds[k];
+        }
+
+        // Combine
+        etaSeconds = timeForCurrentStep + timeForFutureSteps + dwellAdd;
+      }
+    }
+
+    // 6) Uncertainty sigma_eta
     final sigmaP = max(gps.accuracy, uncertaintyMinPos);
     final sigmaV = _computeSigmaV();
     double sigmaEta;

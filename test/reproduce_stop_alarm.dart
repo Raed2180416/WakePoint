@@ -39,7 +39,12 @@ void main() {
                 {
                   'travel_mode': 'TRANSIT',
                   'distance': {'value': 1000},
-                  'transit_details': {'num_stops': 10},
+                  'transit_details': {
+                    'num_stops': 10,
+                    'line': {
+                      'vehicle': {'type': 'BUS'},
+                    },
+                  },
                   'polyline': {'points': ''},
                 },
               ],

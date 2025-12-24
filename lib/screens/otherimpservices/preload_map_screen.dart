@@ -49,7 +49,7 @@ class _PreloadMapScreenState extends State<PreloadMapScreen> {
                   name: "PreloadMapScreen",
                 );
                 _handoffTimer = Timer(
-                  const Duration(milliseconds: 700),
+                  const Duration(milliseconds: 300),
                   () async {
                     if (!mounted) return;
 
