@@ -162,6 +162,7 @@ void main() {
     try {
       final svc = TrackingService();
       await svc.stopTracking();
+      svc.resetForTesting(); // Clear alarm controller state
     } catch (_) {}
     TrackingService.isTestMode = false;
     NotificationService.isTestMode = false;

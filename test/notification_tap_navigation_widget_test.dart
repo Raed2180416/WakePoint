@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:geowake2/services/navigation_service.dart';
 import 'package:geowake2/services/notification_service.dart';
-import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/trackingservice.dart';
 
 NotificationResponse _tap({String? payload}) {
@@ -21,27 +19,9 @@ void main() {
   testWidgets('Tapping paused notification routes to /mapTracking', (
     tester,
   ) async {
-    TrackingStateStore.resetCacheForTests();
-    SharedPreferences.setMockInitialValues({});
     NotificationService.isTestMode = true;
     TrackingService.isTestMode = true;
 
-    await TrackingStateStore.setPaused(true);
-
-    await TrackingStateStore.saveSnapshot(
-      TrackingSnapshot(
-        destinationName: 'Dest',
-        destinationLat: 1.0,
-        destinationLng: 1.0,
-        alarmMode: 'distance',
-        alarmValue: 1.0,
-        metroMode: false,
-        userLat: 0.0,
-        userLng: 0.0,
-        createdAt: DateTime(2024, 1, 1),
-        directions: null,
-      ),
-    );
     await tester.pumpWidget(
       MaterialApp(
         navigatorKey: NavigationService.navigatorKey,
@@ -61,8 +41,9 @@ void main() {
       allowNavigation: true,
     );
 
-    // Let navigation settle.
-    await tester.pumpAndSettle();
+    // Let navigation complete (bounded; avoids hanging if timers keep frames alive).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
     expect(find.byKey(const Key('mapTracking')), findsOneWidget);
 

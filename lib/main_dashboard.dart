@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'all_india_stops.dart'; // OSM Data for all cities
+import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'dart:developer' as dev;
 
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'config/playground_bridge.dart';
 import 'simulation_engine.dart'; // Import the engine
+import 'dashboard/alarm_debouncer.dart';
 
 void main() {
   runApp(const DashboardApp());
@@ -39,9 +44,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Set<Polyline> _polylines = {};
 
   // Route Data State
-  List<Map<String, dynamic>>? _segments;
-
-  List<Map<String, dynamic>>? _routeEvents; // For Alarm Markers
+  // _segments removed as field, passed locally.
+  // List<Map<String, dynamic>>? _routeEvents; // removed
 
   // Track last loaded route signature to avoid resetting the map on repeated broadcasts.
   String? _lastRouteSignature;
@@ -89,14 +93,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _metricDebug = '---';
 
   // Advanced Features State
-  bool _gpsEnabled = true;
-  bool _alarmTriggered = false;
-  DateTime? _rerouteStartTime;
-  int? _rerouteLatencyMs;
-  List<Map<String, dynamic>> _savedRoutes = [];
-  List<LatLng> _deviationRoute = []; // Secondary route for testing deviation
-  bool _transitMode =
-      false; // Track if current route is transit mode (for segment coloring)
+  final AlarmDebouncer _debouncer = AlarmDebouncer();
+  bool _transitMode = false; // Track if current route is transit mode
 
   // Simulation Engine
   final SimulationEngine _engine = SimulationEngine();
@@ -110,15 +108,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const LatLng(51.4995, -0.1273), // Westminster Abbey
   ];
 
+  // Device Position State (from physical device)
+  LatLng? _devicePosition;
+  bool _trackingActive = false; // Tracks if device is actively tracking
+
   // State for naming
-  String? _currentDestinationName;
+  // _currentDestinationName removed
   List<String> _eventLogs = [];
   bool _wasPlayingBeforeScrub = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSavedRoutes();
+    super.initState();
     _connectToRelay();
     _logEvent('System initialized.');
 
@@ -260,8 +262,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         final transitMode = json['transit_mode'] as bool? ?? false;
 
+        // Authoritative runtime transit legs payload (preferred).
+        final transitLegs =
+            (json['transit_legs'] as List?)?.cast<Map<String, dynamic>>();
+
         final destName = json['destinationName'] as String?;
-        _currentDestinationName = destName;
+        // _currentDestinationName = destName; // Unused
         final sig = _computeRouteSignature(points, destName);
 
         _logEvent(
@@ -271,8 +277,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final isSameRoute = _lastRouteSignature == sig;
 
         setState(() {
-          _segments = segments; // Store for alarm updates
-          _routeEvents = events;
+          // _segments field removed
+          // _routeEvents = events; // removed
           _transitMode = transitMode; // Store transit mode for save/load
 
           if (!isSameRoute) {
@@ -287,22 +293,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
             _lastRouteSignature = sig;
 
+            _lastTransitLegsJson = transitLegs;
+
             // Move camera to start only when the route actually changes.
             if (points.isNotEmpty) {
               _mapController?.animateCamera(
                 CameraUpdate.newLatLngZoom(points.first, 14),
               );
             }
-
-            // Reroute Latency Check
-            if (_rerouteStartTime != null) {
-              _rerouteLatencyMs =
-                  DateTime.now().difference(_rerouteStartTime!).inMilliseconds;
-              _rerouteStartTime = null; // Reset
-            }
           } else {
             // Same route rebroadcast: just refresh alarms/segments without resetting camera.
-            _updateAlarmMarkers();
+            // But we must update _segments and _routeEvents as they might contain new alarm info
+            // _segments = segments; // removed
+            // _routeEvents = events; // removed
+            _updateMapRoute(
+              points, // Pass current points to ensure map stays consistent
+              segments: segments,
+              switchPoints: switchPoints,
+              routeEvents: events,
+              inactiveRoutes: inactiveRoutes,
+              transitMode: transitMode,
+              forceRepaint: true, // Force marker updates
+            );
+
+            _lastTransitLegsJson = transitLegs;
           }
         });
       } else if (json['type'] == 'app_state') {
@@ -319,8 +333,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           if (json['alarm_mode'] != null) {
             _currentAlarmMode = json['alarm_mode'] as String;
-            _currentAlarmValue = (json['alarm_value'] as num).toDouble();
             _metricAlarm = '${json['alarm_mode']} (${json['alarm_value']})';
+            // _currentAlarmValue field removed
             _updateAlarmMarkers();
           }
 
@@ -329,13 +343,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _metricStops = stops.toStringAsFixed(1);
           }
 
-          if (json['alarm_fired'] == true) {
-            if (!_alarmTriggered) _logEvent('ALARM FIRED!');
-            _alarmTriggered = true;
-            // Auto-reset after 5 seconds
-            Timer(const Duration(seconds: 5), () {
-              if (mounted) setState(() => _alarmTriggered = false);
-            });
+          final serverAlarmFired = json['alarm_fired'] == true;
+          final now = DateTime.now();
+
+          final shouldLog = _debouncer.update(serverAlarmFired, now);
+          if (shouldLog) {
+            _logEvent('ALARM FIRED!');
           }
 
           if (json['debug_info'] != null) {
@@ -371,6 +384,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _metricDebug = parts.join(' | ');
           }
         });
+
+        // Handle "End Tracking" signal
+        if (json['active'] == false && _trackingActive) {
+          _trackingActive = false;
+          _logEvent('Tracking ended. Clearing route.');
+          _clearRouteForIdle();
+        } else if (json['active'] == true) {
+          _trackingActive = true;
+        }
+      } else if (json['type'] == 'device_position') {
+        // Received real device position from MapTrackingScreen
+        final double lat = (json['lat'] as num).toDouble();
+        final double lng = (json['lng'] as num).toDouble();
+        final newPos = LatLng(lat, lng);
+        final isFirst = _devicePosition == null;
+        _devicePosition = newPos;
+
+        // If no route is loaded, move camera to device position
+        if (!_engine.hasRoute || !_engine.isPlaying) {
+          setState(() {
+            // Update device marker
+            _markers.removeWhere((m) => m.markerId.value == 'device_marker');
+            _markers.add(
+              Marker(
+                markerId: const MarkerId('device_marker'),
+                position: newPos,
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueOrange,
+                ),
+                infoWindow: const InfoWindow(title: 'Your Device'),
+                zIndex: 50,
+              ),
+            );
+          });
+          // Move camera on first device position or if no route
+          if (isFirst || !_engine.hasRoute) {
+            _mapController?.animateCamera(
+              CameraUpdate.newLatLngZoom(newPos, 14),
+            );
+          }
+        }
       }
     } catch (e) {
       print('Dashboard: Error parsing message: $e');
@@ -381,7 +435,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_socket != null &&
         _socket!.readyState == html.WebSocket.OPEN &&
         _engine.currentPosition != null) {
-      if (!_gpsEnabled) return; // Simulate GPS Drop
+      // _gpsEnabled check removed (Chaos Engineering removed)
 
       final pos = _engine.currentPosition!;
       final msg = jsonEncode({
@@ -410,7 +464,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         name: 'MainDashboard',
       );
       // Also reset local alarm triggered flag
-      setState(() => _alarmTriggered = false);
+      setState(() => _debouncer.reset());
     } else {
       dev.log(
         'DEBUG: main_dashboard - WebSocket not connected, cannot send reset',
@@ -419,184 +473,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _saveCurrentRoute() {
-    if (_engine.route.isEmpty) return;
-    final points = _engine.route;
-
-    String name = 'Route ${DateTime.now().toIso8601String().substring(11, 19)}';
-    if (_currentDestinationName != null) {
-      // Abbreviate to 2 words max
-      final words = _currentDestinationName!.split(' ');
-      if (words.length > 2) {
-        name = '${words[0]} ${words[1]}';
-      } else {
-        name = _currentDestinationName!;
-      }
-    }
-
-    final routeData = <String, dynamic>{
-      'name': name,
-      'points':
-          points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList(),
-      // Save alarm parameters for re-running simulations with same settings
-      if (_currentAlarmMode != null) 'alarmMode': _currentAlarmMode,
-      if (_currentAlarmValue != null) 'alarmValue': _currentAlarmValue,
-      // Save segments for consistent visual display when loading
-      if (_segments != null && _segments!.isNotEmpty) 'segments': _segments,
-      // Save route events for alarm position markers
-      if (_routeEvents != null && _routeEvents!.isNotEmpty)
-        'events': _routeEvents,
-      // Save transit mode for correct segment coloring
-      'transitMode': _transitMode,
-    };
-
+  /// Clears the route and markers when tracking ends, keeping only the device marker.
+  void _clearRouteForIdle() {
     setState(() {
-      _savedRoutes.add(routeData);
+      _polylines.clear();
+      _markers.removeWhere((m) => m.markerId.value != 'device_marker');
+      _gtfsMarkers.clear();
+      _lastRouteSignature = null;
+      // _routeEvents = null; // Unused
+      _engine.loadRoute([]); // Clear engine route
+      _metricDistance = '---';
+      _metricTime = '---';
+      _metricStops = '---';
+      _metricAlarm = '---';
     });
-    html.window.localStorage['saved_routes'] = jsonEncode(_savedRoutes);
-    _logEvent(
-      'Route saved: $name (mode: $_currentAlarmMode, value: $_currentAlarmValue, transit: $_transitMode)',
-    );
-  }
-
-  void _deleteRoute(int index) {
-    setState(() {
-      final removed = _savedRoutes.removeAt(index);
-      _logEvent('Route deleted: ${removed['name']}');
-    });
-    html.window.localStorage['saved_routes'] = jsonEncode(_savedRoutes);
-  }
-
-  void _loadSavedRoutes() {
-    final jsonStr = html.window.localStorage['saved_routes'];
-    if (jsonStr != null) {
-      try {
-        final List<dynamic> list = jsonDecode(jsonStr);
-        setState(() {
-          _savedRoutes = list.cast<Map<String, dynamic>>();
-        });
-      } catch (e) {
-        print('Error loading routes: $e');
-      }
-    }
-  }
-
-  void _loadRoute(Map<String, dynamic> routeData) {
-    final List<dynamic> pointsJson = routeData['points'];
-    final List<LatLng> points =
-        pointsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
-
-    // Restore saved segments if available
-    final segments =
-        (routeData['segments'] as List?)?.cast<Map<String, dynamic>>();
-    final events = (routeData['events'] as List?)?.cast<Map<String, dynamic>>();
-    final savedTransitMode = routeData['transitMode'] as bool? ?? false;
-
-    // Restore saved alarm parameters if available
-    final savedAlarmMode = routeData['alarmMode'] as String?;
-    final savedAlarmValue = routeData['alarmValue'] as num?;
-
-    setState(() {
-      _engine.loadRoute(points);
-      _segments = segments;
-      _routeEvents = events;
-      _transitMode = savedTransitMode;
-
-      // Restore alarm display
-      if (savedAlarmMode != null && savedAlarmValue != null) {
-        _currentAlarmMode = savedAlarmMode;
-        _currentAlarmValue = savedAlarmValue.toDouble();
-        _metricAlarm = '$savedAlarmMode ($savedAlarmValue)';
-      }
-
-      _updateMapRoute(
-        points,
-        segments: segments,
-        routeEvents: events,
-        transitMode: savedTransitMode,
+    // Move camera back to device position
+    if (_devicePosition != null) {
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_devicePosition!, 14),
       );
-      if (points.isNotEmpty) {
-        _mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(points.first, 14),
-        );
-      }
-    });
-    _logEvent(
-      'Loaded saved route: ${routeData['name']} (mode: $savedAlarmMode, value: $savedAlarmValue, transit: $savedTransitMode)',
-    );
-  }
-
-  void _forceDeviation() {
-    if (_engine.currentPosition == null) return;
-
-    LatLng targetPos;
-
-    if (_deviationRoute.isNotEmpty) {
-      // Smart Deviation: Snap to closest point on deviation route
-      // Simple implementation: find closest vertex
-      double minDst = double.infinity;
-      LatLng? closest;
-      for (final p in _deviationRoute) {
-        final d =
-            (p.latitude - _engine.currentPosition!.latitude).abs() +
-            (p.longitude - _engine.currentPosition!.longitude).abs();
-        if (d < minDst) {
-          minDst = d;
-          closest = p;
-        }
-      }
-      targetPos = closest!;
-
-      // Switch engine to deviation route
-      // Find index of closest point to start from there
-      final idx = _deviationRoute.indexOf(closest);
-      final remaining = _deviationRoute.sublist(idx);
-      _engine.loadRoute(remaining);
-
-      // Visual feedback: Make deviation route the "active" one (Blue/Solid) for now
-      // In a real scenario, we'd want to see if the App *detects* this.
-      // So we keep the App's route as "Active" (Green/Purple) and just move the ghost.
-    } else {
-      // Legacy: Move 500m North-East
-      final current = _engine.currentPosition!;
-      targetPos = LatLng(current.latitude + 0.005, current.longitude + 0.005);
     }
-
-    setState(() {
-      _engine.currentPosition = targetPos; // Teleport
-      _rerouteStartTime = DateTime.now(); // Start timer
-      _rerouteLatencyMs = null;
-    });
-    _updateGhostMarker();
-    _logEvent('Forced Deviation triggered');
   }
 
-  void _loadDeviationRoute(Map<String, dynamic> routeData) {
-    final List<dynamic> pointsJson = routeData['points'];
-    setState(() {
-      _deviationRoute =
-          pointsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
-      _updateMapRoute(_polylines.first.points); // Refresh map to draw deviation
-    });
-    _logEvent('Loaded deviation route: ${routeData['name']}');
-  }
+  // _saveCurrentRoute, _deleteRoute, _loadSavedRoutes, _loadRoute, _forceDeviation, _loadDeviationRoute REMOVED
 
-  void _updateMapRoute(
+  Future<void> _updateMapRoute(
     List<LatLng> points, {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? routeEvents,
     List<Map<String, dynamic>>? inactiveRoutes,
     bool transitMode = false,
-  }) {
+    bool forceRepaint = false,
+  }) async {
+    // Pre-generate marker icons (must be done outside setState)
+    final cyanMarkerIcon = await _createCustomMarkerBitmap(
+      Colors.cyanAccent,
+      size: 30,
+    );
+    // purpleIcon removed
+    /*
+    final purpleIcon = await _createCustomMarkerBitmap(
+      Colors.purpleAccent,
+      size: 26,
+    );
+    */
+
     setState(() {
-      _segments = segments;
-      _routeEvents = routeEvents;
-      _polylines.clear();
+      // _segments = segments; // removed
+      // _routeEvents = routeEvents; // removed
       _polylines.clear();
       // Keep alarm markers, clear route markers?
       // Rebuild specific markers below
-      _markers.removeWhere((m) => !m.markerId.value.startsWith('alarm_pred_'));
+      _markers.removeWhere((m) => !m.markerId.value.startsWith('alarm_'));
 
       // Draw Inactive Routes (Grey)
       if (inactiveRoutes != null) {
@@ -616,20 +545,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
 
-      // Draw Deviation Route (Grey Dashed) if exists
-      if (_deviationRoute.isNotEmpty) {
-        _polylines.add(
-          Polyline(
-            polylineId: const PolylineId('route_deviation'),
-            points: _deviationRoute,
-            color: Colors.grey,
-            width: 4,
-            patterns: [PatternItem.dash(20), PatternItem.gap(10)],
-            zIndex: 0,
-          ),
-        );
+      // Collect all polyline points to check against
+      final List<LatLng> pathPoints = [];
+      if (segments != null) {
+        for (final seg in segments) {
+          final pts = (seg['points'] as List).map(
+            (p) => LatLng(p['lat'], p['lng']),
+          );
+          pathPoints.addAll(pts);
+        }
+      } else {
+        pathPoints.addAll(points);
       }
 
+      // 4. GTFS Station Markers (Cyan)
+      // Prefer runtime-provided transit legs (exactly what alarm logic sees).
+      // Fallback to legacy GTFS-near-path visualization only if transit legs were not sent.
+      final hasRuntimeTransitLegs = _lastTransitLegsJson != null;
+      if (hasRuntimeTransitLegs) {
+        _markers.removeWhere(
+          (m) => m.markerId.value.startsWith('transit_stop_'),
+        );
+
+        final legs = _lastTransitLegsJson!;
+        for (int li = 0; li < legs.length; li++) {
+          final leg = legs[li];
+          final isMetro = leg['isMetro'] == true;
+          if (!isMetro) continue;
+
+          final positions = (leg['stopPositions'] as List?) ?? const [];
+          final names = (leg['stopNames'] as List?) ?? const [];
+
+          for (int si = 0; si < positions.length; si++) {
+            final p = positions[si] as Map<String, dynamic>;
+            final name = si < names.length ? names[si].toString() : 'Stop';
+            final lat = (p['lat'] as num).toDouble();
+            final lng = (p['lng'] as num).toDouble();
+
+            _markers.add(
+              Marker(
+                markerId: MarkerId('transit_stop_${li}_$si'),
+                position: LatLng(lat, lng),
+                icon: cyanMarkerIcon,
+                infoWindow: InfoWindow(
+                  title: name,
+                  snippet: leg['lineName']?.toString(),
+                ),
+                zIndex: 12,
+              ),
+            );
+          }
+        }
+      } else {
+        // Legacy dashboard visualization: show any nearby GTFS/OSM stops.
+        if (_gtfsMarkers.isEmpty || forceRepaint) {
+          _gtfsMarkers.clear();
+          for (final stop in allIndiaStops) {
+            final stopPos = LatLng(stop['lat'], stop['lng']);
+            if (_isStationNearPath(stopPos, pathPoints, 500)) {
+              _gtfsMarkers.add(
+                Marker(
+                  markerId: MarkerId('gtfs_${stop['id']}'),
+                  position: stopPos,
+                  icon: cyanMarkerIcon,
+                  infoWindow: InfoWindow(title: stop['name']),
+                  zIndex: 10,
+                ),
+              );
+            }
+          }
+        }
+        _markers.addAll(_gtfsMarkers);
+      }
+
+      // 5. Switch Points (Purple) - REMOVED per user request
+      /*
+      if (switchPoints != null) {
+        for (int i = 0; i < switchPoints.length; i++) {
+          final sp = switchPoints[i];
+          _markers.add(
+            Marker(
+              markerId: MarkerId('switch_\$i'),
+              position: LatLng(sp['lat'], sp['lng']),
+              icon: purpleIcon,
+              infoWindow: InfoWindow(title: sp['label'] ?? 'Switch Point'),
+              zIndex: 20,
+            ),
+          );
+        }
+      }
+      */
+
+      // 6. Polylines
       if (segments != null && segments.isNotEmpty) {
         final transitColorMap = <String, Color>{};
         const transitColors = <Color>[Colors.green, Colors.purple];
@@ -637,9 +644,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         for (int i = 0; i < segments.length; i++) {
           final seg = segments[i];
           final mode = seg['mode'] as String;
-          print(
-            'Dash: Drawing seg $i mode=$mode pts=${(seg['points'] as List).length}',
-          );
           final segPoints =
               (seg['points'] as List)
                   .map((p) => LatLng(p['lat'], p['lng']))
@@ -648,18 +652,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Color color;
           List<PatternItem> patterns = [];
 
-          // Match App Styling (DirectionService.dart):
-          // - Driving/Walking are non_transit: blue (walking is dashed)
-          // - Transit in transitMode with SUBWAY/HEAVY_RAIL/RAIL: green/purple
-          // - Other transit types (BUS etc.) or transit when transitMode=false: blue
           switch (mode) {
             case 'driving':
               color = Colors.blue;
-              patterns = []; // Solid
+              patterns = [];
               break;
             case 'transit':
-              // Check if this is a metro-type transit (SUBWAY, HEAVY_RAIL, RAIL)
-              // Only apply green/purple coloring if transitMode is true AND vehicle is metro type
               final vehicleType = seg['vehicle_type'] as String?;
               final isMetroTransit =
                   transitMode &&
@@ -668,7 +666,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       vehicleType == 'RAIL');
 
               if (isMetroTransit) {
-                // Deterministic mapping by transit line label
                 final rawLine = seg['transit_line'];
                 final line = rawLine is String ? rawLine.trim() : '';
                 if (line.isNotEmpty) {
@@ -679,7 +676,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }
                   color = transitColorMap[line]!;
                 } else {
-                  // Fallback for metro without line label
                   if (!transitColorMap.containsKey('_fallback_$i')) {
                     transitColorMap['_fallback_$i'] =
                         transitColors[transitColorIndex % transitColors.length];
@@ -688,14 +684,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color = transitColorMap['_fallback_$i']!;
                 }
               } else {
-                // Non-metro transit (BUS, etc.) or not in transitMode: use blue
                 color = Colors.blue;
               }
-              patterns = []; // Solid
+              patterns = [];
               break;
             case 'walking':
-              color = Colors.blue; // App uses Blue for walking
-              patterns = [PatternItem.dash(20), PatternItem.gap(12)]; // Dashed
+              color = Colors.blue;
+              patterns = [PatternItem.dash(20), PatternItem.gap(12)];
               break;
             default:
               color = Colors.blue;
@@ -709,7 +704,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: color,
               width: 5,
               patterns: patterns,
-              // Metro transit gets higher zIndex like in the app
               zIndex: (mode == 'transit' && transitMode) ? 3 : 2,
             ),
           );
@@ -725,24 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       }
 
-      if (switchPoints != null) {
-        for (int i = 0; i < switchPoints.length; i++) {
-          final sp = switchPoints[i];
-          _markers.add(
-            Marker(
-              markerId: MarkerId('switch_$i'),
-              position: LatLng(sp['lat'], sp['lng']),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor
-                    .hueBlue, // User requested Blue for switch points
-              ),
-              infoWindow: InfoWindow(title: sp['label'] ?? 'Switch Point'),
-            ),
-          );
-        }
-      }
-
-      // Add Start and End Markers (Red)
+      // 7. Start/End Markers
       if (points.isNotEmpty) {
         _markers.add(
           Marker(
@@ -752,6 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               BitmapDescriptor.hueRed,
             ),
             infoWindow: const InfoWindow(title: 'Start'),
+            zIndex: 40,
           ),
         );
         _markers.add(
@@ -762,10 +740,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               BitmapDescriptor.hueRed,
             ),
             infoWindow: const InfoWindow(title: 'Destination'),
+            zIndex: 40,
           ),
         );
       }
     });
+
+    // Update alarm markers
+    await _updateAlarmMarkers();
   }
 
   void _updateGhostMarker() {
@@ -776,16 +758,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Marker(
           markerId: const MarkerId('ghost'),
           position: _engine.currentPosition!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueBlue,
-          ), // Blue for simulated user
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Simulated User'),
-          zIndex: 10, // Ensure user is on top
+          zIndex: 200,
         ),
       );
     });
 
-    // Optional: Camera follow
     _mapController?.animateCamera(
       CameraUpdate.newLatLng(_engine.currentPosition!),
     );
@@ -795,7 +774,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GeoWake Dashboard v2 (Active)'),
+        title: const Text('GeoWake Dashboard v2 (Optimized)'),
         actions: [
           Center(
             child: Padding(
@@ -808,9 +787,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _connected
-                        ? 'Connected: Ready to Mirror'
-                        : 'Disconnected: Routes will not sync',
+                    _connected ? 'Connected' : 'Disconnected',
                     style: TextStyle(
                       color: _connected ? Colors.greenAccent : Colors.redAccent,
                       fontWeight: FontWeight.bold,
@@ -870,6 +847,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   m.markerId.value == 'ghost' ||
                                   m.markerId.value.startsWith('alarm_'),
                             );
+                            _debouncer.reset();
                           });
                         },
                       ),
@@ -884,7 +862,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Slider(
                           value: _engine.speedMultiplier,
                           min: 1.0,
-                          max: 200.0, // Increased to 200x for 2hr -> 1min
+                          max: 200.0,
                           divisions: 199,
                           label:
                               '${_engine.speedMultiplier.toStringAsFixed(0)}x',
@@ -906,14 +884,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _engine.seek(v);
                         _updateGhostMarker();
                         _broadcastPosition();
+                        // Reset alarm state on significant scrub (robustness)
+                        if ((v - oldProgress).abs() > 0.05) {
+                          // _alarmTriggered = false; // removed
+                          _debouncer.reset();
+                          // Note: We don't clear the last fired *time* to prevent instant re-trigger
+                          // if we land back in the zone, but we assume re-entering zone is a valid new event.
+                        }
                       });
-                      // If progress moved backwards significantly, request alarm state reset
                       if (v < oldProgress - 0.05) {
                         _broadcastAlarmReset();
                       }
                     },
                     onChangeStart: (_) {
-                      // Optional: Pause while scrubbing
                       _wasPlayingBeforeScrub = _engine.isPlaying;
                       setState(() => _engine.isPlaying = false);
                     },
@@ -923,101 +906,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 10),
-                  // Chaos Controls
-                  const Text(
-                    'Chaos Engineering',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('GPS Signal'),
-                      Switch(
-                        value: _gpsEnabled,
-                        onChanged: (v) {
-                          setState(() => _gpsEnabled = v);
-                          _logEvent('GPS Signal ${v ? "Restored" : "Lost"}');
-                        },
-                        activeColor: Colors.green,
-                        inactiveThumbColor: Colors.red,
-                      ),
-                    ],
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _forceDeviation,
-                    icon: const Icon(Icons.fork_right),
-                    label: const Text('Force Deviation'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                    ),
-                  ),
-
                   const SizedBox(height: 20),
-                  // Route Management
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Route Management',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.save),
-                        onPressed: _saveCurrentRoute,
-                        tooltip: 'Save Current Route',
-                      ),
-                    ],
-                  ),
-                  if (_savedRoutes.isNotEmpty)
-                    SizedBox(
-                      height: 150,
-                      child: ListView.builder(
-                        itemCount: _savedRoutes.length,
-                        itemBuilder: (ctx, i) {
-                          final route = _savedRoutes[i];
-                          return ListTile(
-                            dense: true,
-                            title: Text(route['name']),
-                            // Play = Load as Active
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    size: 16,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () => _deleteRoute(i),
-                                  tooltip: 'Delete Route',
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.fork_right,
-                                    size: 16,
-                                    color: Colors.orange,
-                                  ),
-                                  onPressed: () => _loadDeviationRoute(route),
-                                  tooltip: 'Load as Deviation',
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.play_arrow,
-                                    size: 16,
-                                    color: Colors.green,
-                                  ),
-                                  onPressed: () => _loadRoute(route),
-                                  tooltip: 'Load as Active',
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
 
-                  const SizedBox(height: 20),
                   const Text(
                     'Alarm Metrics',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -1029,12 +919,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   _buildMetric('Alarm', _metricAlarm),
                   _buildMetric('Debug', _metricDebug),
-                  if (_rerouteLatencyMs != null)
-                    _buildMetric('Reroute Latency', '${_rerouteLatencyMs}ms'),
 
-                  if (_alarmTriggered)
+                  // Removed Reroute Latency UI
+                  if (_debouncer.isTriggered)
                     Container(
                       padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.only(top: 10),
                       color: Colors.red,
                       child: const Text(
                         'ALARM TRIGGERED!',
@@ -1052,7 +942,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const Divider(),
-                  // Fixed height event log
                   SizedBox(
                     height: 200,
                     child: ListView.builder(
@@ -1092,7 +981,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     });
                   },
                 ),
-                // Route legend overlay (match MapTrackingScreen)
                 Positioned(
                   top: 12,
                   left: 12,
@@ -1155,9 +1043,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.right,
+            ),
           ),
         ],
       ),
@@ -1166,135 +1057,147 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // --- Helper Methods ---
 
-  void _updateAlarmMarkers() {
+  Set<Marker> _gtfsMarkers = {};
+
+  Future<void> _updateAlarmMarkers() async {
+    // Optimization: Dont recreate if nothing changed?
+    // Actually we need to check _routeEvents.
+
+    // Check condition: if transitMode is true AND alarmMode is TIME,
+    // user requested to remove yellow dots.
+    if (_transitMode && _currentAlarmMode?.toLowerCase() == 'time') {
+      setState(() {
+        _markers.removeWhere((m) => m.markerId.value.startsWith('alarm_pred_'));
+      });
+      return;
+    }
+
+    // yellowIcon removed
+    /*
+    final yellowIcon = await _createCustomMarkerBitmap(
+      Colors.yellowAccent,
+      size: 28,
+    );
+    */
+    /*
     setState(() {
       _markers.removeWhere((m) => m.markerId.value.startsWith('alarm_pred_'));
-    });
-    if (_currentAlarmMode == null ||
-        _currentAlarmValue == null ||
-        _routeEvents == null) {
-      // Fallback for purely distance based legacy/test routes without events
-      if ((_routeEvents == null || _routeEvents!.isEmpty) &&
-          _segments != null) {
-        // Keep existing segment-based fallback or just return?
-        // Let's keep a minimal fallback for walking start
-      }
-      if (_routeEvents == null) return;
-    }
 
-    print(
-      'DashDebug: Updating Alarm Markers with ${_routeEvents!.length} events',
-    );
+      if (_routeEvents != null) {
+        for (int i = 0; i < _routeEvents!.length; i++) {
+          final ev = _routeEvents![i];
+          final lat = ev['lat'];
+          final lng = ev['lng'];
+          final label = ev['label'];
 
-    for (int i = 0; i < _routeEvents!.length; i++) {
-      final ev = _routeEvents![i];
-      final type = ev['type'];
-      final label = ev['label'];
-      final lat = ev['lat'];
-      final lng = ev['lng'];
-
-      if (lat == null || lng == null) continue;
-
-      String title = 'Alarm Point';
-      String snippet = label ?? '';
-      String triggerNote = '';
-
-      // Logic for Marker Title based on Alarm Mode & Event Type
-      if (_currentAlarmMode == 'distance') {
-        // Distance mode: Everything is "N km before"
-        title = type == 'transfer' ? 'Transfer Point' : 'Switch Point';
-        triggerNote = 'Alarm triggers ${_currentAlarmValue}km before';
-      } else if (_currentAlarmMode == 'stops') {
-        // Stops mode
-        if (type == 'transfer') {
-          title = 'Transfer Point';
-          triggerNote =
-              'Alarm triggers ${_currentAlarmValue?.toInt()} stops before';
-        } else if (type == 'mode_change') {
-          if (label.toString().contains('Board')) {
-            // Walking -> Transit: use distance fallback
-            title = 'Boarding Point';
-            triggerNote =
-                'Alarm triggers ~500m × ${_currentAlarmValue?.toInt()} before';
-          } else if (label.toString().contains('Start walking')) {
-            // Transit -> Walk (Alight)
-            title = 'Alight Point';
-            triggerNote =
-                'Alarm triggers ${_currentAlarmValue?.toInt()} stops before';
-          } else {
-            title = 'Switch Point';
-            triggerNote = 'Alarm triggers before this point';
+          if (lat != null && lng != null) {
+            _markers.add(
+              Marker(
+                markerId: MarkerId('alarm_pred_ev_\$i'),
+                position: LatLng(lat, lng),
+                icon: yellowIcon,
+                zIndex: 30,
+                infoWindow: InfoWindow(title: label ?? 'Alarm Event'),
+              ),
+            );
           }
         }
-      } else {
-        // Time mode or unknown
-        title = type == 'transfer' ? 'Transfer Point' : 'Switch Point';
-        triggerNote = 'Alarm triggers before this point';
       }
-
-      // Combine label and trigger note in snippet
-      if (snippet.isNotEmpty && triggerNote.isNotEmpty) {
-        snippet = '$snippet\n$triggerNote';
-      } else if (triggerNote.isNotEmpty) {
-        snippet = triggerNote;
-      }
-
-      _addPredictedMarker(
-        LatLng(lat, lng),
-        title,
-        idSuffix: '_ev_$i',
-        snippet: snippet,
-        hue: BitmapDescriptor.hueViolet,
-      );
-    }
-
-    // Always add a "Final Destination" distance alarm marker if purely walking/driving?
-    // StopLogicEngine handles the logical triggering.
-    // Dashboard just needs to show WHERE the trigger happens.
-    // For "Switch Alarm", the marker is AT the switch point.
-    // The "trigger" happens before it.
-    // The previous logic calculated the "trigger point" (1km before).
-    // The user wants to see the "Predicted Alarm Marker".
-    // If it's 1km before, I should calculate it along the path.
-    // But I don't have the path easily map-able to events here without complex logic.
-    // The previous logic `_getPointAtDistanceFromEnd` worked on segments.
-    // But segments were missing.
-
-    // COMPROMISE: Place the marker AT the Switch Point (Violet),
-    // but label it "Alarm triggers 1km before" or "N stops before".
-    // This is clearer than guessing a point on a line that might be wrong.
-    // User feedback: "translucent marker... only shows up for the first one".
-    // If I place it AT the station, they know that's the target.
-    // (Previously I tried to place it 1km BEFORE).
-
-    // Let's stick to placing it AT the target for now, as calculating "1km back from event N"
-    // requires mapping Event N to a specific Polyline Segment and traversing back.
-    // Given the segment alignment issues, placing at Target is safer/robust.
-  }
-
-  void _addPredictedMarker(
-    LatLng pos,
-    String title, {
-    String idSuffix = '',
-    String? snippet,
-    double hue = BitmapDescriptor.hueYellow,
-  }) {
-    setState(() {
-      _markers.add(
-        Marker(
-          markerId: MarkerId('alarm_pred$idSuffix'),
-          position: pos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(hue),
-          alpha: 0.5, // Translucent for expected alarm markers
-          infoWindow: InfoWindow(title: title, snippet: snippet),
-        ),
-      );
     });
+    */
   }
 
   // Add state variables
   String? _currentAlarmMode;
-  double? _currentAlarmValue;
+  // _currentAlarmValue removed
+
+  // Authoritative runtime transit legs payload from route_update.
+  List<Map<String, dynamic>>? _lastTransitLegsJson;
+
+  bool _isStationNearPath(LatLng stop, List<LatLng> path, double radiusMeters) {
+    // Check every point to ensure we don't miss stops on long segments
+    // (Performance trade-off acceptable for correctness)
+    const step = 1;
+    for (int i = 0; i < path.length; i += step) {
+      if (_haversineDist(stop, path[i]) <= radiusMeters) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  double _haversineDist(LatLng p1, LatLng p2) {
+    const R = 6371000.0; // Earth radius in meters
+    final dLat = _degToRad(p2.latitude - p1.latitude);
+    final dLon = _degToRad(p2.longitude - p1.longitude);
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(_degToRad(p1.latitude)) *
+            cos(_degToRad(p2.latitude)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+  }
+
+  double _degToRad(double deg) => deg * (pi / 180.0);
+
+  // Cache icons
+  BitmapDescriptor? _cachedCyanIcon;
+  // Others removed
+  /*
+  BitmapDescriptor? _cachedPurpleIcon;
+  BitmapDescriptor? _cachedYellowIcon;
+  */
+
+  Future<BitmapDescriptor> _createCustomMarkerBitmap(
+    Color color, {
+    double size = 24,
+  }) async {
+    // Use cached if available
+    if (color == Colors.cyanAccent && _cachedCyanIcon != null)
+      return _cachedCyanIcon!;
+    // Purple and Yellow removed per user request
+    /*
+    if (color == Colors.purpleAccent && _cachedPurpleIcon != null)
+      return _cachedPurpleIcon!;
+    if (color == Colors.yellowAccent && _cachedYellowIcon != null)
+      return _cachedYellowIcon!;
+    */
+
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint paint = Paint()..color = color;
+    final double radius = size / 2;
+
+    canvas.drawCircle(Offset(radius, radius), radius, paint);
+
+    final Paint borderPaint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0;
+    canvas.drawCircle(Offset(radius, radius), radius - 1, borderPaint);
+
+    final ui.Image image = await pictureRecorder.endRecording().toImage(
+      size.toInt(),
+      size.toInt(),
+    );
+    final ByteData? byteData = await image.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
+    final icon = BitmapDescriptor.bytes(byteData!.buffer.asUint8List());
+
+    // Cache
+    if (color == Colors.cyanAccent) _cachedCyanIcon = icon;
+    // Removed cache assignments for purple/yellow
+    /*
+    if (color == Colors.purpleAccent) _cachedPurpleIcon = icon;
+    if (color == Colors.yellowAccent) _cachedYellowIcon = icon;
+    */
+
+    return icon;
+  }
 }
 
 class _LegendItem extends StatelessWidget {

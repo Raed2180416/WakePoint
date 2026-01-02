@@ -83,9 +83,9 @@ void main() {
 
       expect(events, isNotEmpty);
 
-      // Check for Boarding
+      // Check for Boarding (now preBoarding event with line name)
       final boardEvent = events.firstWhere(
-        (e) => e.label == 'Board transit',
+        (e) => e.type == 'preBoarding' && e.label!.contains('Board'),
         orElse: () => throw 'Missing Boarding',
       );
       expect(boardEvent.meters, 1000);
@@ -211,18 +211,19 @@ void main() {
       );
 
       // Count "Board transit" events - should be exactly 1 (initial boarding)
+      // Now these are preBoarding events with line names like "Board Green Line"
       final boardTransitEvents =
-          events.where((e) => e.label == 'Board transit').toList();
+          events.where((e) => e.type == 'preBoarding').toList();
       expect(
         boardTransitEvents.length,
         1,
         reason:
-            'Should have exactly 1 Board transit event (initial boarding only)',
+            'Should have exactly 1 preBoarding event (initial boarding only)',
       );
       expect(
         boardTransitEvents.first.meters,
         800,
-        reason: 'Board transit should be at the first metro boarding',
+        reason: 'preBoarding should be at the first metro boarding',
       );
 
       // There should be a transfer event

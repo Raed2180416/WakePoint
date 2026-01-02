@@ -102,14 +102,28 @@ void main() {
       // Give it a moment to apply the alarm config before manual alarm checks.
       await Future.delayed(const Duration(milliseconds: 250));
 
-      // Position far enough that remaining stops > 2 (no alarm).
-      // Use an earlier point to stay safely above threshold despite geodesic rounding.
+      // Position far enough that remaining stops >= threshold (no alarm).
+      // With threshold=2, alarm fires when stopsRemaining < 2 (i.e., 0 or 1).
+      // Metro leg: 500m to 4500m = 4000m with 6 stops
+      // Stop positions using formula: prevBound + (legLength * s / numStops)
+      // legLength = 4000m, numStops = 6
+      // Stop 1: 500 + 667 = 1167m
+      // Stop 2: 500 + 1333 = 1833m
+      // Stop 3: 500 + 2000 = 2500m
+      // Stop 4: 500 + 2667 = 3167m
+      // Stop 5: 500 + 3333 = 3833m
+      // Stop 6: 500 + 4000 = 4500m
+      // At lon 0.015 (~1666m), we're past stop 1 (1167m), before stop 2 (1833m)
+      // Stops remaining: 5 (1833, 2500, 3167, 3833, 4500)
+      // 5 < 2 = false, so no alarm. Good.
       await svc.checkAlarmForTest(p(0.0, 0.015), service);
       expect(NotificationService.testRecordedAlarms.length, 0);
 
-      // Move forward so remaining stops <= 2 (alarm should fire once).
-      // lon 0.030 ~= 3330m => remaining stops ~= 1.76
-      await svc.checkAlarmForTest(p(0.0, 0.030), service);
+      // Move forward so remaining stops < 2 (alarm should fire once).
+      // Need to be past stop 5 (3833m) so only 1 stop remains (4500m).
+      // stopsRemaining = 1, and 1 < 2 is true, so alarm fires.
+      // lon 0.035 ~= 3885m (past stop 5 at 3833m)
+      await svc.checkAlarmForTest(p(0.0, 0.035), service);
 
       final alarms = NotificationService.testRecordedAlarms;
       expect(alarms.length, 1);

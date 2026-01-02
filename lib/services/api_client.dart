@@ -100,14 +100,14 @@ class ApiClient {
     try {
       dev.log('🔐 Authenticating with server...', name: 'ApiClient');
 
+      // Import bundle ID from centralized config
+      const bundleId = 'com.geowake.app'; // Must match AppConfig.appBundleId
+
       final response = await http
           .post(
-            Uri.parse('$_baseUrl/auth/token'), // Fixed: Changed to /auth/token
+            Uri.parse('$_baseUrl/auth/token'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'bundleId':
-                  'com.yourcompany.geowake2', // Fixed: Updated bundle ID to match your app
-            }),
+            body: jsonEncode({'bundleId': bundleId}),
           )
           .timeout(const Duration(seconds: 15));
 
@@ -322,6 +322,7 @@ class ApiClient {
     required String destination,
     String mode = 'driving',
     String? transitMode,
+    int? departureTime,
   }) async {
     dev.log(
       '🗺️ Getting directions from $origin to $destination',
@@ -333,6 +334,7 @@ class ApiClient {
       'destination': destination,
       'mode': mode,
       if (transitMode != null) 'transit_mode': transitMode,
+      if (departureTime != null) 'departure_time': departureTime,
     };
 
     final result = await _makeRequest(

@@ -21,6 +21,11 @@ class EtaEngine {
   static const double maxSnapDistance =
       100.0; // meters - max snap search radius
 
+  // Metro scheduled model constants
+  static const double metroScheduledSpeedMps =
+      9.2; // 33 km/h = 9.2 m/s avg metro speed
+  static const double metroDwellTimePerStopSec = 25.0; // 25 seconds per stop
+
   // State (persisted between updates)
   double? smoothedSpeed;
   Position? lastGps;
@@ -349,6 +354,7 @@ class EtaEngine {
     List<double>? stepBoundsMeters,
     List<int>? stepDurationsSeconds,
     double? totalRouteMeters,
+    int? remainingStopsOnMetro, // NEW: for metro scheduled model
   }) {
     final currentPoint = LatLng(gps.latitude, gps.longitude);
 
@@ -380,18 +386,34 @@ class EtaEngine {
 
     // 4) Physics ETA (Base calculation)
     double effectiveSpeed = max(vEst, vMin);
-    if (isMetroMode) {
-      // Clamp effective speed in Metro Mode to avoid infinite ETAs in tunnels/stops.
-      // 5.0 m/s (~18 km/h) is a conservative average for metro systems including stops.
-      // FIX: Only apply this clamp if we are moving faster than walking speed (> 2.5 m/s).
-      // This prevents the ETA from being artificially short (and triggering alarms)
-      // when the user is simply walking to the station at the start of the route.
+    double etaSeconds;
+
+    if (isMetroMode &&
+        remainingStopsOnMetro != null &&
+        remainingStopsOnMetro > 0) {
+      // METRO SCHEDULED MODEL:
+      // Use science-backed calculation: 9.2 m/s avg speed + 25s dwell per stop
+      // This is more accurate than GPS speed in tunnels/urban canyons
+      final travelTimeSec = remainingMeters / metroScheduledSpeedMps;
+      final dwellTimeSec = remainingStopsOnMetro * metroDwellTimePerStopSec;
+      etaSeconds = travelTimeSec + dwellTimeSec;
+
+      // Use scheduled speed as effective for uncertainty calculation
+      effectiveSpeed = metroScheduledSpeedMps;
+    } else if (isMetroMode) {
+      // Metro mode without stop info: use conservative speed clamp
+      // Only apply this clamp if we are moving faster than walking speed (> 2.5 m/s).
+      // This prevents the ETA from being artificially short when walking to station.
       if (effectiveSpeed > 2.5) {
         effectiveSpeed = max(effectiveSpeed, 5.0);
       }
+      etaSeconds = remainingMeters / effectiveSpeed;
+      etaSeconds += dwellAdd;
+    } else {
+      // Non-metro: use GPS-based speed
+      etaSeconds = remainingMeters / effectiveSpeed;
+      etaSeconds += dwellAdd;
     }
-    double etaSeconds = remainingMeters / effectiveSpeed;
-    etaSeconds += dwellAdd;
 
     // 5) Smart ETA (Segment-based)
     // If we have step boundaries and durations, we can provide a much better estimate

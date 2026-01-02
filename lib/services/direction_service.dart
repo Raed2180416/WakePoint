@@ -47,12 +47,55 @@ class DirectionService {
     required bool isDistanceMode,
     required double threshold,
     required bool transitMode,
+    bool preferMetroEvenIfClosed = false,
     bool forceRefresh = false,
   }) async {
     // L2 persistent cache check (Hive)
     final origin = LatLng(startLat, startLng);
     final dest = LatLng(endLat, endLng);
     final mode = transitMode ? 'transit' : 'driving';
+
+    bool containsMetroLeg(Map<String, dynamic> directions) {
+      try {
+        final routes = (directions['routes'] as List?) ?? const [];
+        if (routes.isEmpty) return false;
+        final legs = (routes.first as Map<String, dynamic>)['legs'] as List?;
+        if (legs == null) return false;
+        for (final leg in legs) {
+          final steps = (leg as Map<String, dynamic>)['steps'] as List?;
+          if (steps == null) continue;
+          for (final s in steps) {
+            final step = s as Map<String, dynamic>;
+            final travelMode = (step['travel_mode'] as String?)?.toUpperCase();
+            if (travelMode != 'TRANSIT') continue;
+            final td = step['transit_details'] as Map<String, dynamic>?;
+            final line = td?['line'] as Map<String, dynamic>?;
+            final vehicle = line?['vehicle'] as Map<String, dynamic>?;
+            final vType = (vehicle?['type'] as String?)?.toUpperCase();
+            if (vType == null) continue;
+            if (vType == 'SUBWAY' ||
+                vType == 'HEAVY_RAIL' ||
+                vType == 'RAIL' ||
+                vType == 'METRO_RAIL' ||
+                vType == 'MONORAIL') {
+              return true;
+            }
+          }
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    int nextServiceAnchorDepartureEpochSeconds() {
+      // Conservative default: 09:00 local time (today if still ahead, else tomorrow).
+      final now = DateTime.now();
+      var anchor = DateTime(now.year, now.month, now.day, 9, 0);
+      if (!anchor.isAfter(now)) {
+        anchor = anchor.add(const Duration(days: 1));
+      }
+      return (anchor.millisecondsSinceEpoch / 1000).round();
+    }
+
     if (!forceRefresh) {
       final cached = await RouteCache.get(
         origin: origin,
@@ -107,13 +150,39 @@ class DirectionService {
     }
 
     try {
-      // REPLACE THE DIRECT HTTP CALL WITH API CLIENT
-      final directions = await _apiClient.getDirections(
+      Map<String, dynamic> directions;
+      String? transitVariant = transitMode ? 'rail' : null;
+      int? departureTime;
+
+      // 1) Primary request
+      directions = await _apiClient.getDirections(
         origin: '$startLat,$startLng',
         destination: '$endLat,$endLng',
         mode: transitMode ? 'transit' : 'driving',
-        transitMode: transitMode ? 'rail' : null,
+        transitMode: transitVariant,
       );
+
+      final primaryOk =
+          directions['status'] == 'OK' &&
+          (directions['routes'] as List?) != null &&
+          (directions['routes'] as List).isNotEmpty;
+
+      // 2) If user is in metro mode and Google returns no feasible route (often because
+      // metro is currently closed), retry with a future departure_time to force a metro route.
+      if (transitMode && preferMetroEvenIfClosed) {
+        final hasMetro = primaryOk ? containsMetroLeg(directions) : false;
+        if (!primaryOk || !hasMetro) {
+          transitVariant = 'subway';
+          departureTime = nextServiceAnchorDepartureEpochSeconds();
+          directions = await _apiClient.getDirections(
+            origin: '$startLat,$startLng',
+            destination: '$endLat,$endLng',
+            mode: 'transit',
+            transitMode: transitVariant,
+            departureTime: departureTime,
+          );
+        }
+      }
 
       if (directions['status'] != 'OK' ||
           (directions['routes'] as List).isEmpty) {
@@ -131,9 +200,9 @@ class DirectionService {
           final String encodedPolyline =
               route['overview_polyline']['points'] as String;
           // Decode + simplify with small in-memory cache
-          final simplifiedPoints = _decodeAndSimplifyCached(
+          final simplifiedPoints = _decodeAndProcessCached(
             encodedPolyline,
-            10,
+            10.0,
           );
           // Compress the simplified polyline.
           String compressedPolyline = PolylineSimplifier.compressPolyline(
@@ -147,6 +216,9 @@ class DirectionService {
 
       _cachedDirections = directions;
       _lastFetchTime = DateTime.now();
+      // Note: requestKey is used only for the in-memory fast path. The fallback path is
+      // time-anchored, so we intentionally avoid returning it from the in-memory cache
+      // for a non-time-anchored request.
       _cachedDirectionsKey = requestKey;
 
       // Persist to RouteCache (L2)
@@ -155,7 +227,8 @@ class DirectionService {
           origin: origin,
           destination: dest,
           mode: mode,
-          transitVariant: transitMode ? 'rail' : null,
+          transitVariant: transitVariant,
+          departureTime: departureTime,
         );
         await RouteCache.put(
           RouteCacheEntry(
@@ -197,8 +270,9 @@ class DirectionService {
 
   List<Map<String, dynamic>> buildRawSegments(
     Map<String, dynamic> directions,
-    bool transitMode,
-  ) {
+    bool transitMode, {
+    bool simplify = false,
+  }) {
     List<Map<String, dynamic>> segments = [];
     if (directions['routes'] == null || directions['routes'].isEmpty) {
       return segments;
@@ -252,12 +326,12 @@ class DirectionService {
       currentNonTransitMode = firstInfo.isMetro ? null : firstInfo.mode;
       currentVehicleType = firstInfo.vehicleType;
 
-      // Decode, simplify, then add first step points.
-      List<LatLng> simplifiedPoints = _decodeAndSimplifyCached(
+      // Decode, (maybe) simplify, then add first step points.
+      List<LatLng> processedPoints = _decodeAndProcessCached(
         firstStep['polyline']['points'],
-        10,
+        simplify ? 10.0 : 0.0,
       );
-      groupPoints.addAll(simplifiedPoints);
+      groupPoints.addAll(processedPoints);
 
       for (int i = 1; i < steps.length; i++) {
         var step = steps[i];
@@ -277,11 +351,11 @@ class DirectionService {
         }
 
         if (sameGroup) {
-          List<LatLng> simplifiedStepPoints = _decodeAndSimplifyCached(
+          List<LatLng> stepPoints = _decodeAndProcessCached(
             step['polyline']['points'],
-            10,
+            simplify ? 10.0 : 0.0,
           );
-          groupPoints.addAll(simplifiedStepPoints);
+          groupPoints.addAll(stepPoints);
         } else {
           // Finalize current segment
           segments.add({
@@ -304,12 +378,11 @@ class DirectionService {
           currentNonTransitMode = stepNonTransitMode;
           currentVehicleType = info.vehicleType;
 
-          List<LatLng> rawStepPoints = decodePolyline(
+          List<LatLng> stepPoints = _decodeAndProcessCached(
             step['polyline']['points'],
+            simplify ? 10.0 : 0.0,
           );
-          List<LatLng> simplifiedStepPoints =
-              PolylineSimplifier.simplifyPolyline(rawStepPoints, 10);
-          groupPoints.addAll(simplifiedStepPoints);
+          groupPoints.addAll(stepPoints);
         }
       }
 
@@ -333,19 +406,34 @@ class DirectionService {
 
   List<Polyline> buildSegmentedPolylines(
     Map<String, dynamic> directions,
-    bool transitMode,
-  ) {
-    final rawSegments = buildRawSegments(directions, transitMode);
-    List<Polyline> polylines = [];
+    bool transitMode, {
+    bool simplify = false,
+  }) {
+    final rawSegments = buildRawSegments(
+      directions,
+      transitMode,
+      simplify: simplify,
+    );
+    return buildSegmentedPolylinesFromRawSegments(rawSegments);
+  }
 
-    Map<String, Color> transitColorMap = {};
-    final List<Color> transitColors = [Colors.green, Colors.purple];
+  /// Build polylines from already-prepared raw segments.
+  ///
+  /// This is used by the simulation dashboard so it can render the exact same
+  /// route styling as MapTrackingScreen without re-implementing the logic.
+  List<Polyline> buildSegmentedPolylinesFromRawSegments(
+    List<Map<String, dynamic>> rawSegments,
+  ) {
+    final polylines = <Polyline>[];
+
+    final transitColorMap = <String, Color>{};
+    const transitColors = <Color>[Colors.green, Colors.purple];
     int transitColorIndex = 0;
 
     for (int i = 0; i < rawSegments.length; i++) {
       final seg = rawSegments[i];
-      final mode = seg['mode'] as String;
-      final pointsData = seg['points'] as List;
+      final mode = seg['mode'] as String? ?? 'driving';
+      final pointsData = (seg['points'] as List?) ?? const [];
       final points = pointsData.map((p) => LatLng(p['lat'], p['lng'])).toList();
       final transitLine = seg['transit_line'] as String?;
 
@@ -363,7 +451,7 @@ class DirectionService {
           }
           color = transitColorMap[transitLine]!;
         } else {
-          // Fallback if no line name but is transit (shouldn't happen for metro per logic, but safe fallback)
+          // Safe fallback
           color = Colors.blue;
         }
       } else {
@@ -388,21 +476,23 @@ class DirectionService {
     return polylines;
   }
 
-  // Decode an encoded polyline and simplify it with caching keyed by md5 of input+tol
-  List<LatLng> _decodeAndSimplifyCached(
-    String encoded,
-    double toleranceMeters,
-  ) {
+  // Decode an encoded polyline and optionally simplify it.
+  // Cached keyed by md5 of input+tol.
+  // If toleranceMeters <= 0, simplification is skipped.
+  List<LatLng> _decodeAndProcessCached(String encoded, double toleranceMeters) {
     final key = _polyKey(encoded, toleranceMeters);
     final cached = _polylineSimplifyCache[key];
     if (cached != null) return cached;
     final decoded = decodePolyline(encoded);
-    final simplified = PolylineSimplifier.simplifyPolyline(
-      decoded,
-      toleranceMeters,
-    );
-    _polylineSimplifyCache[key] = simplified;
-    return simplified;
+
+    List<LatLng> result;
+    if (toleranceMeters > 0) {
+      result = PolylineSimplifier.simplifyPolyline(decoded, toleranceMeters);
+    } else {
+      result = decoded;
+    }
+    _polylineSimplifyCache[key] = result;
+    return result;
   }
 
   String _polyKey(String encoded, double tol) {

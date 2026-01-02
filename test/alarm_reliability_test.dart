@@ -57,6 +57,9 @@ void main() {
     NotificationService.clearTestRecordedAlarms();
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
+    // Reset tracking service state to prevent test pollution
+    TrackingService.isTestMode = true;
+    TrackingService().resetForTesting();
   });
 
   test(
@@ -161,6 +164,7 @@ void main() {
         meters: 2000.0,
         type: 'mode_change',
         label: 'Switch to Driving',
+        associatedLegIndex: 0,
       ),
     ];
 
@@ -171,6 +175,27 @@ void main() {
       stepStops: [0.0, 0.0], // Force fallback logic
       routeEvents: events,
       destinationName: "Final Dest",
+      transitMode: true,
+      transitLegStops: [
+        TransitLegStops(
+          legStartMeters: 0.0,
+          legEndMeters: 2000.0,
+          numStops: 0,
+          stopPositions: const [],
+          stopMeters: const [],
+          isMetro: true,
+          isActualPositions: false,
+        ),
+        TransitLegStops(
+          legStartMeters: 2000.0,
+          legEndMeters: 4000.0,
+          numStops: 0,
+          stopPositions: const [],
+          stopMeters: const [],
+          isMetro: false,
+          isActualPositions: false,
+        ),
+      ],
     );
 
     // Debug check
@@ -201,6 +226,7 @@ void main() {
     );
     final alarm = NotificationService.testRecordedAlarms.last;
     expect(alarm['title'], contains('Upcoming change'));
+    expect((alarm['body'] as String), contains('Switch to Driving'));
     expect(alarm['allow'], isTrue);
 
     await service.stopTracking();
@@ -324,6 +350,7 @@ void main() {
       stepStops: [4.0, 4.0], // Stops increase then stay flat for driving
       routeEvents: events,
       destinationName: "Home",
+      transitMode: true, // First leg is Metro
     );
 
     print("Test Debug: Mixed route registered");

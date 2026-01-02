@@ -12,6 +12,7 @@ class _FakeCache implements RouteCachePort {
     required LatLng destination,
     required String mode,
     String? transitVariant,
+    int? departureTime,
   }) async {
     return entry;
   }
@@ -27,6 +28,7 @@ class _NeverDirections implements DirectionsProvider {
     required bool isDistanceMode,
     required double threshold,
     required bool transitMode,
+    bool preferMetroEvenIfClosed = false,
     bool forceRefresh = false,
   }) async {
     throw StateError('Should not hit network when offline');

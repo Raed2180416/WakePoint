@@ -22,6 +22,7 @@ abstract class DirectionsProvider {
     required bool isDistanceMode,
     required double threshold,
     required bool transitMode,
+    bool preferMetroEvenIfClosed,
     bool forceRefresh,
   });
 }
@@ -37,6 +38,7 @@ class DefaultDirectionsProvider implements DirectionsProvider {
     required bool isDistanceMode,
     required double threshold,
     required bool transitMode,
+    bool preferMetroEvenIfClosed = false,
     bool forceRefresh = false,
   }) {
     return _service.getDirections(
@@ -47,6 +49,7 @@ class DefaultDirectionsProvider implements DirectionsProvider {
       isDistanceMode: isDistanceMode,
       threshold: threshold,
       transitMode: transitMode,
+      preferMetroEvenIfClosed: preferMetroEvenIfClosed,
       forceRefresh: forceRefresh,
     );
   }
@@ -59,6 +62,7 @@ abstract class RouteCachePort {
     required LatLng destination,
     required String mode,
     String? transitVariant,
+    int? departureTime,
   });
 }
 
@@ -69,12 +73,14 @@ class DefaultRouteCachePort implements RouteCachePort {
     required LatLng destination,
     required String mode,
     String? transitVariant,
+    int? departureTime,
   }) {
     return RouteCache.get(
       origin: origin,
       destination: destination,
       mode: mode,
       transitVariant: transitVariant,
+      departureTime: departureTime,
     );
   }
 }
@@ -91,9 +97,9 @@ class OfflineCoordinator {
     DirectionsProvider? directionsProvider,
     RouteCachePort? cache,
     bool initialOffline = false,
-  })  : _directionsProvider = directionsProvider ?? DefaultDirectionsProvider(),
-        _cache = cache ?? DefaultRouteCachePort(),
-        _isOffline = initialOffline;
+  }) : _directionsProvider = directionsProvider ?? DefaultDirectionsProvider(),
+       _cache = cache ?? DefaultRouteCachePort(),
+       _isOffline = initialOffline;
 
   bool get isOffline => _isOffline;
   Stream<bool> get offlineStream => _offlineCtrl.stream;
@@ -113,6 +119,7 @@ class OfflineCoordinator {
     required bool isDistanceMode,
     required double threshold,
     required bool transitMode,
+    bool preferMetroEvenIfClosed = false,
     bool forceRefresh = false,
   }) async {
     final mode = transitMode ? 'transit' : 'driving';
@@ -128,7 +135,10 @@ class OfflineCoordinator {
       if (cached == null) {
         throw StateError('Offline and no cached route available');
       }
-      return OfflineRouteResult(directions: cached.directions, source: RouteSource.cache);
+      return OfflineRouteResult(
+        directions: cached.directions,
+        source: RouteSource.cache,
+      );
     }
 
     // Online: delegate to provider (DirectionService handles its own caching)
@@ -140,9 +150,13 @@ class OfflineCoordinator {
       isDistanceMode: isDistanceMode,
       threshold: threshold,
       transitMode: transitMode,
+      preferMetroEvenIfClosed: preferMetroEvenIfClosed,
       forceRefresh: forceRefresh,
     );
-    return OfflineRouteResult(directions: directions, source: RouteSource.network);
+    return OfflineRouteResult(
+      directions: directions,
+      source: RouteSource.network,
+    );
   }
 
   void dispose() {

@@ -48,7 +48,8 @@ void main() {
 
     final events = TransferUtils.buildRouteEvents(directions);
     expect(events.length, 2);
-    expect(events[0].type, 'mode_change');
+    // WALKING → METRO generates preBoarding (not mode_change)
+    expect(events[0].type, 'preBoarding');
     expect(events[0].meters, 300);
     expect(events[1].type, 'transfer');
     expect(events[1].meters, 300 + 800); // end of first transit step (A)

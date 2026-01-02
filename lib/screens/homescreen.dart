@@ -444,6 +444,12 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onWakeMePressed() async {
+    final stopwatch = Stopwatch()..start();
+    dev.log(
+      '[StartupPerf] WakeMe Pressed: ${stopwatch.elapsedMilliseconds}ms',
+      name: 'Performance',
+    );
+
     if (_selectedLocation == null) {
       _showErrorDialog(
         "Destination Missing",
@@ -459,13 +465,17 @@ class HomeScreenState extends State<HomeScreen> {
     final permissionService = PermissionService(context);
     final bool canProceed =
         await permissionService.requestEssentialPermissions();
+    dev.log(
+      '[StartupPerf] Permissions Checked: ${stopwatch.elapsedMilliseconds}ms',
+      name: 'Performance',
+    );
 
     if (!mounted) return;
 
     if (canProceed) {
       // Permissions were granted, proceed with tracking!
       setState(() => _isTracking = true);
-      await _proceedWithDirections();
+      await _proceedWithDirections(stopwatch);
     } else {
       // Permissions were denied. The service already showed the user a dialog.
       // We just need to reset the loading state.
@@ -473,8 +483,13 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _proceedWithDirections() async {
+  Future<void> _proceedWithDirections(Stopwatch stopwatch) async {
     try {
+      dev.log(
+        '[StartupPerf] Proceed Directions Start: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
+
       // OPTIMIZATION: Use cached position if fresh (< 30 seconds old), else get new one
       Position? currentPosition;
       if (_currentPosition != null && _lastPositionTime != null) {
@@ -499,6 +514,11 @@ class HomeScreenState extends State<HomeScreen> {
         }
       }
       currentPosition ??= await _getCurrentLocation();
+      dev.log(
+        '[StartupPerf] Location Acquired: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
+
       if (currentPosition == null) {
         _showErrorDialog(
           "Location Error",
@@ -530,6 +550,11 @@ class HomeScreenState extends State<HomeScreen> {
           startLocation: LatLng(userLat, userLng),
           destination: LatLng(destLat, destLng),
         );
+        dev.log(
+          '[StartupPerf] Metro Validation: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
+
         if (!mounted) return;
         if (!validationResult.isValid || validationResult.closestStop == null) {
           _showErrorDialog(
@@ -557,6 +582,11 @@ class HomeScreenState extends State<HomeScreen> {
 
       // Now wait for same-state validation result
       final sameState = await sameStateFuture;
+      dev.log(
+        '[StartupPerf] State Validation: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
+
       if (!mounted) return;
       if (!sameState) {
         _showErrorDialog(
@@ -571,6 +601,11 @@ class HomeScreenState extends State<HomeScreen> {
       }
 
       final directions = await directionsFuture;
+      dev.log(
+        '[StartupPerf] API Directions Fetched: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
+
       final initialETA =
           directions['routes'][0]['legs'][0]['duration']['value'] as int;
 
@@ -591,12 +626,24 @@ class HomeScreenState extends State<HomeScreen> {
       if (alarmMode == 'stops') {
         final stepData = TransferUtils.buildStepBoundariesAndStops(directions);
         final events = TransferUtils.buildRouteEvents(directions);
+        dev.log(
+          '[StartupPerf] Stops & Events Built: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
+
         // Add destination event if missing (TransferUtils might miss it if single leg)
         if (events.isEmpty || events.last.type != 'destination') {
-           final lastBound = stepData.bounds.isNotEmpty ? stepData.bounds.last : 0.0;
-           events.add(RouteEventBoundary(meters: lastBound, type: 'destination', label: 'Destination'));
+          final lastBound =
+              stepData.bounds.isNotEmpty ? stepData.bounds.last : 0.0;
+          events.add(
+            RouteEventBoundary(
+              meters: lastBound,
+              type: 'destination',
+              label: 'Destination',
+            ),
+          );
         }
-        
+
         final engine = StopLogicEngine();
         final result = engine.validateThreshold(
           userThreshold: alarmValue,
@@ -605,11 +652,16 @@ class HomeScreenState extends State<HomeScreen> {
           routeEvents: events,
         );
 
+        dev.log(
+          '[StartupPerf] Stop Logic Validated: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
+
         if (!result.isValid) {
           _showErrorDialog(
             "Invalid Stops Threshold",
-            result.errorMessage ?? 
-            "The number of stops ($alarmValue) is too high for the first segment of your journey. Max allowed is ${result.maxStops}.",
+            result.errorMessage ??
+                "The number of stops ($alarmValue) is too high for the first segment of your journey. Max allowed is ${result.maxStops}.",
           );
           if (mounted) {
             setState(() {
@@ -619,6 +671,34 @@ class HomeScreenState extends State<HomeScreen> {
           }
           return;
         }
+
+        // NEW: Validate threshold against minimum stops on any metro leg
+        // Rule: User cannot choose n >= min(stops across all metro legs)
+        final transitLegs = TransferUtils.extractTransitLegStops(directions);
+        final metroLegResult = engine.validateThresholdAgainstMetroLegs(
+          userThreshold: alarmValue.toInt(),
+          transitLegs: transitLegs,
+        );
+
+        if (!metroLegResult.isValid) {
+          _showErrorDialog(
+            "Invalid Stops Threshold",
+            metroLegResult.errorMessage ??
+                "The number of stops ($alarmValue) exceeds the minimum stops available on a metro segment.",
+          );
+          if (mounted) {
+            setState(() {
+              _isTracking = false;
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+
+        dev.log(
+          '[StartupPerf] Metro Leg Validation Passed: min=${metroLegResult.minMetroStops}',
+          name: 'Performance',
+        );
       }
 
       // 1. Start Tracking (Ensure service is running)
@@ -629,6 +709,11 @@ class HomeScreenState extends State<HomeScreen> {
           TrackingStateStore.setAlarmFired(false),
           TrackingStateStore.setNotificationsMuted(false),
         ]);
+        dev.log(
+          '[StartupPerf] Simple State Saved: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
+
         await TrackingStateStore.saveSnapshot(
           TrackingSnapshot(
             destinationName:
@@ -644,6 +729,10 @@ class HomeScreenState extends State<HomeScreen> {
             directions: directions, // Save directions for app restore
           ),
         );
+        dev.log(
+          '[StartupPerf] Heavy Snapshot Saved: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
       } catch (e) {
         dev.log('Failed to persist tracking snapshot: $e', name: 'HomeScreen');
       }
@@ -654,6 +743,11 @@ class HomeScreenState extends State<HomeScreen> {
             _selectedLocation?['description'] ?? 'Your Destination',
         alarmMode: alarmMode,
         alarmValue: alarmValue,
+        transitMode: _metroMode,
+      );
+      dev.log(
+        '[StartupPerf] Tracking Service Started: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
       );
 
       // 2. Register Route (fire-and-forget for faster navigation)
@@ -668,6 +762,8 @@ class HomeScreenState extends State<HomeScreen> {
               transitMode: _metroMode,
               destinationName:
                   _selectedLocation?['description'] ?? 'Your Destination',
+              activateRoute:
+                  true, // Ensure RouteSessionManager updates active key & triggers migration
             )
             .catchError((e) {
               dev.log(
@@ -698,6 +794,11 @@ class HomeScreenState extends State<HomeScreen> {
         'lat': destLat,
         'lng': destLng,
       };
+
+      dev.log(
+        '[StartupPerf] Start Navigation: ${stopwatch.elapsedMilliseconds}ms',
+        name: 'Performance',
+      );
 
       if (!context.mounted) return;
       Navigator.pushReplacementNamed(
@@ -771,6 +872,7 @@ class HomeScreenState extends State<HomeScreen> {
         isDistanceMode: _useDistanceMode,
         threshold: threshold,
         transitMode: _metroMode,
+        preferMetroEvenIfClosed: _metroMode,
         forceRefresh: false,
       );
       return res.directions;

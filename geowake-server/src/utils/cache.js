@@ -21,7 +21,7 @@ class CacheManager {
   generateKey(type, params) {
     switch (type) {
       case 'directions':
-        return `directions:${params.origin}:${params.destination}:${params.mode || 'driving'}:${params.transit_mode || ''}`;
+        return `directions:${params.origin}:${params.destination}:${params.mode || 'driving'}:${params.transit_mode || ''}:${params.departure_time || ''}`;
       
       case 'places':
         return `places:${params.input}:${params.location || ''}:${params.radius || ''}:${params.components || ''}`;
