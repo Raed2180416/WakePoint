@@ -1,0 +1,55 @@
+METRO COVERAGE REPORT
+=====================
+
+CITY            | FOUND      | EXPECTED   | STATUS    
+-------------------------------------------------------
+delhi_ncr       | 301        | 288        | OK        
+bengaluru       | 84         | 67         | OK        
+mumbai          | 46         | 68         | LOW       
+kolkata         | 57         | 58         | OK        
+hyderabad       | 66         | 57         | OK        
+chennai         | 44         | 42         | OK        
+ahmedabad       | 44         | 39         | OK        
+nagpur          | 25         | 38         | LOW       
+pune            | 29         | 29         | OK        
+kochi           | 27         | 25         | OK        
+lucknow         | 21         | 21         | OK        
+jaipur          | 11         | 11         | OK        
+navi_mumbai     | 0          | 11         | MISSING   
+kanpur          | 14         | 14         | OK        
+agra            | 0          | 6          | MISSING   
+indore          | 5          | 5          | OK        
+patna           | 0          | 3          | MISSING   
+
+
+MISSING CITY CANDIDATES
+-----------------------
+Kanpur: 0 candidates
+Agra: 2 candidates
+  Samples: Agra Fort Station, Agrasen Square
+Indore: 0 candidates
+Patna: 0 candidates
+
+
+ORPHANED STOPS (Sample)
+-----------------------
+ (none/none)
+AIIMS (none/none)
+Aarey (none/none)
+Agra Fort Station (none/none)
+Agrasen Square (none/none)
+Akurli (none/none)
+Alkapuri (none/none)
+Ambedkar Square (none/none)
+Anand Nagar (none/none)
+Andheri (West) (none/none)
+Andheri L1 (none/none)
+Asalpha (none/none)
+Automotive Square (none/none)
+Azad Nagar (none/none)
+BSNL (none/none)
+Balanagar Metro (none/none)
+Bangur Nagar (none/none)
+Barasat (none/none)
+Basai (none/none)
+Bhootnath (none/none)

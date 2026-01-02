@@ -1001,7 +1001,8 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
 
       _lastSnapResult = snap;
 
-      progressMeters = snap.progressMeters;
+      final progress = snap.progressMeters;
+      progressMeters = progress;
       _registry.updateSessionState(
         active.key,
         lastSnapIndex: snap.segmentIndex,
@@ -1009,12 +1010,11 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
       );
 
       // Track maximum progress seen per route key (used to gate alarm-reset).
-      if (activeKey != null &&
-          progressMeters != null &&
-          progressMeters.isFinite) {
-        final prevMax = _maxProgressMetersSeenByKey[activeKey!];
-        if (prevMax == null || !prevMax.isFinite || progressMeters > prevMax) {
-          _maxProgressMetersSeenByKey[activeKey!] = progressMeters;
+      final key = activeKey;
+      if (key != null && progress.isFinite) {
+        final prevMax = _maxProgressMetersSeenByKey[key];
+        if (prevMax == null || !prevMax.isFinite || progress > prevMax) {
+          _maxProgressMetersSeenByKey[key] = progress;
         }
       }
       // --- Soft Lock / Deviation Check (Bus Reality) ---

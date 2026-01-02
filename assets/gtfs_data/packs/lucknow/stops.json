@@ -1,0 +1,130 @@
+{
+  "stops": [
+    {
+      "id": "OSM_3997322401",
+      "name": "Alambagh",
+      "lat": 26.8140101,
+      "lng": 80.9025123
+    },
+    {
+      "id": "OSM_3997322400",
+      "name": "Alambagh Bus Station",
+      "lat": 26.8184732,
+      "lng": 80.9072927
+    },
+    {
+      "id": "OSM_8006089162",
+      "name": "Amausi",
+      "lat": 26.7713636,
+      "lng": 80.8786976
+    },
+    {
+      "id": "OSM_9655708797",
+      "name": "Badshah Nagar",
+      "lat": 26.8706977,
+      "lng": 80.9610133
+    },
+    {
+      "id": "OSM_9655708796",
+      "name": "Bhootnath Market",
+      "lat": 26.8722368,
+      "lng": 80.9823474
+    },
+    {
+      "id": "OSM_4244207702",
+      "name": "Charbagh Railway Station",
+      "lat": 26.8324023,
+      "lng": 80.9231133
+    },
+    {
+      "id": "OSM_8001538669",
+      "name": "Chaudhary Charan Singh International Airport",
+      "lat": 26.7662824,
+      "lng": 80.8836391
+    },
+    {
+      "id": "OSM_4244207703",
+      "name": "Durgapuri",
+      "lat": 26.8320029,
+      "lng": 80.9154077
+    },
+    {
+      "id": "OSM_9655708801",
+      "name": "Hazratganj",
+      "lat": 26.8500335,
+      "lng": 80.9415944
+    },
+    {
+      "id": "OSM_6445132137",
+      "name": "Hussainganj",
+      "lat": 26.8384284,
+      "lng": 80.93433
+    },
+    {
+      "id": "OSM_9655708798",
+      "name": "IT College",
+      "lat": 26.8710268,
+      "lng": 80.9456475
+    },
+    {
+      "id": "OSM_9655708795",
+      "name": "Indira Nagar",
+      "lat": 26.8727659,
+      "lng": 80.9909732
+    },
+    {
+      "id": "OSM_9655708800",
+      "name": "KD Singh Babu Stadium",
+      "lat": 26.8539449,
+      "lng": 80.9368084
+    },
+    {
+      "id": "OSM_3997322402",
+      "name": "Krishna Nagar",
+      "lat": 26.794391,
+      "lng": 80.891762
+    },
+    {
+      "id": "OSM_9655708793",
+      "name": "Lekhraj Market",
+      "lat": 26.8709686,
+      "lng": 80.9738961
+    },
+    {
+      "id": "OSM_3997322403",
+      "name": "Mawaiya",
+      "lat": 26.8253101,
+      "lng": 80.9098575
+    },
+    {
+      "id": "OSM_9655708794",
+      "name": "Munshipulia",
+      "lat": 26.8879654,
+      "lng": 80.9959863
+    },
+    {
+      "id": "OSM_4244207745",
+      "name": "Sachivalaya",
+      "lat": 26.8415965,
+      "lng": 80.9399056
+    },
+    {
+      "id": "OSM_3997322776",
+      "name": "Singar Nagar",
+      "lat": 26.8030998,
+      "lng": 80.8964272
+    },
+    {
+      "id": "OSM_8006089161",
+      "name": "Transport Nagar",
+      "lat": 26.777877,
+      "lng": 80.8826512
+    },
+    {
+      "id": "OSM_9655708799",
+      "name": "Vishwavidyalaya",
+      "lat": 26.865529,
+      "lng": 80.9395458
+    }
+  ]
+}

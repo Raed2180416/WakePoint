@@ -1,0 +1,2 @@
+version,device name,recording epoch time,recording time,recording timezone,platform,appVersion,device id,sensors,sampleRateMs,standardisation
+3,CPH2717,1766039657273,2025-12-18_06-34-17,Asia/Kolkata,android,1.49.0,5e00f311-31c1-4635-a34c-b1f757b2eb97,Accelerometer|Gyroscope|Orientation|Magnetometer|Compass|Location|Watch Magnetometer|Annotation|TotalAcceleration|MagnetometerUncalibrated|GyroscopeUncalibrated|AccelerometerUncalibrated,10|10|10|10|10|0|10||10|10|10|10,false

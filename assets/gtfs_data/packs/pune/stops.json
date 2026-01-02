@@ -1,0 +1,178 @@
+{
+  "stops": [
+    {
+      "id": "OSM_9599243854",
+      "name": "Anandnagar",
+      "lat": 18.5095724,
+      "lng": 73.8140749
+    },
+    {
+      "id": "OSM_7944597711",
+      "name": "Bopodi",
+      "lat": 18.5696675,
+      "lng": 73.8381109
+    },
+    {
+      "id": "OSM_11699340649",
+      "name": "Bund Garden",
+      "lat": 18.5405933,
+      "lng": 73.8834394
+    },
+    {
+      "id": "OSM_11097527718",
+      "name": "Chhatrapati Sambhaji Udyan",
+      "lat": 18.5201583,
+      "lng": 73.8474797
+    },
+    {
+      "id": "OSM_7944584975",
+      "name": "Dapodi",
+      "lat": 18.5837649,
+      "lng": 73.8337656
+    },
+    {
+      "id": "OSM_11097527725",
+      "name": "Deccan Gymkhana",
+      "lat": 18.5164599,
+      "lng": 73.8443734
+    },
+    {
+      "id": "OSM_11097510274",
+      "name": "District Court",
+      "lat": 18.5292042,
+      "lng": 73.8570209
+    },
+    {
+      "id": "OSM_7944597685",
+      "name": "District Court (Aqua Line)",
+      "lat": 18.5271448,
+      "lng": 73.8580006
+    },
+    {
+      "id": "OSM_9599243857",
+      "name": "Garware College",
+      "lat": 18.5119886,
+      "lng": 73.8380505
+    },
+    {
+      "id": "OSM_9599243855",
+      "name": "Ideal Colony",
+      "lat": 18.508885,
+      "lng": 73.822144
+    },
+    {
+      "id": "OSM_11699340655",
+      "name": "Kalyani Nagar",
+      "lat": 18.5444806,
+      "lng": 73.9056979
+    },
+    {
+      "id": "OSM_7944597699",
+      "name": "Kasarwadi",
+      "lat": 18.5996201,
+      "lng": 73.8272644
+    },
+    {
+      "id": "OSM_2194045720",
+      "name": "Kothrud",
+      "lat": 18.5038889,
+      "lng": 73.807673
+    },
+    {
+      "id": "OSM_7944584974",
+      "name": "Mangalwar Peth",
+      "lat": 18.5300875,
+      "lng": 73.8654426
+    },
+    {
+      "id": "OSM_9599243856",
+      "name": "Nalstop",
+      "lat": 18.5073567,
+      "lng": 73.8287815
+    },
+    {
+      "id": "OSM_7944597706",
+      "name": "Nashik Phata",
+      "lat": 18.609303,
+      "lng": 73.8200965
+    },
+    {
+      "id": "OSM_7944584980",
+      "name": "PMC Bhavan",
+      "lat": 18.5228092,
+      "lng": 73.8533687
+    },
+    {
+      "id": "OSM_7944584963",
+      "name": "Phugewadi",
+      "lat": 18.5911058,
+      "lng": 73.8311472
+    },
+    {
+      "id": "OSM_10214268972",
+      "name": "Pimpri Chinchwad Municipal Corporation (PCMC)",
+      "lat": 18.6293185,
+      "lng": 73.8032857
+    },
+    {
+      "id": "OSM_7944597689",
+      "name": "Pune Railway Station",
+      "lat": 18.529751,
+      "lng": 73.872596
+    },
+    {
+      "id": "OSM_11699340657",
+      "name": "Ramwadi",
+      "lat": 18.5571183,
+      "lng": 73.9086071
+    },
+    {
+      "id": "OSM_7944584984",
+      "name": "Ruby Hall Clinic",
+      "lat": 18.5327176,
+      "lng": 73.8777486
+    },
+    {
+      "id": "OSM_7944597690",
+      "name": "Sant Tukaram Nagar",
+      "lat": 18.6145248,
+      "lng": 73.8157455
+    },
+    {
+      "id": "OSM_11097510271",
+      "name": "Shivaji Nagar",
+      "lat": 18.532172,
+      "lng": 73.8496602
+    },
+    {
+      "id": "OSM_243952358",
+      "name": "Shivajinagar",
+      "lat": 18.5322192,
+      "lng": 73.8499262
+    },
+    {
+      "id": "OSM_9599243853",
+      "name": "Vanaz",
+      "lat": 18.5071853,
+      "lng": 73.8051948
+    },
+    {
+      "id": "OSM_11699340652",
+      "name": "Yerwada",
+      "lat": 18.5453173,
+      "lng": 73.8866882
+    },
+    {
+      "id": "OSM_12211880200",
+      "name": "\u0915\u0938\u092c\u093e \u092a\u0947\u0920",
+      "lat": 18.5214436,
+      "lng": 73.8595779
+    },
+    {
+      "id": "OSM_7944597710",
+      "name": "\u0938\u094d\u0935\u093e\u0930\u0917\u0947\u091f",
+      "lat": 18.4997453,
+      "lng": 73.8574604
+    }
+  ]
+}

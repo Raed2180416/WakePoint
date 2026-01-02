@@ -1,0 +1,14 @@
+60 percent rule : this rule is applied to all non metro legs on the route, including all preboaridng alarm fire events, and final leg destination alarm events if relevant
+if theres 60 percent of distance left between the switchpoint from where a non metro leg starts and the next switchpoint/destination, then we fire the relevant alarm
+note: across all modes we need to make sure, across one leg only one alarm event can ever fire, ie every leg can only fire one alarm, if alarms fired we wait for next leg to start before evaluation of the next alarm event
+we have 2 modes : metro/non-metro(walking/driving/bus) with metro mode having time/stops mode and non metro mode having time and distance mode
+Metro mode(time mode): we take user input for the number of minutes before we need to alert user. and in this time based case, all legs including metro and non metro legs,
+all alarm events will follow eta(which will obviously change depending on the leg youre on and stuff and well your current progress and how quickly it changes), n minutes prior to next switchpoint/destination. no 60 percent rule here. If by chance the n chose by user is much greater than the actual eta, then we just fire the relevant alamr immediately provided we actually follow all eta rules (3 speed samples, moved a certain amount, etc). 
+Metro mode(Stops mode): we dont allow user to chose an n value >= minimum (number of metro stops along any of the metro legs along the route)
+the non metro legs use 60 percent rule to fire preboarding/finaldestination events
+we use osm data available to mark stops along fetched polylines, and then alert user n-stops prior to next switchpoint
+in the rarecase, that along a particular metro eg we have no intermediate stops, ie (switchpoint where we board said metro leg, and the next stop being the end of the leg), we fire an alarm at the switchpoint itself, since its one stop prior to the end of the leg
+in non metro mode, since its not multi legged, its much simpler, we fire final destination alarm n minutes before final stop, or n km before final stop
+
+any doubts any gaps at all ? any edge cases i havnent thought about ??
+

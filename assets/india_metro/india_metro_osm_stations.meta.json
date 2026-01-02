@@ -1,0 +1,14 @@
+{
+  "generated_at_utc": "2025-12-25T12:52:17.899191Z",
+  "source": {
+    "name": "OpenStreetMap contributors via Overpass API",
+    "endpoint": "https://overpass-api.de/api/interpreter",
+    "license": "ODbL-1.0"
+  },
+  "counts": {
+    "raw_elements": 916,
+    "stations_parsed": 916,
+    "stations_deduped": 869
+  },
+  "overpass_query": "[out:json][timeout:180];\narea[\"ISO3166-1\"=\"IN\"][admin_level=2]->.a;\n(\n  // Common station tags\n  node(area.a)[railway~\"^(station|halt|stop)$\"][station~\"^(subway|light_rail)$\"];\n  way(area.a)[railway~\"^(station|halt|stop)$\"][station~\"^(subway|light_rail)$\"];\n  relation(area.a)[railway~\"^(station|halt|stop)$\"][station~\"^(subway|light_rail)$\"];\n\n  // Public transport tagging patterns\n  node(area.a)[public_transport=\"station\"][subway=yes];\n  way(area.a)[public_transport=\"station\"][subway=yes];\n  relation(area.a)[public_transport=\"station\"][subway=yes];\n\n  node(area.a)[public_transport=\"station\"][light_rail=yes];\n  way(area.a)[public_transport=\"station\"][light_rail=yes];\n  relation(area.a)[public_transport=\"station\"][light_rail=yes];\n\n  // Some mappers use metro=yes\n  node(area.a)[public_transport=\"station\"][metro=yes];\n  way(area.a)[public_transport=\"station\"][metro=yes];\n  relation(area.a)[public_transport=\"station\"][metro=yes];\n);\n// Ensure ways/relations include a computed center.\nout tags center;\n"
+}

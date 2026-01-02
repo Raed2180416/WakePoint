@@ -1,0 +1,137 @@
+Searching for 'kanpur' in JSON...
+--- ITEM FOUND ---
+{
+  "osm": {
+    "type": "node",
+    "id": 7944298553
+  },
+  "name": "Bada Chauraha",
+  "operator": "Uttar Pradesh Metro Rail Corporation",
+  "network": "Kanpur Metro",
+  "line": null,
+  "ref": null,
+  "lat": 26.4726897,
+  "lng": 80.3523972,
+  "tags": {
+    "name": "Bada Chauraha",
+    "network": "Kanpur Metro",
+    "network:wikidata": "Q17063873",
+    "operator": "Uttar Pradesh Metro Rail Corporation",
+    "public_transport": "station",
+    "railway": "station",
+    "station": "subway",
+    "subway": "yes"
+  }
+}
+--- ITEM FOUND ---
+{
+  "osm": {
+    "type": "node",
+    "id": 7944317797
+  },
+  "name": "Chunniganj",
+  "operator": "Uttar Pradesh Metro Rail Corporation",
+  "network": "Kanpur Metro",
+  "line": null,
+  "ref": null,
+  "lat": 26.4770395,
+  "lng": 80.3370699,
+  "tags": {
+    "name": "Chunniganj",
+    "network": "Kanpur Metro",
+    "network:wikidata": "Q17063873",
+    "operator": "Uttar Pradesh Metro Rail Corporation",
+    "public_transport": "station",
+    "railway": "station",
+    "station": "subway",
+    "subway": "yes"
+  }
+}
+--- ITEM FOUND ---
+{
+  "osm": {
+    "type": "node",
+    "id": 7944298578
+  },
+  "name": "Geeta Nagar",
+  "operator": "Uttar Pradesh Metro Rail Corporation",
+  "network": "Kanpur Metro",
+  "line": null,
+  "ref": null,
+  "lat": 26.4870224,
+  "lng": 80.2921052,
+  "tags": {
+    "colour": "orange",
+    "name": "Geeta Nagar",
+    "name:hi": "\u0917\u0940\u0924\u093e \u0928\u0917\u0930",
+    "network": "Kanpur Metro",
+    "network:wikidata": "Q17063873",
+    "note": "Contributors are requested to not edit the \"network\" and the \"operator\" tags. (2023/11/08)",
+    "operator": "Uttar Pradesh Metro Rail Corporation",
+    "public_transport": "station",
+    "railway": "station",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q110300585",
+    "wikipedia": "en:Geeta Nagar metro station"
+  }
+}
+--- ITEM FOUND ---
+{
+  "osm": {
+    "type": "node",
+    "id": 7944298542
+  },
+  "name": "Gurudev Chauraha",
+  "operator": "Uttar Pradesh Metro Rail Corporation",
+  "network": "Kanpur Metro",
+  "line": null,
+  "ref": null,
+  "lat": 26.4915749,
+  "lng": 80.2843697,
+  "tags": {
+    "colour": "orange",
+    "name": "Gurudev Chauraha",
+    "name:hi": "\u0917\u0941\u0930\u0941\u0926\u0947\u0935 \u091a\u094c\u0930\u093e\u0939\u093e",
+    "network": "Kanpur Metro",
+    "network:wikidata": "Q17063873",
+    "note": "Contributors are requested to not edit the \"network\" and the \"operator\" tags. (2023/11/08)",
+    "operator": "Uttar Pradesh Metro Rail Corporation",
+    "public_transport": "station",
+    "railway": "station",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q110300584",
+    "wikipedia": "en:Gurudev Chauraha metro station"
+  }
+}
+--- ITEM FOUND ---
+{
+  "osm": {
+    "type": "node",
+    "id": 7944317792
+  },
+  "name": "IIT Kanpur",
+  "operator": "Uttar Pradesh Metro Rail Corporation",
+  "network": "Kanpur Metro",
+  "line": null,
+  "ref": null,
+  "lat": 26.5092071,
+  "lng": 80.2483111,
+  "tags": {
+    "colour": "orange",
+    "name": "IIT Kanpur",
+    "name:hi": "\u0906\u0908 \u0906\u0908 \u091f\u0940 \u0915\u093e\u0928\u092a\u0941\u0930",
+    "network": "Kanpur Metro",
+    "network:wikidata": "Q17063873",
+    "note": "Contributors are requested to not edit the \"network\" and the \"operator\" tags. (2023/11/08)",
+    "operator": "Uttar Pradesh Metro Rail Corporation",
+    "public_transport": "station",
+    "railway": "station",
+    "station": "subway",
+    "subway": "yes",
+    "wikidata": "Q110300579",
+    "wikipedia": "en:IIT Kanpur metro station"
+  }
+}
+Total found matching 'kanpur': 5 (showing max 5)
