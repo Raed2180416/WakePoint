@@ -108,10 +108,13 @@ void main() {
 
     // --- EXECUTION ---
 
-    // 1. Approaching Switch 1
+    // 1. Approaching Switch 1 (at 1100m)
+    // 60% rule triggers when 60% of leg remains (after traveling 40%)
+    // For 1100m leg: trigger at 660m remaining = 440m traveled
+    // Position 0.005 lat = ~555m from origin
     var nextState = svc.activeRouteStateStream.first;
     print('DEBUG: Test: Adding GPS point 1');
-    gps.add(p(0.0015, 0.0)); // ~100m from start
+    gps.add(p(0.005, 0.0)); // ~555m from start, should trigger 60% rule
     await nextState.timeout(const Duration(seconds: 2));
     print('DEBUG: Test: State received');
     await Future.delayed(const Duration(milliseconds: 250));
@@ -120,13 +123,20 @@ void main() {
     expect(
       alarms.any((a) => (a['body'] as String).contains('Metro Stn 1')),
       isTrue,
-      reason: 'Failed to trigger Switch 1 alarm at 1km',
+      reason: 'Failed to trigger Switch 1 alarm via 60% rule',
     );
     NotificationService.clearTestRecordedAlarms();
 
-    // 2. Approaching Switch 2
+    // 2. Approaching Switch 2 (at 4400m)
+    // Metro leg: 1100-4400m with 6 stops
+    // stopMeters formula: prevBound + (legLength * s / numStopsInStep)
+    // legLength = 3300m, numStops = 6
+    // Stop positions: 1650, 2200, 2750, 3300, 3850, 4400m
+    // With threshold=2, alarm fires when stopsRemaining < 2 (i.e., 0 or 1 remaining)
+    // Position 0.035 lat ≈ 3889m (past stop 5 at 3850m), so 1 stop remaining (4400m)
+    // 1 < 2 = true, alarm should fire
     nextState = svc.activeRouteStateStream.first;
-    gps.add(p(0.03, 0.0));
+    gps.add(p(0.035, 0.0));
     await nextState.timeout(const Duration(seconds: 2));
     await Future.delayed(const Duration(milliseconds: 250));
 
@@ -134,7 +144,8 @@ void main() {
     expect(
       alarms.any((a) => (a['body'] as String).contains('Metro Stn 2')),
       isTrue,
-      reason: 'Failed to trigger Switch 2 alarm at 2 stops out',
+      reason:
+          'Failed to trigger Switch 2 alarm at 1 stop remaining (threshold=2)',
     );
     NotificationService.clearTestRecordedAlarms();
 

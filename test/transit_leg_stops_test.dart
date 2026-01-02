@@ -2,6 +2,7 @@
 // Tests for discrete transit leg stop tracking
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'package:geowake2/services/polyline_decoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -172,6 +173,8 @@ void main() {
     });
 
     test('extractTransitLegStops parses directions correctly', () {
+      // Polyline from (0,0) to (0.005, 0.005) is ~786m diagonal
+      // Polyline from (0.005, 0.005) to (0.01, 0.01) is also ~786m diagonal
       final step1Poly = encodePolyline([
         const LatLng(0.0, 0.0),
         const LatLng(0.005, 0.005),
@@ -181,6 +184,10 @@ void main() {
         const LatLng(0.01, 0.01),
       ]);
 
+      // Calculate expected polyline lengths
+      final step1Length = Geolocator.distanceBetween(0.0, 0.0, 0.005, 0.005);
+      final step2Length = Geolocator.distanceBetween(0.005, 0.005, 0.01, 0.01);
+
       final directions = {
         'routes': [
           {
@@ -189,12 +196,16 @@ void main() {
                 'steps': [
                   {
                     'travel_mode': 'WALKING',
-                    'distance': {'value': 800},
+                    'distance': {
+                      'value': 800,
+                    }, // API value ignored, polyline used
                     'polyline': {'points': step1Poly},
                   },
                   {
                     'travel_mode': 'TRANSIT',
-                    'distance': {'value': 2000},
+                    'distance': {
+                      'value': 2000,
+                    }, // API value ignored, polyline used
                     'polyline': {'points': step2Poly},
                     'transit_details': {
                       'line': {
@@ -213,21 +224,43 @@ void main() {
 
       final legs = TransferUtils.extractTransitLegStops(directions);
 
-      expect(legs.length, equals(1));
-      expect(legs[0].legStartMeters, equals(800.0));
-      expect(legs[0].legEndMeters, equals(2800.0));
-      expect(legs[0].numStops, equals(5));
-      expect(legs[0].lineName, equals('M1'));
-      expect(legs[0].stopMeters.length, equals(5));
+      // `extractTransitLegStops` now returns non-transit legs too (walk/drive)
+      // for stable leg IDs and consistent alarm behavior.
+      expect(legs.length, equals(2));
 
-      // 5 stops = 6 segments, stops at 1/6, 2/6, 3/6, 4/6, 5/6 of 2000m
-      // = 333.3, 666.7, 1000, 1333.3, 1666.7m into leg
-      // + 800m walking = 1133.3, 1466.7, 1800, 2133.3, 2466.7m cumulative
-      expect(legs[0].stopMeters[0], closeTo(1133.3, 1.0));
-      expect(legs[0].stopMeters[1], closeTo(1466.7, 1.0));
-      expect(legs[0].stopMeters[2], closeTo(1800.0, 1.0));
-      expect(legs[0].stopMeters[3], closeTo(2133.3, 1.0));
-      expect(legs[0].stopMeters[4], closeTo(2466.7, 1.0));
+      // Transit leg is the second entry.
+      final transit = legs[1];
+
+      // Now uses polyline length instead of API distance
+      // Use tolerance of 3.0m to account for floating-point precision in geodesic calculations
+      expect(transit.legStartMeters, closeTo(step1Length, 3.0));
+      expect(transit.legEndMeters, closeTo(step1Length + step2Length, 3.0));
+      expect(transit.numStops, equals(5));
+      expect(transit.lineName, equals('M1'));
+      expect(transit.stopMeters.length, equals(5));
+
+      // 5 stops = 6 segments, stops at 1/6, 2/6, 3/6, 4/6, 5/6 of step2Length
+      final stopInterval = step2Length / 6;
+      expect(
+        transit.stopMeters[0],
+        closeTo(step1Length + stopInterval * 1, 3.0),
+      );
+      expect(
+        transit.stopMeters[1],
+        closeTo(step1Length + stopInterval * 2, 3.0),
+      );
+      expect(
+        transit.stopMeters[2],
+        closeTo(step1Length + stopInterval * 3, 3.0),
+      );
+      expect(
+        transit.stopMeters[3],
+        closeTo(step1Length + stopInterval * 4, 3.0),
+      );
+      expect(
+        transit.stopMeters[4],
+        closeTo(step1Length + stopInterval * 5, 3.0),
+      );
     });
 
     test('TransitLegStops serialization roundtrip', () {

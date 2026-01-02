@@ -105,9 +105,37 @@ class _SplashScreenState extends State<SplashScreen>
     final restoreSession = await TrackingStateStore.isActive();
 
     if (restoreSession) {
-      // Go straight to tracking; avoid flashing a map during startup.
+      // Load snapshot to pass route data to mapTracking screen
+      final snapshot = await TrackingStateStore.loadSnapshot();
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/mapTracking');
+
+      if (snapshot == null || snapshot.directions == null) {
+        // Snapshot missing or corrupted - clean up zombie state and go home
+        dev.log(
+          'SplashScreen: Snapshot missing or corrupted, cleaning up',
+          name: 'SplashScreen',
+        );
+        await TrackingService().completeEndTracking(navigateHome: false);
+        Navigator.of(context).pushReplacementNamed('/');
+        return;
+      }
+
+      // Pass all required data to mapTracking screen, including user's original
+      // alarm settings so any route refetch respects the initial constraints
+      Navigator.of(context).pushReplacementNamed(
+        '/mapTracking',
+        arguments: {
+          'lat': snapshot.destinationLat,
+          'lng': snapshot.destinationLng,
+          'destination': snapshot.destinationName,
+          'directions': snapshot.directions,
+          'metroMode': snapshot.metroMode,
+          'userLat': snapshot.userLat,
+          'userLng': snapshot.userLng,
+          'mode': snapshot.alarmMode,
+          'value': snapshot.alarmValue,
+        },
+      );
     } else {
       // Normal splash delay
       _navTimer = Timer(const Duration(seconds: 3), () {

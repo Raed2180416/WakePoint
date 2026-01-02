@@ -63,6 +63,8 @@ void main() {
       gps = StreamController<Position>();
       testGpsStream = gps.stream;
       svc = TrackingService();
+      // Reset state to ensure clean session manager with isTestMode=true
+      svc.resetForTesting();
     });
 
     tearDown(() async {
@@ -87,7 +89,16 @@ void main() {
           20,
         ); // north-south along lng=0
 
-        // Register both routes via direct API (bypass Directions polyline complexity)
+        // Start tracking first (this clears the registry)
+        logStep('Starting tracking (test mode, accelerated timers)');
+        await svc.startTracking(
+          destination: LatLng(0.01, 0.01),
+          destinationName: 'Dest',
+          alarmMode: 'distance',
+          alarmValue: 5.0,
+        );
+
+        // Register routes AFTER startTracking to avoid them being cleared
         logStep('Registering two cached routes r1 (E-W) and r2 (N-S)');
         svc.registerRoute(
           key: 'r1',
@@ -100,15 +111,6 @@ void main() {
           mode: 'driving',
           destinationName: 'B',
           points: r2,
-        );
-
-        // Start tracking to initialize background loop
-        logStep('Starting tracking (test mode, accelerated timers)');
-        await svc.startTracking(
-          destination: LatLng(0.01, 0.01),
-          destinationName: 'Dest',
-          alarmMode: 'distance',
-          alarmValue: 5.0,
         );
 
         // Subscribe to switch events
@@ -145,6 +147,8 @@ void main() {
         // Expect at least one switch r1->r2
         final switched = switches.any((s) => s.contains('r1->r2'));
         // Either manager switches to r2 or reroute policy fires due to sustained deviation
+        print('DEBUG: switches=$switches, reroutes=$reroutes');
+        print('DEBUG: registeredRouteKeys=${svc.registeredRouteKeys.toList()}');
         expect(switched || reroutes.any((v) => v), isTrue);
         logInfo('Switches observed: $switches');
         logInfo('Reroute decisions: $reroutes');

@@ -221,7 +221,9 @@ class NotificationService {
       if (response.payload == 'tracking_paused' ||
           response.payload == 'journey_paused') {
         try {
-          await TrackingService().resumeFromNotification();
+          if (!TrackingService.isTestMode) {
+            await TrackingService().resumeFromNotification();
+          }
         } catch (_) {}
       }
 

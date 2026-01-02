@@ -147,9 +147,21 @@ class RouteRegistry {
     _entries.clear();
   }
 
-  List<RouteEntry> get entries =>
-      _entries.values.toList()
-        ..sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
+  /// Get all entries sorted by most recently used.
+  /// Returns a NEW list that is safe to iterate over even if the registry
+  /// is modified during iteration.
+  List<RouteEntry> get entries => List.unmodifiable(
+    _entries.values.toList()..sort((a, b) => b.lastUsed.compareTo(a.lastUsed)),
+  );
+
+  /// Get entry by key. Returns null if not found.
+  RouteEntry? getByKey(String key) => _entries[key];
+
+  /// Check if registry contains a key.
+  bool containsKey(String key) => _entries.containsKey(key);
+
+  /// Get the number of entries in the registry.
+  int get length => _entries.length;
 
   void upsert(RouteEntry entry) {
     final existing = _entries[entry.key];

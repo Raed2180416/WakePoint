@@ -157,13 +157,21 @@ void main() {
       testGpsStream = gps.stream;
 
       final dir = syntheticOvershootDirections();
-      svc.registerRouteFromDirections(
+      await svc.registerRouteFromDirections(
         directions: dir,
         origin: const LatLng(0.0, 0.0),
         destination: const LatLng(0.03, 0.03),
         transitMode: true,
         destinationName: 'Station C',
       );
+
+      // Debug: print registered events
+      // print('DEBUG: Registered Route Keys: ${svc.registeredRouteKeys.toList()}');
+      // final events = svc.routeEvents;
+      // print('DEBUG: Registered Events count: ${events.length}');
+      // for (final evt in events) {
+      //   print('DEBUG: Event: label=${evt.label}, type=${evt.type}, meters=${evt.meters}');
+      // }
 
       // Alarm set to 1 stop prior
       await svc.startTracking(
@@ -188,7 +196,12 @@ void main() {
       gps.add(
         pWithTime(0.02, 0.02, speed: 1.0),
       ); // Slow speed to trigger auto-switch
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(
+        const Duration(milliseconds: 1000),
+      ); // Longer delay for evaluation
+
+      // DEBUG: Print all recorded alarms
+      // print('DEBUG: All recorded alarms: ${NotificationService.testRecordedAlarms}');
 
       // Check for alarms
       final transferAlarms =
@@ -200,9 +213,7 @@ void main() {
               )
               .toList();
 
-      print(
-        'DEBUG: Recorded Alarms: ${NotificationService.testRecordedAlarms}',
-      );
+      // print('DEBUG: Transfer alarms found: $transferAlarms');
 
       // EXPECTATION: This SHOULD fail if the bug exists.
       // The alarm should have fired for "Station B (Transfer)".

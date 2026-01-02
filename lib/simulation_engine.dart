@@ -18,6 +18,7 @@ class SimulationEngine {
 
   // Getters
   List<LatLng> get route => _route;
+  bool get hasRoute => _route.isNotEmpty;
 
   // Distance Cache
   List<double> _segmentDistances = [];

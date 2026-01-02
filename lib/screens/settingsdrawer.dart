@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import '../main.dart';
+import 'package:geowake2/services/tracking_state_store.dart';
 
 // --- STEP 1: ADD THIS IMPORT ---
 // This line tells our settings drawer that the RingtonesScreen exists and where to find it.
 import 'package:geowake2/screens/ringtones_screen.dart';
 
- 
 class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({super.key});
 
@@ -43,6 +43,7 @@ class SettingsDrawer extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ),
+            const _PreboardingToggleTile(),
             ListTile(
               leading: const Icon(Icons.alarm),
               title: const Text('Alarm Ringtones'),
@@ -51,11 +52,13 @@ class SettingsDrawer extends StatelessWidget {
                 // This closes the drawer before navigating to the new screen
                 // for a smoother user experience.
                 Navigator.of(context).pop();
-                
+
                 // This is the command that pushes the RingtonesScreen onto the view.
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const RingtonesScreen(),
-                ));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const RingtonesScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -76,6 +79,47 @@ class SettingsDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PreboardingToggleTile extends StatefulWidget {
+  const _PreboardingToggleTile();
+
+  @override
+  State<_PreboardingToggleTile> createState() => _PreboardingToggleTileState();
+}
+
+class _PreboardingToggleTileState extends State<_PreboardingToggleTile> {
+  bool _enabled = TrackingStateStore.preboardingEnabledSync();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final v = await TrackingStateStore.preboardingEnabled();
+    if (!mounted) return;
+    setState(() {
+      _enabled = v;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: const Icon(Icons.directions_subway),
+      title: const Text('Preboarding alarms'),
+      subtitle: const Text('Notify before boarding metro'),
+      value: _enabled,
+      onChanged: (v) {
+        setState(() {
+          _enabled = v;
+        });
+        TrackingStateStore.setPreboardingEnabled(v);
+      },
     );
   }
 }

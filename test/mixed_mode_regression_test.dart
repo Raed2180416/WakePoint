@@ -227,13 +227,19 @@ void main() {
 
     // 3. Move along Metro.
     // Total Transit Dist = 6678 - 1113 = 5565m.
-    // 5 stops. 1 stop approx 1113m.
+    // 5 stops distributed uniformly across the leg.
+    // Stop positions using formula: prevBound + (legLength * s / numStops)
+    // legLength = 5565m, numStops = 5
+    // Stop 1: 1113 + 1113 = 2226m
+    // Stop 2: 1113 + 2226 = 3339m
+    // Stop 3: 1113 + 3339 = 4452m
+    // Stop 4: 1113 + 4452 = 5565m
+    // Stop 5: 1113 + 5565 = 6678m (Transfer)
     // Alarm threshold: 2 stops before Transfer.
-    // Transfer is at 6678m.
-    // Should fire when remaining stops <= 2.
-    // i.e., Progress >= 6678 - (2 * 1113) = 4452m.
+    // Should fire when remaining stops < 2 (i.e., stopsRemaining = 0 or 1)
+    // With 1 stop remaining, need to be past stop 4 at 5565m
 
-    // Move to 3000m total progress. Remaining stops ~ 3.3. Should NOT fire.
+    // Move to 3000m total progress. Remaining stops = 4 (3339, 4452, 5565, 6678). Should NOT fire.
     // 3000m is approx 0.027 deg.
     await trackingService.testInjectPosition(
       Position(
@@ -253,14 +259,14 @@ void main() {
     expect(
       NotificationService.testRecordedAlarms.isEmpty,
       true,
-      reason: "Should not fire when 3.3 stops away",
+      reason: "Should not fire when 4 stops away",
     );
 
-    // Move to 5000m total progress. Remaining stops ~ 1.5. Should FIRE!
-    // 5000m is approx 0.045 deg.
+    // Move to 5600m total progress. Remaining stop = 1 (6678m). Should FIRE!
+    // 5600m is approx 0.0504 deg.
     await trackingService.testInjectPosition(
       Position(
-        latitude: 0.045,
+        latitude: 0.0504,
         longitude: 0.0,
         timestamp: DateTime.now(),
         accuracy: 0,
@@ -276,7 +282,7 @@ void main() {
     expect(
       NotificationService.testRecordedAlarms.isNotEmpty,
       true,
-      reason: "Should fire when 1.5 stops away from Transfer",
+      reason: "Should fire when 1 stop away from Transfer (threshold=2)",
     );
     dev.log(
       'Alarms fired: ${NotificationService.testRecordedAlarms}',

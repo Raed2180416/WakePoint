@@ -13,7 +13,12 @@ const config = {
   jwtExpiration: '24h',
   
   // Security
-  appBundleId: process.env.APP_BUNDLE_ID || 'com.yourcompany.geowake2',
+  // IMPORTANT: This must match the bundle ID in:
+  // - android/app/build.gradle
+  // - android/app/build.gradle.kts
+  // - lib/config/app_config.dart
+  // - lib/services/api_client.dart
+  appBundleId: process.env.APP_BUNDLE_ID || 'com.geowake.app',
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || [
     'https://geowake-production.up.railway.app',
     '*'

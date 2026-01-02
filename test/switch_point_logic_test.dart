@@ -71,8 +71,9 @@ void main() {
       };
 
       final events = TransferUtils.buildRouteEvents(directions);
-      expect(events.where((e) => e.type == 'mode_change'), isNotEmpty);
-      expect(events.first.type, 'mode_change');
+      // WALKING → METRO generates preBoarding (not mode_change)
+      expect(events.where((e) => e.type == 'preBoarding'), isNotEmpty);
+      expect(events.first.type, 'preBoarding');
     });
 
     test('Should ignore Walking -> BUS transitions', () {
@@ -163,16 +164,16 @@ void main() {
       };
 
       // Note: The mock above generates:
-      // 1. mode_change at 100m (Walking -> Transit L1)
+      // 1. preBoarding at 100m (Walking -> Transit L1)
       // 2. transfer at 300m (L1 -> L2) (Because TransferUtils logic looks ahead)
       // The distance between them is 300 - 100 = 200m.
-      // Expected: Only the first event (mode_change) should remain if dedupe radius is 400m.
+      // Expected: Only the first event (preBoarding) should remain if dedupe radius is 400m.
 
       final events = TransferUtils.buildRouteEvents(directions);
 
       // If logic is correct, it should keep the first one
       expect(events.length, 1);
-      expect(events.first.type, 'mode_change');
+      expect(events.first.type, 'preBoarding');
     });
   });
 }

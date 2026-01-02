@@ -26,14 +26,15 @@ class RouteCacheEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'key': key,
-        'directions': directions,
-        'timestamp': timestamp.toIso8601String(),
-        'origin': {'lat': origin.latitude, 'lng': origin.longitude},
-        'destination': {'lat': destination.latitude, 'lng': destination.longitude},
-        'mode': mode,
-    if (simplifiedCompressedPolyline != null) 'scp': simplifiedCompressedPolyline,
-      };
+    'key': key,
+    'directions': directions,
+    'timestamp': timestamp.toIso8601String(),
+    'origin': {'lat': origin.latitude, 'lng': origin.longitude},
+    'destination': {'lat': destination.latitude, 'lng': destination.longitude},
+    'mode': mode,
+    if (simplifiedCompressedPolyline != null)
+      'scp': simplifiedCompressedPolyline,
+  };
 
   static RouteCacheEntry fromJson(Map<String, dynamic> json) {
     final o = json['origin'] as Map<String, dynamic>;
@@ -42,8 +43,14 @@ class RouteCacheEntry {
       key: json['key'] as String,
       directions: Map<String, dynamic>.from(json['directions'] as Map),
       timestamp: DateTime.parse(json['timestamp'] as String),
-      origin: LatLng((o['lat'] as num).toDouble(), (o['lng'] as num).toDouble()),
-      destination: LatLng((d['lat'] as num).toDouble(), (d['lng'] as num).toDouble()),
+      origin: LatLng(
+        (o['lat'] as num).toDouble(),
+        (o['lng'] as num).toDouble(),
+      ),
+      destination: LatLng(
+        (d['lat'] as num).toDouble(),
+        (d['lng'] as num).toDouble(),
+      ),
       mode: json['mode'] as String,
       simplifiedCompressedPolyline: json['scp'] as String?,
     );
@@ -62,7 +69,10 @@ class RouteCache {
     try {
       _box = await Hive.openBox<String>(boxName);
     } catch (e) {
-      dev.log('Error opening route cache box: $e. Attempting recreate.', name: 'RouteCache');
+      dev.log(
+        'Error opening route cache box: $e. Attempting recreate.',
+        name: 'RouteCache',
+      );
       try {
         await Hive.deleteBoxFromDisk(boxName);
         _box = await Hive.openBox<String>(boxName);
@@ -79,6 +89,7 @@ class RouteCache {
     required LatLng destination,
     required String mode,
     String? transitVariant, // e.g., 'rail'
+    int? departureTime, // unix epoch seconds; when set, route is time-anchored
   }) {
     // Round to ~5 decimal places (~1.1m) to improve cache hits for minor variations
     double r(double v) => double.parse(v.toStringAsFixed(5));
@@ -87,6 +98,7 @@ class RouteCache {
       'd': {'lat': r(destination.latitude), 'lng': r(destination.longitude)},
       'm': mode,
       if (transitVariant != null) 'tv': transitVariant,
+      if (departureTime != null) 'dt': departureTime,
     });
     return payload; // simple JSON string key; could hash if desired
   }
@@ -96,6 +108,7 @@ class RouteCache {
     required LatLng destination,
     required String mode,
     String? transitVariant,
+    int? departureTime,
     Duration ttl = defaultTtl,
     double originDeviationMeters = defaultOriginDeviationMeters,
   }) async {
@@ -105,6 +118,7 @@ class RouteCache {
       destination: destination,
       mode: mode,
       transitVariant: transitVariant,
+      departureTime: departureTime,
     );
     final jsonStr = _box!.get(key);
     if (jsonStr == null) return null;
@@ -127,14 +141,20 @@ class RouteCache {
         entry.origin.longitude,
       );
       if (devMeters >= originDeviationMeters) {
-        dev.log('RouteCache invalid by origin deviation ${devMeters.toStringAsFixed(0)}m.', name: 'RouteCache');
+        dev.log(
+          'RouteCache invalid by origin deviation ${devMeters.toStringAsFixed(0)}m.',
+          name: 'RouteCache',
+        );
         await _box!.delete(key);
         return null;
       }
 
       return entry;
     } catch (e) {
-      dev.log('RouteCache decode failure: $e. Deleting key.', name: 'RouteCache');
+      dev.log(
+        'RouteCache decode failure: $e. Deleting key.',
+        name: 'RouteCache',
+      );
       await _box!.delete(key);
       return null;
     }

@@ -9,11 +9,17 @@ class FakeDirectionsProvider implements DirectionsProvider {
   Map<String, dynamic> payload;
   FakeDirectionsProvider(this.payload);
   @override
-  Future<Map<String, dynamic>> getDirections(double a, double b, double c, double d,
-      {required bool isDistanceMode,
-      required double threshold,
-      required bool transitMode,
-      bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getDirections(
+    double a,
+    double b,
+    double c,
+    double d, {
+    required bool isDistanceMode,
+    required double threshold,
+    required bool transitMode,
+    bool preferMetroEvenIfClosed = false,
+    bool forceRefresh = false,
+  }) async {
     calls++;
     return payload;
   }
@@ -22,7 +28,13 @@ class FakeDirectionsProvider implements DirectionsProvider {
 class FakeCachePort implements RouteCachePort {
   RouteCacheEntry? entry;
   @override
-  Future<RouteCacheEntry?> get({required LatLng origin, required LatLng destination, required String mode, String? transitVariant}) async {
+  Future<RouteCacheEntry?> get({
+    required LatLng origin,
+    required LatLng destination,
+    required String mode,
+    String? transitVariant,
+    int? departureTime,
+  }) async {
     return entry;
   }
 }
@@ -39,11 +51,11 @@ void main() {
           'legs': [
             {
               'steps': [],
-              'duration': {'value': 600}
-            }
-          ]
-        }
-      ]
+              'duration': {'value': 600},
+            },
+          ],
+        },
+      ],
     };
 
     test('Online uses network provider and emits network source', () async {
@@ -68,34 +80,37 @@ void main() {
       logPass('Fetched via network and returned OK');
     });
 
-    test('Offline returns cached when available and never calls network', () async {
-      logSection('OfflineCoordinator: offline uses cache');
-      final fakeProvider = FakeDirectionsProvider(okDirections);
-      final fakeCache = FakeCachePort();
-      fakeCache.entry = RouteCacheEntry(
-        key: 'k',
-        directions: okDirections,
-        timestamp: DateTime.now(),
-        origin: origin,
-        destination: dest,
-        mode: 'driving',
-      );
-      final oc = OfflineCoordinator(
-        directionsProvider: fakeProvider,
-        cache: fakeCache,
-        initialOffline: true,
-      );
-      final res = await oc.getRoute(
-        origin: origin,
-        destination: dest,
-        isDistanceMode: true,
-        threshold: 1.0,
-        transitMode: false,
-      );
-      expect(fakeProvider.calls, 0);
-      expect(res.source, RouteSource.cache);
-      logPass('Served from cache without network');
-    });
+    test(
+      'Offline returns cached when available and never calls network',
+      () async {
+        logSection('OfflineCoordinator: offline uses cache');
+        final fakeProvider = FakeDirectionsProvider(okDirections);
+        final fakeCache = FakeCachePort();
+        fakeCache.entry = RouteCacheEntry(
+          key: 'k',
+          directions: okDirections,
+          timestamp: DateTime.now(),
+          origin: origin,
+          destination: dest,
+          mode: 'driving',
+        );
+        final oc = OfflineCoordinator(
+          directionsProvider: fakeProvider,
+          cache: fakeCache,
+          initialOffline: true,
+        );
+        final res = await oc.getRoute(
+          origin: origin,
+          destination: dest,
+          isDistanceMode: true,
+          threshold: 1.0,
+          transitMode: false,
+        );
+        expect(fakeProvider.calls, 0);
+        expect(res.source, RouteSource.cache);
+        logPass('Served from cache without network');
+      },
+    );
 
     test('Offline without cache throws', () async {
       logSection('OfflineCoordinator: offline no cache -> error');

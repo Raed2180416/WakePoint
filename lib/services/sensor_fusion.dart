@@ -1,11 +1,48 @@
 // lib/services/sensor_fusion.dart
+//
+// ============================================================================
+// ⚠️  DEPRECATED - DO NOT USE IN PRODUCTION  ⚠️
+// ============================================================================
+//
+// This file contains a PLACEHOLDER dead reckoning implementation that has
+// fundamental accuracy issues:
+//
+// 1. UNBOUNDED DRIFT: Accelerometer integration accumulates error rapidly
+// 2. 10-SECOND RESET: Position "snaps back" to anchor every 10 seconds
+// 3. NO SENSOR CALIBRATION: Raw accelerometer values are used directly
+// 4. NO ORIENTATION TRACKING: Assumes device is always level
+// 5. NO GPS FUSION: This runs independently, not fused with GPS
+//
+// This will be COMPLETELY REPLACED with a proper Extended Kalman Filter (EKF)
+// implementation that:
+// - Fuses GPS, accelerometer, gyroscope, and magnetometer
+// - Properly handles sensor biases and calibration
+// - Provides uncertainty estimates (covariance)
+// - Gracefully handles GPS dropout with bounded drift
+//
+// See: docs/ekf_planning/ for the replacement implementation plan.
+//
+// CURRENT STATUS: NOT WIRED INTO TRACKING SERVICE
+// The TrackingService does NOT call this class. It exists only for reference.
+// ============================================================================
+
 import 'dart:async';
 import 'dart:math';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
-/// A sensor fusion manager that performs dead reckoning using accelerometer data.
-/// In production you might use a full Extended Kalman Filter.
+/// @deprecated This class will be completely replaced with EKF implementation.
+///
+/// A basic dead reckoning implementation using accelerometer data.
+///
+/// ⚠️ WARNING: This implementation has severe accuracy limitations:
+/// - Drift accumulates within seconds
+/// - Position resets every 10 seconds (loses all progress)
+/// - No sensor calibration or bias compensation
+/// - No orientation tracking (assumes level device)
+///
+/// DO NOT RELY ON THIS FOR PRODUCTION USE.
+@Deprecated('Will be replaced with EKF implementation - see docs/ekf_planning/')
 class SensorFusionManager {
   late double _initialLat;
   late double _initialLon;

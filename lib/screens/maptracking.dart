@@ -1,80 +1,89 @@
-import 'dart:async';
-import 'dart:math';
-import 'dart:developer' as dev;
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geowake2/services/polyline_decoder.dart';
-import 'package:geowake2/services/direction_service.dart';
-import 'package:geowake2/services/polyline_simplifier.dart';
-import 'package:geolocator/geolocator.dart';
-import 'settingsdrawer.dart';
-import 'package:geowake2/services/snap_to_route.dart';
-import 'package:geowake2/services/trackingservice.dart';
-import 'package:geowake2/services/active_route_manager.dart';
-import 'package:geowake2/services/transfer_utils.dart';
-import 'package:geowake2/widgets/pulsing_dots.dart';
-import 'package:geowake2/services/eta_utils.dart';
-import 'package:geowake2/services/alarm_player.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:geowake2/services/tracking_state_store.dart';
+// lib/screens/maptracking.dart
+
+import 'dart:async'; // Streams and timers for location and UI.
+import 'dart:math'; // Bounds computation (min/max).
+import 'dart:developer' as dev; // Logging.
+import 'package:flutter/material.dart'; // UI widgets.
+import 'package:google_fonts/google_fonts.dart'; // Title font.
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Google Map, Marker, Polyline, LatLng.
+import 'package:geowake2/services/polyline_decoder.dart'; // Decode overview polylines.
+import 'package:geowake2/services/direction_service.dart'; // Build segmented polylines from directions.
+import 'package:geowake2/services/polyline_simplifier.dart'; // Simplify fallback overview.
+import 'package:geolocator/geolocator.dart'; // Position stream and distances.
+import 'package:geowake2/screens/settingsdrawer.dart'; // Drawer component via package import.
+import 'package:geowake2/services/snap_to_route.dart'; // Snapping engine.
+import 'package:geowake2/services/trackingservice.dart'; // Streams for switch/state + stopTracking.
+import 'package:geowake2/services/active_route_manager.dart'; // Types for events and state.
+import 'package:geowake2/services/transfer_utils.dart'; // Transfer/segment boundary helpers.
+import 'package:geowake2/widgets/pulsing_dots.dart'; // UI loading dots.
+import 'package:geowake2/services/eta_utils.dart'; // ETA calculation by steps.
+import 'package:geowake2/services/alarm_player.dart'; // Alarm control.
+import 'package:flutter_background_service/flutter_background_service.dart'; // Notify service when stopping alarm.
+import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
 
 class MapTrackingScreen extends StatefulWidget {
+  // Displays map and live tracking details.
   MapTrackingScreen({Key? key}) : super(key: key);
   @override
-  State<MapTrackingScreen> createState() => _MapTrackingScreenState();
+  State<MapTrackingScreen> createState() => _MapTrackingScreenState(); // State factory.
 }
 
 class _MapTrackingScreenState extends State<MapTrackingScreen> {
-  final Completer<GoogleMapController> _mapController = Completer();
-  bool _isLoading = true;
-  double? _destinationLat;
-  double? _destinationLng;
-  String? _destinationName;
-  LatLng? _currentUserLocation;
-  List<LatLng> _routePoints = const [];
-  int? _lastSnapIndex;
-  StreamSubscription<RouteSwitchEvent>? _routeSwitchSub;
-  StreamSubscription<ActiveRouteState>? _routeStateSub;
-  StreamSubscription<Position>? _locationSubscription; // Restored
-  double _routeLengthMeters = 0.0;
-  double? _speedEmaMps; // simple smoothed speed estimate
-  final List<double> _transferBoundariesMeters = [];
-  final List<double> _stepBoundariesMeters = [];
-  final List<double> _stepDurationsSeconds = [];
+  // Stateful controller for live map tracking.
+  final Completer<GoogleMapController> _mapController =
+      Completer(); // For camera control.
+  bool _isLoading = true; // Show spinner while building polylines.
+  double? _destinationLat; // Destination latitude argument.
+  double? _destinationLng; // Destination longitude argument.
+  String? _destinationName; // Destination name.
+  bool _metroMode = false; // Whether route is metro-inclusive.
+  Set<Marker> _markers = {}; // Map markers set.
+  Set<Polyline> _polylines = {}; // Route polylines to draw.
+  String _etaText = "Calculating ETA..."; // UI ETA text.
+  String _distanceText = "Calculating distance..."; // UI distance text.
+  String? _switchNotice; // Upcoming transfer notice.
+  bool _hasValidArgs = false; // Ensures args present.
 
-  // Restored missing variables
-  String? _switchNotice;
-  bool _hasValidArgs = false;
-  String _alarmMode = 'distance';
-  bool _metroMode = false;
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
-  String _etaText = "Calculating ETA...";
-  String _distanceText = "Calculating distance...";
-  Map<String, dynamic>? directions;
-  bool _isFinalAlarm = false;
+  Map<String, dynamic>? directions; // Raw directions payload.
+
+  // StreamSubscription to update the current location marker. // Foreground position updates.
+  StreamSubscription<Position>? _locationSubscription; // Position stream sub.
+  LatLng? _currentUserLocation; // Last known user position.
+  List<LatLng> _routePoints =
+      const []; // Flattened polyline points for snapping.
+  int? _lastSnapIndex; // Hint index for snap continuity.
+  StreamSubscription<RouteSwitchEvent>?
+  _routeSwitchSub; // Listen to route switch events.
+  StreamSubscription<ActiveRouteState>?
+  _routeStateSub; // Listen to active route state updates.
+  double _routeLengthMeters = 0.0; // Total route length in meters.
+  double?
+  _speedEmaMps; // simple smoothed speed estimate // Exponential moving average of speed.
+  final List<double> _transferBoundariesMeters =
+      []; // Cumulative meters at transfers.
+  final List<double> _stepBoundariesMeters =
+      []; // Cumulative meters at step ends.
+  final List<double> _stepDurationsSeconds = []; // Step durations in seconds.
+
   @override
   void didChangeDependencies() {
-    super.didChangeDependencies();
+    // Parse arguments and initialize map overlays and streams.
+    super.didChangeDependencies(); // Call base.
     final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        ModalRoute.of(context)?.settings.arguments
+            as Map<String, dynamic>?; // Expect map of arguments.
     dev.log(
       "MapTrackingScreen received args: ${args.toString()}",
       name: "MapTrackingScreen",
-    );
-
-    if (args == null) {
-      // Try to restore from SharedPreferences
-      _restoreState();
-      return;
-    }
-
-    if (args['lat'] == null ||
+    ); // Log args for debugging.
+    if (args == null ||
+        args['lat'] == null ||
         args['lng'] == null ||
         args['destination'] == null ||
         args['directions'] == null) {
+      // Validate required args.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Show dialog on next frame to avoid build conflicts.
         showDialog(
           context: context,
           builder:
@@ -93,27 +102,27 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               ),
         );
       });
-      return;
+      return; // Exit early.
     }
-    _hasValidArgs = true;
-    _destinationName = args['destination'];
-    _destinationLat = args['lat'];
-    _destinationLng = args['lng'];
-    _metroMode = args['metroMode'] ?? false;
-    _alarmMode = args['alarmMode'] ?? 'distance';
-    double userLat = args['userLat'] ?? 37.422;
-    double userLng = args['userLng'] ?? -122.084;
-    _currentUserLocation = LatLng(userLat, userLng);
+    _hasValidArgs = true; // Flag OK.
+    _destinationName = args['destination']; // Assign.
+    _destinationLat = args['lat']; // Assign.
+    _destinationLng = args['lng']; // Assign.
+    _metroMode = args['metroMode'] ?? false; // Optional flag.
+    double userLat = args['userLat'] ?? 37.422; // Default lat if missing.
+    double userLng = args['userLng'] ?? -122.084; // Default lng if missing.
+    _currentUserLocation = LatLng(userLat, userLng); // Seed current location.
     dev.log(
       "MapTrackingScreen: Destination: $_destinationName, ($_destinationLat, $_destinationLng)",
       name: "MapTrackingScreen",
-    );
+    ); // Log destination.
     dev.log(
       "MapTrackingScreen: Initial user location: ($userLat, $userLng)",
       name: "MapTrackingScreen",
-    );
+    ); // Log user.
 
     _markers = {
+      // Initial markers: destination and user.
       Marker(
         markerId: const MarkerId('destinationMarker'),
         position: LatLng(_destinationLat!, _destinationLng!),
@@ -126,78 +135,150 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       ),
     };
 
-    _etaText = args['eta']?.toString() ?? _etaText;
-    _distanceText = args['distance']?.toString() ?? _distanceText;
-    directions = args['directions'];
-    _processDirections(userLat, userLng);
+    _etaText = args['eta']?.toString() ?? _etaText; // Optional precomputed ETA.
+    _distanceText =
+        args['distance']?.toString() ??
+        _distanceText; // Optional precomputed distance.
+    directions = args['directions']; // Raw directions for polylines.
+    if (directions != null) {
+      // If present, build map overlays.
+      if (_metroMode) {
+        // Metro-specific segmentation (colors, styles per mode).
+        final directionService = DirectionService(); // Instantiate.
+        // 1. Build simplified polylines for UI rendering
+        final segmentedPolylines = directionService.buildSegmentedPolylines(
+          directions!,
+          true,
+          simplify: false,
+        );
+        // 2. Build raw high-res segments for physics/snapping
+        final rawSegments = directionService.buildRawSegments(
+          directions!,
+          true,
+          simplify: false,
+        );
+
+        setState(() {
+          _polylines = segmentedPolylines.toSet(); // Assign set for Map.
+          // Flatten raw high-res points for accurate snapping
+          _routePoints = rawSegments
+              .expand<LatLng>((s) {
+                final pts = s['points'] as List;
+                return pts
+                    .map<LatLng>((p) => LatLng(p['lat'], p['lng']))
+                    .toList();
+              })
+              .toList(growable: false);
+          _isLoading = false; // Hide spinner.
+        });
+        _computeRouteLength(); // Sum length.
+        _buildTransferBoundariesFromDirections(); // Compute transfer boundaries.
+        _buildStepBoundariesAndDurations(); // Build step boundaries/durations.
+        _computeInitialMetrics(userLat, userLng); // Derive ETA/distance.
+        _adjustCamera(userLat, userLng); // Fit bounds.
+      } else {
+        try {
+          final directionService = DirectionService(); // Instantiate.
+          final segmentedPolylines = directionService.buildSegmentedPolylines(
+            directions!,
+            false,
+          ); // Driving/walking segmentation.
+          if (segmentedPolylines.isNotEmpty) {
+            // Normal path.
+            setState(() {
+              _polylines = segmentedPolylines.toSet(); // Draw polylines.
+              _routePoints = segmentedPolylines
+                  .expand((p) => p.points)
+                  .toList(growable: false); // Flatten for snapping.
+              _isLoading = false; // Done loading.
+            });
+          } else {
+            // Step data missing -> fallback to overview polyline.
+            // Fallback to overview polyline if step data is missing
+            final route = directions!['routes'][0];
+            final String encodedPolyline =
+                route['overview_polyline']['points']
+                    as String; // Encoded polyline.
+            final points = PolylineSimplifier.simplifyPolyline(
+              decodePolyline(encodedPolyline),
+              10,
+            ); // Decode and simplify.
+            setState(() {
+              _polylines = {
+                // Single polyline fallback.
+                Polyline(
+                  polylineId: const PolylineId('route'),
+                  points: points,
+                  color: Colors.blue,
+                  width: 4,
+                ),
+              };
+              _routePoints = points; // Flatten.
+              _isLoading = false; // Done.
+            });
+          }
+          _computeRouteLength(); // Compute total length.
+          _transferBoundariesMeters
+              .clear(); // No transfers expected for non-metro; ensure cleared.
+          _buildStepBoundariesAndDurations(); // Step boundaries for ETA.
+          _computeInitialMetrics(userLat, userLng); // Initial ETA/distance.
+          _adjustCamera(userLat, userLng); // Fit camera.
+        } catch (e) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false; // Stop spinner.
+            });
+            dev.log(
+              "Error processing directions data: $e",
+              name: "MapTrackingScreen",
+            ); // Log.
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Error processing directions data: $e"),
+              ), // User feedback.
+            );
+          }
+        }
+      }
+    } else {
+      // No directions provided.
+      setState(() {
+        _isLoading = false; // Stop spinner.
+      });
+      dev.log(
+        "No valid routes in directions data",
+        name: "MapTrackingScreen",
+      ); // Log.
+    }
 
     // Start listening for location updates to update the current location marker.
-    _startLocationUpdates();
+    _startLocationUpdates(); // Begin foreground updates.
 
-    // Listen for route switches from TrackingService and show a banner + update map.
+    // Listen for route switches from TrackingService and show a banner.
     _routeSwitchSub ??= TrackingService().routeSwitchStream.listen((evt) {
-      if (!mounted) return;
+      // Switch banner.
+      if (!mounted) return; // Guard.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Switched route: ${evt.fromKey} → ${evt.toKey}'),
         ),
       );
-
-      if (evt.geometry != null && evt.geometry!.isNotEmpty) {
-        dev.log(
-          'MapTrackingScreen: Updating map for switched route ${evt.toKey}',
-          name: 'MapTrackingScreen',
-        );
-        setState(() {
-          _routePoints = evt.geometry!;
-          _polylines = {};
-
-          if (evt.inactivePolylines != null) {
-            for (int i = 0; i < evt.inactivePolylines!.length; i++) {
-              _polylines.add(
-                Polyline(
-                  polylineId: PolylineId('inactive_route_$i'),
-                  points: evt.inactivePolylines![i],
-                  color: Colors.grey,
-                  width: 4,
-                  zIndex: 0,
-                ),
-              );
-            }
-          }
-
-          _polylines.add(
-            Polyline(
-              polylineId: const PolylineId('route'),
-              points: _routePoints,
-              color: Colors.blue,
-              width: 4,
-              zIndex: 1,
-            ),
-          );
-        });
-        // Recompute metrics for the new route
-        _computeRouteLength();
-        if (_currentUserLocation != null) {
-          _computeInitialMetrics(
-            _currentUserLocation!.latitude,
-            _currentUserLocation!.longitude,
-          );
-        }
-      }
     });
 
     // Listen for continuous route state to compute ETA and remaining distance.
     _routeStateSub ??= TrackingService().activeRouteStateStream.listen((state) {
-      if (!mounted) return;
+      // Update summary cards.
+      if (!mounted) return; // Guard.
       // Remaining distance from manager
-      final remainingM = state.remainingMeters;
+      final remainingM =
+          state.remainingMeters; // Remaining meters provided by manager.
       // Derive ETA using a fallback speed; will be replaced by fusion/dead-reckoning later
-      final spd =
-          (_speedEmaMps != null && _speedEmaMps! > 0.5) ? _speedEmaMps! : 12.0;
-      double etaSec = remainingM / spd;
+      double etaSec; // Local ETA seconds.
+      final fallbackSpeed =
+          12.0; // ~43 km/h; TODO: replace with fusion when ready
+      etaSec = remainingM / fallbackSpeed; // Simple division.
       // Format
-      String etaStr;
+      String etaStr; // Human readable ETA.
       if (etaSec < 90) {
         etaStr = '${etaSec.toStringAsFixed(0)} sec remaining';
       } else if (etaSec < 3600) {
@@ -210,302 +291,84 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               ? '${(remainingM / 1000).toStringAsFixed(2)} km to destination'
               : '${remainingM.toStringAsFixed(0)} m to destination';
 
-      String? switchMsg;
+      String? switchMsg; // Upcoming transfer display.
       if (state.pendingSwitchToKey != null &&
           state.pendingSwitchInSeconds != null) {
-        final secs = state.pendingSwitchInSeconds!;
+        final secs = state.pendingSwitchInSeconds!; // Seconds until switch.
         final when =
             secs < 60
                 ? '${secs.toStringAsFixed(0)} sec'
-                : '${(secs / 60).toStringAsFixed(0)} min';
-        switchMsg = "You'll have to switch routes in $when";
+                : '${(secs / 60).toStringAsFixed(0)} min'; // Humanize.
+        switchMsg = "You'll have to switch routes in $when"; // Compose.
       }
 
       setState(() {
-        _etaText = etaStr;
-        _distanceText = distStr;
-        _switchNotice = switchMsg;
+        _etaText = etaStr; // Apply ETA.
+        _distanceText = distStr; // Apply distance.
+        _switchNotice = switchMsg; // Apply notice.
       });
     });
   }
 
-  Future<void> _restoreState() async {
-    dev.log(
-      'DEBUG: maptracking - _restoreState called',
-      name: 'MapTrackingScreen',
-    );
-    try {
-      final active = await TrackingStateStore.isActive();
-      final snapshot = await TrackingStateStore.loadSnapshot();
-      dev.log(
-        'DEBUG: maptracking - active: $active, snapshot exists: ${snapshot != null}',
-        name: 'MapTrackingScreen',
-      );
-      if (snapshot != null) {
-        dev.log(
-          'DEBUG: maptracking - snapshot details: dest=${snapshot.destinationName}, directions=${snapshot.directions != null ? "exists" : "null"}',
-          name: 'MapTrackingScreen',
-        );
-      }
-      if (!active || snapshot == null) {
-        dev.log(
-          'DEBUG: maptracking - redirecting to home: active=$active, snapshot=${snapshot != null}',
-          name: 'MapTrackingScreen',
-        );
-        if (mounted) Navigator.of(context).pushReplacementNamed('/');
-        return;
-      }
-
-      setState(() {
-        _destinationLat = snapshot.destinationLat;
-        _destinationLng = snapshot.destinationLng;
-        _destinationName = snapshot.destinationName;
-        _metroMode = snapshot.metroMode;
-        _alarmMode = snapshot.alarmMode;
-        directions = snapshot.directions;
-        _hasValidArgs = true;
-      });
-
-      _currentUserLocation = LatLng(snapshot.userLat, snapshot.userLng);
-
-      // If directions are missing, fetch fresh route
-      if (directions == null) {
-        dev.log(
-          'DEBUG: maptracking - Directions missing in snapshot, fetching fresh route',
-          name: 'MapTrackingScreen',
-        );
-        try {
-          final newDirections = await DirectionService().getDirections(
-            _currentUserLocation!.latitude,
-            _currentUserLocation!.longitude,
-            snapshot.destinationLat,
-            snapshot.destinationLng,
-            isDistanceMode: _alarmMode == 'distance' || _alarmMode == 'stops',
-            threshold: snapshot.alarmValue,
-            transitMode: _metroMode,
-          );
-          dev.log(
-            'DEBUG: maptracking - Fresh directions fetched successfully',
-            name: 'MapTrackingScreen',
-          );
-          setState(() {
-            directions = newDirections;
-          });
-          // Update snapshot with fresh directions
-          await TrackingStateStore.saveSnapshot(
-            TrackingSnapshot(
-              destinationName: snapshot.destinationName,
-              destinationLat: snapshot.destinationLat,
-              destinationLng: snapshot.destinationLng,
-              alarmMode: snapshot.alarmMode,
-              alarmValue: snapshot.alarmValue,
-              metroMode: snapshot.metroMode,
-              userLat: snapshot.userLat,
-              userLng: snapshot.userLng,
-              createdAt: snapshot.createdAt,
-              directions: newDirections,
-            ),
-          );
-        } catch (e) {
-          dev.log(
-            'Failed to fetch fresh route on restore: $e',
-            name: 'MapTrackingScreen',
-          );
-        }
-      }
-
-      // Initialize markers
-      _markers = {
-        if (_destinationLat != null && _destinationLng != null)
-          Marker(
-            markerId: const MarkerId('destinationMarker'),
-            position: LatLng(_destinationLat!, _destinationLng!),
-            infoWindow: InfoWindow(title: _destinationName ?? 'Destination'),
-          ),
-        Marker(
-          markerId: const MarkerId('currentLocationMarker'),
-          position: _currentUserLocation!,
-          infoWindow: const InfoWindow(title: 'Your Location'),
-        ),
-      };
-
-      _isLoading = false;
-      _processDirections(
-        _currentUserLocation!.latitude,
-        _currentUserLocation!.longitude,
-      );
-      _adjustCamera(
-        _currentUserLocation!.latitude,
-        _currentUserLocation!.longitude,
-      );
-      _startLocationUpdates();
-
-      // Re-subscribe to tracking service streams
-      _routeSwitchSub ??= TrackingService().routeSwitchStream.listen((evt) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched route: ${evt.fromKey} → ${evt.toKey}'),
-          ),
-        );
-      });
-
-      _routeStateSub ??= TrackingService().activeRouteStateStream.listen((
-        state,
-      ) {
-        if (!mounted) return;
-        final remainingM = state.remainingMeters;
-        double etaSec;
-        final fallbackSpeed = 12.0;
-        etaSec = remainingM / fallbackSpeed;
-        String etaStr;
-        if (etaSec < 90) {
-          etaStr = '${etaSec.toStringAsFixed(0)} sec remaining';
-        } else if (etaSec < 3600) {
-          etaStr = '${(etaSec / 60).toStringAsFixed(0)} min remaining';
-        } else {
-          etaStr = '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
-        }
-        String distStr =
-            remainingM >= 1000
-                ? '${(remainingM / 1000).toStringAsFixed(2)} km to destination'
-                : '${remainingM.toStringAsFixed(0)} m to destination';
-
-        setState(() {
-          _etaText = etaStr;
-          _distanceText = distStr;
-          _isFinalAlarm = state.isFinalAlarm;
-        });
-      });
-    } catch (e) {
-      dev.log("Error restoring state: $e", name: "MapTrackingScreen");
-      if (mounted) Navigator.of(context).pushReplacementNamed('/');
-    }
-  }
-
-  void _processDirections(double userLat, double userLng) {
-    if (directions != null) {
-      if (_metroMode) {
-        final directionService = DirectionService();
-        final segmentedPolylines = directionService.buildSegmentedPolylines(
-          directions!,
-          true,
-        );
-        setState(() {
-          _polylines = segmentedPolylines.toSet();
-          _routePoints = segmentedPolylines
-              .expand((p) => p.points)
-              .toList(growable: false);
-          _isLoading = false;
-        });
-        _computeRouteLength();
-        _buildTransferBoundariesFromDirections();
-        _buildStepBoundariesAndDurations();
-        _computeInitialMetrics(userLat, userLng);
-        _adjustCamera(userLat, userLng);
-      } else {
-        try {
-          final directionService = DirectionService();
-          final segmentedPolylines = directionService.buildSegmentedPolylines(
-            directions!,
-            false,
-          );
-          if (segmentedPolylines.isNotEmpty) {
-            setState(() {
-              _polylines = segmentedPolylines.toSet();
-              _routePoints = segmentedPolylines
-                  .expand((p) => p.points)
-                  .toList(growable: false);
-              _isLoading = false;
-            });
-          } else {
-            final route = directions!['routes'][0];
-            final String encodedPolyline =
-                route['overview_polyline']['points'] as String;
-            final points = PolylineSimplifier.simplifyPolyline(
-              decodePolyline(encodedPolyline),
-              10,
-            );
-            setState(() {
-              _polylines = {
-                Polyline(
-                  polylineId: const PolylineId('route'),
-                  points: points,
-                  color: Colors.blue,
-                  width: 4,
-                ),
-              };
-              _routePoints = points;
-              _isLoading = false;
-            });
-          }
-          _computeRouteLength();
-          _transferBoundariesMeters.clear();
-          _buildStepBoundariesAndDurations();
-          _computeInitialMetrics(userLat, userLng);
-          _adjustCamera(userLat, userLng);
-        } catch (e) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-            dev.log(
-              "Error processing directions data: $e",
-              name: "MapTrackingScreen",
-            );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error processing directions data: $e")),
-            );
-          }
-        }
-      }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      dev.log("No valid routes in directions data", name: "MapTrackingScreen");
-    }
-  }
-
   Future<void> _startLocationUpdates() async {
-    _locationSubscription?.cancel();
-    dev.log(
-      'Starting unified location updates from TrackingService',
-      name: 'MapTrackingScreen',
+    // Foreground GPS updates and snapping.
+    // Use high accuracy updates in the foreground.
+    LocationSettings settings = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5, // Update when moved 5 meters.
     );
-
-    // Listen to unified location stream (Real + Simulated) from TrackingService
-    _locationSubscription = TrackingService().locationStream.listen((position) {
-      _currentUserLocation = LatLng(position.latitude, position.longitude);
+    _locationSubscription = Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).listen((position) {
+      _currentUserLocation = LatLng(
+        position.latitude,
+        position.longitude,
+      ); // Store raw position.
       dev.log(
         "MapTrackingScreen: New user location: (${position.latitude}, ${position.longitude})",
         name: "MapTrackingScreen",
-      );
+      ); // Log update.
+
+      // Broadcast device position to dashboard for real-time sync
+      try {
+        LocationManager().broadcastPosition(
+          lat: position.latitude,
+          lng: position.longitude,
+          heading: position.heading,
+          speed: position.speed,
+        );
+      } catch (_) {}
       // Smooth speed estimate
       final rawSpeed = position.speed; // m/s
       if (rawSpeed.isFinite && rawSpeed >= 0) {
         final v =
-            rawSpeed < 0.5 && _speedEmaMps != null ? _speedEmaMps! : rawSpeed;
+            rawSpeed < 0.5 && _speedEmaMps != null
+                ? _speedEmaMps!
+                : rawSpeed; // Avoid overreacting to near-zero noise.
         _speedEmaMps =
-            _speedEmaMps == null ? v : (_speedEmaMps! * 0.8 + v * 0.2);
+            _speedEmaMps == null
+                ? v
+                : (_speedEmaMps! * 0.8 + v * 0.2); // EMA smoothing.
       }
       // Prefer snapped position onto the route if available
-      LatLng markerPos = _currentUserLocation!;
+      LatLng markerPos = _currentUserLocation!; // Default marker position.
       if (_routePoints.length >= 2) {
+        // Snap only when polyline ready.
         final snap = SnapToRouteEngine.snap(
           point: _currentUserLocation!,
           polyline: _routePoints,
           hintIndex: _lastSnapIndex,
           searchWindow: 30,
         );
-        _lastSnapIndex = snap.segmentIndex;
-        markerPos = snap.snappedPoint;
+        _lastSnapIndex = snap.segmentIndex; // Update hint.
+        markerPos = snap.snappedPoint; // Snapped marker.
         // Compute remaining distance and ETA locally
-        final progress = snap.progressMeters;
+        final progress =
+            snap.progressMeters; // Meters progressed along polyline.
         final remaining = (_routeLengthMeters - progress).clamp(
           0.0,
           double.infinity,
-        );
+        ); // Clamp non-negative.
         // Prefer ETA from directions step durations (no API) if available; fallback to speed-based
         double? etaSec = EtaUtils.etaRemainingSeconds(
           progressMeters: progress,
@@ -516,46 +379,46 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           final spd =
               (_speedEmaMps != null && _speedEmaMps! > 0.5)
                   ? _speedEmaMps!
-                  : 12.0;
-          etaSec = remaining / spd;
+                  : 12.0; // Fallback speed.
+          etaSec = remaining / spd; // Simple estimate.
         }
         final etaStr =
             etaSec < 90
                 ? '${etaSec.toStringAsFixed(0)} sec remaining'
                 : etaSec < 3600
                 ? '${(etaSec / 60).toStringAsFixed(0)} min remaining'
-                : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+                : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining'; // Format.
         final distStr =
             remaining >= 1000
                 ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
-                : '${remaining.toStringAsFixed(0)} m to destination';
+                : '${remaining.toStringAsFixed(0)} m to destination'; // Format.
 
-        String? switchMsg;
+        String? switchMsg; // Next transfer banner.
         if (_transferBoundariesMeters.isNotEmpty) {
           final next = _transferBoundariesMeters.firstWhere(
             (b) => b > progress,
             orElse: () => -1,
           );
           if (next > 0) {
-            final toSwitchM = next - progress;
+            final toSwitchM = next - progress; // Meters until next transfer.
             final spd =
                 (_speedEmaMps != null && _speedEmaMps! > 0.5)
                     ? _speedEmaMps!
-                    : 12.0;
-            final tSec = toSwitchM / spd;
+                    : 12.0; // Fallback speed.
+            final tSec = toSwitchM / spd; // Seconds to transfer.
             final when =
                 tSec < 60
                     ? '${tSec.toStringAsFixed(0)} sec'
-                    : '${(tSec / 60).toStringAsFixed(0)} min';
-            switchMsg = "You'll have to switch routes in $when";
+                    : '${(tSec / 60).toStringAsFixed(0)} min'; // Humanize.
+            switchMsg = "You'll have to switch routes in $when"; // Compose.
           }
         }
         if (mounted) {
           setState(() {
-            _etaText = etaStr;
-            _distanceText = distStr;
-            _switchNotice = switchMsg;
-            // metrics ready
+            _etaText = etaStr; // Update.
+            _distanceText = distStr; // Update.
+            _switchNotice = switchMsg; // Update.
+            // metrics ready // Marker update below.
           });
         }
       }
@@ -563,11 +426,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       setState(() {
         _markers.removeWhere(
           (m) => m.markerId.value == 'currentLocationMarker',
-        );
+        ); // Remove old marker.
         _markers.add(
           Marker(
             markerId: const MarkerId('currentLocationMarker'),
-            position: markerPos,
+            position: markerPos, // Either raw or snapped.
             infoWindow: const InfoWindow(title: 'Your Location'),
           ),
         );
@@ -576,27 +439,28 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   }
 
   void _computeInitialMetrics(double userLat, double userLng) {
-    if (_routePoints.length < 2) return;
-    final p = LatLng(userLat, userLng);
+    // First draw ETA/distance after building route.
+    if (_routePoints.length < 2) return; // Require polyline.
+    final p = LatLng(userLat, userLng); // Current position.
     final snap = SnapToRouteEngine.snap(
       point: p,
       polyline: _routePoints,
       hintIndex: null,
       searchWindow: 30,
-    );
-    final progress = snap.progressMeters;
+    ); // Snap to route.
+    final progress = snap.progressMeters; // Meters progressed.
     final remaining = (_routeLengthMeters - progress).clamp(
       0.0,
       double.infinity,
-    );
+    ); // Remaining meters.
     double? etaSec = EtaUtils.etaRemainingSeconds(
       progressMeters: progress,
       stepBoundariesMeters: _stepBoundariesMeters,
       stepDurationsSeconds: _stepDurationsSeconds,
     );
     if (etaSec == null) {
-      final spd = 12.0;
-      etaSec = remaining / spd;
+      final spd = 12.0; // Fallback speed.
+      etaSec = remaining / spd; // Simple ETA.
     }
     final etaStr =
         etaSec < 90
@@ -608,35 +472,36 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         remaining >= 1000
             ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
             : '${remaining.toStringAsFixed(0)} m to destination';
-    String? switchMsg;
+    String? switchMsg; // Next transfer message.
     if (_transferBoundariesMeters.isNotEmpty) {
       final next = _transferBoundariesMeters.firstWhere(
         (b) => b > progress,
         orElse: () => -1,
-      );
+      ); // Find next.
       if (next > 0) {
-        final toSwitchM = next - progress;
-        final spd = 12.0;
-        final tSec = toSwitchM / spd;
+        final toSwitchM = next - progress; // Meters to transfer.
+        final spd = 12.0; // Fallback speed for initial estimation.
+        final tSec = toSwitchM / spd; // Seconds.
         final when =
             tSec < 60
                 ? '${tSec.toStringAsFixed(0)} sec'
-                : '${(tSec / 60).toStringAsFixed(0)} min';
-        switchMsg = "You'll have to switch routes in $when";
+                : '${(tSec / 60).toStringAsFixed(0)} min'; // Humanize.
+        switchMsg = "You'll have to switch routes in $when"; // Compose.
       }
     }
     if (mounted) {
       setState(() {
-        _etaText = etaStr;
-        _distanceText = distStr;
-        _switchNotice = switchMsg;
+        _etaText = etaStr; // Apply.
+        _distanceText = distStr; // Apply.
+        _switchNotice = switchMsg; // Apply.
         // metrics ready
       });
     }
   }
 
   void _computeRouteLength() {
-    double sum = 0.0;
+    // Sum segments of polyline in meters.
+    double sum = 0.0; // Accumulator.
     for (var i = 1; i < _routePoints.length; i++) {
       sum += Geolocator.distanceBetween(
         _routePoints[i - 1].latitude,
@@ -645,10 +510,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         _routePoints[i].longitude,
       );
     }
-    _routeLengthMeters = sum;
+    _routeLengthMeters = sum; // Store total.
   }
 
   void _buildTransferBoundariesFromDirections() {
+    // Populate transfer boundaries for metro notifications.
     _transferBoundariesMeters
       ..clear()
       ..addAll(
@@ -656,83 +522,99 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           directions!,
           metroMode: _metroMode,
         ),
-      );
+      ); // Compute from directions.
   }
 
   void _buildStepBoundariesAndDurations() {
-    _stepBoundariesMeters.clear();
-    _stepDurationsSeconds.clear();
-    if (directions == null) return;
+    // Prepare step cumulative meters and durations for ETA interpolation.
+    _stepBoundariesMeters.clear(); // Reset.
+    _stepDurationsSeconds.clear(); // Reset.
+    if (directions == null) return; // Require directions.
     try {
-      final routes = (directions!['routes'] as List?) ?? const [];
-      if (routes.isEmpty) return;
-      final route = routes.first as Map<String, dynamic>;
-      final legs = (route['legs'] as List?) ?? const [];
-      double cum = 0.0;
+      final routes =
+          (directions!['routes'] as List?) ?? const []; // Safe routes.
+      if (routes.isEmpty) return; // No routes.
+      final route = routes.first as Map<String, dynamic>; // Use first route.
+      final legs = (route['legs'] as List?) ?? const []; // Legs list.
+      double cum = 0.0; // Cumulative meters.
       for (final leg in legs) {
-        final steps = (leg['steps'] as List?) ?? const [];
+        final steps = (leg['steps'] as List?) ?? const []; // Steps list.
         for (final step in steps) {
           final m =
-              ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
+              ((step['distance'] as Map<String, dynamic>?)?['value'])
+                  as num?; // Step meters.
           final s =
-              ((step['duration'] as Map<String, dynamic>?)?['value']) as num?;
+              ((step['duration'] as Map<String, dynamic>?)?['value'])
+                  as num?; // Step seconds.
           if (m != null && s != null) {
-            cum += m.toDouble();
-            _stepBoundariesMeters.add(cum);
-            _stepDurationsSeconds.add(s.toDouble());
+            cum += m.toDouble(); // Increment cumulative.
+            _stepBoundariesMeters.add(cum); // Record boundary.
+            _stepDurationsSeconds.add(s.toDouble()); // Record duration.
           }
         }
       }
-    } catch (_) {}
+    } catch (_) {} // Ignore parse errors; will fallback ETA.
   }
 
   Future<void> _adjustCamera(double userLat, double userLng) async {
-    final GoogleMapController controller = await _mapController.future;
-    if (_destinationLat == null || _destinationLng == null) return;
+    // Fit camera to user and destination.
+    final GoogleMapController controller =
+        await _mapController.future; // Await controller.
+    if (_destinationLat == null || _destinationLng == null)
+      return; // Require destination.
     final bounds = LatLngBounds(
       southwest: LatLng(
         min(userLat, _destinationLat!),
         min(userLng, _destinationLng!),
-      ),
+      ), // SW corner.
       northeast: LatLng(
         max(userLat, _destinationLat!),
         max(userLng, _destinationLng!),
-      ),
+      ), // NE corner.
     );
-    controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+    controller.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 50),
+    ); // Apply with padding.
   }
 
   @override
   void dispose() {
-    _locationSubscription?.cancel();
-    _routeSwitchSub?.cancel();
-    _routeStateSub?.cancel();
-    super.dispose();
+    // Clean up streams and controllers.
+    _locationSubscription?.cancel(); // Stop GPS stream.
+    _routeSwitchSub?.cancel(); // Stop switch stream.
+    _routeStateSub?.cancel(); // Stop state stream.
+    super.dispose(); // Parent cleanup.
   }
 
   @override
   Widget build(BuildContext context) {
+    // Compose the map tracking UI.
     if (!_hasValidArgs) {
+      // If args missing, show simple error.
       return Scaffold(
         appBar: AppBar(title: const Text("Map Tracking")),
         body: const Center(child: Text("Invalid or missing destination data.")),
       );
     }
     return PopScope(
-      canPop: false,
+      // Intercept back button.
+      canPop: false, // Prevent pop.
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        // Back handler.
         if (!didPop) {
           // Handle the back button press here if needed
           // For now, we'll just prevent the pop since canPop is false
         }
       },
       child: Scaffold(
-        drawer: const SettingsDrawer(),
+        drawer: const SettingsDrawer(), // Drawer.
         appBar: AppBar(
           title: Row(
             children: [
               Text(
-                _metroMode ? 'Metro Tracking' : 'Map Tracking',
+                _metroMode
+                    ? 'Metro Tracking'
+                    : 'Map Tracking', // Title toggles with mode.
                 style: GoogleFonts.pacifico(
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -742,7 +624,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               ),
               if (_metroMode) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.train),
+                const Icon(Icons.train), // Mode icon.
               ],
             ],
           ),
@@ -750,7 +632,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         bottomNavigationBar: Container(
           height: 50,
           color: Colors.grey[300],
-          child: const Center(child: Text('Ad Banner Placeholder')),
+          child: const Center(child: Text('Ad Banner Placeholder')), // Stub ad.
         ),
         body: SafeArea(
           child: Column(
@@ -760,14 +642,17 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                   children: [
                     GoogleMap(
                       initialCameraPosition: CameraPosition(
-                        target: LatLng(_destinationLat!, _destinationLng!),
+                        target: LatLng(
+                          _destinationLat!,
+                          _destinationLng!,
+                        ), // Start view at destination.
                         zoom: 14,
                       ),
-                      markers: _markers,
-                      polylines: _polylines,
+                      markers: _markers, // Markers.
+                      polylines: _polylines, // Polylines.
                       onMapCreated: (controller) {
                         if (!_mapController.isCompleted) {
-                          _mapController.complete(controller);
+                          _mapController.complete(controller); // Complete once.
                         }
                       },
                     ),
@@ -777,7 +662,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       left: 12,
                       right: 12,
                       child: Material(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withOpacity(0.5), // Translucent bg.
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -820,7 +705,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       ),
                     ),
                     if (_isLoading)
-                      const Center(child: CircularProgressIndicator()),
+                      const Center(
+                        child: CircularProgressIndicator(),
+                      ), // Spinner overlay.
                   ],
                 ),
               ),
@@ -841,7 +728,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                         ),
                         if (!_etaText.contains('remaining')) ...[
                           const SizedBox(width: 8),
-                          const PulsingDots(color: Colors.grey),
+                          const PulsingDots(
+                            color: Colors.grey,
+                          ), // Loading indicator near ETA.
                         ],
                       ],
                     ),
@@ -858,7 +747,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                         ),
                         if (!_distanceText.contains('to destination')) ...[
                           const SizedBox(width: 8),
-                          const PulsingDots(color: Colors.grey),
+                          const PulsingDots(
+                            color: Colors.grey,
+                          ), // Loading indicator near distance.
                         ],
                       ],
                     ),
@@ -877,99 +768,19 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                     Row(
                       children: [
                         // Stop Alarm Button - only visible when alarm is playing
-                        // Stop Alarm Button - only visible when alarm is playing AND NOT final destination
-                        // We assume 'distance' and 'time' are final destination alarms.
-                        // 'stops' might be intermediate, so we allow stopping the alarm.
-                        // Stop Alarm Button - visible whenever alarm is playing
-                        ValueListenableBuilder<bool>(
-                          valueListenable: AlarmPlayer.isPlaying,
-                          builder: (context, playing, child) {
-                            if (!playing) return const SizedBox.shrink();
-
-                            // HIDE STOP ALARM BUTTON FOR FINAL DESTINATION
-                            // The user requested only "End Tracking" be available.
-                            // We check the latest route state (if active) or rely on heuristics?
-                            // Better: We should have access to the latest ActiveRouteState via stream.
-                            // But here we are inside a ValueListenableBuilder for playing.
-                            // We can use a StreamBuilder for ActiveRouteState or store it in state.
-                            // Actually, simply check if the current active alarm is 'destination'.
-                            // But AlarmPlayer doesn't expose type.
-                            // Hence we updated ActiveRouteState.
-                            // We need to access the boolean from the state.
-                            // Let's assume we store the latest 'isFinalAlarm' in a member variable from the stream listener.
-
-                            // Re-reading logic: _routeStateSub listener updates UI state?
-                            // Line 312: _routeStateSub updates _etaText, _distanceText.
-                            // I should update a local field `_isFinalAlarm` there too.
-
-                            if (_isFinalAlarm) return const SizedBox.shrink();
-
-                            final cs = Theme.of(context).colorScheme;
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: cs.secondaryContainer,
-                                    foregroundColor: cs.onSecondaryContainer,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                    textStyle: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    await AlarmPlayer.stop();
-                                    try {
-                                      // Also notify the background service
-                                      final service =
-                                          FlutterBackgroundService();
-                                      service.invoke('stopAlarm');
-                                    } catch (e) {
-                                      dev.log(
-                                        'Failed to send stopAlarm to service: $e',
-                                        name: 'MapTracking',
-                                      );
-                                    }
-                                  },
-                                  icon: const Icon(
-                                    Icons.notifications_off,
-                                    size: 24,
-                                  ),
-                                  label: const Text('STOP ALARM'),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        if (_alarmMode == 'stops')
-                          const SizedBox(width: 8), // Spacing between buttons
-                        // End Tracking Button
                         Expanded(
-                          child: Builder(
-                            builder: (context) {
-                              final isDark =
-                                  Theme.of(context).brightness ==
-                                  Brightness.dark;
-                              // Use a softer red in dark mode for better aesthetics
-                              final bgColor =
-                                  isDark
-                                      ? const Color(
-                                        0xFFCF6679,
-                                      ) // Material Dark Error
-                                      : Theme.of(context).colorScheme.error;
-                              final fgColor =
-                                  isDark
-                                      ? Colors.black
-                                      : Theme.of(context).colorScheme.onError;
-
+                          child: ValueListenableBuilder<bool>(
+                            valueListenable:
+                                AlarmPlayer.isPlaying, // Listen to alarm state.
+                            builder: (context, playing, child) {
+                              final cs =
+                                  Theme.of(
+                                    context,
+                                  ).colorScheme; // Theme colors.
                               return ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: bgColor,
-                                  foregroundColor: fgColor,
+                                  backgroundColor: cs.secondaryContainer,
+                                  foregroundColor: cs.onSecondaryContainer,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 16,
@@ -978,32 +789,74 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  disabledBackgroundColor: Colors.grey.shade300,
+                                  disabledForegroundColor: Colors.grey.shade600,
                                 ),
-                                onPressed: () async {
-                                  // Stop alarm sounds and vibration
-                                  await AlarmPlayer.stop();
-
-                                  await TrackingService().completeEndTracking();
-
-                                  // Ensure we return to home even if the global navigator is null
-                                  try {
-                                    if (mounted) {
-                                      Navigator.of(
-                                        context,
-                                      ).pushNamedAndRemoveUntil(
-                                        '/',
-                                        (route) => false,
-                                      );
-                                    }
-                                  } catch (_) {}
-                                },
+                                onPressed:
+                                    playing
+                                        ? () async {
+                                          await AlarmPlayer.stop(); // Stop sound.
+                                          try {
+                                            // Also notify the background service
+                                            final service =
+                                                FlutterBackgroundService();
+                                            service.invoke(
+                                              'stopAlarm',
+                                            ); // Ask service to stop vibration etc.
+                                          } catch (e) {
+                                            dev.log(
+                                              'Failed to send stopAlarm to service: $e',
+                                              name: 'MapTracking',
+                                            );
+                                          }
+                                        }
+                                        : null, // Button disabled when alarm not playing
                                 icon: const Icon(
-                                  Icons.stop_circle_outlined,
+                                  Icons.notifications_off,
                                   size: 24,
                                 ),
-                                label: const Text('END TRACKING'),
+                                label: const Text('STOP ALARM'),
                               );
                             },
+                          ),
+                        ),
+                        const SizedBox(width: 8), // Spacing between buttons
+                        // End Tracking Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onError,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () async {
+                              // Stop alarm sounds and vibration
+                              await AlarmPlayer.stop();
+
+                              // End tracking completely - clears snapshot, stops service,
+                              // cancels notifications, and resets all tracking state.
+                              // Pass navigateHome: false since we handle navigation here.
+                              await TrackingService().completeEndTracking(
+                                navigateHome: false,
+                              );
+
+                              // Navigate back to home screen
+                              Navigator.pushReplacementNamed(context, '/');
+                            },
+                            icon: const Icon(
+                              Icons.stop_circle_outlined,
+                              size: 24,
+                            ),
+                            label: const Text('END TRACKING'),
                           ),
                         ),
                       ],
@@ -1020,9 +873,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
 }
 
 class _LegendItem extends StatelessWidget {
-  final Color color;
-  final bool dashed;
-  final String label;
+  // Small legend chip for route types.
+  final Color color; // Line color.
+  final bool dashed; // Dashed or solid.
+  final String label; // Text label.
   const _LegendItem({
     required this.color,
     required this.dashed,
@@ -1031,49 +885,68 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Render chip.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         CustomPaint(
-          painter: _LineSamplePainter(color: color, dashed: dashed),
-          size: const Size(28, 6),
+          painter: _LineSamplePainter(
+            color: color,
+            dashed: dashed,
+          ), // Draw line sample.
+          size: const Size(28, 6), // Sample size.
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+          ), // White small text.
+        ),
       ],
     );
   }
 }
 
 class _LineSamplePainter extends CustomPainter {
-  final Color color;
-  final bool dashed;
+  // Paints a solid or dashed line sample.
+  final Color color; // Paint color.
+  final bool dashed; // Whether to draw dashes.
   _LineSamplePainter({required this.color, required this.dashed});
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Draw on canvas.
     final paint =
         Paint()
           ..color = color
           ..strokeWidth = 4
           ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
-    final y = size.height / 2;
+          ..strokeCap = StrokeCap.round; // Rounded ends.
+    final y = size.height / 2; // Center y.
     if (!dashed) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        paint,
+      ); // Single solid line.
     } else {
-      const double dashWidth = 8.0;
-      const double dashSpace = 6.0;
-      double x = 0.0;
+      const double dashWidth = 8.0; // Dash length.
+      const double dashSpace = 6.0; // Space length.
+      double x = 0.0; // Cursor.
       while (x < size.width) {
+        // Repeat dashes.
         final double x2 =
-            (x + dashWidth) > size.width ? size.width : (x + dashWidth);
-        canvas.drawLine(Offset(x, y), Offset(x2, y), paint);
-        x += dashWidth + dashSpace;
+            (x + dashWidth) > size.width
+                ? size.width
+                : (x + dashWidth); // Clip last dash.
+        canvas.drawLine(Offset(x, y), Offset(x2, y), paint); // Draw dash.
+        x += dashWidth + dashSpace; // Advance.
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false; // No repaint needed.
 }

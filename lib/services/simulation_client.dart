@@ -14,7 +14,7 @@ class SimulationClient {
 
   /// Optional hook to run when the first position is received from dashboard.
   /// This indicates the dashboard is actively sending positions.
-  final VoidCallback? onFirstPositionReceived;
+  VoidCallback? onFirstPositionReceived;
 
   /// Callback for when dashboard requests alarm state reset (e.g., progress slider moved backward)
   VoidCallback? _onAlarmReset;
@@ -191,6 +191,8 @@ class SimulationClient {
     List<Map<String, dynamic>>? segments,
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? events,
+    List<double>? stopMeters,
+    List<Map<String, dynamic>>? transitLegs,
     List<Map<String, dynamic>>? inactiveRoutes,
     bool? transitMode,
   }) {
@@ -203,6 +205,8 @@ class SimulationClient {
         'segments': segments,
         'switch_points': switchPoints,
         'events': events,
+        if (stopMeters != null) 'stop_meters': stopMeters,
+        if (transitLegs != null) 'transit_legs': transitLegs,
         if (inactiveRoutes != null) 'inactive_routes': inactiveRoutes,
         if (transitMode != null) 'transit_mode': transitMode,
       };
@@ -219,6 +223,7 @@ class SimulationClient {
     required String alarmMode,
     required double alarmValue,
     required bool alarmFired,
+    bool active = true,
     double? remainingStops,
     Map<String, dynamic>? debugInfo,
   }) {
@@ -231,12 +236,37 @@ class SimulationClient {
         'alarm_mode': alarmMode,
         'alarm_value': alarmValue,
         'alarm_fired': alarmFired,
+        'active': active,
         if (remainingStops != null) 'remaining_stops': remainingStops,
         if (debugInfo != null) 'debug_info': debugInfo,
       };
       _channel!.sink.add(jsonEncode(state));
     } catch (e) {
       print('SimulationClient: Send failed $e');
+      _handleDisconnection();
+    }
+  }
+
+  /// Broadcasts the physical device's current GPS position to the dashboard.
+  void broadcastPosition({
+    required double lat,
+    required double lng,
+    double? heading,
+    double? speed,
+  }) {
+    if (!PlaygroundBridgeConfig.enabled || _channel == null) return;
+    try {
+      final payload = {
+        'type': 'device_position',
+        'lat': lat,
+        'lng': lng,
+        if (heading != null) 'heading': heading,
+        if (speed != null) 'speed': speed,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+      _channel!.sink.add(jsonEncode(payload));
+    } catch (e) {
+      print('SimulationClient: broadcastPosition failed $e');
       _handleDisconnection();
     }
   }

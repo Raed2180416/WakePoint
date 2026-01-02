@@ -15,7 +15,7 @@ android {
     compileSdkVersion 35
 
     defaultConfig {
-        applicationId "com.example.geowake2"
+        applicationId "com.geowake.app"
         minSdkVersion 23
         targetSdkVersion 34
         versionCode 1

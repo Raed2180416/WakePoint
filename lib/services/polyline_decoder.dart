@@ -113,10 +113,10 @@ List<LatLng> estimateStopPositions(List<LatLng> polyline, int numStops) {
   if (totalLength <= 0) return const [];
 
   final positions = <LatLng>[];
-  final numSegments = numStops + 1;
-
   for (int i = 1; i <= numStops; i++) {
-    final targetDistance = (i / numSegments) * totalLength;
+    // Google Directions `num_stops` is the number of intermediate stops
+    // (excluding departure and arrival). So stops lie at 1/(n+1)..n/(n+1).
+    final targetDistance = (i / (numStops + 1)) * totalLength;
     final point = pointAlongPolyline(polyline, targetDistance);
     if (point != null) {
       positions.add(point);
@@ -169,6 +169,58 @@ List<double> stopDistancesAlongPolyline(
   }
 
   return result;
+}
+
+/// Snap a point to the closest position on a polyline.
+///
+/// Returns null if the polyline is empty.
+/// - snapped: closest point on the polyline
+/// - metersAlong: cumulative meters from start to snapped
+/// - distanceMeters: haversine distance from input point to snapped
+({LatLng snapped, double metersAlong, double distanceMeters})?
+snapPointToPolyline(List<LatLng> polyline, LatLng point) {
+  if (polyline.isEmpty) return null;
+  if (polyline.length == 1) {
+    return (
+      snapped: polyline.first,
+      metersAlong: 0.0,
+      distanceMeters: haversineDistance(point, polyline.first),
+    );
+  }
+
+  // Build cumulative distances for polyline vertices
+  final cumulativeDistances = <double>[0.0];
+  for (int i = 0; i < polyline.length - 1; i++) {
+    final d = haversineDistance(polyline[i], polyline[i + 1]);
+    cumulativeDistances.add(cumulativeDistances.last + d);
+  }
+
+  double bestDist = double.infinity;
+  LatLng bestPoint = polyline.first;
+  double bestMetersAlong = 0.0;
+
+  for (int i = 0; i < polyline.length - 1; i++) {
+    final projected = _projectPointOnSegment(
+      polyline[i],
+      polyline[i + 1],
+      point,
+    );
+    final snapped = projected.point;
+    final dist = haversineDistance(point, snapped);
+
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestPoint = snapped;
+      bestMetersAlong =
+          cumulativeDistances[i] + haversineDistance(polyline[i], snapped);
+    }
+  }
+
+  return (
+    snapped: bestPoint,
+    metersAlong: bestMetersAlong,
+    distanceMeters: bestDist,
+  );
 }
 
 /// Project a point onto a line segment, returning the closest point on the segment.
