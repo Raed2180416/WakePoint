@@ -19,7 +19,6 @@ import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/services/route_registry.dart';
 import 'package:geowake2/services/snap_to_route.dart';
-import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
 /// Context needed for alarm evaluation.
@@ -412,34 +411,40 @@ class AlarmController {
     }
 
     // ============ ALARM CONTROLLER DEBUG ============
-    print('┌─────────────────────────────────────────────────────────────');
-    print('│ ALARM CHECK: ${DateTime.now()}');
-    print('│ Controller Instance: ${hashCode}'); // Log Instance ID
-    print(
-      '│ ALARM_CTRL: mode=$modeEnum, progress=${progressMeters.toStringAsFixed(0)}m',
+    trackingLog.debug(
+      'ALARM CHECK',
+      data: {
+        'now': DateTime.now().toIso8601String(),
+        'controllerHash': hashCode,
+        'mode': modeEnum.toString(),
+        'progress_m': double.tryParse(progressMeters.toStringAsFixed(0)),
+        'transitLegsLength': context.transitLegs.length,
+        'currentLegIndex': currentLegIndex,
+        'isFinalLeg': isFinalLeg,
+        if (context.transitLegs.isNotEmpty)
+          'leg0': {
+            'hash': context.transitLegs[0].hashCode,
+            'stops': context.transitLegs[0].numStops,
+            'name': context.transitLegs[0].lineName,
+          },
+        if (context.transitLegs.isNotEmpty &&
+            currentLegIndex >= 0 &&
+            currentLegIndex < context.transitLegs.length)
+          'currentLeg': {
+            'name': context.transitLegs[currentLegIndex].lineName,
+            'isMetro': context.transitLegs[currentLegIndex].isMetro,
+            'start_m': context.transitLegs[currentLegIndex].legStartMeters,
+            'end_m': context.transitLegs[currentLegIndex].legEndMeters,
+          },
+      },
     );
-    if (context.transitLegs.isNotEmpty) {
-      final l0 = context.transitLegs[0];
-      print(
-        '│ Leg[0] hash: ${l0.hashCode}, stops: ${l0.numStops}, name: ${l0.lineName}',
-      );
-    }
-    print(
-      '│ transitLegs.length=${context.transitLegs.length}, currentLegIndex=$currentLegIndex',
-    );
-    if (context.transitLegs.isNotEmpty &&
-        currentLegIndex >= 0 &&
-        currentLegIndex < context.transitLegs.length) {
-      final leg = context.transitLegs[currentLegIndex];
-      print(
-        '│ currentLeg: ${leg.lineName}, isMetro=${leg.isMetro}, range=${leg.legStartMeters.toStringAsFixed(0)}-${leg.legEndMeters.toStringAsFixed(0)}m',
-      );
-    }
-    print('└─────────────────────────────────────────────────────────────');
 
     // Eagerly fetch the fired set to debug its state
     final firedSet = firedLegIdsForKey(alarmKey);
-    print('│ ALARM_CTRL_DEBUG: key="$alarmKey", firedLegs=$firedSet');
+    trackingLog.debug(
+      'ALARM_CTRL_DEBUG',
+      data: {'key': alarmKey, 'firedLegs': firedSet},
+    );
 
     // Evaluate
     try {

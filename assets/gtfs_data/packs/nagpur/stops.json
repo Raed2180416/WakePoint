@@ -1,0 +1,154 @@
+{
+  "stops": [
+    {
+      "id": "OSM_11368300694",
+      "name": "Airport",
+      "lat": 21.0862162,
+      "lng": 79.0637884
+    },
+    {
+      "id": "OSM_11368300695",
+      "name": "Airport South",
+      "lat": 21.0790559,
+      "lng": 79.0605257
+    },
+    {
+      "id": "OSM_11368300691",
+      "name": "Ajni Square",
+      "lat": 21.1182122,
+      "lng": 79.0721071
+    },
+    {
+      "id": "OSM_11371112354",
+      "name": "Ambazari Lake",
+      "lat": 21.1286919,
+      "lng": 79.0457448
+    },
+    {
+      "id": "OSM_11369581745",
+      "name": "Bansi Nagar",
+      "lat": 21.1161997,
+      "lng": 79.0126033
+    },
+    {
+      "id": "OSM_11368300690",
+      "name": "Chhatrapati Square",
+      "lat": 21.109139,
+      "lng": 79.0696114
+    },
+    {
+      "id": "OSM_6841157975",
+      "name": "Congress Nagar",
+      "lat": 21.1281984,
+      "lng": 79.0825531
+    },
+    {
+      "id": "OSM_11369581741",
+      "name": "Institute of Engineers",
+      "lat": 21.1383147,
+      "lng": 79.0700943
+    },
+    {
+      "id": "OSM_11368300693",
+      "name": "Jaiprakash Nagar",
+      "lat": 21.1036395,
+      "lng": 79.068179
+    },
+    {
+      "id": "OSM_11369581742",
+      "name": "Jhasi Rani Square",
+      "lat": 21.1407181,
+      "lng": 79.0778268
+    },
+    {
+      "id": "OSM_11368300687",
+      "name": "Kasturchand Park",
+      "lat": 21.1543646,
+      "lng": 79.081477
+    },
+    {
+      "id": "OSM_11368300696",
+      "name": "Khapri",
+      "lat": 21.0493478,
+      "lng": 79.0478446
+    },
+    {
+      "id": "OSM_11371112353",
+      "name": "LAD College",
+      "lat": 21.1329162,
+      "lng": 79.054798
+    },
+    {
+      "id": "OSM_11369581746",
+      "name": "Lokmanya Nagar",
+      "lat": 21.1108046,
+      "lng": 79.001754
+    },
+    {
+      "id": "OSM_9066500976",
+      "name": "New Airport",
+      "lat": 21.0660407,
+      "lng": 79.0558315
+    },
+    {
+      "id": "OSM_11369581743",
+      "name": "Rachna Ring Road",
+      "lat": 21.121523,
+      "lng": 79.0294117
+    },
+    {
+      "id": "OSM_6841157974",
+      "name": "Rahate Colony",
+      "lat": 21.1276692,
+      "lng": 79.0756888
+    },
+    {
+      "id": "OSM_11371112352",
+      "name": "Shankar Nagar Square",
+      "lat": 21.1362125,
+      "lng": 79.0616442
+    },
+    {
+      "id": "OSM_11368300689",
+      "name": "Sitabuldi",
+      "lat": 21.1414478,
+      "lng": 79.0824843
+    },
+    {
+      "id": "OSM_11371112355",
+      "name": "Subhash Nagar",
+      "lat": 21.1233162,
+      "lng": 79.0420532
+    },
+    {
+      "id": "OSM_11368300692",
+      "name": "Ujjwal Nagar",
+      "lat": 21.0963504,
+      "lng": 79.0663192
+    },
+    {
+      "id": "OSM_11369581744",
+      "name": "Vasudev Nagar",
+      "lat": 21.1187853,
+      "lng": 79.0194659
+    },
+    {
+      "id": "OSM_7049150985",
+      "name": "Zaveri Nursing Home, Nagpur",
+      "lat": 21.1699068,
+      "lng": 79.1101322
+    },
+    {
+      "id": "OSM_11368300688",
+      "name": "Zero Mile",
+      "lat": 21.1466946,
+      "lng": 79.0806347
+    },
+    {
+      "id": "OSM_7944597694",
+      "name": "\u092e\u0902\u0921\u0908",
+      "lat": 18.5129081,
+      "lng": 73.8569695
+    }
+  ]
+}

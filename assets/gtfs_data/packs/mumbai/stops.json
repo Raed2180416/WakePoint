@@ -1,0 +1,280 @@
+{
+  "stops": [
+    {
+      "id": "OSM_1330720641",
+      "name": "Aarey JVLR",
+      "lat": 19.1304284,
+      "lng": 72.8843492
+    },
+    {
+      "id": "OSM_12857565154",
+      "name": "Acharya Atre Chowk",
+      "lat": 18.9978202,
+      "lng": 72.8177201
+    },
+    {
+      "id": "OSM_311841874",
+      "name": "Airport Road",
+      "lat": 19.110135,
+      "lng": 72.8741686
+    },
+    {
+      "id": "OSM_12074909129",
+      "name": "Bandra Colony",
+      "lat": 19.0699627,
+      "lng": 72.8493601
+    },
+    {
+      "id": "OSM_5221297179",
+      "name": "Bandra Kurla Complex (BKC)",
+      "lat": 19.0606629,
+      "lng": 72.8546797
+    },
+    {
+      "id": "OSM_605163723",
+      "name": "Belpada",
+      "lat": 19.0252734,
+      "lng": 73.0549449
+    },
+    {
+      "id": "OSM_11335491947",
+      "name": "CBD Belapur",
+      "lat": 19.0205999,
+      "lng": 73.0402663
+    },
+    {
+      "id": "OSM_12074909131",
+      "name": "CSMI Airport Domestic T1",
+      "lat": 19.093899,
+      "lng": 72.8535765
+    },
+    {
+      "id": "OSM_5221297132",
+      "name": "CSMI Airport International T2",
+      "lat": 19.1023335,
+      "lng": 72.8744692
+    },
+    {
+      "id": "OSM_605163719",
+      "name": "Central Park",
+      "lat": 19.053613,
+      "lng": 73.0759978
+    },
+    {
+      "id": "OSM_13207029322",
+      "name": "Chhatrapati Shivaji Maharaj Terminus",
+      "lat": 18.9408329,
+      "lng": 72.831861
+    },
+    {
+      "id": "OSM_13207029319",
+      "name": "Churchgate",
+      "lat": 18.9314946,
+      "lng": 72.8269394
+    },
+    {
+      "id": "OSM_13207029317",
+      "name": "Cuffe Parade",
+      "lat": 18.9135692,
+      "lng": 72.8207152
+    },
+    {
+      "id": "OSM_12855459845",
+      "name": "Dadar",
+      "lat": 19.0236238,
+      "lng": 72.8392214
+    },
+    {
+      "id": "OSM_12855459847",
+      "name": "Dharavi",
+      "lat": 19.0462612,
+      "lng": 72.849741
+    },
+    {
+      "id": "OSM_151205149",
+      "name": "Ghatkopar L1",
+      "lat": 19.0867,
+      "lng": 72.9080738
+    },
+    {
+      "id": "OSM_13207029324",
+      "name": "Girgaon",
+      "lat": 18.9521015,
+      "lng": 72.8222065
+    },
+    {
+      "id": "OSM_13207029325",
+      "name": "Grant Road",
+      "lat": 18.9632181,
+      "lng": 72.8180437
+    },
+    {
+      "id": "OSM_13207029320",
+      "name": "Hutatma Chowk",
+      "lat": 18.9341849,
+      "lng": 72.8325037
+    },
+    {
+      "id": "OSM_13192130534",
+      "name": "Jagannath Shankar Sheth Metro",
+      "lat": 18.9699923,
+      "lng": 72.8211795
+    },
+    {
+      "id": "OSM_311841875",
+      "name": "Jagruti Nagar",
+      "lat": 19.0925802,
+      "lng": 72.9019098
+    },
+    {
+      "id": "OSM_13207029323",
+      "name": "Kalbadevi",
+      "lat": 18.946329,
+      "lng": 72.827193
+    },
+    {
+      "id": "OSM_605163717",
+      "name": "Kendriya Vihar",
+      "lat": 19.0376668,
+      "lng": 73.064078
+    },
+    {
+      "id": "OSM_605163718",
+      "name": "Khargar Village",
+      "lat": 19.0431093,
+      "lng": 73.0743003
+    },
+    {
+      "id": "OSM_5787704196",
+      "name": "MIDC - Andheri",
+      "lat": 19.1173537,
+      "lng": 72.8735966
+    },
+    {
+      "id": "OSM_13192130535",
+      "name": "Mahalaxmi",
+      "lat": 18.979467,
+      "lng": 72.8254006
+    },
+    {
+      "id": "OSM_5787704197",
+      "name": "Marol Naka (Line 3)",
+      "lat": 19.1085041,
+      "lng": 72.878578
+    },
+    {
+      "id": "OSM_311841876",
+      "name": "Marol Naka L1",
+      "lat": 19.1081525,
+      "lng": 72.8794868
+    },
+    {
+      "id": "OSM_9629564105",
+      "name": "Ovaripada",
+      "lat": 19.2431487,
+      "lng": 72.8641377
+    },
+    {
+      "id": "OSM_605163727",
+      "name": "Panchanand",
+      "lat": 19.0745418,
+      "lng": 73.0907708
+    },
+    {
+      "id": "OSM_605163726",
+      "name": "Pendhar",
+      "lat": 19.0722309,
+      "lng": 73.0978004
+    },
+    {
+      "id": "OSM_605163720",
+      "name": "Pethpada",
+      "lat": 19.0638208,
+      "lng": 73.0773651
+    },
+    {
+      "id": "OSM_11335491948",
+      "name": "RBI Colony",
+      "lat": 19.0229846,
+      "lng": 73.0479433
+    },
+    {
+      "id": "OSM_9629564104",
+      "name": "Rashtriya Udyan",
+      "lat": 19.2348129,
+      "lng": 72.8630608
+    },
+    {
+      "id": "OSM_5787704195",
+      "name": "SEEPZ",
+      "lat": 19.1259985,
+      "lng": 72.8737266
+    },
+    {
+      "id": "OSM_12074909132",
+      "name": "Sahar Road",
+      "lat": 19.102196,
+      "lng": 72.8652361
+    },
+    {
+      "id": "OSM_12074909130",
+      "name": "Santacruz",
+      "lat": 19.0792887,
+      "lng": 72.8471185
+    },
+    {
+      "id": "OSM_13192130536",
+      "name": "Science Museum",
+      "lat": 18.9908949,
+      "lng": 72.8213521
+    },
+    {
+      "id": "OSM_605163721",
+      "name": "Sector-34",
+      "lat": 19.0736469,
+      "lng": 73.0818144
+    },
+    {
+      "id": "OSM_12855459846",
+      "name": "Shitala Devi Mandir",
+      "lat": 19.0384641,
+      "lng": 72.8419646
+    },
+    {
+      "id": "OSM_12857565156",
+      "name": "Siddhivinayak Temple",
+      "lat": 19.0158935,
+      "lng": 72.8309199
+    },
+    {
+      "id": "OSM_9126268647",
+      "name": "Teen Hath Naka Station",
+      "lat": 19.1870457,
+      "lng": 72.9615868
+    },
+    {
+      "id": "OSM_605163722",
+      "name": "Utsav Chowk",
+      "lat": 19.032583,
+      "lng": 73.059056
+    },
+    {
+      "id": "OSM_287299861",
+      "name": "Versova",
+      "lat": 19.130252,
+      "lng": 72.8213775
+    },
+    {
+      "id": "OSM_13207029318",
+      "name": "Vidhan Bhavan",
+      "lat": 18.9247813,
+      "lng": 72.8254934
+    },
+    {
+      "id": "OSM_12857565155",
+      "name": "Worli",
+      "lat": 19.0086057,
+      "lng": 72.8192741
+    }
+  ]
+}
