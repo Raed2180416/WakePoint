@@ -7,11 +7,10 @@ import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/api_client.dart';
 import 'package:geowake2/services/notification_service.dart';
-import 'package:flutter/foundation.dart'; // for kDebugMode
 import 'dart:developer' as dev;
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

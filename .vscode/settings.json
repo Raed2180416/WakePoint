@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "C:/Users/thisi/geowake2/windows/runner",
+    "cmake.sourceDirectory": "${workspaceFolder}/windows/runner",
     "java.format.settings.url": ".vscode/java-formatter.xml",
-    "dart.flutterSdkPath": "C:\\dev\\flutter"
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
