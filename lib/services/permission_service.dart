@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:app_settings/app_settings.dart';
 import 'dart:io' show Platform;
+import 'dart:developer' as dev;
 
 class PermissionService {
   final BuildContext context;
@@ -50,8 +51,27 @@ class PermissionService {
         );
         if (!didAgree) return false;
 
+        dev.log(
+          "Requesting locationWhenInUse permission...",
+          name: "PermissionService",
+        );
         status = await Permission.locationWhenInUse.request();
-        if (!status.isGranted) return false;
+        dev.log(
+          "locationWhenInUse status after request: $status",
+          name: "PermissionService",
+        );
+
+        if (!status.isGranted) {
+          dev.log(
+            "Location permission still not granted after request",
+            name: "PermissionService",
+          );
+          if (status.isDenied) {
+            // Try one more time with a different approach
+            status = await Permission.locationWhenInUse.request();
+          }
+          if (!status.isGranted) return false;
+        }
       }
 
       // iOS: Step 2 - Now request background location (always)

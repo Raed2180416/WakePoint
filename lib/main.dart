@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'services/navigation_service.dart';
+import 'services/permission_service.dart';
 import 'dart:developer' as dev;
+import 'dart:io' show Platform;
 import 'screens/homescreen.dart';
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -39,10 +42,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // Start listening for app lifecycle events (pause, resume, etc.).
     WidgetsBinding.instance.addObserver(this);
 
-    // =======================================================================
-    // FIX: Call the permission check function here.
-    // =======================================================================
-    _checkNotificationPermission();
+    // Request all essential permissions (location, notifications, etc.)
+    _requestAllPermissions();
     _restoreThemePreference();
   }
 
@@ -73,12 +74,30 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     TrackingService().handleAppLifecycleChange(state);
   }
 
-  /// Check and request notification permission on Android 13+ or iOS.
-  Future<void> _checkNotificationPermission() async {
-    final status = await Permission.notification.status;
-    if (status.isDenied) {
-      await Permission.notification.request();
-    }
+  /// Request all essential permissions including location and notifications
+  /// Uses geolocator for location (which actually shows native dialogs)
+  Future<void> _requestAllPermissions() async {
+    try {
+      // Request location permission using geolocator (shows actual iOS dialog)
+      LocationPermission permission = await Geolocator.checkPermission();
+      print("Current location permission: $permission");
+      
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        print("After request: $permission");
+      }
+      
+      // Request notification permission using permission_handler
+      PermissionStatus notifStatus = await Permission.notification.status;
+      print("Current notification permission: $notifStatus");
+      
+      if (notifStatus.isDenied) {
+        notifStatus = await Permission.notification.request();
+        print("After notification request: $notifStatus");
+      }
+    } catch (e) {
+      dev.log("Error requesting permissions: $e", name: "main");
+      print("Error requesting permissions: $e");
   }
 
   void toggleTheme() {
