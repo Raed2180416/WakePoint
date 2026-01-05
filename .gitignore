@@ -15,6 +15,11 @@
 # is commented out by default.
 #.vscode/
 
+# Environment variables - NEVER commit these!
+.env
+.env.local
+.env.*.local
+
 # Flutter/Dart/Pub related
 .dart_tool/
 .flutter-plugins

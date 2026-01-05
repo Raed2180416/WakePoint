@@ -45,8 +45,7 @@ dependencies:
   google_maps_flutter: ^2.2.5
   google_places_flutter: ^2.0.0
 
-  # Ads & In-app purchases
-  google_mobile_ads: ^6.0.0
+  # In-app purchases
   in_app_purchase: ^3.2.1
 
   cupertino_icons: ^1.0.8
