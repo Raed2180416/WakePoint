@@ -193,17 +193,6 @@ class AlarmController {
   // during cooldown while still allowing the leg to fire once cooldown expires.
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Mark a leg as cooldown-suppressed (trigger was generated but blocked by cooldown).
-  void _markCooldownSuppressed(String? key, String legId) {
-    final now = AppClock().now();
-    if (key == null) {
-      _cooldownSuppressed[legId] = now;
-    } else {
-      _cooldownSuppressedByKey.putIfAbsent(key, () => <String, DateTime>{});
-      _cooldownSuppressedByKey[key]![legId] = now;
-    }
-  }
-
   /// Clear a leg from cooldown-suppressed (when it actually fires).
   void _clearCooldownSuppressed(String? key, String legId) {
     if (key == null) {
@@ -312,11 +301,17 @@ class AlarmController {
     required AlarmContext context,
     void Function()? onAlarmFired,
   }) async {
-    // DEBUG: Print key context every call to trace alarm evaluation
-    print(
-      'ALARM_CHECK_ENTRY: mode=${context.alarmMode}, value=${context.alarmValue}, '
-      'dest=${context.destination != null}, active=${context.trackingSessionActive}, '
-      'progress=${context.progressMeters}, pos=(${currentPosition.latitude.toStringAsFixed(5)}, ${currentPosition.longitude.toStringAsFixed(5)})',
+    trackingLog.debug(
+      'ALARM_CHECK_ENTRY',
+      data: {
+        'mode': context.alarmMode,
+        'value': context.alarmValue,
+        'dest': context.destination != null,
+        'active': context.trackingSessionActive,
+        'progress': context.progressMeters,
+        'lat': double.tryParse(currentPosition.latitude.toStringAsFixed(5)),
+        'lng': double.tryParse(currentPosition.longitude.toStringAsFixed(5)),
+      },
     );
 
     if (!context.trackingSessionActive) {
@@ -324,16 +319,12 @@ class AlarmController {
         'ALARM_CHECK: Early return - tracking not active',
         name: 'AlarmController',
       );
-      print('ALARM_CHECK: Early return - tracking NOT active');
       return;
     }
     if (context.destination == null || context.alarmValue == null) {
       dev.log(
         'ALARM_CHECK: Early return - dest=${context.destination}, value=${context.alarmValue}',
         name: 'AlarmController',
-      );
-      print(
-        'ALARM_CHECK: Early return - dest=${context.destination}, value=${context.alarmValue}',
       );
       return;
     }
@@ -409,8 +400,13 @@ class AlarmController {
     final isDistanceMode = context.alarmMode == 'distance';
     final hasAlarmValue = context.alarmValue != null;
     final alreadyFired = destinationAlarmFiredForKey(alarmKey);
-    print(
-      'ALARM_DIST_CHECK: isDistanceMode=$isDistanceMode, hasValue=$hasAlarmValue, alreadyFired=$alreadyFired',
+    trackingLog.debug(
+      'ALARM_DIST_CHECK',
+      data: {
+        'isDistanceMode': isDistanceMode,
+        'hasValue': hasAlarmValue,
+        'alreadyFired': alreadyFired,
+      },
     );
 
     if (isDistanceMode && hasAlarmValue && !alreadyFired) {
@@ -421,7 +417,7 @@ class AlarmController {
           'DISTANCE_MODE: progressMeters is NULL - using straight-line fallback',
           name: 'AlarmController',
         );
-        print(
+        trackingLog.debug(
           'ALARM_DEBUG: progressMeters is NULL - trying straight-line fallback',
         );
 
@@ -439,8 +435,13 @@ class AlarmController {
             'shouldFire=${distMeters <= thresholdMeters}',
             name: 'AlarmController',
           );
-          print(
-            'ALARM_DEBUG: StraightLine dist=$distMeters thresh=$thresholdMeters fire=${distMeters <= thresholdMeters}',
+          trackingLog.debug(
+            'ALARM_DEBUG_STRAIGHTLINE',
+            data: {
+              'distMeters': distMeters,
+              'thresholdMeters': thresholdMeters,
+              'fire': distMeters <= thresholdMeters,
+            },
           );
 
           if (distMeters <= thresholdMeters) {
@@ -500,13 +501,18 @@ class AlarmController {
             'Threshold: ${thresholdMeters.toStringAsFixed(1)}',
             name: 'AlarmController',
           );
-          // FORCE PRINT
-          print(
-            'ALARM_DEBUG: Total=${totalMeters} Prog=${progressMeters} Rem=${remainingMeters} Thresh=${thresholdMeters}',
+          trackingLog.debug(
+            'ALARM_DEBUG_DISTANCE',
+            data: {
+              'total_m': totalMeters,
+              'progress_m': progressMeters,
+              'remaining_m': remainingMeters,
+              'threshold_m': thresholdMeters,
+            },
           );
 
           if (remainingMeters <= thresholdMeters) {
-            print('ALARM_DEBUG: Condition MET! Firing.');
+            trackingLog.debug('ALARM_DEBUG: Condition MET! Firing.');
             dev.log(
               'ALARM_DEBUG: FIRING ALARM! (Condition Met)',
               name: 'AlarmController',
@@ -534,7 +540,10 @@ class AlarmController {
     }
 
     // Use AlarmEvaluator if we have route context
-    print('EVAL_GATE: events=${activeEvents.length}, progress=$progressMeters');
+    trackingLog.debug(
+      'EVAL_GATE',
+      data: {'events': activeEvents.length, 'progress': progressMeters},
+    );
     if (activeEvents.isNotEmpty && progressMeters != null) {
       await _evaluateWithRoute(
         currentPosition: currentPosition,
@@ -573,11 +582,14 @@ class AlarmController {
       currentSpeed = context.lastSpeedMps;
     }
 
-    print(
-      'SPEED_DEBUG: smoothedSpeed=${context.smoothedSpeed?.toStringAsFixed(2)}, '
-      'lastSpeedMps=${context.lastSpeedMps?.toStringAsFixed(2)}, '
-      'finalSpeed=${currentSpeed?.toStringAsFixed(2)}, '
-      'smoothedETA=${context.smoothedETA?.toStringAsFixed(1)}',
+    trackingLog.debug(
+      'SPEED_DEBUG',
+      data: {
+        'smoothedSpeed': context.smoothedSpeed,
+        'lastSpeedMps': context.lastSpeedMps,
+        'finalSpeed': currentSpeed,
+        'smoothedETA': context.smoothedETA,
+      },
     );
 
     // Metro journeys need time-mode evaluation immediately on each leg to
@@ -942,28 +954,44 @@ class AlarmController {
       data: {'key': alarmKey, 'firedLegs': firedSet},
     );
 
-    print(
-      'STOPS_EVAL_PRE: mode=$modeEnum, value=${context.alarmValue}, '
-      'progress=$progressMeters, transitLegs=${context.transitLegs.length}, '
-      'currentLegIndex=$currentLegIndex, events=${activeEvents.length}',
+    trackingLog.debug(
+      'STOPS_EVAL_PRE',
+      data: {
+        'mode': modeEnum.toString(),
+        'value': context.alarmValue,
+        'progress': progressMeters,
+        'transitLegs': context.transitLegs.length,
+        'currentLegIndex': currentLegIndex,
+        'events': activeEvents.length,
+      },
     );
 
     // DEBUG: Log all transit legs for inspection
     if (context.transitLegs.isNotEmpty) {
       for (int i = 0; i < context.transitLegs.length; i++) {
         final tl = context.transitLegs[i];
-        print(
-          'TRANSIT_LEG[$i]: isMetro=${tl.isMetro}, name=${tl.lineName}, '
-          'start=${tl.legStartMeters.toStringAsFixed(0)}, end=${tl.legEndMeters.toStringAsFixed(0)}, '
-          'stops=${tl.numStops}, legId=${tl.legId.substring(0, tl.legId.length.clamp(0, 50))}',
+        trackingLog.debug(
+          'TRANSIT_LEG',
+          data: {
+            'i': i,
+            'isMetro': tl.isMetro,
+            'name': tl.lineName,
+            'start_m': double.tryParse(tl.legStartMeters.toStringAsFixed(0)),
+            'end_m': double.tryParse(tl.legEndMeters.toStringAsFixed(0)),
+            'stops': tl.numStops,
+            'legId': tl.legId.substring(0, tl.legId.length.clamp(0, 50)),
+          },
         );
       }
     }
 
     // DEBUG: Log step bounds being passed
-    print(
-      'STEP_BOUNDS_CHECK: stepBoundsMeters.length=${context.stepBoundsMeters.length}, '
-      'stepDurations.length=${context.stepDurationsSeconds.length}',
+    trackingLog.debug(
+      'STEP_BOUNDS_CHECK',
+      data: {
+        'stepBoundsMetersLength': context.stepBoundsMeters.length,
+        'stepDurationsLength': context.stepDurationsSeconds.length,
+      },
     );
 
     // Evaluate
@@ -986,8 +1014,12 @@ class AlarmController {
         legStartMeters: legStartMeters,
       );
 
-      print(
-        'STOPS_EVAL_POST: trigger=${trigger != null ? "FIRE(${trigger.reason})" : "null"}',
+      trackingLog.debug(
+        'STOPS_EVAL_POST',
+        data: {
+          'trigger': trigger != null,
+          if (trigger != null) 'reason': trigger.reason,
+        },
       );
 
       if (trigger != null) {
@@ -999,8 +1031,12 @@ class AlarmController {
         if (context.alarmMode == 'time' && isMetroJourney) {
           final destinationOnly =
               await TrackingStateStore.destinationOnlyMetroTimeEnabled();
-          print(
-            'SUPPRESS_CHECK: metro+time mode, destinationOnly=$destinationOnly, eventType=${trigger.eventType}',
+          trackingLog.debug(
+            'SUPPRESS_CHECK_METRO_TIME',
+            data: {
+              'destinationOnly': destinationOnly,
+              'eventType': trigger.eventType.toString(),
+            },
           );
           if (destinationOnly &&
               trigger.eventType != AlarmEventType.finalDestination) {
@@ -1020,24 +1056,27 @@ class AlarmController {
         if (trigger.eventType == AlarmEventType.preBoarding &&
             context.alarmMode == 'stops') {
           final preboardingOn = await TrackingStateStore.preboardingEnabled();
-          print(
-            'SUPPRESS_CHECK: preBoarding event in STOPS mode, preboardingOn=$preboardingOn',
+          trackingLog.debug(
+            'SUPPRESS_CHECK_PREBOARDING_STOPS',
+            data: {'preboardingOn': preboardingOn},
           );
           if (!preboardingOn) {
             suppress = true;
             suppressReason = 'preboarding disabled (stops mode)';
           }
         } else if (trigger.eventType == AlarmEventType.preBoarding) {
-          print(
-            'SUPPRESS_CHECK: preBoarding event in TIME mode - preboarding toggle does NOT apply',
+          trackingLog.debug(
+            'SUPPRESS_CHECK_PREBOARDING_TIME',
+            data: {'note': 'preboarding toggle does not apply'},
           );
         }
 
         // Destination protection
         if (trigger.eventType == AlarmEventType.finalDestination) {
           final alreadyFired = destinationAlarmFiredForKey(alarmKey);
-          print(
-            'SUPPRESS_CHECK: destination event, alreadyFired=$alreadyFired',
+          trackingLog.debug(
+            'SUPPRESS_CHECK_DESTINATION',
+            data: {'alreadyFired': alreadyFired},
           );
           if (alreadyFired) {
             suppress = true;
@@ -1052,14 +1091,20 @@ class AlarmController {
           // If destination already fired, suppress everything else
           suppress = true;
           suppressReason = 'destination fired, suppressing other alarms';
-          print(
-            'SUPPRESS_CHECK: destination already fired for key, suppressing non-dest alarm',
+          trackingLog.debug(
+            'SUPPRESS_CHECK_DESTINATION_ALREADY_FIRED',
+            data: {'note': 'suppressing non-destination alarm'},
           );
         }
 
-        print(
-          'SUPPRESS_RESULT: suppress=$suppress, reason=${suppressReason.isEmpty ? "none" : suppressReason}, '
-          'eventType=${trigger.eventType}, legId=${trigger.legId}',
+        trackingLog.debug(
+          'SUPPRESS_RESULT',
+          data: {
+            'suppress': suppress,
+            'reason': suppressReason.isEmpty ? 'none' : suppressReason,
+            'eventType': trigger.eventType.toString(),
+            'legId': trigger.legId,
+          },
         );
 
         // NOTE: Metro time-mode cooldown has been REMOVED.
@@ -1073,7 +1118,6 @@ class AlarmController {
 
         if (!suppress) {
           final firedIndexes = firedIndexesForKey(alarmKey);
-          final firedLegIds = firedLegIdsForKey(alarmKey);
           final int? eventIndexToMark = trigger.eventIndex;
           final String? legIdToMark =
               (trigger.legId != null && trigger.legId!.trim().isNotEmpty)
@@ -1135,12 +1179,18 @@ class AlarmController {
             );
 
             // Single authoritative line for log-based auditing.
-            print(
-              'ALARM_FIRED: key=$alarmKey, type=${trigger.eventType}, title=$title, '
-              'legIdx=${trigger.legIndex}, legId=$legIdToMark, '
-              'progress=${context.progressMeters?.toStringAsFixed(0)}, '
-              'remainingM=${trigger.remainingMeters?.toStringAsFixed(0)}, '
-              'reason=${trigger.reason}',
+            trackingLog.info(
+              'ALARM_FIRED',
+              data: {
+                'key': alarmKey,
+                'type': trigger.eventType.toString(),
+                'title': title,
+                'legIdx': trigger.legIndex,
+                'legId': legIdToMark,
+                'progress_m': context.progressMeters,
+                'remaining_m': trigger.remainingMeters,
+                'reason': trigger.reason,
+              },
             );
 
             // Only mark as fired AFTER notification triggering succeeds.

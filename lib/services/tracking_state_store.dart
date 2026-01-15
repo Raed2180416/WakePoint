@@ -474,6 +474,13 @@ class TrackingStateStore {
     return prefs.getBool(_alarmFiredKey) ?? false;
   }
 
+  static Future<bool?> pendingAlarmAllowContinue() async {
+    final prefs = await _prefs();
+    await prefs.reload();
+    if (!prefs.containsKey('pending_alarm_allow')) return null;
+    return prefs.getBool('pending_alarm_allow');
+  }
+
   /// Persist transit leg stops for session resume.
   /// These contain actual stop positions from stop matching (when available)
   /// and are keyed by route key for multi-route sessions.

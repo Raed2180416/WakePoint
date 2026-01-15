@@ -45,6 +45,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   String _distanceText = "Calculating distance..."; // UI distance text.
   String? _switchNotice; // Upcoming transfer notice.
   bool _hasValidArgs = false; // Ensures args present.
+  bool _finalAlarmActive = false; // Destination alarm UI mode.
 
   Map<String, dynamic>? directions; // Raw directions payload.
 
@@ -71,6 +72,40 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   final List<double> _stepBoundariesMeters =
       []; // Cumulative meters at step ends.
   final List<double> _stepDurationsSeconds = []; // Step durations in seconds.
+
+  @override
+  void initState() {
+    super.initState();
+    AlarmPlayer.isPlaying.addListener(_onAlarmPlayingChanged);
+    _refreshFinalAlarmState();
+  }
+
+  void _onAlarmPlayingChanged() {
+    _refreshFinalAlarmState();
+  }
+
+  Future<void> _refreshFinalAlarmState() async {
+    if (!mounted) return;
+    final isPlaying = AlarmPlayer.isPlaying.value;
+    if (!isPlaying) {
+      if (_finalAlarmActive) {
+        setState(() {
+          _finalAlarmActive = false;
+        });
+      }
+      return;
+    }
+
+    final allowContinue =
+        await TrackingStateStore.pendingAlarmAllowContinue();
+    if (!mounted) return;
+    final next = isPlaying && allowContinue == false;
+    if (next != _finalAlarmActive) {
+      setState(() {
+        _finalAlarmActive = next;
+      });
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -716,6 +751,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   @override
   void dispose() {
     // Clean up streams and controllers.
+    AlarmPlayer.isPlaying.removeListener(_onAlarmPlayingChanged);
     _locationSubscription?.cancel(); // Stop GPS stream.
     _routeSwitchSub?.cancel(); // Stop switch stream.
     _routeStateSub?.cancel(); // Stop state stream.
@@ -906,102 +942,150 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        // Stop Alarm Button - only visible when alarm is playing
-                        Expanded(
-                          child: ValueListenableBuilder<bool>(
-                            valueListenable:
-                                AlarmPlayer.isPlaying, // Listen to alarm state.
-                            builder: (context, playing, child) {
-                              final cs =
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme; // Theme colors.
-                              return ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: cs.secondaryContainer,
-                                  foregroundColor: cs.onSecondaryContainer,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  disabledBackgroundColor: Colors.grey.shade300,
-                                  disabledForegroundColor: Colors.grey.shade600,
+                    if (_finalAlarmActive)
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 440),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onError,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 18,
                                 ),
-                                onPressed:
-                                    playing
-                                        ? () async {
-                                          await AlarmPlayer.stop(); // Stop sound.
-                                          try {
-                                            // Also notify the background service
-                                            final service =
-                                                FlutterBackgroundService();
-                                            service.invoke(
-                                              'stopAlarm',
-                                            ); // Ask service to stop vibration etc.
-                                          } catch (e) {
-                                            dev.log(
-                                              'Failed to send stopAlarm to service: $e',
-                                              name: 'MapTracking',
-                                            );
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: () async {
+                                // Stop alarm sounds and vibration
+                                await AlarmPlayer.stop();
+
+                                // End tracking completely - clears snapshot, stops service,
+                                // cancels notifications, and resets all tracking state.
+                                // Pass navigateHome: false since we handle navigation here.
+                                await TrackingService().completeEndTracking(
+                                  navigateHome: false,
+                                );
+
+                                // Navigate back to home screen
+                                Navigator.pushReplacementNamed(context, '/');
+                              },
+                              icon: const Icon(
+                                Icons.stop_circle_outlined,
+                                size: 24,
+                              ),
+                              label: const Text('END TRACKING'),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          // Stop Alarm Button - only visible when alarm is playing
+                          Expanded(
+                            child: ValueListenableBuilder<bool>(
+                              valueListenable:
+                                  AlarmPlayer.isPlaying, // Listen to alarm state.
+                              builder: (context, playing, child) {
+                                final cs =
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme; // Theme colors.
+                                return ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: cs.secondaryContainer,
+                                    foregroundColor: cs.onSecondaryContainer,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 16,
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    disabledBackgroundColor:
+                                        Colors.grey.shade300,
+                                    disabledForegroundColor:
+                                        Colors.grey.shade600,
+                                  ),
+                                  onPressed:
+                                      playing
+                                          ? () async {
+                                            await AlarmPlayer
+                                                .stop(); // Stop sound.
+                                            try {
+                                              // Also notify the background service
+                                              final service =
+                                                  FlutterBackgroundService();
+                                              service.invoke(
+                                                'stopAlarm',
+                                              ); // Ask service to stop vibration etc.
+                                            } catch (e) {
+                                              dev.log(
+                                                'Failed to send stopAlarm to service: $e',
+                                                name: 'MapTracking',
+                                              );
+                                            }
                                           }
-                                        }
-                                        : null, // Button disabled when alarm not playing
-                                icon: const Icon(
-                                  Icons.notifications_off,
-                                  size: 24,
+                                          : null, // Button disabled when alarm not playing
+                                  icon: const Icon(
+                                    Icons.notifications_off,
+                                    size: 24,
+                                  ),
+                                  label: const Text('STOP ALARM'),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8), // Spacing between buttons
+                          // End Tracking Button
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onError,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
                                 ),
-                                label: const Text('STOP ALARM'),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8), // Spacing between buttons
-                        // End Tracking Button
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                              foregroundColor:
-                                  Theme.of(context).colorScheme.onError,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 16,
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              onPressed: () async {
+                                // Stop alarm sounds and vibration
+                                await AlarmPlayer.stop();
+
+                                // End tracking completely - clears snapshot, stops service,
+                                // cancels notifications, and resets all tracking state.
+                                // Pass navigateHome: false since we handle navigation here.
+                                await TrackingService().completeEndTracking(
+                                  navigateHome: false,
+                                );
+
+                                // Navigate back to home screen
+                                Navigator.pushReplacementNamed(context, '/');
+                              },
+                              icon: const Icon(
+                                Icons.stop_circle_outlined,
+                                size: 24,
                               ),
+                              label: const Text('END TRACKING'),
                             ),
-                            onPressed: () async {
-                              // Stop alarm sounds and vibration
-                              await AlarmPlayer.stop();
-
-                              // End tracking completely - clears snapshot, stops service,
-                              // cancels notifications, and resets all tracking state.
-                              // Pass navigateHome: false since we handle navigation here.
-                              await TrackingService().completeEndTracking(
-                                navigateHome: false,
-                              );
-
-                              // Navigate back to home screen
-                              Navigator.pushReplacementNamed(context, '/');
-                            },
-                            icon: const Icon(
-                              Icons.stop_circle_outlined,
-                              size: 24,
-                            ),
-                            label: const Text('END TRACKING'),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
