@@ -4,6 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as dev;
 
+import 'package:geowake2/core/clock/app_clock.dart';
+
 /// ETA Engine - Computes estimated time of arrival using map-matching,
 /// speed smoothing, dwell time handling, and uncertainty calculations.
 class EtaEngine {
@@ -57,7 +59,7 @@ class EtaEngine {
   /// Persist state to SharedPreferences
   /// [force] bypasses the throttle (e.g. on service stop)
   Future<void> saveState({bool force = false}) async {
-    final now = DateTime.now();
+    final now = AppClock().now();
     if (!force &&
         _lastSaveTime != null &&
         now.difference(_lastSaveTime!) < _saveThrottle) {
@@ -438,10 +440,82 @@ class EtaEngine {
       if (currentStepIndex != -1) {
         // Calculate remaining distance in CURRENT step
         double stepEnd = stepBoundsMeters[currentStepIndex];
+        double stepStart =
+            currentStepIndex == 0
+                ? 0.0
+                : stepBoundsMeters[currentStepIndex - 1];
+        final double stepLen = (stepEnd - stepStart).clamp(
+          0.0,
+          double.infinity,
+        );
         double distRemainingInStep = stepEnd - accumulatedProgress;
 
+        // Conservative current-step time:
+        // - Planned (step duration proportion) provides a floor (prevents optimistic
+        //   ETA when GPS speed spikes).
+        // - Speed-based time provides a ceiling when we're slower than plan.
+        final double plannedStepSeconds = stepDurationsSeconds[currentStepIndex]
+            .toDouble()
+            .clamp(0.0, 1e9);
+        final double plannedRemainingSeconds =
+            stepLen > 0
+                ? (plannedStepSeconds * (distRemainingInStep / stepLen)).clamp(
+                  0.0,
+                  1e9,
+                )
+                : 0.0;
+
         // Time to finish current step at CURRENT effective speed
-        double timeForCurrentStep = distRemainingInStep / effectiveSpeed;
+        final double speedBasedSeconds = distRemainingInStep / effectiveSpeed;
+        double timeForCurrentStep = speedBasedSeconds;
+
+        // Allow ETA to be better than the plan when we're credibly moving faster,
+        // but never by an unbounded amount (guards against GPS speed spikes).
+        //
+        // We compute a dynamic "floor factor" in [0.60, 0.90] based on:
+        // - GPS accuracy (worse accuracy => closer to 0.90 i.e. little improvement)
+        // - Speed stability (higher sigmaV => closer to 0.90)
+        //
+        // Interpreting the factor:
+        // - 0.60 => allow ETA to drop to 60% of planned remaining (up to 40% faster)
+        // - 0.90 => allow ETA to drop to 90% of planned remaining (up to 10% faster)
+        final bool allowFasterThanPlan =
+            gps.accuracy.isFinite &&
+            gps.accuracy <= gpsAccuracyThreshold &&
+            speedWindow.length >= 3 &&
+            effectiveSpeed > 1.0;
+
+        double floorFactor = 1.0;
+        double? sigmaVNow;
+        if (allowFasterThanPlan) {
+          sigmaVNow = _computeSigmaV();
+
+          final double accNorm = ((gps.accuracy - uncertaintyMinPos) /
+                  (gpsAccuracyThreshold - uncertaintyMinPos))
+              .clamp(0.0, 1.0);
+          // sigmaV ~ 0.5 m/s: stable, sigmaV >= 2.0 m/s: noisy
+          final double sigmaNorm = (sigmaVNow / 2.0).clamp(0.0, 1.0);
+
+          final double worst = max(accNorm, sigmaNorm);
+          floorFactor = (0.60 + 0.30 * worst).clamp(0.60, 0.90);
+        }
+
+        final double floorSeconds = (plannedRemainingSeconds * floorFactor)
+            .clamp(0.0, 1e9);
+
+        // DEBUG: hybrid step ETA components.
+        dev.log(
+          'ETA_DEBUG hybridStep: idx=$currentStepIndex, acc=${gps.accuracy.toStringAsFixed(1)}m, '
+          'sigmaV=${sigmaVNow?.toStringAsFixed(2) ?? "n/a"}, floorFactor=${floorFactor.toStringAsFixed(2)}, '
+          'plannedRemain=${plannedRemainingSeconds.toStringAsFixed(1)}s, speedBased=${speedBasedSeconds.toStringAsFixed(1)}s, '
+          'floor=${floorSeconds.toStringAsFixed(1)}s, chosen=${max(speedBasedSeconds, floorSeconds).toStringAsFixed(1)}s, '
+          'stepLen=${stepLen.toStringAsFixed(0)}m, distRemainStep=${distRemainingInStep.toStringAsFixed(0)}m, vEff=${effectiveSpeed.toStringAsFixed(2)}',
+          name: 'EtaEngine',
+        );
+
+        if (timeForCurrentStep.isFinite && floorSeconds.isFinite) {
+          timeForCurrentStep = max(timeForCurrentStep, floorSeconds);
+        }
 
         // Time for FUTURE steps (sum of their nominal durations)
         double timeForFutureSteps = 0.0;
@@ -476,6 +550,10 @@ class EtaEngine {
     // Save state asynchronously
     saveState();
 
+    dev.log(
+      'ETA_DEBUG computeEta: etaSec=${etaSeconds.toStringAsFixed(1)}, remainM=${remainingMeters.toStringAsFixed(0)}, vEst=${effectiveSpeed.toStringAsFixed(2)}, rawSpd=${rawSpeed.toStringAsFixed(2)}, smoothSpd=${smoothedSpeed?.toStringAsFixed(2)}, metro=$isMetroMode, hasSteps=${stepBoundsMeters != null}',
+      name: 'EtaEngine',
+    );
     return (
       etaSeconds: etaSeconds,
       remainingMeters: remainingMeters,

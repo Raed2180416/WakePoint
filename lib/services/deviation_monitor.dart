@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:geowake2/core/clock/app_clock.dart';
+import 'package:geowake2/dashboard/constraint_logger.dart';
+
 class DeviationState {
   final bool offroute;
   final bool sustained;
@@ -20,7 +23,11 @@ class SpeedThresholdModel {
   final double base;
   final double k;
   final double hysteresisRatio;
-  const SpeedThresholdModel({this.base = 15.0, this.k = 1.5, this.hysteresisRatio = 0.7});
+  const SpeedThresholdModel({
+    this.base = 15.0,
+    this.k = 1.5,
+    this.hysteresisRatio = 0.7,
+  });
 
   double high(double speedMps) => base + k * speedMps;
   double low(double speedMps) => hysteresisRatio * high(speedMps);
@@ -42,8 +49,12 @@ class DeviationMonitor {
     this.model = const SpeedThresholdModel(),
   });
 
-  void ingest({required double offsetMeters, required double speedMps, DateTime? at}) {
-    final now = at ?? DateTime.now();
+  void ingest({
+    required double offsetMeters,
+    required double speedMps,
+    DateTime? at,
+  }) {
+    final now = at ?? AppClock().now();
     final th = model.high(speedMps);
     final tl = model.low(speedMps);
 
@@ -52,6 +63,15 @@ class DeviationMonitor {
         _offroute = true;
         _deviatingSince = now;
         _sustained = false;
+
+        // Log deviation detected
+        ConstraintLogger.instance.log(
+          ConstraintEvent.deviationDetected(
+            timestamp: now,
+            offsetMeters: offsetMeters,
+            thresholdMeters: th,
+          ),
+        );
       }
     } else {
       // currently deviating
@@ -60,21 +80,46 @@ class DeviationMonitor {
         _offroute = false;
         _sustained = false;
         _deviatingSince = null;
+
+        // Log back on route
+        ConstraintLogger.instance.log(
+          ConstraintEvent(
+            type: ConstraintEventType.backOnRoute,
+            timestamp: now,
+            title: 'Back on Route',
+            description:
+                'Returned within ${offsetMeters.toStringAsFixed(1)}m (threshold: ${tl.toStringAsFixed(0)}m)',
+            details: {'offsetMeters': offsetMeters, 'thresholdMeters': tl},
+          ),
+        );
       } else {
         // still offroute; check sustain
-        if (!_sustained && _deviatingSince != null && now.difference(_deviatingSince!) >= sustainDuration) {
+        if (!_sustained &&
+            _deviatingSince != null &&
+            now.difference(_deviatingSince!) >= sustainDuration) {
           _sustained = true;
+
+          // Log deviation sustained
+          ConstraintLogger.instance.log(
+            ConstraintEvent.deviationSustained(
+              timestamp: now,
+              duration: now.difference(_deviatingSince!),
+              offsetMeters: offsetMeters,
+            ),
+          );
         }
       }
     }
 
-    _stateCtrl.add(DeviationState(
-      offroute: _offroute,
-      sustained: _sustained,
-      offsetMeters: offsetMeters,
-      speedMps: speedMps,
-      at: now,
-    ));
+    _stateCtrl.add(
+      DeviationState(
+        offroute: _offroute,
+        sustained: _sustained,
+        offsetMeters: offsetMeters,
+        speedMps: speedMps,
+        at: now,
+      ),
+    );
   }
 
   void reset() {

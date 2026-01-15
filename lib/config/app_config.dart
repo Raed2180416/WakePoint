@@ -16,15 +16,6 @@ class AppConfig {
   static const String serverBaseUrl =
       'https://geowake-production.up.railway.app/api';
 
-  /// Base URL for hosted GTFS-derived city packs (recommended: GitHub Pages).
-  ///
-  /// Example:
-  /// `https://<username>.github.io/geowake-gtfs`
-  ///
-  /// Leave empty to disable GTFS stop enrichment (app will fall back to uniform
-  /// stop estimation for metro legs).
-  static const String gtfsBaseUrl = '';
-
   // Unified bundle ID - must match:
   // - android/app/build.gradle
   // - android/app/build.gradle.kts

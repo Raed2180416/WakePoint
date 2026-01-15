@@ -36,9 +36,11 @@ class ForegroundBridge {
   final _routeStateCtrl = StreamController<ActiveRouteState>.broadcast();
   final _routeSwitchCtrl = StreamController<RouteSwitchEvent>.broadcast();
   final _locationCtrl = StreamController<Position>.broadcast();
+  final _etaCtrl = StreamController<double?>.broadcast();
 
   // Callback for when alarm is triggered from background
-  void Function(String title, String body, bool allowContinue)? onAlarmTrigger;
+  void Function(String title, String body, bool allowContinue, bool playSound)?
+  onAlarmTrigger;
 
   ForegroundBridge({
     required FlutterBackgroundService service,
@@ -49,6 +51,7 @@ class ForegroundBridge {
   Stream<ActiveRouteState> get activeRouteStateStream => _routeStateCtrl.stream;
   Stream<RouteSwitchEvent> get routeSwitchStream => _routeSwitchCtrl.stream;
   Stream<Position> get locationStream => _locationCtrl.stream;
+  Stream<double?> get etaSecondsStream => _etaCtrl.stream;
 
   /// Ensures all ACK and event listeners are registered on the service.
   /// Call this before any invoke operations.
@@ -208,15 +211,17 @@ class ForegroundBridge {
       final body =
           data['body'] as String? ?? 'You are approaching your destination';
       final allowContinue = data['allowContinue'] as bool? ?? false;
+      final playSound = data['playSound'] as bool? ?? true;
 
       if (onAlarmTrigger != null) {
-        onAlarmTrigger!(title, body, allowContinue);
+        onAlarmTrigger!(title, body, allowContinue, playSound);
       } else {
         // Fallback: call notification service directly
         await NotificationService().showWakeUpAlarm(
           title: title,
           body: body,
           allowContinueTracking: allowContinue,
+          playSound: playSound,
         );
       }
     } catch (e) {
@@ -232,6 +237,7 @@ class ForegroundBridge {
     try {
       final lat = (data['latitude'] as num).toDouble();
       final lng = (data['longitude'] as num).toDouble();
+      final eta = (data['eta'] as num?)?.toDouble();
       final pos = Position(
         latitude: lat,
         longitude: lng,
@@ -245,6 +251,7 @@ class ForegroundBridge {
         speedAccuracy: 0.0,
       );
       _locationCtrl.add(pos);
+      _etaCtrl.add(eta);
     } catch (e) {
       trackingLog.warn(
         'Failed to parse updateLocation data',

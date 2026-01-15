@@ -406,22 +406,24 @@ class NotificationService {
       // alarm-like vibration behavior across Android versions.
       await AlarmHaptics.start(pattern: _alarmVibrationPattern);
 
-      // Android (especially newer versions) may stop long-running repeating
-      // vibrations. Re-trigger the pattern on a fixed cadence to keep it going
-      // for as long as the alarm is active.
-      _alarmVibrationResyncTimer?.cancel();
-      _alarmVibrationResyncTimer = Timer.periodic(
-        _alarmVibrationPatternPeriod,
-        (_) {
-          if (!_alarmVibrationLoopActive) return;
-          // Fire-and-forget; best effort.
-          () async {
-            try {
-              await AlarmHaptics.start(pattern: _alarmVibrationPattern);
-            } catch (_) {}
-          }();
-        },
-      );
+      // Only enable the periodic resync when we are *not* using the native
+      // Android implementation. The native path uses a repeating waveform
+      // (repeatIndex=0) and should run continuously until cancelled.
+      if (!AlarmHaptics.isUsingNativeForAndroid) {
+        _alarmVibrationResyncTimer?.cancel();
+        _alarmVibrationResyncTimer = Timer.periodic(
+          _alarmVibrationPatternPeriod,
+          (_) {
+            if (!_alarmVibrationLoopActive) return;
+            // Fire-and-forget; best effort.
+            () async {
+              try {
+                await AlarmHaptics.start(pattern: _alarmVibrationPattern);
+              } catch (_) {}
+            }();
+          },
+        );
+      }
     } catch (e) {
       // MissingPluginException / platform limitations.
       _alarmVibrationLoopActive = false;
@@ -573,7 +575,7 @@ class NotificationService {
         // Vibration.vibrate() for better sync with the alarm sound.
         await androidImpl.createNotificationChannel(
           const AndroidNotificationChannel(
-            'geowake_alarm_channel_v3',
+            'geowake_alarm_channel_v4',
             'GeoWake Alarms (High Priority)',
             description: 'Channel for urgent GeoWake wake-up alarms',
             importance: Importance.max,
@@ -614,10 +616,12 @@ class NotificationService {
   }
 
   // This is the main function to trigger the alarm
+  // This is the main function to trigger the alarm
   Future<void> showWakeUpAlarm({
     required String title,
     required String body,
     bool allowContinueTracking = true,
+    bool playSound = true, // Default to true for backward compatibility
   }) async {
     // Test-mode observability: always record, and call optional hook when present
     if (isTestMode || testOnShowWakeUpAlarm != null) {
@@ -631,6 +635,7 @@ class NotificationService {
           'title': title,
           'body': body,
           'allow': allowContinueTracking,
+          'playSound': playSound,
           'ts': DateTime.now().toIso8601String(),
         });
       } catch (_) {}
@@ -641,7 +646,7 @@ class NotificationService {
       return;
     }
     dev.log(
-      'DEBUG: ALARM TRIGGER: Showing wake-up alarm with title: "$title", body: "$body"',
+      'DEBUG: ALARM TRIGGER: Showing wake-up alarm with title: "$title", body: "$body", sound: $playSound',
       name: 'NotificationService',
     );
 
@@ -682,7 +687,7 @@ class NotificationService {
 
     final AndroidNotificationDetails
     androidDetails = AndroidNotificationDetails(
-      'geowake_alarm_channel_v3',
+      'geowake_alarm_channel_v4',
       'GeoWake Alarms (High Priority)',
       channelDescription: 'Channel for GeoWake wake-up alarms',
       importance: Importance.max,
@@ -753,12 +758,25 @@ class NotificationService {
         'DEBUG: Starting alarm sound, vibration, and notification in parallel',
         name: 'NotificationService',
       );
-      final soundFuture = AlarmPlayer.playSelected().catchError((e) {
+      final soundFuture =
+          playSound
+              ? AlarmPlayer.playSelected().catchError((e) {
+                dev.log(
+                  'DEBUG: Failed to play alarm sound: $e',
+                  name: 'NotificationService',
+                );
+              })
+              : Future.value();
+
+      if (!playSound) {
         dev.log(
-          'DEBUG: Failed to play alarm sound: $e',
+          'DEBUG: Skipping sound playback (handled by background isolate)',
           name: 'NotificationService',
         );
-      });
+        // Mark alarm as playing in foreground so UI (Stop Alarm button) is enabled.
+        // The actual audio is playing in background isolate, but UI needs to know.
+        AlarmPlayer.markAsPlaying();
+      }
 
       // Start vibration loop in sync with sound
       dev.log('DEBUG: Starting vibration loop', name: 'NotificationService');
@@ -810,7 +828,7 @@ class NotificationService {
       final allowContinue = prefs.getBool('pending_alarm_allow') ?? false;
 
       final androidDetails = AndroidNotificationDetails(
-        'geowake_alarm_channel_v3',
+        'geowake_alarm_channel_v4',
         'GeoWake Alarms (High Priority)',
         channelDescription: 'Channel for GeoWake wake-up alarms',
         importance: Importance.max,

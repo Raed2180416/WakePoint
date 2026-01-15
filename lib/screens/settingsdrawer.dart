@@ -9,7 +9,14 @@ import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/screens/ringtones_screen.dart';
 
 class SettingsDrawer extends StatelessWidget {
-  const SettingsDrawer({super.key});
+  const SettingsDrawer({
+    super.key,
+    required this.metroModeEnabled,
+    this.isMetroTimeMode = false,
+  });
+
+  final bool metroModeEnabled;
+  final bool isMetroTimeMode;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +50,10 @@ class SettingsDrawer extends StatelessWidget {
                 Navigator.of(context).pop();
               },
             ),
-            const _PreboardingToggleTile(),
+            _PreboardingToggleTile(
+              metroModeEnabled: metroModeEnabled,
+              isMetroTimeMode: isMetroTimeMode,
+            ),
             ListTile(
               leading: const Icon(Icons.alarm),
               title: const Text('Alarm Ringtones'),
@@ -84,14 +94,20 @@ class SettingsDrawer extends StatelessWidget {
 }
 
 class _PreboardingToggleTile extends StatefulWidget {
-  const _PreboardingToggleTile();
+  const _PreboardingToggleTile({
+    required this.metroModeEnabled,
+    required this.isMetroTimeMode,
+  });
+
+  final bool metroModeEnabled;
+  final bool isMetroTimeMode;
 
   @override
   State<_PreboardingToggleTile> createState() => _PreboardingToggleTileState();
 }
 
 class _PreboardingToggleTileState extends State<_PreboardingToggleTile> {
-  bool _enabled = TrackingStateStore.preboardingEnabledSync();
+  bool _enabled = false;
 
   @override
   void initState() {
@@ -100,7 +116,10 @@ class _PreboardingToggleTileState extends State<_PreboardingToggleTile> {
   }
 
   Future<void> _load() async {
-    final v = await TrackingStateStore.preboardingEnabled();
+    final v =
+        widget.isMetroTimeMode
+            ? await TrackingStateStore.destinationOnlyMetroTimeEnabled()
+            : await TrackingStateStore.preboardingEnabled();
     if (!mounted) return;
     setState(() {
       _enabled = v;
@@ -109,17 +128,35 @@ class _PreboardingToggleTileState extends State<_PreboardingToggleTile> {
 
   @override
   Widget build(BuildContext context) {
+    final title =
+        widget.isMetroTimeMode
+            ? 'Fire only destination alarm'
+            : 'Preboarding alarms';
+    final subtitle =
+        widget.metroModeEnabled
+            ? (widget.isMetroTimeMode
+                ? 'Suppress leg alarms; only destination will fire'
+                : 'Notify before boarding metro')
+            : 'Enable Metro Mode to use this';
+
     return SwitchListTile(
       secondary: const Icon(Icons.directions_subway),
-      title: const Text('Preboarding alarms'),
-      subtitle: const Text('Notify before boarding metro'),
+      title: Text(title),
+      subtitle: Text(subtitle),
       value: _enabled,
-      onChanged: (v) {
-        setState(() {
-          _enabled = v;
-        });
-        TrackingStateStore.setPreboardingEnabled(v);
-      },
+      onChanged:
+          widget.metroModeEnabled
+              ? (v) {
+                setState(() {
+                  _enabled = v;
+                });
+                if (widget.isMetroTimeMode) {
+                  TrackingStateStore.setDestinationOnlyMetroTimeEnabled(v);
+                } else {
+                  TrackingStateStore.setPreboardingEnabled(v);
+                }
+              }
+              : null,
     );
   }
 }

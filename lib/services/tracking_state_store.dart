@@ -266,6 +266,8 @@ class TrackingStateStore {
   static const _progressPayloadKey = 'gw_progress_payload_v1';
   static const _pausedKey = 'tracking_paused_v1';
   static const _preboardingEnabledKey = 'gw_preboarding_enabled_v1';
+  static const _destinationOnlyMetroTimeKey =
+      'gw_destination_only_metro_time_v1';
 
   static SharedPreferences? _cachedPrefs;
 
@@ -303,6 +305,23 @@ class TrackingStateStore {
   static Future<bool> isPaused() async {
     final prefs = await _prefs();
     return prefs.getBool(_pausedKey) ?? false;
+  }
+
+  /// When true (only applicable to metro + time mode), suppress all
+  /// intermediate/leg alarms and fire only the final destination alarm.
+  static Future<void> setDestinationOnlyMetroTimeEnabled(bool enabled) async {
+    final prefs = await _prefs();
+    await prefs.setBool(_destinationOnlyMetroTimeKey, enabled);
+  }
+
+  static Future<bool> destinationOnlyMetroTimeEnabled() async {
+    final prefs = await _prefs();
+    await prefs.reload();
+    return prefs.getBool(_destinationOnlyMetroTimeKey) ?? false;
+  }
+
+  static bool destinationOnlyMetroTimeEnabledSync() {
+    return _cachedPrefs?.getBool(_destinationOnlyMetroTimeKey) ?? false;
   }
 
   static Future<void> saveSnapshot(TrackingSnapshot snapshot) async {
@@ -456,7 +475,7 @@ class TrackingStateStore {
   }
 
   /// Persist transit leg stops for session resume.
-  /// These contain actual stop positions from GTFS matching (when available)
+  /// These contain actual stop positions from stop matching (when available)
   /// and are keyed by route key for multi-route sessions.
   static Future<void> saveTransitLegStops(
     String routeKey,

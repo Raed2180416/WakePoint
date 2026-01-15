@@ -30,11 +30,27 @@ void main() {
   group('TrackingService Connectivity Simulation', () {
     late StreamController<Position> gpsController;
     late TrackingService trackingService;
+    late Duration _originalGpsDropoutBuffer;
+
+    Future<void> _eventuallyBool(
+      bool Function() getValue,
+      bool expected, {
+      Duration timeout = const Duration(seconds: 5),
+      Duration pollInterval = const Duration(milliseconds: 50),
+    }) async {
+      final deadline = DateTime.now().add(timeout);
+      while (DateTime.now().isBefore(deadline)) {
+        if (getValue() == expected) return;
+        await Future.delayed(pollInterval);
+      }
+      expect(getValue(), expected);
+    }
 
     setUp(() {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({});
       TrackingService.isTestMode = true;
+      _originalGpsDropoutBuffer = gpsDropoutBuffer;
       gpsDropoutBuffer = Duration(seconds: 2);
       // Create a fake GPS stream.
       gpsController = StreamController<Position>();
@@ -45,11 +61,20 @@ void main() {
         AccelerometerEvent(0.2, 0.2, 0.0, DateTime.now()),
       ]);
       trackingService = TrackingService();
+
+      // Always stop tracking even if an expectation fails.
+      addTearDown(() async {
+        try {
+          await trackingService.stopTracking();
+        } catch (_) {}
+      });
     });
 
     tearDown(() async {
       await gpsController.close();
       testGpsStream = null;
+      testAccelerometerStream = null;
+      gpsDropoutBuffer = _originalGpsDropoutBuffer;
     });
 
     test(
@@ -67,23 +92,29 @@ void main() {
           alarmValue: 100.0,
         );
 
-        // Wait 1 second.
-        await Future.delayed(Duration(seconds: 1));
-        expect(trackingService.fusionActive, isFalse);
+        await _eventuallyBool(
+          () => trackingService.fusionActive,
+          false,
+          timeout: const Duration(seconds: 2),
+        );
 
         // Wait to exceed the dropout buffer.
         logStep('Wait past dropout buffer to trigger fusion');
-        await Future.delayed(Duration(seconds: 3));
-        expect(trackingService.fusionActive, isTrue);
+        await _eventuallyBool(
+          () => trackingService.fusionActive,
+          true,
+          timeout: const Duration(seconds: 6),
+        );
 
         // Emit a resumed GPS update.
         final resumedPos = fakePosition(37.423, -122.083);
         gpsController.add(resumedPos);
         logStep('GPS resumes; fusion should stop');
-        await Future.delayed(Duration(seconds: 1));
-        expect(trackingService.fusionActive, isFalse);
-
-        await trackingService.stopTracking();
+        await _eventuallyBool(
+          () => trackingService.fusionActive,
+          false,
+          timeout: const Duration(seconds: 3),
+        );
       },
     );
   });

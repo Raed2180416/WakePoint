@@ -7,7 +7,7 @@ void main() {
     'Simulate Route 2 Matching (Driving -> Metro -> Metro -> Driving)',
     () async {
       // 1. Mock Directions API Response for Route 2
-      //    Leg 1: Driving (Ramaiah -> Peenya) (Ignored by GTFS logic)
+      //    Leg 1: Driving (Ramaiah -> Peenya) (Ignored by stop-matching logic)
       //    Leg 2: Metro (Green Line: Peenya Industry? -> Majestic)
       //    Leg 3: Metro (Purple Line: Majestic -> Whitefield/Kadugodi)
       //    Leg 4: Driving (Last mile)
@@ -122,7 +122,7 @@ void main() {
         }
       }
 
-      // 3. Enhance with GTFS (using allIndiaStops internally now)
+      // 3. Enhance with OSM stops (using allIndiaStops)
       final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
         legs,
         mockDirections,
@@ -157,7 +157,7 @@ void main() {
 
       if (greenLeg.isActualPositions == false) {
         dev.log(
-          '⚠️ FALLBACK DETECTED: Utilizing uniform interpolation instead of GTFS data.',
+          '⚠️ FALLBACK DETECTED: Utilizing uniform interpolation instead of matched stop data.',
           name: 'DebugRoute2',
         );
       }

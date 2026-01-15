@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/simulation_client.dart';
 import 'package:logging/logging.dart';
@@ -41,7 +42,7 @@ class LocationManager {
   double get currentSpeedMps => _speedEmaMps ?? 0.0;
 
   // Configuration
-  LocationSettings _locationSettings = const LocationSettings(
+  final LocationSettings _locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.high,
     distanceFilter: 0, // Receive all updates for smoothing
   );
@@ -109,6 +110,13 @@ class LocationManager {
           _log.info(
             'Auto-switching to Simulation Mode (First position received)',
           );
+          // CRITICAL: Reset alarm state when simulation begins so that
+          // firedLegIds from previous sessions don't carry over.
+          _simulationClient.onAlarmReset?.call();
+          dev.log(
+            'LocationManager: Called onAlarmReset on simulation mode entry',
+            name: 'LocationManager',
+          );
         }
         _simulationPositionsReceived = true;
         _processPosition(pos, isSimulated: true);
@@ -121,12 +129,30 @@ class LocationManager {
     // Also explicitly connect the client logic which handles the WebSocket
     _simulationClient.connect();
 
-    // Set up the explicit callback as a backup/indicator
+    // Set up the explicit callback - this fires BEFORE the position stream emits
+    // so we use it as the primary reset trigger.
     _simulationClient.onFirstPositionReceived = () {
       if (!_isSimulationMode) {
         _isSimulationMode = true;
         _simulationPositionsReceived = true;
+        // CRITICAL: Reset alarm state when simulation begins so that
+        // firedLegIds from previous sessions don't carry over.
+        _simulationClient.onAlarmReset?.call();
+        dev.log(
+          'LocationManager: Called onAlarmReset on simulation mode entry (from onFirstPositionReceived)',
+          name: 'LocationManager',
+        );
       }
+    };
+
+    // Reset simulation mode when dashboard disconnects, so next connection triggers reset
+    _simulationClient.onDisconnected = () {
+      dev.log(
+        'LocationManager: Simulation disconnected, resetting simulation mode',
+        name: 'LocationManager',
+      );
+      _isSimulationMode = false;
+      _simulationPositionsReceived = false;
     };
   }
 
@@ -150,32 +176,79 @@ class LocationManager {
 
   void _processPosition(Position pos, {required bool isSimulated}) {
     // 1) Normalize speed so simulation and real GPS behave the same.
-    // Prefer a derived speed from successive points (distance / dt), since raw
-    // GPS speed quality varies by device and simulation may not provide it.
+    // We derive speed from successive points (distance / dt), but guard hard
+    // against GPS jitter producing huge spikes (which makes ETA wildly optimistic).
+    double dtSeconds = 0.0;
     double derivedSpeedMps = 0.0;
+    double dMeters = 0.0;
     try {
       final ts = pos.timestamp;
       if (_lastSpeedPosition != null && _lastSpeedTimestamp != null) {
-        final dtSeconds =
-            ts.difference(_lastSpeedTimestamp!).inMilliseconds / 1000.0;
-        if (dtSeconds > 0.0) {
-          final dMeters = Geolocator.distanceBetween(
+        dtSeconds = ts.difference(_lastSpeedTimestamp!).inMilliseconds / 1000.0;
+        if (dtSeconds.isFinite && dtSeconds > 0.0) {
+          dMeters = Geolocator.distanceBetween(
             _lastSpeedPosition!.latitude,
             _lastSpeedPosition!.longitude,
             pos.latitude,
             pos.longitude,
           );
-          final raw = dMeters / dtSeconds;
-          derivedSpeedMps = raw.isFinite ? raw.clamp(0.0, 60.0) : 0.0;
+
+          // Treat small movements within the accuracy radius as jitter.
+          final acc =
+              (pos.accuracy.isFinite && pos.accuracy > 0) ? pos.accuracy : 25.0;
+          final double jitterMeters =
+              isSimulated ? 0.0 : (acc * 0.6).clamp(3.0, 30.0);
+
+          final double minDt = isSimulated ? 0.05 : 0.8;
+          if (dtSeconds >= minDt && dMeters >= jitterMeters) {
+            final raw = dMeters / dtSeconds;
+            // Clamp to a sane upper bound to prevent ETA collapse.
+            derivedSpeedMps = raw.isFinite ? raw.clamp(0.0, 40.0) : 0.0;
+          }
         }
       }
       _lastSpeedPosition = pos;
       _lastSpeedTimestamp = ts;
     } catch (_) {
+      dtSeconds = 0.0;
       derivedSpeedMps = 0.0;
     }
 
-    final normalizedSpeedMps = derivedSpeedMps;
+    // Prefer platform speed when it's present, but stay conservative when
+    // derived speed spikes (noise). When both exist, use the smaller unless
+    // platform speed looks "stuck" at ~0 while derived indicates real motion.
+    double? platformSpeedMps;
+    try {
+      final s = pos.speed;
+      if (s.isFinite && s >= 0) {
+        platformSpeedMps = s.clamp(0.0, 40.0);
+      }
+    } catch (_) {
+      platformSpeedMps = null;
+    }
+
+    double normalizedSpeedMps;
+    if (platformSpeedMps != null && derivedSpeedMps > 0) {
+      if (platformSpeedMps < 0.5 && derivedSpeedMps > 1.5) {
+        normalizedSpeedMps = derivedSpeedMps;
+      } else {
+        normalizedSpeedMps = min(platformSpeedMps, derivedSpeedMps);
+      }
+    } else {
+      normalizedSpeedMps =
+          (derivedSpeedMps > 0) ? derivedSpeedMps : (platformSpeedMps ?? 0.0);
+    }
+
+    // Final spike guard: cap sudden jumps relative to prior EMA.
+    if (_speedEmaMps != null && normalizedSpeedMps.isFinite) {
+      final double dt = dtSeconds.isFinite && dtSeconds > 0 ? dtSeconds : 1.0;
+      const double maxAccel = 3.0; // m/s^2 conservative
+      final maxIncrease = (maxAccel * dt) + 1.0; // small allowance
+      final cap = (_speedEmaMps! + maxIncrease).clamp(0.0, 40.0);
+      if (normalizedSpeedMps > cap) {
+        normalizedSpeedMps = cap;
+      }
+    }
 
     // 2) Speed smoothing (EMA) for downstream consumers.
     double smoothedSpeed = normalizedSpeedMps;
@@ -245,6 +318,10 @@ class LocationManager {
 
     final double etaRaw = apiEtaSeconds ?? smoothedETA ?? 0.0;
     final int etaSeconds = etaRaw.isFinite ? etaRaw.round() : 0;
+    dev.log(
+      'ETA_DEBUG broadcastState: apiEta=$apiEtaSeconds, smoothedETA=$smoothedETA, etaRaw=$etaRaw, etaSec=$etaSeconds',
+      name: 'LocationManager',
+    );
     final double distance =
         (distanceTravelledMeters?.isFinite ?? false)
             ? distanceTravelledMeters!
@@ -264,6 +341,7 @@ class LocationManager {
 
   /// Delegates to SimulationClient.broadcastRoute
   void broadcastRoute({
+    String? routeKey,
     required String destinationName,
     required List<Map<String, dynamic>> points,
     List<Map<String, dynamic>>? segments,
@@ -275,6 +353,7 @@ class LocationManager {
     bool? transitMode,
   }) {
     _simulationClient.broadcastRoute(
+      routeKey: routeKey,
       destinationName: destinationName,
       points: points,
       segments: segments,
@@ -290,6 +369,10 @@ class LocationManager {
   /// Callback for alarm reset
   set onAlarmReset(VoidCallback? callback) =>
       _simulationClient.onAlarmReset = callback;
+
+  /// Callback for route switch requests from dashboard
+  set onSwitchRoute(void Function(String routeKey)? callback) =>
+      _simulationClient.onSwitchRoute = callback;
 
   /// Delegates to SimulationClient.broadcastPosition for device location sync.
   void broadcastPosition({

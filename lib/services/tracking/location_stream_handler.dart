@@ -327,9 +327,13 @@ class LocationStreamHandler {
       );
       _smoothedETA = result.etaSeconds;
       _smoothedSpeed = result.vEst;
+      dev.log(
+        'ETA_DEBUG handler: smoothedETA=${_smoothedETA?.toStringAsFixed(1)}, smoothedSpeed=${_smoothedSpeed?.toStringAsFixed(2)}',
+        name: 'LocationStreamHandler',
+      );
     } else {
       // Fallback if no route known
-      double speed = position.speed > 1 ? position.speed : 12.0;
+      double speed = position.speed > 0.5 ? position.speed : 2.8;
       _smoothedETA = distance / speed;
     }
 

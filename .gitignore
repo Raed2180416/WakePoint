@@ -30,6 +30,10 @@
 /android/.gradle
 android/local.properties
 
+# Local datasets and generated caches (too large/volatile for git)
+/tools/osm_data/
+/tools/.cache/
+
 # iOS specific
 /ios/Pods/
 /ios/.symlinks/

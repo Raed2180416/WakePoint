@@ -132,4 +132,144 @@ void main() {
       mockLocationProvider.dispose();
     },
   );
+
+  test(
+    'Non-metro distance-mode triggers using route progress (fallback polyline mismatch)',
+    () async {
+      final mockLocationProvider = MockLocationProvider();
+
+      TrackingService.isTestMode = true;
+      NotificationService.isTestMode = true;
+      final trackingService = TrackingService();
+
+      // Build a route where step distances are much larger than the actual
+      // geometry length (forces potential meter-domain mismatch).
+      // The alarm should still fire based on remaining distance along the
+      // active polyline.
+      const origin = LatLng(0.0, 0.0);
+      const mid = LatLng(0.0, 0.01);
+      const destination = LatLng(0.0, 0.02); // ~2.2km from origin
+
+      final directions = {
+        'status': 'OK',
+        'routes': [
+          {
+            // Intentionally omit usable polylines so RouteSessionManager falls back
+            // to step start/end locations.
+            'overview_polyline': {'points': 'invalid_polyline'},
+            'legs': [
+              {
+                'steps': [
+                  {
+                    'travel_mode': 'DRIVING',
+                    'distance': {'value': 5000},
+                    'start_location': {
+                      'lat': origin.latitude,
+                      'lng': origin.longitude,
+                    },
+                    'end_location': {'lat': mid.latitude, 'lng': mid.longitude},
+                  },
+                  {
+                    'travel_mode': 'DRIVING',
+                    'distance': {'value': 5000},
+                    'start_location': {
+                      'lat': mid.latitude,
+                      'lng': mid.longitude,
+                    },
+                    'end_location': {
+                      'lat': destination.latitude,
+                      'lng': destination.longitude,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      // Register the route so progressMeters is derived from snapping.
+      await trackingService.registerRouteFromDirections(
+        directions: directions as Map<String, dynamic>,
+        origin: origin,
+        destination: destination,
+        transitMode: false,
+        destinationName: 'Dest',
+        activateRoute: true,
+      );
+
+      // Feed positions along the same geometry.
+      testGpsStream = mockLocationProvider.positionStream;
+
+      // Trigger 0.5km before destination.
+      await trackingService.startTracking(
+        destination: destination,
+        destinationName: 'Dest',
+        alarmMode: 'distance',
+        alarmValue: 0.5,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      await mockLocationProvider.playRoute([origin, mid, destination]);
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      expect(
+        NotificationService.testRecordedAlarms.isNotEmpty,
+        isTrue,
+        reason: 'Expected a distance-mode destination alarm to fire',
+      );
+
+      await trackingService.stopTracking();
+      mockLocationProvider.dispose();
+    },
+  );
+
+  test(
+    'Distance-mode fires via straight-line fallback when no route metadata',
+    () async {
+      // Test the edge case where destEvents is empty but we're in distance mode.
+      // The alarm should still fire using straight-line distance.
+
+      final mockLocationProvider = MockLocationProvider();
+
+      TrackingService.isTestMode = true;
+      NotificationService.isTestMode = true;
+      final trackingService = TrackingService();
+
+      // Simple destination 1km away
+      const destination = LatLng(0.0, 0.009); // ~1km east of origin
+
+      // Start tracking WITHOUT registering a route (no route metadata)
+      testGpsStream = mockLocationProvider.positionStream;
+
+      await trackingService.startTracking(
+        destination: destination,
+        destinationName: 'Test Dest',
+        alarmMode: 'distance',
+        alarmValue:
+            2.0, // 2km threshold - should fire immediately at destination
+      );
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Feed position AT the destination (should trigger)
+      await mockLocationProvider.playRoute([
+        const LatLng(0.0, 0.0), // Start far away
+        const LatLng(0.0, 0.005), // Mid-way (~500m)
+        destination, // At destination
+      ]);
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      expect(
+        NotificationService.testRecordedAlarms.isNotEmpty,
+        isTrue,
+        reason:
+            'Distance-mode should fire via straight-line fallback when no route',
+      );
+
+      await trackingService.stopTracking();
+      mockLocationProvider.dispose();
+    },
+  );
 }

@@ -16,8 +16,14 @@ class SimulationClient {
   /// This indicates the dashboard is actively sending positions.
   VoidCallback? onFirstPositionReceived;
 
+  /// Callback for when simulation disconnects (so LocationManager can reset mode)
+  VoidCallback? onDisconnected;
+
   /// Callback for when dashboard requests alarm state reset (e.g., progress slider moved backward)
   VoidCallback? _onAlarmReset;
+
+  /// Callback for when dashboard requests switching to a different route
+  void Function(String routeKey)? _onSwitchRoute;
 
   /// Tracks whether we've received at least one position from the dashboard.
   bool _hasReceivedPosition = false;
@@ -42,6 +48,13 @@ class SimulationClient {
 
   /// Set the callback to be invoked when dashboard requests alarm reset
   set onAlarmReset(VoidCallback? callback) => _onAlarmReset = callback;
+
+  /// Get the current alarm reset callback (for triggering on simulation start)
+  VoidCallback? get onAlarmReset => _onAlarmReset;
+
+  /// Set the callback to be invoked when dashboard requests route switch
+  set onSwitchRoute(void Function(String routeKey)? callback) =>
+      _onSwitchRoute = callback;
 
   Future<void> connect({String? host}) async {
     if (!PlaygroundBridgeConfig.enabled) return;
@@ -151,6 +164,13 @@ class SimulationClient {
     _channel = null;
     _connectionCheckTimer?.cancel();
     _lastPingReceived = null;
+    // Reset so onFirstPositionReceived fires again on next connection
+    _hasReceivedPosition = false;
+
+    // Notify LocationManager so it can reset simulation mode
+    try {
+      onDisconnected?.call();
+    } catch (_) {}
 
     if (_shouldBeConnected) {
       _scheduleReconnect();
@@ -186,6 +206,7 @@ class SimulationClient {
   }
 
   void broadcastRoute({
+    String? routeKey,
     required String destinationName,
     required List<Map<String, dynamic>> points,
     List<Map<String, dynamic>>? segments,
@@ -200,6 +221,7 @@ class SimulationClient {
     try {
       final state = {
         'type': 'route_update',
+        if (routeKey != null) 'route_key': routeKey,
         'destinationName': destinationName,
         'points': points,
         'segments': segments,
@@ -303,36 +325,92 @@ class SimulationClient {
         return;
       }
 
+      // Handle route switch request (e.g., user wants to revert to a previous route)
+      if (json['type'] == 'switch_route') {
+        final routeKey = json['route_key'] as String?;
+        if (routeKey != null && routeKey.isNotEmpty) {
+          print(
+            'SimulationClient: Received switch_route request for: $routeKey',
+          );
+          _onSwitchRoute?.call(routeKey);
+          dev.log(
+            'DEBUG: simulation_client - called onSwitchRoute callback for key: $routeKey',
+            name: 'SimulationClient',
+          );
+        }
+        return;
+      }
+
       if (json['type'] == 'simulation_update') {
-        final double lat = json['lat'];
-        final double lng = json['lng'];
-        final int timestamp =
-            json['timestamp'] ?? DateTime.now().millisecondsSinceEpoch;
-
-        final ts = DateTime.fromMillisecondsSinceEpoch(timestamp);
-
-        // Estimate speed from successive simulation points so time-based alarm
-        // gating behaves realistically during playground runs.
-        double speedMps = 0.0;
+        final double lat = (json['lat'] as num).toDouble();
+        final double lng = (json['lng'] as num).toDouble();
+        // IMPORTANT: When dashboard time-warp is enabled, the update *rate*
+        // can change dramatically. If we stamp simulated points with
+        // DateTime.now(), derived speed becomes speed*warpFactor and ETA
+        // collapses (wildly optimistic). Prefer the dashboard's virtual time.
+        DateTime ts;
         try {
-          if (_lastSimPosition != null && _lastSimTimestamp != null) {
-            final dtSeconds =
-                ts.difference(_lastSimTimestamp!).inMilliseconds / 1000.0;
-            if (dtSeconds > 0.0) {
-              final dMeters = Geolocator.distanceBetween(
-                _lastSimPosition!.latitude,
-                _lastSimPosition!.longitude,
-                lat,
-                lng,
-              );
-              final raw = dMeters / dtSeconds;
-              // Clamp outliers (e.g., occasional timestamp jumps)
-              speedMps = raw.isFinite ? raw.clamp(0.0, 60.0) : 0.0;
+          final vt = json['virtualTime'];
+          if (vt is String) {
+            final parsed = DateTime.tryParse(vt);
+            if (parsed != null) {
+              ts = parsed;
+            } else {
+              final int timestamp =
+                  (json['timestamp'] as num?)?.toInt() ??
+                  DateTime.now().millisecondsSinceEpoch;
+              ts = DateTime.fromMillisecondsSinceEpoch(timestamp);
             }
+          } else {
+            final int timestamp =
+                (json['timestamp'] as num?)?.toInt() ??
+                DateTime.now().millisecondsSinceEpoch;
+            ts = DateTime.fromMillisecondsSinceEpoch(timestamp);
           }
         } catch (_) {
-          speedMps = 0.0;
+          ts = DateTime.now();
         }
+
+        // Prefer dashboard-provided speed. When time warp is enabled, the
+        // *rate* of position updates can change dramatically; deriving speed
+        // from (distance / dt) will become wildly inflated and collapse ETA.
+        double? providedSpeedMps;
+        try {
+          final v = (json['speedMps'] as num?)?.toDouble();
+          if (v != null && v.isFinite && v >= 0) {
+            providedSpeedMps = v.clamp(0.0, 60.0);
+          }
+        } catch (_) {
+          providedSpeedMps = null;
+        }
+
+        double derivedSpeedMps = 0.0;
+        if (providedSpeedMps == null) {
+          // Fallback: estimate speed from successive simulation points.
+          try {
+            if (_lastSimPosition != null && _lastSimTimestamp != null) {
+              final dtSeconds =
+                  ts.difference(_lastSimTimestamp!).inMilliseconds / 1000.0;
+              if (dtSeconds > 0.0) {
+                final dMeters = Geolocator.distanceBetween(
+                  _lastSimPosition!.latitude,
+                  _lastSimPosition!.longitude,
+                  lat,
+                  lng,
+                );
+                final raw = dMeters / dtSeconds;
+                // Clamp outliers (e.g., occasional timestamp jumps)
+                derivedSpeedMps = raw.isFinite ? raw.clamp(0.0, 60.0) : 0.0;
+              }
+            }
+          } catch (_) {
+            derivedSpeedMps = 0.0;
+          }
+        }
+
+        final speedMps = providedSpeedMps ?? derivedSpeedMps;
+
+        final heading = (json['heading'] as num?)?.toDouble() ?? 0.0;
 
         final pos = Position(
           latitude: lat,
@@ -340,7 +418,7 @@ class SimulationClient {
           timestamp: ts,
           accuracy: 10.0,
           altitude: 0.0,
-          heading: 0.0,
+          heading: heading,
           speed: speedMps,
           speedAccuracy: 0.0,
           altitudeAccuracy: 0.0,
@@ -358,11 +436,18 @@ class SimulationClient {
           } catch (_) {}
         }
 
+        final warp = json['warpFactor'];
         print(
-          'DEBUG: SimulationClient adding position to stream: (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}) speed=${speedMps.toStringAsFixed(2)}',
+          'ETA_DEBUG simClient RX: (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}) '
+          'speed=${speedMps.toStringAsFixed(2)}m/s '
+          '(provided=${providedSpeedMps?.toStringAsFixed(2)}, derived=${derivedSpeedMps.toStringAsFixed(2)}), '
+          'warp=$warp',
         );
         dev.log(
-          'DEBUG: SimulationClient adding position to stream: (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}) speed=${speedMps.toStringAsFixed(2)}',
+          'ETA_DEBUG simClient RX: (${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}) '
+          'speed=${speedMps.toStringAsFixed(2)}m/s '
+          '(provided=${providedSpeedMps?.toStringAsFixed(2)}, derived=${derivedSpeedMps.toStringAsFixed(2)}), '
+          'warp=$warp',
           name: 'SimulationClient',
         );
         _positionController.add(pos);

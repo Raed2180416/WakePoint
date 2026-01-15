@@ -1,6 +1,6 @@
 import 'dart:developer' as dev;
 import 'dart:math' as math;
-import 'package:geowake2/services/gtfs_stop_matcher.dart';
+import 'package:geowake2/services/stop_matcher.dart';
 import 'package:geowake2/services/polyline_decoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -29,15 +29,15 @@ class TransitLegStops {
   /// Line name/ID for this transit leg.
   final String? lineName;
 
-  /// Whether stop positions are from actual data (GTFS match) vs estimated (uniform).
-  /// True = stop positions snapped from GTFS stops to the transit-step polyline.
+  /// Whether stop positions are from actual data (stop asset match) vs estimated (uniform).
+  /// True = stop positions snapped from stop assets (OSM) to the transit-step polyline.
   /// False = uniformly distributed estimates (legacy behavior).
   final bool isActualPositions;
 
   /// Whether this leg is a Metro/Rapid transit leg (vs Bus/Other).
   final bool isMetro;
 
-  /// Names of each stop (from GTFS).
+  /// Names of each stop (from stop assets).
   /// Empty list if not available (legacy uniform estimation).
   final List<String> stopNames;
 
@@ -284,42 +284,66 @@ class TransferUtils {
         final steps = (leg['steps'] as List?) ?? const [];
         for (int i = 0; i < steps.length; i++) {
           final step = steps[i] as Map<String, dynamic>;
+          final stepStartMeters = cum;
           final dist =
               ((step['distance'] as Map<String, dynamic>?)?['value']) as num?;
-          final mode = step['travel_mode'] as String?;
           if (dist != null) cum += dist.toDouble();
-          if (mode?.toUpperCase() == 'TRANSIT' && _isMetroTransitStep(step)) {
-            // Identify current line id
-            final curLine =
-                ((step['transit_details'] as Map<String, dynamic>?)?['line'])
-                    as Map<String, dynamic>?;
-            final curId =
-                (curLine?['short_name'] ?? curLine?['name'] ?? curLine?['id'])
-                    ?.toString();
-            if (curId == null) continue;
-            // Look ahead to the next transit step (skipping walking)
-            String? nextTransitId;
-            for (int j = i + 1; j < steps.length; j++) {
-              final nextStep = steps[j] as Map<String, dynamic>;
-              final nextMode = nextStep['travel_mode'] as String?;
-              if (nextMode?.toUpperCase() == 'TRANSIT' &&
-                  _isMetroTransitStep(nextStep)) {
-                final nxtLine =
-                    ((nextStep['transit_details']
-                            as Map<String, dynamic>?)?['line'])
-                        as Map<String, dynamic>?;
-                nextTransitId =
-                    (nxtLine?['short_name'] ??
-                            nxtLine?['name'] ??
-                            nxtLine?['id'])
-                        ?.toString();
-                break;
-              }
+          final stepEndMeters = cum;
+
+          final mode = step['travel_mode'] as String?;
+          final isMetroStep =
+              mode?.toUpperCase() == 'TRANSIT' && _isMetroTransitStep(step);
+          if (!isMetroStep) continue;
+
+          // Identify current line id (best-effort; can be null)
+          final curLine =
+              ((step['transit_details'] as Map<String, dynamic>?)?['line'])
+                  as Map<String, dynamic>?;
+          final curId =
+              (curLine?['short_name'] ?? curLine?['name'] ?? curLine?['id'])
+                  ?.toString();
+
+          // 1) Boarding boundary: start of this metro segment.
+          final prevIsMetro =
+              i > 0 &&
+              ((steps[i - 1] as Map<String, dynamic>)['travel_mode'] as String?)
+                      ?.toUpperCase() ==
+                  'TRANSIT' &&
+              _isMetroTransitStep(steps[i - 1] as Map<String, dynamic>);
+          if (!prevIsMetro) {
+            result.add(stepStartMeters);
+          }
+
+          // 2) Alight/switch boundary: end of this metro segment.
+          // Add when the next metro segment is a different line OR there is no
+          // upcoming metro segment (exit transit).
+          String? nextTransitId;
+          bool foundNextMetro = false;
+          for (int j = i + 1; j < steps.length; j++) {
+            final nextStep = steps[j] as Map<String, dynamic>;
+            final nextMode = nextStep['travel_mode'] as String?;
+            if (nextMode?.toUpperCase() == 'TRANSIT' &&
+                _isMetroTransitStep(nextStep)) {
+              final nxtLine =
+                  ((nextStep['transit_details']
+                          as Map<String, dynamic>?)?['line'])
+                      as Map<String, dynamic>?;
+              nextTransitId =
+                  (nxtLine?['short_name'] ?? nxtLine?['name'] ?? nxtLine?['id'])
+                      ?.toString();
+              foundNextMetro = true;
+              break;
             }
-            if (nextTransitId != null && nextTransitId != curId) {
-              // Boundary at the end of current transit step
-              result.add(cum);
-            }
+          }
+
+          final shouldAddEndBoundary =
+              !foundNextMetro ||
+              (curId != null &&
+                  nextTransitId != null &&
+                  nextTransitId != curId) ||
+              (curId == null && foundNextMetro && nextTransitId != null);
+          if (shouldAddEndBoundary) {
+            result.add(stepEndMeters);
           }
         }
       }
@@ -329,7 +353,14 @@ class TransferUtils {
         name: 'TransferUtils',
       );
     }
-    return result;
+    // Ensure monotonic increasing unique boundaries.
+    result.sort();
+    final uniq = <double>[];
+    const eps = 1.0; // meter-level de-dup
+    for (final m in result) {
+      if (uniq.isEmpty || (m - uniq.last).abs() > eps) uniq.add(m);
+    }
+    return uniq;
   }
 
   // Build rich event boundaries for transfers and mode changes along the route.
@@ -682,8 +713,12 @@ class TransferUtils {
       }
       final route = routes.first as Map<String, dynamic>;
       final legs = (route['legs'] as List?) ?? const [];
+      // IMPORTANT: Use polyline-domain meters so step bounds match the same
+      // domain as route snapping/progress (RouteSessionManager builds the active
+      // polyline primarily from step polylines).
       double cumM = 0.0;
       double cumStops = 0.0;
+      LatLng? lastStepEnd;
       for (final leg in legs) {
         final steps = (leg['steps'] as List?) ?? const [];
         for (final s in steps) {
@@ -693,7 +728,39 @@ class TransferUtils {
           final dur =
               ((step['duration'] as Map<String, dynamic>?)?['value']) as num?;
 
-          if (dist != null) cumM += dist.toDouble();
+          final apiDistanceMeters = dist?.toDouble() ?? 0.0;
+
+          // Prefer the step polyline length (same meters-domain as snapping).
+          double stepMeters = 0.0;
+          try {
+            final polylineEncoded =
+                (step['polyline'] as Map<String, dynamic>?)?['points']
+                    as String? ??
+                '';
+            final pts = decodePolyline(polylineEncoded);
+            final polyMeters = polylineLength(pts);
+            stepMeters = polyMeters > 0 ? polyMeters : apiDistanceMeters;
+
+            // Add gap distance between steps if polylines are not stitched.
+            if (lastStepEnd != null && pts.isNotEmpty) {
+              final gap = Geolocator.distanceBetween(
+                lastStepEnd.latitude,
+                lastStepEnd.longitude,
+                pts.first.latitude,
+                pts.first.longitude,
+              );
+              if (gap > 5.0) {
+                cumM += gap;
+              }
+            }
+            if (pts.isNotEmpty) {
+              lastStepEnd = pts.last;
+            }
+          } catch (_) {
+            stepMeters = apiDistanceMeters;
+          }
+
+          cumM += stepMeters;
 
           if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT') {
             final td = (step['transit_details'] as Map<String, dynamic>?);
@@ -1082,9 +1149,9 @@ class TransferUtils {
       final transitPolylines = _extractTransitPolylines(directions);
 
       // Load OSM stops as the SINGLE source of truth
-      final List<GtfsStop> loadedStops =
+      final List<Stop> loadedStops =
           allIndiaStops.map((m) {
-            return GtfsStop(
+            return Stop(
               id: m['id'] as String,
               name: m['name'] as String,
               location: LatLng(
@@ -1127,7 +1194,7 @@ class TransferUtils {
 
         try {
           // Match OSM stops within 500m of the polyline
-          final matchedAll = GtfsStopMatcher.matchStopsToPolyline(
+          final matchedAll = StopMatcher.matchStopsToPolyline(
             polyline: polylinePoints,
             stops: loadedStops,
             radiusMeters: 500.0,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:geolocator/geolocator.dart';
@@ -43,6 +44,10 @@ class RouteSessionManager {
 
   final _rerouteCtrl = StreamController<RerouteDecision>.broadcast();
   Stream<RerouteDecision> get rerouteStream => _rerouteCtrl.stream;
+
+  // Deviation state stream for termination policy
+  final _deviationStateCtrl = StreamController<DeviationState>.broadcast();
+  Stream<DeviationState> get deviationStateStream => _deviationStateCtrl.stream;
 
   // Internal subscriptions
   StreamSubscription<ActiveRouteState>? _mgrStateSub;
@@ -90,6 +95,7 @@ class RouteSessionManager {
     await _routeStateCtrl.close();
     await _routeSwitchCtrl.close();
     await _rerouteCtrl.close();
+    await _deviationStateCtrl.close();
     clearSession();
   }
 
@@ -484,7 +490,7 @@ class RouteSessionManager {
       for (int i = 0; i < transitLegStops.length; i++) {
         final leg = transitLegStops[i];
         print(
-          '   Leg[$i]: ${leg.lineName}, isMetro=${leg.isMetro}, range=${leg.legStartMeters.toStringAsFixed(0)}-${leg.legEndMeters.toStringAsFixed(0)}m, stops=${leg.numStops}, source=${leg.isActualPositions ? "OSM/GTFS" : "Interpolated"}',
+          '   Leg[$i]: ${leg.lineName}, isMetro=${leg.isMetro}, range=${leg.legStartMeters.toStringAsFixed(0)}-${leg.legEndMeters.toStringAsFixed(0)}m, stops=${leg.numStops}, source=${leg.isActualPositions ? "OSM" : "Interpolated"}',
         );
       }
 
@@ -897,6 +903,55 @@ class RouteSessionManager {
     }
   }
 
+  /// Switches to a previously registered route by its key.
+  /// Returns true if the switch was successful.
+  bool switchToRoute(String routeKey) {
+    if (activeManager == null) {
+      dev.log(
+        'switchToRoute failed: no activeManager',
+        name: 'RouteSessionManager',
+      );
+      return false;
+    }
+
+    // Check if route exists in registry
+    final hasRoute = registry.entries.any((e) => e.key == routeKey);
+    if (!hasRoute) {
+      dev.log(
+        'switchToRoute failed: route key not found: $routeKey',
+        name: 'RouteSessionManager',
+      );
+      return false;
+    }
+
+    final fromKey = lastActiveState?.activeKey;
+    activeManager!.setActive(routeKey);
+
+    // Emit switch event
+    if (fromKey != null && fromKey != routeKey) {
+      final entry = registry.entries.firstWhere(
+        (e) => e.key == routeKey,
+        orElse: () => registry.entries.first,
+      );
+      final evt = RouteSwitchEvent(
+        fromKey: fromKey,
+        toKey: routeKey,
+        geometry: entry.points,
+      );
+      _routeSwitchCtrl.add(evt);
+
+      dev.log(
+        'switchToRoute: switched from $fromKey to $routeKey',
+        name: 'RouteSessionManager',
+      );
+    }
+
+    // Force broadcast to update dashboard with new active/inactive routes
+    _maybeBroadcastCachedRoute(force: true);
+
+    return true;
+  }
+
   void _maybeBroadcastCachedRoute({bool force = false}) {
     final payload = cachedRoutePayload;
     if (payload == null) return;
@@ -930,6 +985,7 @@ class RouteSessionManager {
     }
 
     LocationManager().broadcastRoute(
+      routeKey: activeKey,
       destinationName: payload['destinationName'] as String,
       points: (payload['points'] as List).cast<Map<String, dynamic>>(),
       segments: (payload['segments'] as List?)?.cast<Map<String, dynamic>>(),
@@ -993,6 +1049,9 @@ class RouteSessionManager {
   void _setupDeviationListeners() {
     _devSub?.cancel();
     _devSub = devMonitor!.stream.listen((ds) {
+      // Forward deviation state for termination policy tracking
+      _deviationStateCtrl.add(ds);
+
       // Deviation handling logic moved from TrackingService
       // 1. Check local switch opportunities
       double off = lastActiveState?.offsetMeters ?? double.infinity;

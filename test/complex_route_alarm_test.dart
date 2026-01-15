@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geowake2/services/location_manager.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/notification_service.dart';
+import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/transfer_utils.dart'; // For RouteEventBoundary
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,6 +33,13 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
+    TrackingStateStore.resetCacheForTests();
+
+    // Prevent cross-test contamination from global test injections.
+    testGpsStream = null;
+    testAccelerometerStream = null;
+    LocationManager().testModeStream = null;
+
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dev.fluttercommunity.plus/sensors/method'),
@@ -46,6 +55,14 @@ void main() {
   tearDown(() async {
     final svc = TrackingService();
     await svc.stopTracking();
+
+    // Reset global flags/streams so later tests don't inherit state.
+    testGpsStream = null;
+    testAccelerometerStream = null;
+    LocationManager().testModeStream = null;
+    TrackingService.isTestMode = false;
+    NotificationService.isTestMode = false;
+    TrackingStateStore.resetCacheForTests();
   });
 
   test('Complex Route Alarm Logic: Switch vs Destination Conflict', () async {

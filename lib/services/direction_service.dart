@@ -29,12 +29,14 @@ class DirectionService {
     required LatLng destination,
     required String mode,
     String? transitVariant,
+    int? departureTime,
   }) {
     return RouteCache.makeKey(
       origin: origin,
       destination: destination,
       mode: mode,
       transitVariant: transitVariant,
+      departureTime: departureTime,
     );
   }
 
@@ -55,11 +57,9 @@ class DirectionService {
     final dest = LatLng(endLat, endLng);
     final mode = transitMode ? 'transit' : 'driving';
 
-    bool containsMetroLeg(Map<String, dynamic> directions) {
+    bool routeContainsMetroLeg(Map<String, dynamic> route) {
       try {
-        final routes = (directions['routes'] as List?) ?? const [];
-        if (routes.isEmpty) return false;
-        final legs = (routes.first as Map<String, dynamic>)['legs'] as List?;
+        final legs = route['legs'] as List?;
         if (legs == null) return false;
         for (final leg in legs) {
           final steps = (leg as Map<String, dynamic>)['steps'] as List?;
@@ -84,6 +84,45 @@ class DirectionService {
         }
       } catch (_) {}
       return false;
+    }
+
+    double routeDurationSeconds(Map<String, dynamic> route) {
+      try {
+        final legs = route['legs'] as List?;
+        if (legs == null || legs.isEmpty) return double.infinity;
+        double total = 0;
+        for (final leg in legs) {
+          final dur = (leg as Map<String, dynamic>)['duration'] as Map?;
+          total += (dur?['value'] as num?)?.toDouble() ?? 0;
+        }
+        return total > 0 ? total : double.infinity;
+      } catch (_) {
+        return double.infinity;
+      }
+    }
+
+    int pickFastestRouteIndex(List routes, {required bool requireMetroLeg}) {
+      int bestIdx = -1;
+      double bestDur = double.infinity;
+      for (int i = 0; i < routes.length; i++) {
+        final r = routes[i];
+        if (r is! Map<String, dynamic>) continue;
+        if (requireMetroLeg && !routeContainsMetroLeg(r)) continue;
+        final dur = routeDurationSeconds(r);
+        if (dur < bestDur) {
+          bestDur = dur;
+          bestIdx = i;
+        }
+      }
+      return bestIdx;
+    }
+
+    void promoteRouteToFront(Map<String, dynamic> directions, int routeIndex) {
+      if (routeIndex <= 0) return;
+      final routes = directions['routes'];
+      if (routes is! List || routeIndex >= routes.length) return;
+      final picked = routes.removeAt(routeIndex);
+      routes.insert(0, picked);
     }
 
     int nextServiceAnchorDepartureEpochSeconds() {
@@ -167,11 +206,20 @@ class DirectionService {
           (directions['routes'] as List?) != null &&
           (directions['routes'] as List).isNotEmpty;
 
+      bool primaryHasMetroRoute = false;
+      if (primaryOk && transitMode) {
+        final routes = directions['routes'] as List;
+        final bestIdx = pickFastestRouteIndex(routes, requireMetroLeg: true);
+        if (bestIdx >= 0) {
+          primaryHasMetroRoute = true;
+          promoteRouteToFront(directions, bestIdx);
+        }
+      }
+
       // 2) If user is in metro mode and Google returns no feasible route (often because
       // metro is currently closed), retry with a future departure_time to force a metro route.
       if (transitMode && preferMetroEvenIfClosed) {
-        final hasMetro = primaryOk ? containsMetroLeg(directions) : false;
-        if (!primaryOk || !hasMetro) {
+        if (!primaryOk || !primaryHasMetroRoute) {
           transitVariant = 'subway';
           departureTime = nextServiceAnchorDepartureEpochSeconds();
           directions = await _apiClient.getDirections(
@@ -181,6 +229,34 @@ class DirectionService {
             transitMode: transitVariant,
             departureTime: departureTime,
           );
+
+          // After fallback, select the fastest metro-containing route (if any)
+          final ok =
+              directions['status'] == 'OK' &&
+              (directions['routes'] as List?) != null &&
+              (directions['routes'] as List).isNotEmpty;
+          if (ok) {
+            final routes = directions['routes'] as List;
+            final bestIdx = pickFastestRouteIndex(
+              routes,
+              requireMetroLeg: true,
+            );
+            if (bestIdx >= 0) {
+              promoteRouteToFront(directions, bestIdx);
+            } else {
+              dev.log(
+                'Metro mode: fallback still has no metro leg; using fastest available route',
+                name: 'DirectionService',
+              );
+              final anyIdx = pickFastestRouteIndex(
+                routes,
+                requireMetroLeg: false,
+              );
+              if (anyIdx >= 0) {
+                promoteRouteToFront(directions, anyIdx);
+              }
+            }
+          }
         }
       }
 
@@ -219,7 +295,15 @@ class DirectionService {
       // Note: requestKey is used only for the in-memory fast path. The fallback path is
       // time-anchored, so we intentionally avoid returning it from the in-memory cache
       // for a non-time-anchored request.
-      _cachedDirectionsKey = requestKey;
+      // Key in-memory cache by the actual request params used (time-anchored routes
+      // must not be served for non-time-anchored requests).
+      _cachedDirectionsKey = _makeRequestKey(
+        origin: origin,
+        destination: dest,
+        mode: mode,
+        transitVariant: transitVariant,
+        departureTime: departureTime,
+      );
 
       // Persist to RouteCache (L2)
       try {

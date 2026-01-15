@@ -28,6 +28,10 @@ class SnapToRouteEngine {
       10.0; // Bonus (meters saved) for staying on same/next segment
   static const double _kJumpPenaltyPerIndex = 5.0; // Penalty per index jumped
 
+  /// If lateral offset exceeds this threshold, do a full-route search to escape
+  /// "stuck" situations where the search window is trapped in the wrong area.
+  static const double _kMaxLateralBeforeFullSearch = 500.0;
+
   /// Snap a point to a polyline using a "Scientific" weighted approach.
   ///
   /// [point]: The user's current raw GPS location.
@@ -54,6 +58,67 @@ class SnapToRouteEngine {
       );
     }
 
+    // Precompute Cumulative Meters if needed
+    final cum =
+        precomputedCumMeters ??
+        (() {
+          final c = List<double>.filled(polyline.length, 0.0);
+          for (int i = 1; i < polyline.length; i++) {
+            c[i] = c[i - 1] + _dist(polyline[i - 1], polyline[i]);
+          }
+          return c;
+        })();
+
+    // First attempt: windowed search around previous result
+    final windowedResult = _snapInRange(
+      point: point,
+      polyline: polyline,
+      heading: heading,
+      previousResult: previousResult,
+      cum: cum,
+      searchWindow: searchWindow,
+    );
+
+    // If windowed search has large lateral offset, it may be "stuck" in the wrong
+    // segment region. Fall back to full-route search to find a better match.
+    if (windowedResult.lateralOffsetMeters > _kMaxLateralBeforeFullSearch &&
+        previousResult != null) {
+      // Full-route search (no previous result = no window constraint)
+      final fullResult = _snapInRange(
+        point: point,
+        polyline: polyline,
+        heading: heading,
+        previousResult: null, // Force full search
+        cum: cum,
+        searchWindow: searchWindow,
+      );
+
+      // Use the result with better lateral fit
+      if (fullResult.lateralOffsetMeters <
+          windowedResult.lateralOffsetMeters - 50.0) {
+        // Full search found significantly better match
+        print(
+          'SNAP_DEBUG: Full-search fallback activated! '
+          'Windowed offset=${windowedResult.lateralOffsetMeters.toStringAsFixed(1)}m, '
+          'Full offset=${fullResult.lateralOffsetMeters.toStringAsFixed(1)}m, '
+          'seg ${windowedResult.segmentIndex} -> ${fullResult.segmentIndex}',
+        );
+        return fullResult;
+      }
+    }
+
+    return windowedResult;
+  }
+
+  /// Internal helper: snap within a specific range.
+  static SnapResult _snapInRange({
+    required LatLng point,
+    required List<LatLng> polyline,
+    double? heading,
+    SnapResult? previousResult,
+    required List<double> cum,
+    int searchWindow = 25,
+  }) {
     // 1. Determine Search Bounds
     int start = 0;
     int end = polyline.length - 2;
@@ -71,24 +136,13 @@ class SnapToRouteEngine {
       end = (effectiveHint + searchWindow).clamp(0, end); // Look mostly forward
     }
 
-    // 2. Precompute Cumulative Meters if needed
-    final cum =
-        precomputedCumMeters ??
-        (() {
-          final c = List<double>.filled(polyline.length, 0.0);
-          for (int i = 1; i < polyline.length; i++) {
-            c[i] = c[i - 1] + _dist(polyline[i - 1], polyline[i]);
-          }
-          return c;
-        })();
-
     double bestScore = double.infinity;
     LatLng bestPoint = polyline[0];
     double bestDist = double.infinity;
     int bestIdx = 0;
     double bestProgress = 0.0;
 
-    // 3. Iterate Candidates
+    // 2. Iterate Candidates
     for (int i = start; i <= end; i++) {
       final A = polyline[i];
       final B = polyline[i + 1];

@@ -8,11 +8,14 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:developer' as dev;
 
-// ignore: avoid_web_libraries_in_flutter
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:html' as html;
 import 'config/playground_bridge.dart';
 import 'simulation_engine.dart'; // Import the engine
 import 'dashboard/alarm_debouncer.dart';
+import 'services/direction_service.dart';
+import 'services/testing/osm_loader.dart';
+import 'services/testing/osm_graph.dart';
 
 void main() {
   runApp(const DashboardApp());
@@ -40,8 +43,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   GoogleMapController? _mapController;
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
 
   // Route Data State
   // _segments removed as field, passed locally.
@@ -49,6 +52,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Track last loaded route signature to avoid resetting the map on repeated broadcasts.
   String? _lastRouteSignature;
+
+  // Preferred stable identifier for routes (sent by app as route_key).
+  String? _lastRouteKey;
+
+  // Cache polylines per route key so transit colors don't change across rebroadcasts,
+  // and so inactive routes can be rendered using the same segmentation.
+  final Map<String, List<Polyline>> _routePolylinesByKey = {};
+  final Map<String, List<Polyline>> _routeGreyPolylinesByKey = {};
+
+  final DirectionService _directionService = DirectionService();
+
+  // OSM Graph and overlay state
+  OsmGraph? _osmGraph;
+  Set<Polyline> _osmOverlayPolylines = {};
+  bool _osmOverlayVisible = true;
+  bool _osmLoading = false;
+  // ignore: unused_field
+  String? _osmLoadError;
 
   String _computeRouteSignature(List<LatLng> pts, String? dest) {
     if (pts.isEmpty) return dest ?? '';
@@ -100,12 +121,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final SimulationEngine _engine = SimulationEngine();
   Timer? _loopTimer;
 
-  // Demo Route (London)
+  // Demo Route (Bengaluru - within loaded OSM bbox)
   final List<LatLng> _demoRoute = [
-    const LatLng(51.5074, -0.1278), // Trafalgar Sq
-    const LatLng(51.5033, -0.1195), // London Eye
-    const LatLng(51.5007, -0.1246), // Big Ben
-    const LatLng(51.4995, -0.1273), // Westminster Abbey
+    const LatLng(12.9716, 77.5946), // MG Road
+    const LatLng(12.9766, 77.5993), // Trinity
+    const LatLng(12.9850, 77.6050), // Indiranagar
+    const LatLng(12.9900, 77.6150), // HAL
+    const LatLng(12.9950, 77.6250), // Airport Road
   ];
 
   // Device Position State (from physical device)
@@ -114,7 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // State for naming
   // _currentDestinationName removed
-  List<String> _eventLogs = [];
+  final List<String> _eventLogs = [];
   bool _wasPlayingBeforeScrub = false;
 
   @override
@@ -123,6 +145,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _connectToRelay();
     _logEvent('System initialized.');
+    _loadOsmGraph(); // Load Bengaluru OSM roads
 
     // Load demo route initially
     _engine.loadRoute(_demoRoute);
@@ -161,6 +184,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _eventLogs.insert(0, '[$time] $message');
       if (_eventLogs.length > 50) _eventLogs.removeLast();
     });
+  }
+
+  /// Load Bengaluru OSM graph and build overlay polylines.
+  Future<void> _loadOsmGraph() async {
+    setState(() {
+      _osmLoading = true;
+      _osmLoadError = null;
+    });
+
+    try {
+      final graph = await OsmLoader.loadAsset('assets/osm/bengaluru.wkp');
+      _logEvent(
+        'Loaded OSM graph: ${graph.nodes.length} nodes, ${graph.edges.length} edges',
+      );
+
+      // Build polylines from graph edges for overlay visualization
+      final polylines = <Polyline>{};
+      int polylineIdx = 0;
+
+      // Group edges by road type for styling
+      for (final edge in graph.edges) {
+        final fromNode = graph.nodes[edge.fromIndex];
+        final toNode = graph.nodes[edge.toIndex];
+
+        final points = [
+          LatLng(fromNode.lat, fromNode.lon),
+          LatLng(toNode.lat, toNode.lon),
+        ];
+
+        // Style based on road type
+        final color = _roadTypeColor(edge.roadType.value);
+        final width = _roadTypeWidth(edge.roadType.value);
+
+        polylines.add(
+          Polyline(
+            polylineId: PolylineId('osm_edge_$polylineIdx'),
+            points: points,
+            color: color.withValues(alpha: 0.4),
+            width: width,
+            zIndex: -10, // Below route polylines
+          ),
+        );
+        polylineIdx++;
+      }
+
+      setState(() {
+        _osmGraph = graph;
+        _osmOverlayPolylines = polylines;
+        _osmLoading = false;
+      });
+      _logEvent('OSM overlay ready: ${polylines.length} road segments');
+    } catch (e) {
+      setState(() {
+        _osmLoading = false;
+        _osmLoadError = e.toString();
+      });
+      _logEvent('OSM load failed: $e');
+    }
+  }
+
+  Color _roadTypeColor(int roadType) {
+    return switch (roadType) {
+      1 || 2 => const Color(0xFFE65100), // motorway/link - orange
+      3 || 4 => const Color(0xFFFF8F00), // trunk/link - amber
+      5 || 6 => const Color(0xFFFFD600), // primary/link - yellow
+      7 || 8 => const Color(0xFFAED581), // secondary/link - light green
+      9 || 10 => const Color(0xFF81D4FA), // tertiary/link - light blue
+      11 || 12 => const Color(0xFFB0BEC5), // residential/living - grey
+      13 || 14 => const Color(0xFF90A4AE), // unclassified/service
+      _ => const Color(0xFF78909C), // other
+    };
+  }
+
+  int _roadTypeWidth(int roadType) {
+    return switch (roadType) {
+      1 || 2 => 4, // motorway
+      3 || 4 => 3, // trunk
+      5 || 6 => 3, // primary
+      7 || 8 => 2, // secondary
+      9 || 10 => 2, // tertiary
+      _ => 1, // residential/other
+    };
+  }
+
+  void _toggleOsmOverlay() {
+    setState(() {
+      _osmOverlayVisible = !_osmOverlayVisible;
+    });
+    _logEvent('OSM overlay: ${_osmOverlayVisible ? "visible" : "hidden"}');
   }
 
   @override
@@ -246,6 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       if (json['type'] == 'route_update') {
+        final routeKey = json['route_key'] as String?;
         final List<dynamic> pointsJson = json['points'];
         final List<LatLng> points =
             pointsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
@@ -258,7 +371,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final inactiveRoutes =
             (json['inactive_routes'] as List?)?.cast<Map<String, dynamic>>();
         if (inactiveRoutes != null) {
-          print('DashDebug: Received ${inactiveRoutes.length} inactive routes');
+          dev.log(
+            'DashDebug: Received ${inactiveRoutes.length} inactive routes',
+          );
         }
         final transitMode = json['transit_mode'] as bool? ?? false;
 
@@ -274,7 +389,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'RX Route: ${points.length} pts, ${segments?.length} segs, ${switchPoints?.length} switches, transitMode=$transitMode',
         );
         _logEvent('Keys: ${json.keys.toList()}'); // Debug keys
-        final isSameRoute = _lastRouteSignature == sig;
+
+        final isSameRoute =
+            routeKey != null
+                ? (_lastRouteKey == routeKey)
+                : (_lastRouteSignature == sig);
+
+        final prevProgress = _engine.progress;
+        final hadRoute = _engine.hasRoute;
 
         setState(() {
           // _segments field removed
@@ -282,7 +404,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _transitMode = transitMode; // Store transit mode for save/load
 
           if (!isSameRoute) {
+            final oldRouteBefore = List<LatLng>.of(_engine.route);
+            // New route. Reset the engine route.
             _engine.loadRoute(points);
+
+            // Legacy sender (no routeKey): if endpoints are essentially unchanged,
+            // preserve progress to avoid random resets on periodic rebroadcast.
+            if (routeKey == null && hadRoute && prevProgress > 0.0) {
+              if (oldRouteBefore.isNotEmpty && points.isNotEmpty) {
+                final startDelta = _haversineDist(
+                  oldRouteBefore.first,
+                  points.first,
+                );
+                final endDelta = _haversineDist(
+                  oldRouteBefore.last,
+                  points.last,
+                );
+                if (startDelta < 120 && endDelta < 120) {
+                  _engine.seek(prevProgress);
+                }
+              }
+            }
             _updateMapRoute(
               points,
               segments: segments,
@@ -290,8 +432,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               routeEvents: events,
               inactiveRoutes: inactiveRoutes,
               transitMode: transitMode,
+              routeKey: routeKey,
             );
             _lastRouteSignature = sig;
+            _lastRouteKey = routeKey;
 
             _lastTransitLegsJson = transitLegs;
 
@@ -313,10 +457,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               routeEvents: events,
               inactiveRoutes: inactiveRoutes,
               transitMode: transitMode,
+              routeKey: routeKey,
               forceRepaint: true, // Force marker updates
             );
 
             _lastTransitLegsJson = transitLegs;
+
+            // If a key is present, keep it fresh.
+            if (routeKey != null) {
+              _lastRouteKey = routeKey;
+            }
           }
         });
       } else if (json['type'] == 'app_state') {
@@ -355,32 +505,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final info = json['debug_info'] as Map<String, dynamic>;
             // Keep this lightweight; it's a diagnostics pane.
             final parts = <String>[];
-            if (info['destination'] != null)
+            if (info['destination'] != null) {
               parts.add('dest=${info['destination']}');
-            if (info['active_key'] != null)
+            }
+            if (info['active_key'] != null) {
               parts.add('key=${info['active_key']}');
-            if (info['snap_offset_m'] != null)
+            }
+            if (info['snap_offset_m'] != null) {
               parts.add('off=${info['snap_offset_m']}m');
-            if (info['progress_m'] != null)
+            }
+            if (info['progress_m'] != null) {
               parts.add('prog=${info['progress_m']}m');
-            if (info['progress_jump_m'] != null)
+            }
+            if (info['progress_jump_m'] != null) {
               parts.add('jump=${info['progress_jump_m']}m');
-            if (info['next_event_type'] != null)
+            }
+            if (info['next_event_type'] != null) {
               parts.add('next=${info['next_event_type']}');
-            if (info['to_next_event_m'] != null)
+            }
+            if (info['to_next_event_m'] != null) {
               parts.add('toNext=${info['to_next_event_m']}m');
+            }
             if (info['poly_total_m'] != null && info['step_total_m'] != null) {
               parts.add(
                 'poly/step=${info['poly_total_m']}/${info['step_total_m']}',
               );
             }
             // Backwards-compat with older debug keys.
-            if (info['stepBounds'] != null)
+            if (info['stepBounds'] != null) {
               parts.add('Bounds:${info['stepBounds']}');
-            if (info['stepStops'] != null)
+            }
+            if (info['stepStops'] != null) {
               parts.add('Stops:${info['stepStops']}');
-            if (info['routeEvents'] != null)
+            }
+            if (info['routeEvents'] != null) {
               parts.add('Events:${info['routeEvents']}');
+            }
             _metricDebug = parts.join(' | ');
           }
         });
@@ -414,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   BitmapDescriptor.hueOrange,
                 ),
                 infoWindow: const InfoWindow(title: 'Your Device'),
-                zIndex: 50,
+                zIndexInt: 50,
               ),
             );
           });
@@ -427,7 +587,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
     } catch (e) {
-      print('Dashboard: Error parsing message: $e');
+      dev.log('Dashboard: Error parsing message: $e');
     }
   }
 
@@ -478,7 +638,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _polylines.clear();
       _markers.removeWhere((m) => m.markerId.value != 'device_marker');
-      _gtfsMarkers.clear();
+      _stopMarkers.clear();
       _lastRouteSignature = null;
       // _routeEvents = null; // Unused
       _engine.loadRoute([]); // Clear engine route
@@ -504,6 +664,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     List<Map<String, dynamic>>? routeEvents,
     List<Map<String, dynamic>>? inactiveRoutes,
     bool transitMode = false,
+    String? routeKey,
     bool forceRepaint = false,
   }) async {
     // Pre-generate marker icons (must be done outside setState)
@@ -511,6 +672,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Colors.cyanAccent,
       size: 30,
     );
+
+    List<Polyline> prefixPolylines(
+      List<Polyline> src,
+      String prefix, {
+      Color? colorOverride,
+      int? zIndexOverride,
+    }) {
+      return src
+          .map(
+            (p) => Polyline(
+              polylineId: PolylineId('$prefix${p.polylineId.value}'),
+              points: p.points,
+              color: colorOverride ?? p.color,
+              width: p.width,
+              visible: p.visible,
+              zIndex: zIndexOverride ?? p.zIndex,
+              jointType: p.jointType,
+              patterns: p.patterns,
+              startCap: p.startCap,
+              endCap: p.endCap,
+              geodesic: p.geodesic,
+              consumeTapEvents: p.consumeTapEvents,
+            ),
+          )
+          .toList();
+    }
     // purpleIcon removed
     /*
     final purpleIcon = await _createCustomMarkerBitmap(
@@ -530,12 +717,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Draw Inactive Routes (Grey)
       if (inactiveRoutes != null) {
         for (final route in inactiveRoutes) {
-          final ptsJson = route['points'] as List;
+          final inactiveKeyRaw = route['route_key'] ?? route['key'];
+          final inactiveKey =
+              inactiveKeyRaw is String && inactiveKeyRaw.trim().isNotEmpty
+                  ? inactiveKeyRaw.trim()
+                  : null;
+
+          // Preferred: reuse cached segmentation for this route key.
+          if (inactiveKey != null) {
+            final cachedGrey = _routeGreyPolylinesByKey[inactiveKey];
+            if (cachedGrey != null && cachedGrey.isNotEmpty) {
+              _polylines.addAll(cachedGrey);
+              continue;
+            }
+          }
+
+          // Next best: build from raw segments if provided.
+          final inactiveSegments =
+              (route['segments'] as List?)?.cast<Map<String, dynamic>>();
+          if (inactiveSegments != null && inactiveSegments.isNotEmpty) {
+            final base = _directionService
+                .buildSegmentedPolylinesFromRawSegments(inactiveSegments);
+            final derivedKey = inactiveKey ?? 'inactive_${route.hashCode}';
+            final grey = prefixPolylines(
+              base,
+              'inactive:$derivedKey:',
+              colorOverride: Colors.grey,
+              zIndexOverride: 0,
+            );
+            if (inactiveKey != null) {
+              _routeGreyPolylinesByKey[inactiveKey] = grey;
+            }
+            _polylines.addAll(grey);
+            continue;
+          }
+
+          // Fallback: render provided points as a single grey polyline.
+          final ptsJson = (route['points'] as List?) ?? const [];
           final pts = ptsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
-          final key = route['key'] ?? 'inactive_${pts.hashCode}';
+          final derivedKey = inactiveKey ?? 'inactive_${pts.hashCode}';
           _polylines.add(
             Polyline(
-              polylineId: PolylineId('inactive_$key'),
+              polylineId: PolylineId('inactive:$derivedKey'),
               points: pts,
               color: Colors.grey,
               width: 4,
@@ -558,9 +781,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         pathPoints.addAll(points);
       }
 
-      // 4. GTFS Station Markers (Cyan)
+      // 4. Station Markers (Cyan)
       // Prefer runtime-provided transit legs (exactly what alarm logic sees).
-      // Fallback to legacy GTFS-near-path visualization only if transit legs were not sent.
+      // Fallback to legacy OSM-near-path visualization only if transit legs were not sent.
       final hasRuntimeTransitLegs = _lastTransitLegsJson != null;
       if (hasRuntimeTransitLegs) {
         _markers.removeWhere(
@@ -591,31 +814,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title: name,
                   snippet: leg['lineName']?.toString(),
                 ),
-                zIndex: 12,
+                zIndexInt: 12,
               ),
             );
           }
         }
       } else {
-        // Legacy dashboard visualization: show any nearby GTFS/OSM stops.
-        if (_gtfsMarkers.isEmpty || forceRepaint) {
-          _gtfsMarkers.clear();
+        // Legacy dashboard visualization: show any nearby OSM stops.
+        if (_stopMarkers.isEmpty || forceRepaint) {
+          _stopMarkers.clear();
           for (final stop in allIndiaStops) {
             final stopPos = LatLng(stop['lat'], stop['lng']);
             if (_isStationNearPath(stopPos, pathPoints, 500)) {
-              _gtfsMarkers.add(
+              _stopMarkers.add(
                 Marker(
-                  markerId: MarkerId('gtfs_${stop['id']}'),
+                  markerId: MarkerId('stop_${stop['id']}'),
                   position: stopPos,
                   icon: cyanMarkerIcon,
                   infoWindow: InfoWindow(title: stop['name']),
-                  zIndex: 10,
+                  zIndexInt: 10,
                 ),
               );
             }
           }
         }
-        _markers.addAll(_gtfsMarkers);
+        _markers.addAll(_stopMarkers);
       }
 
       // 5. Switch Points (Purple) - REMOVED per user request
@@ -638,75 +861,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // 6. Polylines
       if (segments != null && segments.isNotEmpty) {
-        final transitColorMap = <String, Color>{};
-        const transitColors = <Color>[Colors.green, Colors.purple];
-        int transitColorIndex = 0;
-        for (int i = 0; i < segments.length; i++) {
-          final seg = segments[i];
-          final mode = seg['mode'] as String;
-          final segPoints =
-              (seg['points'] as List)
-                  .map((p) => LatLng(p['lat'], p['lng']))
-                  .toList();
-
-          Color color;
-          List<PatternItem> patterns = [];
-
-          switch (mode) {
-            case 'driving':
-              color = Colors.blue;
-              patterns = [];
-              break;
-            case 'transit':
-              final vehicleType = seg['vehicle_type'] as String?;
-              final isMetroTransit =
-                  transitMode &&
-                  (vehicleType == 'SUBWAY' ||
-                      vehicleType == 'HEAVY_RAIL' ||
-                      vehicleType == 'RAIL');
-
-              if (isMetroTransit) {
-                final rawLine = seg['transit_line'];
-                final line = rawLine is String ? rawLine.trim() : '';
-                if (line.isNotEmpty) {
-                  if (!transitColorMap.containsKey(line)) {
-                    transitColorMap[line] =
-                        transitColors[transitColorIndex % transitColors.length];
-                    transitColorIndex++;
-                  }
-                  color = transitColorMap[line]!;
-                } else {
-                  if (!transitColorMap.containsKey('_fallback_$i')) {
-                    transitColorMap['_fallback_$i'] =
-                        transitColors[transitColorIndex % transitColors.length];
-                    transitColorIndex++;
-                  }
-                  color = transitColorMap['_fallback_$i']!;
-                }
-              } else {
-                color = Colors.blue;
-              }
-              patterns = [];
-              break;
-            case 'walking':
-              color = Colors.blue;
-              patterns = [PatternItem.dash(20), PatternItem.gap(12)];
-              break;
-            default:
-              color = Colors.blue;
-              patterns = [];
+        final hasKey = routeKey != null && routeKey.trim().isNotEmpty;
+        if (hasKey) {
+          final key = routeKey.trim();
+          var cached = _routePolylinesByKey[key];
+          if (cached == null || cached.isEmpty) {
+            final base = _directionService
+                .buildSegmentedPolylinesFromRawSegments(segments);
+            cached = prefixPolylines(base, 'active:$key:');
+            _routePolylinesByKey[key] = cached;
+            _routeGreyPolylinesByKey.putIfAbsent(
+              key,
+              () => prefixPolylines(
+                base,
+                'inactive:$key:',
+                colorOverride: Colors.grey,
+                zIndexOverride: 0,
+              ),
+            );
           }
-
-          _polylines.add(
-            Polyline(
-              polylineId: PolylineId('seg_$i'),
-              points: segPoints,
-              color: color,
-              width: 5,
-              patterns: patterns,
-              zIndex: (mode == 'transit' && transitMode) ? 3 : 2,
-            ),
+          _polylines.addAll(cached);
+        } else {
+          final base = _directionService.buildSegmentedPolylinesFromRawSegments(
+            segments,
           );
+          _polylines.addAll(prefixPolylines(base, 'active:legacy:'));
         }
       } else {
         _polylines.add(
@@ -729,7 +908,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               BitmapDescriptor.hueRed,
             ),
             infoWindow: const InfoWindow(title: 'Start'),
-            zIndex: 40,
+            zIndexInt: 40,
           ),
         );
         _markers.add(
@@ -740,7 +919,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               BitmapDescriptor.hueRed,
             ),
             infoWindow: const InfoWindow(title: 'Destination'),
-            zIndex: 40,
+            zIndexInt: 40,
           ),
         );
       }
@@ -760,7 +939,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           position: _engine.currentPosition!,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
           infoWindow: const InfoWindow(title: 'Simulated User'),
-          zIndex: 200,
+          zIndexInt: 200,
         ),
       );
     });
@@ -850,6 +1029,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _debouncer.reset();
                           });
                         },
+                      ),
+                      // OSM overlay toggle
+                      IconButton(
+                        icon: Icon(
+                          _osmOverlayVisible
+                              ? Icons.layers
+                              : Icons.layers_outlined,
+                          color:
+                              _osmLoading
+                                  ? Colors.orange
+                                  : (_osmGraph != null
+                                      ? Colors.green
+                                      : Colors.grey),
+                        ),
+                        tooltip:
+                            _osmLoading
+                                ? 'Loading Bengaluru roads...'
+                                : (_osmGraph != null
+                                    ? '${_osmOverlayPolylines.length} road segments'
+                                    : 'OSM not loaded'),
+                        onPressed:
+                            _osmGraph != null
+                                ? _toggleOsmOverlay
+                                : _loadOsmGraph,
                       ),
                     ],
                   ),
@@ -972,7 +1175,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   onMapCreated: (ctrl) => _mapController = ctrl,
                   markers: _markers,
-                  polylines: _polylines,
+                  polylines: {
+                    // OSM overlay (below route)
+                    if (_osmOverlayVisible) ..._osmOverlayPolylines,
+                    // Route polylines (on top)
+                    ..._polylines,
+                  },
                   onTap: (pos) {
                     setState(() {
                       _engine.currentPosition = pos;
@@ -986,7 +1194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   left: 12,
                   right: 12,
                   child: Material(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -1057,7 +1265,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // --- Helper Methods ---
 
-  Set<Marker> _gtfsMarkers = {};
+  final Set<Marker> _stopMarkers = {};
 
   Future<void> _updateAlarmMarkers() async {
     // Optimization: Dont recreate if nothing changed?
@@ -1155,8 +1363,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     double size = 24,
   }) async {
     // Use cached if available
-    if (color == Colors.cyanAccent && _cachedCyanIcon != null)
+    if (color == Colors.cyanAccent && _cachedCyanIcon != null) {
       return _cachedCyanIcon!;
+    }
     // Purple and Yellow removed per user request
     /*
     if (color == Colors.purpleAccent && _cachedPurpleIcon != null)

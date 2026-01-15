@@ -3,8 +3,8 @@ import 'package:geowake2/services/alarm_evaluator.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
 void main() {
-  test('Debug Data Mismatch: API=5 stops, GTFS=3 stops', () {
-    // 1. Create a "Broken" JSON that mimics the API/GTFS mismatch
+  test('Debug Data Mismatch: API=5 stops, matched=3 stops', () {
+    // 1. Create a "Broken" JSON that mimics an API vs matching mismatch
     // API says 5 stops ("numStops": 5), but we only matched 3 positions.
     final brokenLegJson = {
       'legStartMeters': 0.0,
@@ -14,10 +14,10 @@ void main() {
         {'lat': 10.0, 'lng': 10.0},
         {'lat': 10.001, 'lng': 10.001},
         {'lat': 10.002, 'lng': 10.002},
-      ], // <--- GTFS FOUND 3
+      ], // <--- MATCH FOUND 3
       'stopMeters': [100.0, 500.0, 900.0],
       'lineName': 'Metro Line',
-      'isActualPositions': true, // <--- GTFS ENHANCED
+      'isActualPositions': true, // <--- MATCHED POSITIONS
       'isMetro': true,
       'stopNames': ['A', 'B', 'C'],
     };

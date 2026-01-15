@@ -7,7 +7,7 @@ import 'dart:convert';
 void main() {
   test('TransitLegStops Persistence: OSM Data Survival', () {
     // 1. Create "Enhanced" Leg (Source of Truth)
-    // This simulates what happens after TransferUtils.enhanceWithGtfs()
+    // This simulates what happens after TransferUtils.enhanceTransitLegStopsWithOsm()
     final originalLeg = TransitLegStops(
       legStartMeters: 0,
       legEndMeters: 1000,

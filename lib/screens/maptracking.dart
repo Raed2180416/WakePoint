@@ -20,6 +20,7 @@ import 'package:geowake2/services/eta_utils.dart'; // ETA calculation by steps.
 import 'package:geowake2/services/alarm_player.dart'; // Alarm control.
 import 'package:flutter_background_service/flutter_background_service.dart'; // Notify service when stopping alarm.
 import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
+import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
 
 class MapTrackingScreen extends StatefulWidget {
   // Displays map and live tracking details.
@@ -37,6 +38,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   double? _destinationLng; // Destination longitude argument.
   String? _destinationName; // Destination name.
   bool _metroMode = false; // Whether route is metro-inclusive.
+  bool _isMetroTimeMode = false; // Metro + time-mode: destination-only toggle.
   Set<Marker> _markers = {}; // Map markers set.
   Set<Polyline> _polylines = {}; // Route polylines to draw.
   String _etaText = "Calculating ETA..."; // UI ETA text.
@@ -56,6 +58,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   _routeSwitchSub; // Listen to route switch events.
   StreamSubscription<ActiveRouteState>?
   _routeStateSub; // Listen to active route state updates.
+  StreamSubscription<Position>?
+  _simulatedLocationSub; // Listen for simulated positions from TrackingService.
+  StreamSubscription<double?>?
+  _etaSub; // Listen for background-computed ETA (EtaEngine).
+  double? _lastEtaSecondsFromService;
   double _routeLengthMeters = 0.0; // Total route length in meters.
   double?
   _speedEmaMps; // simple smoothed speed estimate // Exponential moving average of speed.
@@ -109,6 +116,31 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _destinationLat = args['lat']; // Assign.
     _destinationLng = args['lng']; // Assign.
     _metroMode = args['metroMode'] ?? false; // Optional flag.
+
+    // Determine whether we're in the special Metro + Time Mode.
+    // In this mode, the settings drawer should show the destination-only toggle
+    // (instead of the stop-mode preboarding toggle).
+    final modeRaw =
+        (args['mode'] ?? args['alarmMode'] ?? args['alarm_mode'])?.toString();
+    _isMetroTimeMode = _metroMode && modeRaw == 'time';
+    if (_metroMode && modeRaw == null) {
+      // Some navigation paths may omit the alarm mode; use the persisted snapshot.
+      // This keeps MapTracking consistent with HomeScreen/Splash restore.
+      TrackingStateStore.loadSnapshot()
+          .then((snapshot) {
+            if (!mounted || snapshot == null) return;
+            final derived = snapshot.metroMode && snapshot.alarmMode == 'time';
+            if (derived != _isMetroTimeMode) {
+              setState(() {
+                _isMetroTimeMode = derived;
+              });
+            }
+          })
+          .catchError((_) {
+            // Ignore snapshot load errors; default behavior remains.
+          });
+    }
+
     double userLat = args['userLat'] ?? 37.422; // Default lat if missing.
     double userLng = args['userLng'] ?? -122.084; // Default lng if missing.
     _currentUserLocation = LatLng(userLat, userLng); // Seed current location.
@@ -265,6 +297,38 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       );
     });
 
+    // Listen for simulated positions from TrackingService (e.g., from unified dashboard).
+    // This ensures the map marker updates even when positions are injected via WebSocket.
+    _simulatedLocationSub ??= TrackingService().locationStream.listen((
+      position,
+    ) {
+      if (!mounted) return;
+      _handlePositionUpdate(position);
+    });
+
+    // Listen for ETA computed by the background EtaEngine (authoritative).
+    // This keeps MapTrackingScreen ETA consistent with the unified dashboard.
+    _etaSub ??= TrackingService().etaSecondsStream.listen((etaSeconds) {
+      if (!mounted) return;
+      if (etaSeconds == null || !etaSeconds.isFinite) return;
+
+      _lastEtaSecondsFromService = etaSeconds;
+
+      final double etaSec = etaSeconds.clamp(0.0, double.infinity);
+      String etaStr;
+      if (etaSec < 90) {
+        etaStr = '${etaSec.toStringAsFixed(0)} sec remaining';
+      } else if (etaSec < 3600) {
+        etaStr = '${(etaSec / 60).toStringAsFixed(0)} min remaining';
+      } else {
+        etaStr = '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+      }
+
+      setState(() {
+        _etaText = etaStr;
+      });
+    });
+
     // Listen for continuous route state to compute ETA and remaining distance.
     _routeStateSub ??= TrackingService().activeRouteStateStream.listen((state) {
       // Update summary cards.
@@ -272,11 +336,24 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       // Remaining distance from manager
       final remainingM =
           state.remainingMeters; // Remaining meters provided by manager.
-      // Derive ETA using a fallback speed; will be replaced by fusion/dead-reckoning later
-      double etaSec; // Local ETA seconds.
-      final fallbackSpeed =
-          12.0; // ~43 km/h; TODO: replace with fusion when ready
-      etaSec = remainingM / fallbackSpeed; // Simple division.
+      // Derive ETA using step durations when available; otherwise use a
+      // conservative fallback speed (avoid overly optimistic ~43 km/h defaults).
+      final serviceEta = _lastEtaSecondsFromService;
+      double etaSec =
+          (serviceEta != null && serviceEta.isFinite)
+              ? serviceEta
+              : (EtaUtils.etaRemainingSeconds(
+                    progressMeters: state.progressMeters,
+                    stepBoundariesMeters: _stepBoundariesMeters,
+                    stepDurationsSeconds: _stepDurationsSeconds,
+                  ) ??
+                  (remainingM /
+                      (((_speedEmaMps != null &&
+                                  _speedEmaMps!.isFinite &&
+                                  _speedEmaMps! > 0.5)
+                              ? _speedEmaMps!
+                              : 2.8)
+                          .clamp(0.5, 20.0))));
       // Format
       String etaStr; // Human readable ETA.
       if (etaSec < 90) {
@@ -300,6 +377,14 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                 ? '${secs.toStringAsFixed(0)} sec'
                 : '${(secs / 60).toStringAsFixed(0)} min'; // Humanize.
         switchMsg = "You'll have to switch routes in $when"; // Compose.
+
+        // Debug: this countdown is about ACTIVE ROUTE switching (route manager),
+        // not necessarily a transit transfer switchpoint.
+        print(
+          'MAP_ROUTE_SWITCH_DEBUG: pendingTo=${state.pendingSwitchToKey}, '
+          'pendingSecs=${secs.toStringAsFixed(1)}, '
+          'progress=${state.progressMeters.toStringAsFixed(0)}',
+        );
       }
 
       setState(() {
@@ -308,6 +393,153 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         _switchNotice = switchMsg; // Apply notice.
       });
     });
+  }
+
+  /// Shared handler for both real GPS and simulated position updates.
+  void _handlePositionUpdate(Position position) {
+    _currentUserLocation = LatLng(position.latitude, position.longitude);
+    dev.log(
+      "MapTrackingScreen: Position update: (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})",
+      name: "MapTrackingScreen",
+    );
+
+    // Smooth speed estimate
+    final rawSpeed = position.speed;
+    if (rawSpeed.isFinite && rawSpeed >= 0) {
+      final v =
+          rawSpeed < 0.5 && _speedEmaMps != null ? _speedEmaMps! : rawSpeed;
+      _speedEmaMps = _speedEmaMps == null ? v : (_speedEmaMps! * 0.8 + v * 0.2);
+    }
+
+    // Prefer snapped position onto the route if available
+    LatLng markerPos = _currentUserLocation!;
+    if (_routePoints.length >= 2) {
+      final snap = SnapToRouteEngine.snap(
+        point: _currentUserLocation!,
+        polyline: _routePoints,
+        hintIndex: _lastSnapIndex,
+        searchWindow: 30,
+      );
+      _lastSnapIndex = snap.segmentIndex;
+      markerPos = snap.snappedPoint;
+
+      // Compute remaining distance and ETA locally
+      final progress = snap.progressMeters;
+      final remaining = (_routeLengthMeters - progress).clamp(
+        0.0,
+        double.infinity,
+      );
+
+      // ETA to destination: combine step-duration ETA with speed ETA.
+      const double speedSafetyFactor = 1.20;
+      const double maxStepInflationVsSpeed = 1.50;
+
+      final stepEtaToDestSec = EtaUtils.etaRemainingSeconds(
+        progressMeters: progress,
+        stepBoundariesMeters: _stepBoundariesMeters,
+        stepDurationsSeconds: _stepDurationsSeconds,
+      );
+
+      final spdToDest =
+          (_speedEmaMps != null && _speedEmaMps! > 0.5) ? _speedEmaMps! : 2.8;
+      final speedEtaToDestSec = remaining / spdToDest;
+
+      final double etaSec;
+      if (stepEtaToDestSec != null) {
+        final speedBuffered = speedEtaToDestSec * speedSafetyFactor;
+        final stepCap = speedBuffered * maxStepInflationVsSpeed;
+        etaSec =
+            (stepEtaToDestSec <= speedBuffered)
+                ? speedBuffered
+                : (stepEtaToDestSec <= stepCap ? stepEtaToDestSec : stepCap);
+      } else {
+        etaSec = speedEtaToDestSec * speedSafetyFactor;
+      }
+
+      final etaStr =
+          etaSec < 90
+              ? '${etaSec.toStringAsFixed(0)} sec remaining'
+              : etaSec < 3600
+              ? '${(etaSec / 60).toStringAsFixed(0)} min remaining'
+              : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining';
+      final distStr =
+          remaining >= 1000
+              ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
+              : '${remaining.toStringAsFixed(0)} m to destination';
+
+      String? switchMsg;
+      if (_transferBoundariesMeters.isNotEmpty) {
+        final next = _transferBoundariesMeters.firstWhere(
+          (b) => b > progress,
+          orElse: () => -1,
+        );
+        if (next > 0) {
+          final toSwitchM = next - progress;
+          final spd =
+              (_speedEmaMps != null && _speedEmaMps! > 0.5)
+                  ? _speedEmaMps!
+                  : 2.8;
+          final stepEtaSec = EtaUtils.etaToTargetSeconds(
+            progressMeters: progress,
+            targetMeters: next,
+            stepBoundariesMeters: _stepBoundariesMeters,
+            stepDurationsSeconds: _stepDurationsSeconds,
+          );
+          final speedEtaSec = toSwitchM / spd;
+          final double tSec;
+          if (stepEtaSec != null) {
+            final speedBuffered = speedEtaSec * speedSafetyFactor;
+            final stepCap = speedBuffered * maxStepInflationVsSpeed;
+            tSec =
+                (stepEtaSec <= speedBuffered)
+                    ? speedBuffered
+                    : (stepEtaSec <= stepCap ? stepEtaSec : stepCap);
+          } else {
+            tSec = speedEtaSec * speedSafetyFactor;
+          }
+
+          print(
+            'MAP_SWITCH_ETA_DEBUG: progress=${progress.toStringAsFixed(0)}, '
+            'nextBoundary=${next.toStringAsFixed(0)}, '
+            'toSwitchM=${toSwitchM.toStringAsFixed(0)}, '
+            'stepEtaSec=${stepEtaSec?.toStringAsFixed(1) ?? "null"}, '
+            'speedEtaSec=${speedEtaSec.toStringAsFixed(1)}, '
+            'chosenSec=${tSec.toStringAsFixed(1)}, '
+            'speedEma=${_speedEmaMps?.toStringAsFixed(2) ?? "null"}, '
+            'boundaries=${_transferBoundariesMeters.length}',
+          );
+          final when =
+              tSec < 60
+                  ? '${tSec.toStringAsFixed(0)} sec'
+                  : '${(tSec / 60).toStringAsFixed(0)} min';
+          switchMsg = "You'll have to switch routes in $when";
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _etaText = etaStr;
+          _distanceText = distStr;
+          _switchNotice = switchMsg;
+        });
+      }
+    }
+
+    // Update the marker for current (snapped) location.
+    if (mounted) {
+      setState(() {
+        _markers.removeWhere(
+          (m) => m.markerId.value == 'currentLocationMarker',
+        );
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('currentLocationMarker'),
+            position: markerPos,
+            infoWindow: const InfoWindow(title: 'Your Location'),
+          ),
+        );
+      });
+    }
   }
 
   Future<void> _startLocationUpdates() async {
@@ -320,14 +552,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _locationSubscription = Geolocator.getPositionStream(
       locationSettings: settings,
     ).listen((position) {
-      _currentUserLocation = LatLng(
-        position.latitude,
-        position.longitude,
-      ); // Store raw position.
-      dev.log(
-        "MapTrackingScreen: New user location: (${position.latitude}, ${position.longitude})",
-        name: "MapTrackingScreen",
-      ); // Log update.
+      // Handle the position update (shared with simulated positions)
+      _handlePositionUpdate(position);
 
       // Broadcast device position to dashboard for real-time sync
       try {
@@ -338,103 +564,6 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           speed: position.speed,
         );
       } catch (_) {}
-      // Smooth speed estimate
-      final rawSpeed = position.speed; // m/s
-      if (rawSpeed.isFinite && rawSpeed >= 0) {
-        final v =
-            rawSpeed < 0.5 && _speedEmaMps != null
-                ? _speedEmaMps!
-                : rawSpeed; // Avoid overreacting to near-zero noise.
-        _speedEmaMps =
-            _speedEmaMps == null
-                ? v
-                : (_speedEmaMps! * 0.8 + v * 0.2); // EMA smoothing.
-      }
-      // Prefer snapped position onto the route if available
-      LatLng markerPos = _currentUserLocation!; // Default marker position.
-      if (_routePoints.length >= 2) {
-        // Snap only when polyline ready.
-        final snap = SnapToRouteEngine.snap(
-          point: _currentUserLocation!,
-          polyline: _routePoints,
-          hintIndex: _lastSnapIndex,
-          searchWindow: 30,
-        );
-        _lastSnapIndex = snap.segmentIndex; // Update hint.
-        markerPos = snap.snappedPoint; // Snapped marker.
-        // Compute remaining distance and ETA locally
-        final progress =
-            snap.progressMeters; // Meters progressed along polyline.
-        final remaining = (_routeLengthMeters - progress).clamp(
-          0.0,
-          double.infinity,
-        ); // Clamp non-negative.
-        // Prefer ETA from directions step durations (no API) if available; fallback to speed-based
-        double? etaSec = EtaUtils.etaRemainingSeconds(
-          progressMeters: progress,
-          stepBoundariesMeters: _stepBoundariesMeters,
-          stepDurationsSeconds: _stepDurationsSeconds,
-        );
-        if (etaSec == null) {
-          final spd =
-              (_speedEmaMps != null && _speedEmaMps! > 0.5)
-                  ? _speedEmaMps!
-                  : 12.0; // Fallback speed.
-          etaSec = remaining / spd; // Simple estimate.
-        }
-        final etaStr =
-            etaSec < 90
-                ? '${etaSec.toStringAsFixed(0)} sec remaining'
-                : etaSec < 3600
-                ? '${(etaSec / 60).toStringAsFixed(0)} min remaining'
-                : '${(etaSec / 3600).toStringAsFixed(1)} hr remaining'; // Format.
-        final distStr =
-            remaining >= 1000
-                ? '${(remaining / 1000).toStringAsFixed(2)} km to destination'
-                : '${remaining.toStringAsFixed(0)} m to destination'; // Format.
-
-        String? switchMsg; // Next transfer banner.
-        if (_transferBoundariesMeters.isNotEmpty) {
-          final next = _transferBoundariesMeters.firstWhere(
-            (b) => b > progress,
-            orElse: () => -1,
-          );
-          if (next > 0) {
-            final toSwitchM = next - progress; // Meters until next transfer.
-            final spd =
-                (_speedEmaMps != null && _speedEmaMps! > 0.5)
-                    ? _speedEmaMps!
-                    : 12.0; // Fallback speed.
-            final tSec = toSwitchM / spd; // Seconds to transfer.
-            final when =
-                tSec < 60
-                    ? '${tSec.toStringAsFixed(0)} sec'
-                    : '${(tSec / 60).toStringAsFixed(0)} min'; // Humanize.
-            switchMsg = "You'll have to switch routes in $when"; // Compose.
-          }
-        }
-        if (mounted) {
-          setState(() {
-            _etaText = etaStr; // Update.
-            _distanceText = distStr; // Update.
-            _switchNotice = switchMsg; // Update.
-            // metrics ready // Marker update below.
-          });
-        }
-      }
-      // Update the marker for current (snapped) location.
-      setState(() {
-        _markers.removeWhere(
-          (m) => m.markerId.value == 'currentLocationMarker',
-        ); // Remove old marker.
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('currentLocationMarker'),
-            position: markerPos, // Either raw or snapped.
-            infoWindow: const InfoWindow(title: 'Your Location'),
-          ),
-        );
-      });
     });
   }
 
@@ -481,7 +610,14 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       if (next > 0) {
         final toSwitchM = next - progress; // Meters to transfer.
         final spd = 12.0; // Fallback speed for initial estimation.
-        final tSec = toSwitchM / spd; // Seconds.
+        final tSec =
+            EtaUtils.etaToTargetSeconds(
+              progressMeters: progress,
+              targetMeters: next,
+              stepBoundariesMeters: _stepBoundariesMeters,
+              stepDurationsSeconds: _stepDurationsSeconds,
+            ) ??
+            (toSwitchM / spd); // Seconds.
         final when =
             tSec < 60
                 ? '${tSec.toStringAsFixed(0)} sec'
@@ -583,6 +719,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _locationSubscription?.cancel(); // Stop GPS stream.
     _routeSwitchSub?.cancel(); // Stop switch stream.
     _routeStateSub?.cancel(); // Stop state stream.
+    _simulatedLocationSub?.cancel(); // Stop simulated position stream.
+    _etaSub?.cancel(); // Stop ETA stream.
     super.dispose(); // Parent cleanup.
   }
 
@@ -607,7 +745,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         }
       },
       child: Scaffold(
-        drawer: const SettingsDrawer(), // Drawer.
+        drawer: SettingsDrawer(
+          metroModeEnabled: _metroMode,
+          isMetroTimeMode: _isMetroTimeMode,
+        ), // Drawer.
         appBar: AppBar(
           title: Row(
             children: [

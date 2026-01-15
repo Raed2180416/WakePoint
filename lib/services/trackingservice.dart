@@ -48,6 +48,8 @@ import 'package:geowake2/config/power_policy.dart';
 import 'package:geowake2/services/soft_lock_manager.dart';
 import 'package:geowake2/services/deviation_monitor.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
+import 'package:geowake2/services/reroute_constraints.dart';
+import 'package:geowake2/services/tracking_termination_policy.dart';
 // Modular tracking components (Phase 1 refactoring)
 import 'package:geowake2/services/tracking/tracking.dart';
 // ... rest of imports
@@ -121,15 +123,21 @@ class TrackingService {
     _foregroundBridge.ensureListenersRegistered();
 
     // Wire up alarm callback to show notifications
-    _foregroundBridge.onAlarmTrigger ??= (title, body, allowContinue) async {
+    _foregroundBridge.onAlarmTrigger ??= (
+      title,
+      body,
+      allowContinue,
+      playSound,
+    ) async {
       dev.log(
-        'DEBUG: Foreground received triggerAlarm from background',
+        'DEBUG: Foreground received triggerAlarm from background (sound: $playSound)',
         name: 'TrackingService',
       );
       await NotificationService().showWakeUpAlarm(
         title: title,
         body: body,
         allowContinueTracking: allowContinue,
+        playSound: playSound,
       );
     };
 
@@ -144,6 +152,7 @@ class TrackingService {
       (s) => _routeStateCtrl.add(s),
     );
     _foregroundBridge.locationStream.listen((p) => _locationCtrl.add(p));
+    _foregroundBridge.etaSecondsStream.listen((eta) => _etaCtrl.add(eta));
   }
 
   Future<bool> _invokeWithAckRetry({
@@ -168,6 +177,7 @@ class TrackingService {
   Stream<RouteSwitchEvent> get routeSwitchStream => _routeSwitchCtrl.stream;
   Stream<RerouteDecision> get rerouteDecisionStream => _rerouteCtrl.stream;
   Stream<Position> get locationStream => _locationCtrl.stream;
+  Stream<double?> get etaSecondsStream => _etaCtrl.stream;
 
   Future<void> initializeService() async {
     if (isTestMode) return;
@@ -630,6 +640,12 @@ void _broadcastSimulationState({
   double? remainingStops,
   Map<String, dynamic>? debugInfo,
 }) {
+  dev.log(
+    'ETA_DEBUG trackingService broadcast: apiEta=$_apiEtaSeconds, smoothedETA=$_smoothedETA, '
+    'distTravelled=$_distanceTravelledMeters, mode=$_alarmMode, val=$_alarmValue, '
+    'progress=$_lastComputedProgressMeters, polyTotal=$_lastComputedPolylineTotalMeters',
+    name: 'TrackingService',
+  );
   _notificationUpdater.broadcastSimulationState(
     alarmFired: alarmFired,
     remainingStops: remainingStops,
@@ -669,6 +685,8 @@ RouteSessionManager? _sessionManagerInstance;
 RouteSessionManager get _sessionManager {
   _sessionManagerInstance ??= RouteSessionManager(
     isTestMode: TrackingService.isTestMode,
+    // Pass the singleton OfflineCoordinator so reroute logic can fetch new routes
+    offlineCoordinator: OfflineCoordinator.instance,
   );
   return _sessionManagerInstance!;
 }
@@ -677,6 +695,14 @@ RouteSessionManager get _sessionManager {
 // AlarmController manages alarm state and evaluation.
 // Currently running in parallel with legacy code for safe migration.
 final AlarmController _alarmController = AlarmController();
+
+// === TRACKING TERMINATION POLICY ===
+// Smart termination using distance + time + behavior signals
+final TrackingTerminationPolicy _terminationPolicy =
+    TrackingTerminationPolicy();
+
+// Reroute in-flight flag to prevent concurrent reroute attempts
+bool _rerouteInFlight = false;
 
 // Alarm state is keyed by route key - now managed solely by AlarmController
 // (Legacy _destinationAlarmFiredByKey, _firedEventIndexesByKey removed)
@@ -723,6 +749,7 @@ final _routeSwitchCtrl = StreamController<RouteSwitchEvent>.broadcast();
 final _rerouteCtrl = StreamController<RerouteDecision>.broadcast();
 // _locationCtrl was irrelevant to SessionManager, keep it?
 final _locationCtrl = StreamController<Position>.broadcast();
+final _etaCtrl = StreamController<double?>.broadcast();
 SnapResult? _lastSnapResult;
 
 // Subscriptions (Keep local to manage lifecycle in TrackingService if needed, or SessionManager handles its own?)
@@ -732,6 +759,7 @@ StreamSubscription<ActiveRouteState>? _mgrStateSub;
 StreamSubscription<RouteSwitchEvent>? _mgrSwitchSub;
 StreamSubscription<DeviationState>? _devSub;
 StreamSubscription<RerouteDecision>? _rerouteSub;
+StreamSubscription<DeviationState>? _devStateForTerminationSub;
 
 // Manager Delegates (Mutable)
 ActiveRouteManager? get _activeManager => _sessionManager.activeManager;
@@ -845,12 +873,18 @@ void _onStop() async {
   _devSub = null;
   _rerouteSub?.cancel();
   _rerouteSub = null;
+  _devStateForTerminationSub?.cancel();
+  _devStateForTerminationSub = null;
   _activeManager?.dispose();
   _activeManager = null;
   _devMonitor?.dispose();
   _devMonitor = null;
   _reroutePolicy?.dispose();
   _reroutePolicy = null;
+
+  // Reset termination policy
+  _terminationPolicy.reset();
+  _rerouteInFlight = false;
 
   // Persist final ETA state
   await _etaEngine.saveState(force: true);
@@ -957,6 +991,30 @@ void _resetAlarmState() {
   dev.log('DEBUG: _resetAlarmState completed', name: 'TrackingService');
 }
 
+/// Handle route switch request from dashboard.
+/// Called when user clicks "Revert to Previous Route" button.
+void _handleDashboardRouteSwitch(String routeKey) {
+  dev.log(
+    'DEBUG: _handleDashboardRouteSwitch called for key: $routeKey',
+    name: 'TrackingService',
+  );
+
+  final success = _sessionManager.switchToRoute(routeKey);
+  if (success) {
+    dev.log(
+      'DEBUG: Successfully switched to route: $routeKey',
+      name: 'TrackingService',
+    );
+    // Reset alarm state since we're on a different route now
+    _resetAlarmState();
+  } else {
+    dev.log(
+      'DEBUG: Failed to switch to route: $routeKey',
+      name: 'TrackingService',
+    );
+  }
+}
+
 /// Helper to trigger alarm notification - handles background isolate case
 /// where NotificationService can't show notifications directly due to
 /// null Android Context. In that case, we send a request to the foreground.
@@ -988,6 +1046,9 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
     activeKey = _lastActiveState?.activeKey ?? active?.key;
 
     if (active != null && _lastProcessedPosition != null) {
+      print(
+        'SNAP_DEBUG: Snapping to route ${active.key}, pos=${_lastProcessedPosition}',
+      );
       final snap = SnapToRouteEngine.snap(
         point: _lastProcessedPosition!,
         polyline: active.points,
@@ -1002,6 +1063,9 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
       _lastSnapResult = snap;
 
       final progress = snap.progressMeters;
+      print(
+        'SNAP_DEBUG: Snapped! progress=$progress, segIdx=${snap.segmentIndex}',
+      );
       progressMeters = progress;
       _registry.updateSessionState(
         active.key,
@@ -1186,6 +1250,194 @@ Future<void> _checkAndTriggerAlarm(
   );
 }
 
+/// Handles reroute decision from deviation monitor.
+///
+/// This is the CRITICAL missing piece that was previously just forwarding
+/// the event without actually doing anything. This method:
+/// 1. Fetches new directions from user's current position to destination
+/// 2. Validates the new route respects original alarm constraints
+/// 3. Registers the new route if valid
+/// 4. Terminates tracking gracefully if no valid route exists
+@pragma('vm:entry-point')
+Future<void> _handleRerouteDecision(RerouteDecision decision) async {
+  if (!decision.shouldReroute) {
+    return;
+  }
+
+  if (_rerouteInFlight) {
+    dev.log('Reroute already in flight, skipping', name: 'TrackingService');
+    return;
+  }
+
+  if (_destination == null || _alarmMode == null || _alarmValue == null) {
+    dev.log(
+      'Cannot reroute: missing destination or alarm settings',
+      name: 'TrackingService',
+    );
+    return;
+  }
+
+  final currentPosition = _lastProcessedPosition;
+  if (currentPosition == null) {
+    dev.log('Cannot reroute: no current position', name: 'TrackingService');
+    _terminationPolicy.onRerouteFailed();
+    return;
+  }
+
+  _rerouteInFlight = true;
+  dev.log(
+    'REROUTE: Starting reroute from ${currentPosition.latitude.toStringAsFixed(5)}, ${currentPosition.longitude.toStringAsFixed(5)}',
+    name: 'TrackingService',
+  );
+
+  try {
+    // Check termination policy first
+    final terminationDecision = _terminationPolicy.shouldTerminate(
+      currentPosition: currentPosition,
+      speedMps: _lastSpeedMps ?? 0,
+    );
+
+    if (terminationDecision.shouldTerminate) {
+      dev.log(
+        'REROUTE: Termination policy triggered: ${terminationDecision.reason}',
+        name: 'TrackingService',
+      );
+      await _terminateTrackingWithMessage(
+        terminationDecision.userMessage ??
+            'Tracking ended due to extended deviation',
+      );
+      return;
+    }
+
+    // Fetch new directions
+    final offlineCoord = _offlineCoordinator;
+    if (offlineCoord == null || offlineCoord.isOffline) {
+      dev.log(
+        'REROUTE: Cannot fetch new route - offline or no coordinator',
+        name: 'TrackingService',
+      );
+      _terminationPolicy.onRerouteFailed();
+      return;
+    }
+
+    final newDirections = await offlineCoord.getRoute(
+      origin: currentPosition,
+      destination: _destination!,
+      isDistanceMode: _alarmMode != 'time',
+      threshold: _alarmValue!,
+      transitMode: _transitMode,
+      preferMetroEvenIfClosed: _transitMode,
+      forceRefresh: true, // Always get fresh route for reroute
+    );
+
+    // Validate constraints
+    final constraints = RerouteConstraints(
+      alarmMode: _alarmMode!,
+      alarmValue: _alarmValue!,
+      transitMode: _transitMode,
+    );
+
+    final validation = constraints.validate(newDirections.directions);
+
+    if (!validation.isValid) {
+      dev.log(
+        'REROUTE: Constraint validation failed: ${validation.failureReason}',
+        name: 'TrackingService',
+      );
+      _terminationPolicy.onRerouteFailed();
+
+      // If too many failures, terminate
+      if (_terminationPolicy.failedRerouteAttempts >= 3) {
+        await _terminateTrackingWithMessage(
+          validation.userMessage ??
+              'Tracking ended: No valid alternate route found',
+        );
+      } else {
+        // Show notification about failed reroute but continue
+        if (!TrackingService.isTestMode) {
+          await NotificationService().showJourneyProgress(
+            title: 'Route deviation detected',
+            subtitle:
+                'Unable to find valid alternate route (attempt ${_terminationPolicy.failedRerouteAttempts}/3)',
+            progress0to1: 0,
+            isTracking: true,
+          );
+        }
+      }
+      return;
+    }
+
+    // Success! Register the new route
+    dev.log(
+      'REROUTE: Constraint validation passed, registering new route',
+      name: 'TrackingService',
+    );
+
+    await TrackingService().registerRouteFromDirections(
+      directions: newDirections.directions,
+      origin: currentPosition,
+      destination: _destination!,
+      transitMode: _transitMode,
+      destinationName: _destinationName,
+      activateRoute: true,
+    );
+
+    // Update termination policy
+    _terminationPolicy.onRerouteSuccess();
+
+    // Update notification
+    if (!TrackingService.isTestMode) {
+      await NotificationService().showJourneyProgress(
+        title:
+            _destinationName != null
+                ? 'Journey to $_destinationName'
+                : 'GeoWake journey',
+        subtitle: 'Route updated',
+        progress0to1: 0,
+        isTracking: true,
+      );
+    }
+
+    dev.log(
+      'REROUTE: Successfully registered new route',
+      name: 'TrackingService',
+    );
+  } catch (e) {
+    dev.log('REROUTE: Error during reroute: $e', name: 'TrackingService');
+    _terminationPolicy.onRerouteFailed();
+
+    // Check if we should terminate after this failure
+    if (_terminationPolicy.failedRerouteAttempts >= 3) {
+      await _terminateTrackingWithMessage(
+        'Tracking ended: Unable to find alternate route after multiple attempts',
+      );
+    }
+  } finally {
+    _rerouteInFlight = false;
+  }
+}
+
+/// Gracefully terminates tracking with a user message.
+Future<void> _terminateTrackingWithMessage(String message) async {
+  dev.log('TERMINATION: $message', name: 'TrackingService');
+
+  try {
+    if (!TrackingService.isTestMode) {
+      // Show termination notification
+      await NotificationService().showWakeUpAlarm(
+        title: 'Tracking Ended',
+        body: message,
+        allowContinueTracking: false,
+      );
+    }
+
+    // Stop tracking
+    await TrackingService().stopTracking();
+  } catch (e) {
+    dev.log('Error during termination: $e', name: 'TrackingService');
+  }
+}
+
 @visibleForTesting
 Future<void> triggerOnStartForRecoveryTest(ServiceInstance service) async =>
     _onStart(service, initialData: null);
@@ -1217,6 +1469,10 @@ void _handleBackgroundStartTracking({
     _registry.clear();
   } catch (_) {}
   _etaEngine.reset();
+  // Critical: clear any cached smoothed speed/ETA so the first alarm check
+  // cannot use a stale (persisted) speed estimate.
+  _locationStreamHandler.reset();
+  _smoothedSpeed = null;
   _sessionManager.activeRouteInitialized = false;
   _routeEvents = const [];
   _stepBoundsMeters = const [];
@@ -1238,6 +1494,10 @@ void _handleBackgroundStartTracking({
   _alarmValue = alarmValue;
   _trackingSessionActive = true;
 
+  // Initialize termination policy with destination
+  _terminationPolicy.reset();
+  _terminationPolicy.setDestination(destination);
+
   // Bridge RouteSessionManager streams to TrackingService controllers
   // This is critical for test mode where foreground listeners are skipped
   _mgrStateSub?.cancel();
@@ -1251,8 +1511,27 @@ void _handleBackgroundStartTracking({
     _routeSwitchCtrl.add(e);
   });
   _rerouteSub?.cancel();
-  _rerouteSub = _sessionManager.rerouteStream.listen((d) {
+  _rerouteSub = _sessionManager.rerouteStream.listen((d) async {
     _rerouteCtrl.add(d);
+    // CRITICAL: Actually handle the reroute decision
+    await _handleRerouteDecision(d);
+  });
+
+  // Listen to deviation state for termination policy
+  _devStateForTerminationSub?.cancel();
+  _devStateForTerminationSub = _sessionManager.deviationStateStream.listen((
+    ds,
+  ) {
+    if (ds.offroute && !_terminationPolicy.isDeviating) {
+      // Deviation started
+      _terminationPolicy.onDeviationStart(
+        position: _lastProcessedPosition ?? const LatLng(0, 0),
+        at: ds.at,
+      );
+    } else if (!ds.offroute && _terminationPolicy.isDeviating) {
+      // Returned to route
+      _terminationPolicy.onReturnToRoute();
+    }
   });
 
   // Persist session-active flag for restore flows.
@@ -1302,6 +1581,8 @@ void _handleBackgroundStartTracking({
   _timeAlarmEligible = false;
 
   _smoothedETA = null;
+  _smoothedSpeed = null;
+  _locationStreamHandler.reset();
   if (_transitMode && _firstTransitBoarding == null) {
     try {
       final ev = _routeEvents.firstWhere(
@@ -1464,8 +1745,27 @@ Future<void> _onStart(
     _routeSwitchCtrl.add(e);
   });
   _rerouteSub?.cancel();
-  _rerouteSub = _sessionManager.rerouteStream.listen((d) {
+  _rerouteSub = _sessionManager.rerouteStream.listen((d) async {
     _rerouteCtrl.add(d);
+    // CRITICAL: Actually handle the reroute decision
+    await _handleRerouteDecision(d);
+  });
+
+  // Listen to deviation state for termination policy
+  _devStateForTerminationSub?.cancel();
+  _devStateForTerminationSub = _sessionManager.deviationStateStream.listen((
+    ds,
+  ) {
+    if (ds.offroute && !_terminationPolicy.isDeviating) {
+      // Deviation started
+      _terminationPolicy.onDeviationStart(
+        position: _lastProcessedPosition ?? const LatLng(0, 0),
+        at: ds.at,
+      );
+    } else if (!ds.offroute && _terminationPolicy.isDeviating) {
+      // Returned to route
+      _terminationPolicy.onReturnToRoute();
+    }
   });
 
   // Initialize ETA engine
@@ -1594,6 +1894,9 @@ Future<void> _onStart(
   // Set up alarm reset callback
   LocationManager().onAlarmReset = _resetAlarmState;
 
+  // Set up route switch callback from dashboard
+  LocationManager().onSwitchRoute = _handleDashboardRouteSwitch;
+
   // Handle data passed directly (for test mode)
   if (initialData != null) {
     _destination = LatLng(
@@ -1630,6 +1933,8 @@ Future<void> _onStart(
     _distanceTravelledMeters = 0.0;
     _etaSamples = 0;
     _timeAlarmEligible = false;
+    _smoothedSpeed = null;
+    _locationStreamHandler.reset();
 
     startLocationStream(service);
     // Start fast polling for notification action buttons (Stop Alarm, Ignore, End Tracking)
@@ -2111,24 +2416,62 @@ extension TrackingServiceRouteOps on TrackingService {
     String? destinationName,
     bool activateRoute = false,
   }) async {
+    // In test mode, we run everything in-process and often register routes
+    // before startTracking() invokes _onStart() (which flips _isBackgroundIsolate).
+    // Register locally so snapping/progress + alarm logic has the route available.
+    if (TrackingService.isTestMode) {
+      await _sessionManager.registerRouteFromDirections(
+        directions: directions,
+        origin: origin,
+        destination: destination,
+        transitMode: transitMode,
+        destinationName: destinationName,
+        activateRoute: activateRoute,
+      );
+      return;
+    }
+
+    // IMPORTANT: route registration must occur in the background isolate,
+    // because snapping/progress (and therefore distance-mode alarms) are evaluated there.
+    // If ACK retry fails, fall back to a best-effort invoke to the background service,
+    // NOT a foreground-only registration.
     if (!_isBackgroundIsolate) {
+      _ensureAckListenersRegistered();
+      final args = {
+        'directions': directions,
+        'origin': {'lat': origin.latitude, 'lng': origin.longitude},
+        'destination': {
+          'lat': destination.latitude,
+          'lng': destination.longitude,
+        },
+        'transitMode': transitMode,
+        'destinationName': destinationName,
+        'activateRoute': activateRoute,
+      };
+
       final ok = await _invokeWithAckRetry(
         method: 'registerRouteDirections',
         ackEvent: 'registerRouteDirectionsAck',
-        args: {
-          'directions': directions,
-          'origin': {'lat': origin.latitude, 'lng': origin.longitude},
-          'destination': {
-            'lat': destination.latitude,
-            'lng': destination.longitude,
-          },
-          'transitMode': transitMode,
-          'destinationName': destinationName,
-        },
+        args: args,
       );
       if (ok) return;
+
+      // Best-effort fallback: still try to send to background even if ACK is missing.
+      try {
+        if (!await _service.isRunning()) {
+          await _service.startService();
+        }
+        _service.invoke('registerRouteDirections', args);
+      } catch (e) {
+        trackingLog.error(
+          'registerRouteFromDirections fallback invoke failed',
+          error: e,
+        );
+      }
+      return;
     }
 
+    // Background isolate: perform registration directly.
     await _sessionManager.registerRouteFromDirections(
       directions: directions,
       origin: origin,

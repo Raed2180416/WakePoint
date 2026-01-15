@@ -10,11 +10,46 @@ class AlarmPlayer {
   static bool _audioAvailable = true; // set false if plugin missing
   static final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
 
+  static final AudioContext _alarmAudioContext = AudioContext(
+    android: AudioContextAndroid(
+      contentType: AndroidContentType.sonification,
+      usageType: AndroidUsageType.alarm,
+      audioFocus: AndroidAudioFocus.gainTransient,
+      stayAwake: true,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.playback,
+      options: <AVAudioSessionOptions>{AVAudioSessionOptions.mixWithOthers},
+    ),
+  );
+
+  static Future<void> _configureAlarmAudioRoute() async {
+    if (!_audioAvailable || _player == null) return;
+    try {
+      // Critical UX fix:
+      // - Default playback uses the media stream on Android.
+      // - If the user’s media volume is 0 but alarm volume is non-zero,
+      //   the alarm will appear “silent” until they press volume buttons.
+      // Force alarm-appropriate attributes so it routes to the ALARM stream.
+      await _player!.setAudioContext(_alarmAudioContext);
+    } catch (_) {
+      // Best-effort: keep playback functional even if context APIs differ
+      // across platforms/versions.
+    }
+  }
+
   static Future<void> _ensureInit() async {
     if (_initialized) return;
     _initialized = true;
     try {
       _player = AudioPlayer();
+      // Prefer MediaPlayer-style playback for alarm-like looping reliability.
+      // (SoundPool/low-latency can be flaky for long looping assets.)
+      try {
+        await _player!.setPlayerMode(PlayerMode.mediaPlayer);
+      } catch (_) {}
+
+      await _configureAlarmAudioRoute();
       await _player!.setReleaseMode(ReleaseMode.loop);
     } on MissingPluginException {
       _audioAvailable = false;
@@ -42,7 +77,13 @@ class AlarmPlayer {
 
     if (_audioAvailable && _player != null) {
       try {
+        // Re-apply context at play-time too (some OEM stacks reset audio attrs
+        // when isolates restart, when app is backgrounded, etc.).
+        await _configureAlarmAudioRoute();
         await _player!.stop();
+        try {
+          await _player!.setVolume(1.0);
+        } catch (_) {}
         await _player!.play(AssetSource(assetPath.replaceFirst('assets/', '')));
       } on MissingPluginException {
         _audioAvailable = false;
@@ -54,6 +95,13 @@ class AlarmPlayer {
     }
 
     // Update state regardless so UI/tests can proceed
+    isPlaying.value = true;
+  }
+
+  /// Mark the alarm as playing without actually playing audio.
+  /// Used when the background isolate plays the sound but the foreground UI
+  /// needs to know an alarm is active (for Stop Alarm button state).
+  static void markAsPlaying() {
     isPlaying.value = true;
   }
 

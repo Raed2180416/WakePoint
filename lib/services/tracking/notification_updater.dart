@@ -224,6 +224,7 @@ class NotificationUpdater {
               : context.transitLegStops.map((l) => l.toJson()).toList();
 
       LocationManager().broadcastRoute(
+        routeKey: context.activeKey,
         destinationName: payload['destinationName'] as String,
         points: (payload['points'] as List).cast<Map<String, dynamic>>(),
         segments: (payload['segments'] as List?)?.cast<Map<String, dynamic>>(),

@@ -48,7 +48,8 @@ class HomeScreenState extends State<HomeScreen> {
   bool _isTracking = false;
   bool _noConnectivity = false;
   bool _lowBattery = false;
-  late OfflineCoordinator _offline;
+  // Use singleton OfflineCoordinator for shared access with TrackingService reroute logic
+  OfflineCoordinator get _offline => OfflineCoordinator.instance;
 
   LatLng? _currentPosition;
   DateTime? _lastPositionTime; // Track when position was last updated
@@ -72,14 +73,18 @@ class HomeScreenState extends State<HomeScreen> {
     _placesService = PlacesService();
     _loadRecentLocations();
     _initBatteryMonitoring();
-    _offline = OfflineCoordinator(initialOffline: false);
+    // OfflineCoordinator.instance is now used via getter, no need to initialize here
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       results,
     ) {
       if (!mounted) return;
       setState(() {
-        _noConnectivity = results.contains(ConnectivityResult.none);
+        // Some platforms can report multiple interfaces; treat as offline only
+        // when ALL reported states are `none`.
+        _noConnectivity =
+            results.isEmpty ||
+            results.every((r) => r == ConnectivityResult.none);
       });
       _offline.setOffline(_noConnectivity);
       // Inform tracking service about connectivity for reroute gating
@@ -117,23 +122,34 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _setDestinationFromLatLng(LatLng position) async {
+    final lat = position.latitude;
+    final lng = position.longitude;
+
+    // UX: set destination immediately so taps feel responsive even if
+    // reverse-geocoding (server call) is slow or offline.
+    await _setSelectedLocation('Dropped pin', lat, lng);
+
     try {
-      final lat = position.latitude;
-      final lng = position.longitude;
       final result = await ApiClient.instance.geocode(latlng: '$lat,$lng');
       final desc =
           (result != null
               ? (result['formatted_address'] ?? result['name'])
               : null) ??
           'Dropped pin';
-      await _setSelectedLocation(desc, lat, lng);
+
+      if (!mounted) return;
+
+      // Only update label if the user hasn't already selected a different
+      // destination since this request started.
+      final selected = _selectedLocation;
+      if (selected != null &&
+          selected['lat'] == lat &&
+          selected['lng'] == lng) {
+        await _setSelectedLocation(desc, lat, lng);
+      }
     } catch (e) {
       dev.log('Reverse geocode failed on map tap: $e', name: 'HomeScreen');
-      await _setSelectedLocation(
-        'Dropped pin',
-        position.latitude,
-        position.longitude,
-      );
+      // Keep the existing "Dropped pin" selection.
     }
   }
 
@@ -626,10 +642,6 @@ class HomeScreenState extends State<HomeScreen> {
       if (alarmMode == 'stops') {
         final stepData = TransferUtils.buildStepBoundariesAndStops(directions);
         final events = TransferUtils.buildRouteEvents(directions);
-        dev.log(
-          '[StartupPerf] Stops & Events Built: ${stopwatch.elapsedMilliseconds}ms',
-          name: 'Performance',
-        );
 
         // Add destination event if missing (TransferUtils might miss it if single leg)
         if (events.isEmpty || events.last.type != 'destination') {
@@ -643,6 +655,11 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
+
+        dev.log(
+          '[StartupPerf] Stops & Events Built: ${stopwatch.elapsedMilliseconds}ms',
+          name: 'Performance',
+        );
 
         final engine = StopLogicEngine();
         final result = engine.validateThreshold(
@@ -904,7 +921,10 @@ class HomeScreenState extends State<HomeScreen> {
         isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
 
     return Scaffold(
-      drawer: const SettingsDrawer(),
+      drawer: SettingsDrawer(
+        metroModeEnabled: _metroMode,
+        isMetroTimeMode: _metroMode && !_useDistanceMode,
+      ),
       appBar: AppBar(
         title: Text(
           'GeoWake',
@@ -1269,8 +1289,10 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.isDistanceMode
-            ? (widget.isStopsMode ? 'Enter stops' : 'Enter distance (km)')
+        widget.isStopsMode
+            ? 'How many stops prior should the alarm go off?'
+            : widget.isDistanceMode
+            ? 'Enter distance (km)'
             : 'Enter time (minutes)',
       ),
       content: TextField(
@@ -1280,10 +1302,10 @@ class _EnterValueDialogState extends State<_EnterValueDialog> {
         ),
         decoration: InputDecoration(
           hintText:
-              widget.isDistanceMode
-                  ? (widget.isStopsMode
-                      ? 'Number of stops (1 - 10)'
-                      : 'Distance in km (0.5 - 10)')
+              widget.isStopsMode
+                  ? 'Number of stops (1 - 10)'
+                  : widget.isDistanceMode
+                  ? 'Distance in km (0.5 - 10)'
                   : 'Time in minutes (1 - 60)',
         ),
       ),

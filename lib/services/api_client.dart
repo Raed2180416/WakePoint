@@ -18,7 +18,17 @@ class ApiClient {
   static Map<String, dynamic>? lastAutocompleteBody;
   static Map<String, dynamic>? lastPlaceDetailsBody;
   static Map<String, dynamic>? lastDirectionsBody;
+  static final List<Map<String, dynamic>> directionsBodiesHistory =
+      <Map<String, dynamic>>[];
   static int directionsCallCount = 0;
+
+  /// Optional test-only canned responses for /maps/directions.
+  /// - If [testDirectionsResponses] is non-empty, responses are returned FIFO.
+  /// - Else if [testDirectionsResponse] is set, it is returned.
+  /// - Else a minimal default directions payload is returned.
+  static Map<String, dynamic>? testDirectionsResponse;
+  static final List<Map<String, dynamic>> testDirectionsResponses =
+      <Map<String, dynamic>>[];
 
   ApiClient._internal();
 
@@ -203,7 +213,18 @@ class ApiClient {
         if (endpoint.contains('/maps/directions')) {
           lastDirectionsBody =
               body != null ? Map<String, dynamic>.from(body) : {};
+          directionsBodiesHistory.add(lastDirectionsBody!);
           directionsCallCount++;
+
+          if (testDirectionsResponses.isNotEmpty) {
+            return Map<String, dynamic>.from(
+              testDirectionsResponses.removeAt(0),
+            );
+          }
+          if (testDirectionsResponse != null) {
+            return Map<String, dynamic>.from(testDirectionsResponse!);
+          }
+
           // Minimal directions payload
           return {
             'routes': [

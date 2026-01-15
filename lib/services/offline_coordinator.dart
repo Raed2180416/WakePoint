@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/route_cache.dart';
@@ -87,12 +88,48 @@ class DefaultRouteCachePort implements RouteCachePort {
 
 /// Coordinates offline/online behavior for directions fetching and exposure of state.
 class OfflineCoordinator {
+  /// Singleton instance for shared access across HomeScreen and TrackingService.
+  /// This ensures reroute logic has access to the same coordinator that handles
+  /// connectivity changes.
+  static OfflineCoordinator? _instance;
+
+  /// Returns the singleton instance, creating it if necessary.
+  /// The singleton starts in online mode by default.
+  static OfflineCoordinator get instance {
+    _instance ??= OfflineCoordinator._internal(initialOffline: false);
+    return _instance!;
+  }
+
+  /// Allows tests to inject a custom instance.
+  @visibleForTesting
+  static void setInstance(OfflineCoordinator? coordinator) {
+    _instance = coordinator;
+  }
+
+  /// Resets the singleton (for testing).
+  @visibleForTesting
+  static void resetInstance() {
+    _instance?.dispose();
+    _instance = null;
+  }
+
   final DirectionsProvider _directionsProvider;
   final RouteCachePort _cache;
 
   bool _isOffline;
   final _offlineCtrl = StreamController<bool>.broadcast();
 
+  /// Named constructor for internal singleton creation.
+  OfflineCoordinator._internal({
+    DirectionsProvider? directionsProvider,
+    RouteCachePort? cache,
+    bool initialOffline = false,
+  }) : _directionsProvider = directionsProvider ?? DefaultDirectionsProvider(),
+       _cache = cache ?? DefaultRouteCachePort(),
+       _isOffline = initialOffline;
+
+  /// Public constructor for testing or explicit instantiation.
+  /// Prefer using [OfflineCoordinator.instance] for production code.
   OfflineCoordinator({
     DirectionsProvider? directionsProvider,
     RouteCachePort? cache,

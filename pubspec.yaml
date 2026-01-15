@@ -76,20 +76,7 @@ flutter:
   assets:
     - assets/geowake.png
     - assets/ringtones/
-    - assets/gtfs_data/packs/bengaluru/
-    - assets/gtfs_data/packs/mumbai/
-    - assets/gtfs_data/packs/chennai/
-    - assets/gtfs_data/packs/kolkata/
-    - assets/gtfs_data/packs/hyderabad/
-    - assets/gtfs_data/packs/kochi/
-    - assets/gtfs_data/packs/delhi_ncr/
-    - assets/gtfs_data/packs/lucknow/
-    - assets/gtfs_data/packs/jaipur/
-    - assets/gtfs_data/packs/nagpur/
-    - assets/gtfs_data/packs/pune/
-    - assets/gtfs_data/packs/ahmedabad/
-    - assets/gtfs_data/packs/navi_mumbai/
-    - assets/gtfs_data/packs/gurgaon/
+    - assets/osm/
 
 flutter_native_splash:
   color: "#FFFFFF" # Match this with your custom splash background

@@ -11,11 +11,13 @@ class AlarmHaptics {
   static const MethodChannel _channel = MethodChannel('geowake/alarm_haptics');
 
   static bool _active = false;
+  static bool _nativeAvailable = false;
 
   static Future<void> start({List<int>? pattern}) async {
     if (detectFlutterTest()) return;
 
     _active = true;
+    _nativeAvailable = false;
 
     // Prefer native Android implementation (uses alarm vibration attributes).
     try {
@@ -28,6 +30,7 @@ class AlarmHaptics {
       await _channel.invokeMethod<void>('start', {
         if (pattern != null) 'pattern': pattern,
       });
+      _nativeAvailable = true;
       return;
     } catch (_) {
       // Fall back to vibration plugin.
@@ -57,6 +60,7 @@ class AlarmHaptics {
 
   static Future<void> stop() async {
     _active = false;
+    _nativeAvailable = false;
     if (detectFlutterTest()) return;
 
     // Prefer native Android cancellation.
@@ -74,4 +78,8 @@ class AlarmHaptics {
 
   @visibleForTesting
   static bool get isActiveForTests => _active;
+
+  /// True when the native Android vibration implementation (with alarm usage)
+  /// is available and was successfully invoked.
+  static bool get isUsingNativeForAndroid => _nativeAvailable;
 }

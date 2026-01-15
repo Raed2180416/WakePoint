@@ -33,9 +33,9 @@ def extract_stops():
         
         bengaluru_stops.sort(key=lambda x: x['name'])
         
-        # Write to stops.json
+        # Write to output json
         output_data = {"stops": bengaluru_stops}
-        with open('assets/gtfs_data/packs/bengaluru/stops.json', 'w', encoding='utf-8') as f:
+        with open('assets/india_metro/bengaluru_stops.json', 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2)
             
         print(f"Success: Overwrote stops.json with {len(bengaluru_stops)} stations from OSM")
