@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 // import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/route_registry.dart';
 import 'package:geowake2/services/snap_to_route.dart';
+import 'package:geowake2/core/ekf/ekf_types.dart';
 
 class RouteSwitchEvent {
   final String fromKey;
@@ -84,11 +85,16 @@ class ActiveRouteManager {
 
   final _stateCtrl = StreamController<ActiveRouteState>.broadcast();
   final _switchCtrl = StreamController<RouteSwitchEvent>.broadcast();
+  final _stationSnapCtrl = StreamController<StationSnapConfirmed>.broadcast();
 
   Stream<ActiveRouteState> get stateStream => _stateCtrl.stream;
   Stream<RouteSwitchEvent> get switchStream => _switchCtrl.stream;
+  Stream<StationSnapConfirmed> get stationSnapStream => _stationSnapCtrl.stream;
 
   String? get activeKey => _activeKey;
+
+  /// Last station index that was snapped via EKF (for monotonic gating).
+  int _lastEkfSnapIndex = -1;
 
   ActiveRouteManager({
     required this.registry,
@@ -276,8 +282,39 @@ class ActiveRouteManager {
     return 0.5;
   }
 
+  /// Handle a confirmed station snap from EKF per §24.2.
+  /// The event has already passed the EKF-side confidence gates (σ≤30m, single
+  /// candidate, monotonic within EKF). This method applies the ARM-side gate
+  /// (monotonic station index relative to ARM state) and emits for UI/telemetry.
+  void onStationSnapConfirmed(StationSnapConfirmed event) {
+    // §24.2 ARM-side monotonic gate: station index >= last snapped index
+    if (event.stationIndex <= _lastEkfSnapIndex) return;
+
+    _lastEkfSnapIndex = event.stationIndex;
+    _stationSnapCtrl.add(event);
+
+    // Update session state if active route exists
+    if (_activeKey != null) {
+      try {
+        final entry = registry.entries.firstWhere((e) => e.key == _activeKey);
+        registry.updateSessionState(
+          entry.key,
+          lastProgressMeters: event.stationMeters,
+        );
+      } catch (_) {
+        // Route not found, ignore
+      }
+    }
+  }
+
+  /// Reset the EKF snap index (call on route change or session start).
+  void resetStationSnapIndex() {
+    _lastEkfSnapIndex = -1;
+  }
+
   void dispose() {
     _stateCtrl.close();
     _switchCtrl.close();
+    _stationSnapCtrl.close();
   }
 }

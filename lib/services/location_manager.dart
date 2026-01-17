@@ -351,6 +351,7 @@ class LocationManager {
     List<Map<String, dynamic>>? transitLegs,
     List<Map<String, dynamic>>? inactiveRoutes,
     bool? transitMode,
+    Map<String, dynamic>? routeDebug,
   }) {
     _simulationClient.broadcastRoute(
       routeKey: routeKey,
@@ -363,6 +364,7 @@ class LocationManager {
       transitLegs: transitLegs,
       inactiveRoutes: inactiveRoutes,
       transitMode: transitMode,
+      routeDebug: routeDebug,
     );
   }
 

@@ -22,6 +22,9 @@ class TrackingSnapshot {
     required this.userLng,
     required this.createdAt,
     this.directions,
+    this.ekfS,
+    this.ekfSigmaS,
+    this.ekfMode,
   });
 
   final String destinationName;
@@ -34,6 +37,9 @@ class TrackingSnapshot {
   final double userLng;
   final DateTime createdAt;
   final Map<String, dynamic>? directions;
+  final double? ekfS;
+  final double? ekfSigmaS;
+  final String? ekfMode;
 
   Map<String, dynamic> toJson() => {
     'destinationName': destinationName,
@@ -46,6 +52,9 @@ class TrackingSnapshot {
     'userLng': userLng,
     'createdAt': createdAt.toIso8601String(),
     if (directions != null) 'directions': directions,
+    if (ekfS != null) 'ekfS': ekfS,
+    if (ekfSigmaS != null) 'ekfSigmaS': ekfSigmaS,
+    if (ekfMode != null) 'ekfMode': ekfMode,
   };
 
   static TrackingSnapshot? fromJson(Map<String, dynamic>? json) {
@@ -69,6 +78,9 @@ class TrackingSnapshot {
                 : Map<String, dynamic>.from(
                   json['directions'] as Map<String, dynamic>,
                 ),
+        ekfS: (json['ekfS'] as num?)?.toDouble(),
+        ekfSigmaS: (json['ekfSigmaS'] as num?)?.toDouble(),
+        ekfMode: json['ekfMode'] as String?,
       );
     } catch (_) {
       return null;

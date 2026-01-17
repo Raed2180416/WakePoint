@@ -22,9 +22,12 @@ import 'package:geowake2/services/location_manager.dart';
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/config/power_policy.dart';
 import 'package:geowake2/services/route_registry.dart';
+import 'package:geowake2/core/ekf/route_geometry.dart';
 // ignore: deprecated_member_use_from_same_package
 import 'package:geowake2/services/sensor_fusion.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/core/ekf/ekf_types.dart';
+import 'package:geowake2/services/transfer_utils.dart';
 
 /// Context needed for location stream processing.
 class LocationStreamContext {
@@ -53,6 +56,8 @@ class LocationStreamContext {
   final List<double> stepBoundsMeters;
   final List<int> stepDurationsSeconds;
   final double? polylineTotalMeters;
+  final Map<String, List<TransitLegStops>> transitLegStopsByKey;
+  final List<TransitLegStops> fallbackTransitLegStops;
 
   LocationStreamContext({
     required this.service,
@@ -71,6 +76,8 @@ class LocationStreamContext {
     this.stepBoundsMeters = const [],
     this.stepDurationsSeconds = const [],
     this.polylineTotalMeters,
+    this.transitLegStopsByKey = const {},
+    this.fallbackTransitLegStops = const [],
   });
 }
 
@@ -93,10 +100,14 @@ class LocationStreamHandler {
   // GPS dropout buffer duration
   Duration gpsDropoutBuffer = const Duration(seconds: 5);
 
+  bool _fftEnabled = true;
+  LocationStreamContext? _ctx;
+
   // Last processed position
   LatLng? _lastProcessedPosition;
   double? _lastSpeedMps;
   DateTime? _lastPositionTimestamp;
+  DateTime? _lastDashboardBroadcastAt;
 
   // Journey start tracking
   DateTime? _startedAt;
@@ -133,6 +144,9 @@ class LocationStreamHandler {
   // Callback for route broadcast
   void Function({bool force})? onMaybeBroadcastRoute;
 
+  // Callback for EKF updates (optional, for wiring without changing alarm logic).
+  void Function(EkfPublicState state)? onEkfUpdate;
+
   /// Optional callback invoked when an "end tracking" notification action is
   /// requested. If set, it becomes the single source of truth for cleanup and
   /// stopping the service.
@@ -140,6 +154,10 @@ class LocationStreamHandler {
 
   // Test streams
   Stream<AccelerometerEvent>? testAccelerometerStream;
+  Stream<GyroscopeEvent>? testGyroscopeStream;
+
+  StreamSubscription<EkfPublicState>? _ekfStateSubscription;
+  EkfPublicState? _lastEkfState;
 
   // Getters for state
   DateTime? get lastGpsUpdate => _lastGpsUpdate;
@@ -154,6 +172,7 @@ class LocationStreamHandler {
 
   /// Start the location stream with the given context.
   Future<void> start(LocationStreamContext ctx) async {
+    _ctx = ctx;
     await _positionSubscription?.cancel();
 
     // Determine battery level for power policy
@@ -178,6 +197,7 @@ class LocationStreamHandler {
             : PowerPolicyManager.forBatteryLevel(batteryLevel);
 
     gpsDropoutBuffer = policy.gpsDropoutBuffer;
+    _fftEnabled = batteryLevel >= 20;
 
     dev.log(
       'DEBUG: LocationStreamHandler.start - delegating to LocationManager',
@@ -209,14 +229,28 @@ class LocationStreamHandler {
       _lastSpeedMps = position.speed;
       _lastPositionTimestamp = position.timestamp;
 
+      final now = DateTime.now();
+      if (_lastDashboardBroadcastAt == null ||
+          now.difference(_lastDashboardBroadcastAt!).inSeconds >= 1) {
+        try {
+          LocationManager().broadcastPosition(
+            lat: position.latitude,
+            lng: position.longitude,
+            heading: position.heading,
+            speed: position.speed,
+          );
+        } catch (_) {}
+        _lastDashboardBroadcastAt = now;
+      }
+
+      _ensureFusionManager(position, ctx);
+      _sensorFusionManager?.updateGps(position);
+
       // Track movement distance since start
       _trackMovement(position, ctx);
 
       // Stop sensor fusion if active (GPS is back)
-      if (_fusionActive) {
-        _sensorFusionManager?.stopFusion();
-        _fusionActive = false;
-      }
+      // Keep fusion running continuously to avoid cold starts.
 
       // Compute ETA
       _computeEta(position, ctx);
@@ -365,6 +399,9 @@ class LocationStreamHandler {
             userLng: position.longitude,
             createdAt: _startedAt ?? now,
             directions: ctx.currentDirections,
+            ekfS: _lastEkfState?.s,
+            ekfSigmaS: _lastEkfState?.sigmaS,
+            ekfMode: _lastEkfState?.mode.name,
           );
           await TrackingStateStore.saveSnapshot(snap);
         } catch (e) {
@@ -487,20 +524,71 @@ class LocationStreamHandler {
 
     final silentFor = DateTime.now().difference(last);
     if (silentFor >= gpsDropoutBuffer) {
-      if (!_fusionActive && _lastProcessedPosition != null) {
-        // ignore: deprecated_member_use_from_same_package
-        _sensorFusionManager = SensorFusionManager(
-          initialPosition: _lastProcessedPosition!,
-          accelerometerStream:
-              ctx.isTestMode
-                  ? (testAccelerometerStream ??
-                      const Stream<AccelerometerEvent>.empty())
-                  : null,
-        );
-        _sensorFusionManager!.startFusion();
-        _fusionActive = true;
+      if (_lastProcessedPosition != null) {
+        _ensureFusionManagerPosition(_lastProcessedPosition!, ctx);
       }
     }
+  }
+
+  void _ensureFusionManager(Position position, LocationStreamContext ctx) {
+    if (_sensorFusionManager != null) return;
+    _ensureFusionManagerPosition(
+      LatLng(position.latitude, position.longitude),
+      ctx,
+    );
+  }
+
+  void _ensureFusionManagerPosition(
+    LatLng position,
+    LocationStreamContext ctx,
+  ) {
+    if (_sensorFusionManager != null) return;
+
+    RouteGeometry? geometry;
+    final activeKey = ctx.activeManager?.activeKey;
+    if (activeKey != null) {
+      final entry = ctx.registry.getByKey(activeKey);
+      if (entry != null && entry.points.length >= 2) {
+        geometry = RouteGeometry.fromPoints(
+          entry.points,
+          maxLateralErrorMeters: ctx.transitMode ? 50 : 75,
+        );
+      }
+    }
+
+    // ignore: deprecated_member_use_from_same_package
+    _sensorFusionManager = SensorFusionManager(
+      initialPosition: position,
+      accelerometerStream:
+        ctx.isTestMode
+          ? (testAccelerometerStream ??
+            const Stream<AccelerometerEvent>.empty())
+          : null,
+      gyroscopeStream:
+        ctx.isTestMode
+          ? (testGyroscopeStream ??
+            const Stream<GyroscopeEvent>.empty())
+          : null,
+      routeGeometry: geometry,
+      enableEkf: geometry != null,
+    );
+    // Wire station snap confirmed callback to ARM (§24.2).
+    _sensorFusionManager!.onStationSnapConfirmed = (event) {
+      ctx.activeManager?.onStationSnapConfirmed(event);
+    };
+    _sensorFusionManager!.updateTransitLegStops(
+      _resolveTransitLegStops(ctx, activeKey),
+    );
+    _sensorFusionManager!.setFftEnabled(_fftEnabled);
+    _sensorFusionManager!.startFusion();
+    _ekfStateSubscription?.cancel();
+    _ekfStateSubscription = _sensorFusionManager!.ekfStateStream.listen((
+      state,
+    ) {
+      _lastEkfState = state;
+      onEkfUpdate?.call(state);
+    });
+    _fusionActive = true;
   }
 
   /// Evaluate time-alarm eligibility.
@@ -532,10 +620,15 @@ class LocationStreamHandler {
     _sensorFusionManager?.stopFusion();
     _sensorFusionManager = null;
     _fusionActive = false;
+
+    await _ekfStateSubscription?.cancel();
+    _ekfStateSubscription = null;
+    _ctx = null;
   }
 
   /// Reset state for a new journey.
   void reset() {
+    _ctx = null;
     _lastGpsUpdate = null;
     _lastProcessedPosition = null;
     _lastSpeedMps = null;
@@ -548,11 +641,43 @@ class LocationStreamHandler {
     _smoothedSpeed = null;
     _lastSnapshotSave = null;
     _fusionActive = false;
+    _lastEkfState = null;
   }
 
   /// Clear all state for testing.
   void clear() {
     stop();
     reset();
+  }
+
+  void updateRouteGeometryForKey(String? routeKey) {
+    final ctx = _ctx;
+    if (ctx == null) return;
+    final key = routeKey ?? ctx.activeManager?.activeKey;
+    if (key == null) return;
+
+    RouteGeometry? geometry;
+    final entry = ctx.registry.getByKey(key);
+    if (entry != null && entry.points.length >= 2) {
+      geometry = RouteGeometry.fromPoints(
+        entry.points,
+        maxLateralErrorMeters: ctx.transitMode ? 50 : 75,
+      );
+    }
+
+    _sensorFusionManager?.updateRouteGeometry(geometry);
+    _sensorFusionManager?.updateTransitLegStops(
+      _resolveTransitLegStops(ctx, key),
+    );
+  }
+
+  List<TransitLegStops> _resolveTransitLegStops(
+    LocationStreamContext ctx,
+    String? activeKey,
+  ) {
+    if (activeKey != null && ctx.transitLegStopsByKey.containsKey(activeKey)) {
+      return ctx.transitLegStopsByKey[activeKey] ?? const [];
+    }
+    return ctx.fallbackTransitLegStops;
   }
 }

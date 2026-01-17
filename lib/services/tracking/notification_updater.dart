@@ -235,6 +235,7 @@ class NotificationUpdater {
         transitLegs: transitLegsJson,
         inactiveRoutes: inactivePayload,
         transitMode: payload['transit_mode'] as bool?,
+        routeDebug: (payload['route_debug'] as Map?)?.cast<String, dynamic>(),
       );
     } catch (e) {
       trackingLog.debug(

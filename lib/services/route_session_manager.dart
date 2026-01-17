@@ -147,6 +147,10 @@ class RouteSessionManager {
     List<LatLng> points = [];
     double polylineMeters = 0.0;
     bool usedFallbackPolyline = false;
+    bool usedStepsPolyline = false;
+    bool usedOverviewPolyline = false;
+    bool usedSimplifiedPolyline = false;
+    String polylineSource = 'unknown';
     try {
       final route =
           (directions['routes'] as List).first as Map<String, dynamic>;
@@ -250,6 +254,9 @@ class RouteSessionManager {
               final stepPoly = step['polyline'] as Map<String, dynamic>?;
               if (stepPoly != null && stepPoly['points'] != null) {
                 final stepPoints = decodePolyline(stepPoly['points'] as String);
+                if (stepPoints.isNotEmpty) {
+                  usedStepsPolyline = true;
+                }
                 // Avoid duplicating junction points
                 if (points.isNotEmpty && stepPoints.isNotEmpty) {
                   final lastPt = points.last;
@@ -280,6 +287,7 @@ class RouteSessionManager {
           route['overview_polyline'] != null &&
           route['overview_polyline']['points'] != null) {
         points = decodePolyline(route['overview_polyline']['points'] as String);
+        usedOverviewPolyline = true;
       }
 
       // LAST RESORT: Use simplified_polyline only if nothing else worked.
@@ -290,6 +298,7 @@ class RouteSessionManager {
         if (scp is String && scp.isNotEmpty) {
           try {
             points = PolylineSimplifier.decompressPolyline(scp);
+            usedSimplifiedPolyline = true;
           } catch (e) {
             _log.warning('Polyline decompress failed', e);
             points = [];
@@ -309,6 +318,16 @@ class RouteSessionManager {
       polylineMeters = _polylineLengthMeters(points);
     } catch (e) {
       _log.warning('Route parsing failed', e);
+    }
+
+    if (usedFallbackPolyline) {
+      polylineSource = 'fallback_steps';
+    } else if (usedStepsPolyline) {
+      polylineSource = 'steps';
+    } else if (usedOverviewPolyline) {
+      polylineSource = 'overview';
+    } else if (usedSimplifiedPolyline) {
+      polylineSource = 'simplified';
     }
 
     // Parse Step Bounds & Stops
@@ -728,6 +747,19 @@ class RouteSessionManager {
     // Construct simplified events list for serialization
     final serializedEvents = events.map((e) => e.toJson()).toList();
 
+    final routeDebug = <String, dynamic>{
+      'polyline_source': polylineSource,
+      'points_count': points.length,
+      'polyline_meters': polylineMeters,
+      'used_fallback_polyline': usedFallbackPolyline,
+      'used_simplified_polyline': usedSimplifiedPolyline,
+      'segments_count': segments.length,
+      'switch_points_count': switchPoints.length,
+      'transit_mode': transitMode,
+    };
+
+    _log.info('Route debug [$key]: $routeDebug');
+
     // Delegate to registerRoute to finish setup
     registerRoute(
       key: key,
@@ -737,6 +769,7 @@ class RouteSessionManager {
       segments: segments,
       switchPoints: switchPoints,
       events: serializedEvents,
+      routeDebug: routeDebug,
       activate: activateRoute,
     );
   }
@@ -751,6 +784,7 @@ class RouteSessionManager {
     List<Map<String, dynamic>>? switchPoints,
     List<Map<String, dynamic>>? events,
     List<Map<String, dynamic>>? transitLegsJson, // New Param
+    Map<String, dynamic>? routeDebug,
     bool activate = false,
   }) {
     final isTransitMode = mode == 'transit';
@@ -772,6 +806,7 @@ class RouteSessionManager {
       if (switchPoints != null) 'switch_points': switchPoints,
       if (events != null) 'events': events,
       'transit_mode': isTransitMode,
+      if (routeDebug != null) 'route_debug': routeDebug,
     };
     _routePayloadsByKey[key] = Map<String, dynamic>.from(cachedRoutePayload!);
 
@@ -962,6 +997,8 @@ class RouteSessionManager {
     }
 
     final inactive = _getInactiveRoutesPayload();
+    final routeDebug =
+      (payload['route_debug'] as Map?)?.cast<String, dynamic>();
     _lastRouteBroadcastAt = DateTime.now();
 
     // Use transitLegStops of ACTIVE key if available, or just first?
@@ -996,6 +1033,7 @@ class RouteSessionManager {
       transitLegs: transitLegsJson,
       inactiveRoutes: inactive,
       transitMode: payload['transit_mode'] as bool?,
+      routeDebug: routeDebug,
     );
   }
 

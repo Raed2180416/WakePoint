@@ -28,8 +28,13 @@
 
 import 'dart:async';
 import 'dart:math';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:geowake2/core/ekf/ekf_orchestrator.dart';
+import 'package:geowake2/core/ekf/ekf_types.dart';
+import 'package:geowake2/core/ekf/route_geometry.dart';
+import 'package:geowake2/services/transfer_utils.dart';
 
 /// @deprecated This class will be completely replaced with EKF implementation.
 ///
@@ -66,25 +71,125 @@ class SensorFusionManager {
   /// Exposes a stream of fused positions.
   Stream<LatLng> get fusedPositionStream => _positionController.stream;
 
+  /// Optional EKF public state stream (not wired into app yet).
+  Stream<EkfPublicState> get ekfStateStream => _ekfStateController.stream;
+  EkfPublicState? get lastEkfState => _lastEkfState;
+
   /// Accept an optional accelerometer stream (for testing).
   final Stream<AccelerometerEvent>? accelerometerStream;
+  /// Accept an optional gyroscope stream (for testing).
+  final Stream<GyroscopeEvent>? gyroscopeStream;
+  /// Optional EKF route geometry (enables EKF path when provided).
+  RouteGeometry? _routeGeometry;
+  /// Flag to enable EKF path (default false to avoid regression).
+  bool _enableEkf;
+
+  final StreamController<EkfPublicState> _ekfStateController =
+      StreamController<EkfPublicState>.broadcast();
+  EkfPublicState? _lastEkfState;
+
+  EkfOrchestrator? _ekfOrchestrator;
+  bool _fftEnabled = true;
+  List<TransitLegStops> _transitLegStops = const [];
+
+  /// Callback for station snap confirmed events from EKF (§24.2).
+  void Function(StationSnapConfirmed)? onStationSnapConfirmed;
 
   SensorFusionManager({
     required LatLng initialPosition,
     Stream<AccelerometerEvent>? accelerometerStream,
-  }) : accelerometerStream = accelerometerStream {
+    Stream<GyroscopeEvent>? gyroscopeStream,
+     RouteGeometry? routeGeometry,
+     bool enableEkf = false,
+  }) : accelerometerStream = accelerometerStream,
+       gyroscopeStream = gyroscopeStream,
+       _routeGeometry = routeGeometry,
+       _enableEkf = enableEkf {
     _initialLat = initialPosition.latitude;
     _initialLon = initialPosition.longitude;
     _lastUpdate = DateTime.now();
     _fusionStartTime = DateTime.now();
     _positionController.add(initialPosition);
+
+    if (_enableEkf && _routeGeometry != null) {
+      _ekfOrchestrator = EkfOrchestrator(route: _routeGeometry!);
+      _ekfOrchestrator!.setFftEnabled(_fftEnabled);
+      _ekfOrchestrator!.onStationSnapConfirmed = _handleStationSnapConfirmed;
+    }
+  }
+
+  void _handleStationSnapConfirmed(StationSnapConfirmed event) {
+    onStationSnapConfirmed?.call(event);
+  }
+
+  void setFftEnabled(bool enabled) {
+    _fftEnabled = enabled;
+    _ekfOrchestrator?.setFftEnabled(enabled);
+  }
+
+  void updateRouteGeometry(RouteGeometry? geometry) {
+    _routeGeometry = geometry;
+    _enableEkf = geometry != null;
+    if (!_enableEkf || _routeGeometry == null) {
+      _ekfOrchestrator = null;
+      _lastEkfState = null;
+      return;
+    }
+
+    _ekfOrchestrator = EkfOrchestrator(route: _routeGeometry!);
+    _ekfOrchestrator!.setFftEnabled(_fftEnabled);
+    _ekfOrchestrator!.onStationSnapConfirmed = _handleStationSnapConfirmed;
+    _lastEkfState = null;
+  }
+
+  void updateGps(Position position) {
+    final ekf = _ekfOrchestrator;
+    if (ekf == null) return;
+    final timestamp = Duration(
+      microseconds: _imuClock?.elapsedMicroseconds ??
+          DateTime.now().millisecondsSinceEpoch * 1000,
+    );
+    final sGps = _routeGeometry?.projectLatLng(
+      position.latitude,
+      position.longitude,
+    );
+    if (sGps != null && sGps.isFinite) {
+      final leg = _legForProgress(sGps);
+      if (leg != null) {
+        ekf.setStationContext(
+          stationMeters: leg.stopMeters,
+          isMetroLeg: leg.isMetro,
+        );
+      } else {
+        ekf.setStationContext(stationMeters: const [], isMetroLeg: false);
+      }
+    }
+    ekf.onGpsFixAuto(
+      GpsFix(
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracyMeters: position.accuracy,
+        speedMps: position.speed,
+        timestamp: timestamp,
+      ),
+    );
+  }
+
+  void updateTransitLegStops(List<TransitLegStops> stops) {
+    _transitLegStops = stops;
   }
 
   StreamSubscription? _accelerometerSubscription;
+  StreamSubscription? _gyroscopeSubscription;
+  GyroscopeEvent? _lastGyro;
+  Stopwatch? _imuClock;
 
   /// Starts sensor fusion by listening to accelerometer events.
   void startFusion() {
     try {
+      _imuClock ??= Stopwatch()..start();
+      _lastGyro = null;
+
       // Lazily resolve the default sensors stream so unit/widget tests that
       // don't have the plugin registered don't throw during construction.
       final Stream<AccelerometerEvent> stream =
@@ -125,6 +230,30 @@ class SensorFusionManager {
           final fusedLat = _initialLat + dLat;
           final fusedLon = _initialLon + dLon;
           _positionController.add(LatLng(fusedLat, fusedLon));
+
+          final ekf = _ekfOrchestrator;
+          if (ekf != null) {
+            final timestamp = Duration(
+              microseconds: _imuClock?.elapsedMicroseconds ??
+                  now.millisecondsSinceEpoch * 1000,
+            );
+            final gx = _lastGyro?.x ?? 0.0;
+            final gy = _lastGyro?.y ?? 0.0;
+            final gz = _lastGyro?.z ?? 0.0;
+            ekf.onImuSample(
+              ImuSample(
+                ax: event.x,
+                ay: event.y,
+                az: event.z,
+                gx: gx,
+                gy: gy,
+                gz: gz,
+                timestamp: timestamp,
+              ),
+            );
+            _lastEkfState = ekf.publicState;
+            _ekfStateController.add(_lastEkfState!);
+          }
         },
         onError: (_) {
           // If the platform stream errors (e.g., MissingPluginException), disable fusion.
@@ -133,10 +262,23 @@ class SensorFusionManager {
         },
         cancelOnError: true,
       );
+
+      final gyroStream = gyroscopeStream ?? gyroscopeEvents;
+      _gyroscopeSubscription = gyroStream.handleError((_) {}).listen(
+        (GyroscopeEvent event) {
+          _lastGyro = event;
+        },
+        onError: (_) {
+          _gyroscopeSubscription?.cancel();
+          _gyroscopeSubscription = null;
+        },
+        cancelOnError: true,
+      );
     } catch (_) {
       // In widget/unit tests or unsupported platforms, sensors_plus may not be registered.
       // Treat sensor fusion as unavailable instead of crashing.
       _accelerometerSubscription = null;
+      _gyroscopeSubscription = null;
     }
   }
 
@@ -144,6 +286,10 @@ class SensorFusionManager {
   void stopFusion() {
     _accelerometerSubscription?.cancel();
     _accelerometerSubscription = null;
+    _gyroscopeSubscription?.cancel();
+    _gyroscopeSubscription = null;
+    _imuClock = null;
+    _lastGyro = null;
   }
 
   /// Resets the fusion manager with a new initial position.
@@ -157,10 +303,23 @@ class SensorFusionManager {
     _lastUpdate = DateTime.now();
     _fusionStartTime = DateTime.now();
     _positionController.add(initialPosition);
+    _imuClock = Stopwatch()..start();
+    _lastGyro = null;
+    _transitLegStops = const [];
+  }
+
+  TransitLegStops? _legForProgress(double s) {
+    for (final leg in _transitLegStops) {
+      if (s >= leg.legStartMeters && s <= leg.legEndMeters) {
+        return leg;
+      }
+    }
+    return null;
   }
 
   void dispose() {
     stopFusion();
     _positionController.close();
+    _ekfStateController.close();
   }
 }

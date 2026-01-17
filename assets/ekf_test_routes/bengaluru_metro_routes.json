@@ -1,0 +1,849 @@
+{
+  "version": 1,
+  "generated": "2025-01-17",
+  "source": "IMU recordings + official station data",
+  "routes": [
+    {
+      "id": "majestic_to_nallur_halli",
+      "name": "Majestic to Nallur Halli (Purple Line East)",
+      "stations": [
+        {
+          "name": "Nadaprabhu Kempegowda (Majestic)",
+          "recorded_name": "majestic",
+          "lat": 12.9771,
+          "lng": 77.5711,
+          "time_elapsed": 12.736,
+          "cumulative_meters": 0.0
+        },
+        {
+          "name": "Sir M. Visvesvaraya",
+          "recorded_name": "sir m",
+          "lat": 12.9782,
+          "lng": 77.5848,
+          "time_elapsed": 141.86,
+          "cumulative_meters": 1489.490789265652
+        },
+        {
+          "name": "Vidhana Soudha",
+          "recorded_name": "vidhan souda",
+          "lat": 12.9788,
+          "lng": 77.5793,
+          "time_elapsed": 243.252,
+          "cumulative_meters": 2089.162793128388
+        },
+        {
+          "name": "Cubbon Park",
+          "recorded_name": "cubbon park",
+          "lat": 12.978,
+          "lng": 77.5915,
+          "time_elapsed": 342.816,
+          "cumulative_meters": 3414.0765046571332
+        },
+        {
+          "name": "M.G. Road",
+          "recorded_name": "mg road",
+          "lat": 12.9756,
+          "lng": 77.6066,
+          "time_elapsed": 509.831,
+          "cumulative_meters": 5071.859936843009
+        },
+        {
+          "name": "Trinity",
+          "recorded_name": "trinity",
+          "lat": 12.9766,
+          "lng": 77.6183,
+          "time_elapsed": 615.888,
+          "cumulative_meters": 6344.4855987039045
+        },
+        {
+          "name": "Halasuru",
+          "recorded_name": "halasuru",
+          "lat": 12.9821,
+          "lng": 77.6211,
+          "time_elapsed": 752.311,
+          "cumulative_meters": 7027.176360694342
+        },
+        {
+          "name": "Indiranagar",
+          "recorded_name": "indiranagar",
+          "lat": 12.9778,
+          "lng": 77.6408,
+          "time_elapsed": 916.88,
+          "cumulative_meters": 9214.640822382144
+        },
+        {
+          "name": "Swami Vivekananda Road",
+          "recorded_name": "kv road",
+          "lat": 12.9758,
+          "lng": 77.6585,
+          "time_elapsed": 1090.3,
+          "cumulative_meters": 11145.377212959585
+        },
+        {
+          "name": "Baiyappanahalli",
+          "recorded_name": "baiyaopanahalli",
+          "lat": 12.9895,
+          "lng": 77.6674,
+          "time_elapsed": 1236.859,
+          "cumulative_meters": 12948.320728207964
+        },
+        {
+          "name": "Benniganahalli",
+          "recorded_name": "benniganahalli",
+          "lat": 12.9902,
+          "lng": 77.6827,
+          "time_elapsed": 1404.976,
+          "cumulative_meters": 14607.893447054044
+        },
+        {
+          "name": "Krishnarajapura",
+          "recorded_name": "krishnarajapura",
+          "lat": 12.9899,
+          "lng": 77.6935,
+          "time_elapsed": 1524.927,
+          "cumulative_meters": 15778.541811430257
+        },
+        {
+          "name": "Singayyanapalya",
+          "recorded_name": "singayannapalaya",
+          "lat": 12.9882,
+          "lng": 77.706,
+          "time_elapsed": 1665.678,
+          "cumulative_meters": 17146.042182653364
+        },
+        {
+          "name": "Garudacharpalya",
+          "recorded_name": "garydacharpalaya",
+          "lat": 12.985,
+          "lng": 77.7141,
+          "time_elapsed": 1783.01,
+          "cumulative_meters": 18093.072224250212
+        },
+        {
+          "name": "Hoodi Junction",
+          "recorded_name": "hoodi",
+          "lat": 12.9838,
+          "lng": 77.7169,
+          "time_elapsed": 1943.856,
+          "cumulative_meters": 18424.50414131465
+        },
+        {
+          "name": "Seetharampalya",
+          "recorded_name": "seetarama palaya",
+          "lat": 12.9808,
+          "lng": 77.72,
+          "time_elapsed": 2047.334,
+          "cumulative_meters": 18897.899561363196
+        },
+        {
+          "name": "Kundalahalli",
+          "recorded_name": "kundalahalli",
+          "lat": 12.9779,
+          "lng": 77.723,
+          "time_elapsed": 2160.84,
+          "cumulative_meters": 19355.77421276603
+        },
+        {
+          "name": "Nallurhalli",
+          "recorded_name": "nallur halli",
+          "lat": 12.9765,
+          "lng": 77.7252,
+          "time_elapsed": 2253.162,
+          "cumulative_meters": 19640.48371880831
+        }
+      ],
+      "polyline_points": [
+        [
+          12.9771,
+          77.5711
+        ],
+        [
+          12.9782,
+          77.5848
+        ],
+        [
+          12.9788,
+          77.5793
+        ],
+        [
+          12.978,
+          77.5915
+        ],
+        [
+          12.9756,
+          77.6066
+        ],
+        [
+          12.9766,
+          77.6183
+        ],
+        [
+          12.9821,
+          77.6211
+        ],
+        [
+          12.9778,
+          77.6408
+        ],
+        [
+          12.9758,
+          77.6585
+        ],
+        [
+          12.9895,
+          77.6674
+        ],
+        [
+          12.9902,
+          77.6827
+        ],
+        [
+          12.9899,
+          77.6935
+        ],
+        [
+          12.9882,
+          77.706
+        ],
+        [
+          12.985,
+          77.7141
+        ],
+        [
+          12.9838,
+          77.7169
+        ],
+        [
+          12.9808,
+          77.72
+        ],
+        [
+          12.9779,
+          77.723
+        ],
+        [
+          12.9765,
+          77.7252
+        ]
+      ],
+      "cumulative_meters": [
+        0.0,
+        1489.490789265652,
+        2089.162793128388,
+        3414.0765046571332,
+        5071.859936843009,
+        6344.4855987039045,
+        7027.176360694342,
+        9214.640822382144,
+        11145.377212959585,
+        12948.320728207964,
+        14607.893447054044,
+        15778.541811430257,
+        17146.042182653364,
+        18093.072224250212,
+        18424.50414131465,
+        18897.899561363196,
+        19355.77421276603,
+        19640.48371880831
+      ],
+      "total_meters": 19640.48371880831,
+      "duration_seconds": 2269.520356689453
+    },
+    {
+      "id": "rajajinagar_to_nallur_halli",
+      "name": "Rajajinagar to Nallur Halli (Full Purple Line)",
+      "stations": [
+        {
+          "name": "Rajajinagar",
+          "recorded_name": "rajajinagar",
+          "lat": 12.9998,
+          "lng": 77.5498,
+          "time_elapsed": 4.972,
+          "cumulative_meters": 0.0
+        },
+        {
+          "name": "Mahakavi Kuvempu",
+          "recorded_name": "mahakavi kuvempu",
+          "lat": 12.9938,
+          "lng": 77.5542,
+          "time_elapsed": 108.61799975585937,
+          "cumulative_meters": 819.9885157147162
+        },
+        {
+          "name": "Srirampura",
+          "recorded_name": "stirampura",
+          "lat": 12.9897,
+          "lng": 77.558,
+          "time_elapsed": 201.452,
+          "cumulative_meters": 1434.2859341363544
+        },
+        {
+          "name": "Mantri Square Sampige Road",
+          "recorded_name": "mantri square",
+          "lat": 12.987,
+          "lng": 77.5665,
+          "time_elapsed": 326.127,
+          "cumulative_meters": 2402.96143061572
+        },
+        {
+          "name": "Nadaprabhu Kempegowda (Majestic)",
+          "recorded_name": "majestic",
+          "lat": 12.9771,
+          "lng": 77.5711,
+          "time_elapsed": 474.4019997558594,
+          "cumulative_meters": 3611.370192557377
+        },
+        {
+          "name": "Nadaprabhu Kempegowda (Majestic)",
+          "recorded_name": "majestic",
+          "lat": 12.9771,
+          "lng": 77.5711,
+          "time_elapsed": 1158.9820002441406,
+          "cumulative_meters": 3611.370192557377
+        },
+        {
+          "name": "Sir M. Visvesvaraya",
+          "recorded_name": "sir m",
+          "lat": 12.9782,
+          "lng": 77.5848,
+          "time_elapsed": 1306.823,
+          "cumulative_meters": 5100.860981823029
+        },
+        {
+          "name": "Dr. B.R. Ambedkar",
+          "recorded_name": "dr br",
+          "lat": 12.9795,
+          "lng": 77.5888,
+          "time_elapsed": 1404.54,
+          "cumulative_meters": 5557.74819631474
+        },
+        {
+          "name": "Cubbon Park",
+          "recorded_name": "cubbon park",
+          "lat": 12.978,
+          "lng": 77.5915,
+          "time_elapsed": 1515.8700002441406,
+          "cumulative_meters": 5894.510777068551
+        },
+        {
+          "name": "M.G. Road",
+          "recorded_name": "mg road",
+          "lat": 12.9756,
+          "lng": 77.6066,
+          "time_elapsed": 1681.72,
+          "cumulative_meters": 7552.294209254426
+        },
+        {
+          "name": "Trinity",
+          "recorded_name": "trinity",
+          "lat": 12.9766,
+          "lng": 77.6183,
+          "time_elapsed": 1791.887,
+          "cumulative_meters": 8824.919871115322
+        },
+        {
+          "name": "Halasuru",
+          "recorded_name": "halasuru",
+          "lat": 12.9821,
+          "lng": 77.6211,
+          "time_elapsed": 1922.669,
+          "cumulative_meters": 9507.61063310576
+        },
+        {
+          "name": "Indiranagar",
+          "recorded_name": "indiranagar",
+          "lat": 12.9778,
+          "lng": 77.6408,
+          "time_elapsed": 2086.34,
+          "cumulative_meters": 11695.075094793561
+        },
+        {
+          "name": "Swami Vivekananda Road",
+          "recorded_name": "sv road",
+          "lat": 12.9758,
+          "lng": 77.6585,
+          "time_elapsed": 2263.4019997558594,
+          "cumulative_meters": 13625.811485371003
+        },
+        {
+          "name": "Baiyappanahalli",
+          "recorded_name": "baiyappanahallo",
+          "lat": 12.9895,
+          "lng": 77.6674,
+          "time_elapsed": 2405.449999755859,
+          "cumulative_meters": 15428.755000619381
+        },
+        {
+          "name": "Benniganahalli",
+          "recorded_name": "benniganahalli",
+          "lat": 12.9902,
+          "lng": 77.6827,
+          "time_elapsed": 2578.447,
+          "cumulative_meters": 17088.327719465462
+        },
+        {
+          "name": "Krishnarajapura",
+          "recorded_name": "kr",
+          "lat": 12.9899,
+          "lng": 77.6935,
+          "time_elapsed": 2697.036,
+          "cumulative_meters": 18258.976083841673
+        },
+        {
+          "name": "Singayyanapalya",
+          "recorded_name": "singayyanapalya",
+          "lat": 12.9882,
+          "lng": 77.706,
+          "time_elapsed": 2841.521,
+          "cumulative_meters": 19626.476455064778
+        },
+        {
+          "name": "Garudacharpalya",
+          "recorded_name": "garudacharpalya",
+          "lat": 12.985,
+          "lng": 77.7141,
+          "time_elapsed": 2947.0499997558595,
+          "cumulative_meters": 20573.506496661626
+        },
+        {
+          "name": "Hoodi Junction",
+          "recorded_name": "hoodi",
+          "lat": 12.9838,
+          "lng": 77.7169,
+          "time_elapsed": 3114.4259997558593,
+          "cumulative_meters": 20904.938413726064
+        },
+        {
+          "name": "Seetharampalya",
+          "recorded_name": "seetharam palya",
+          "lat": 12.9808,
+          "lng": 77.72,
+          "time_elapsed": 3213.052,
+          "cumulative_meters": 21378.33383377461
+        },
+        {
+          "name": "Kundalahalli",
+          "recorded_name": "kundalahalli",
+          "lat": 12.9779,
+          "lng": 77.723,
+          "time_elapsed": 3328.8300002441406,
+          "cumulative_meters": 21836.208485177445
+        },
+        {
+          "name": "Nallurhalli",
+          "recorded_name": "nallur halli",
+          "lat": 12.9765,
+          "lng": 77.7252,
+          "time_elapsed": 3437.676,
+          "cumulative_meters": 22120.917991219725
+        }
+      ],
+      "polyline_points": [
+        [
+          12.9998,
+          77.5498
+        ],
+        [
+          12.9938,
+          77.5542
+        ],
+        [
+          12.9897,
+          77.558
+        ],
+        [
+          12.987,
+          77.5665
+        ],
+        [
+          12.9771,
+          77.5711
+        ],
+        [
+          12.9771,
+          77.5711
+        ],
+        [
+          12.9782,
+          77.5848
+        ],
+        [
+          12.9795,
+          77.5888
+        ],
+        [
+          12.978,
+          77.5915
+        ],
+        [
+          12.9756,
+          77.6066
+        ],
+        [
+          12.9766,
+          77.6183
+        ],
+        [
+          12.9821,
+          77.6211
+        ],
+        [
+          12.9778,
+          77.6408
+        ],
+        [
+          12.9758,
+          77.6585
+        ],
+        [
+          12.9895,
+          77.6674
+        ],
+        [
+          12.9902,
+          77.6827
+        ],
+        [
+          12.9899,
+          77.6935
+        ],
+        [
+          12.9882,
+          77.706
+        ],
+        [
+          12.985,
+          77.7141
+        ],
+        [
+          12.9838,
+          77.7169
+        ],
+        [
+          12.9808,
+          77.72
+        ],
+        [
+          12.9779,
+          77.723
+        ],
+        [
+          12.9765,
+          77.7252
+        ]
+      ],
+      "cumulative_meters": [
+        0.0,
+        819.9885157147162,
+        1434.2859341363544,
+        2402.96143061572,
+        3611.370192557377,
+        3611.370192557377,
+        5100.860981823029,
+        5557.74819631474,
+        5894.510777068551,
+        7552.294209254426,
+        8824.919871115322,
+        9507.61063310576,
+        11695.075094793561,
+        13625.811485371003,
+        15428.755000619381,
+        17088.327719465462,
+        18258.976083841673,
+        19626.476455064778,
+        20573.506496661626,
+        20904.938413726064,
+        21378.33383377461,
+        21836.208485177445,
+        22120.917991219725
+      ],
+      "total_meters": 22120.917991219725,
+      "duration_seconds": 3442.079955810547
+    },
+    {
+      "id": "nallur_halli_to_vijayanagar",
+      "name": "Nallur Halli to Vijayanagar (Purple Line West)",
+      "stations": [
+        {
+          "name": "Kundalahalli",
+          "recorded_name": "kundalahalli",
+          "lat": 12.9779,
+          "lng": 77.723,
+          "time_elapsed": 49.887999755859376,
+          "cumulative_meters": 0.0
+        },
+        {
+          "name": "Seetharampalya",
+          "recorded_name": "seetharam palys",
+          "lat": 12.9808,
+          "lng": 77.72,
+          "time_elapsed": 166.95,
+          "cumulative_meters": 457.874651402836
+        },
+        {
+          "name": "Hoodi Junction",
+          "recorded_name": "hoodi",
+          "lat": 12.9838,
+          "lng": 77.7169,
+          "time_elapsed": 284.943,
+          "cumulative_meters": 931.2700714513825
+        },
+        {
+          "name": "Garudacharpalya",
+          "recorded_name": "garudachar palya",
+          "lat": 12.985,
+          "lng": 77.7141,
+          "time_elapsed": 445.422,
+          "cumulative_meters": 1262.7019885158197
+        },
+        {
+          "name": "Singayyanapalya",
+          "recorded_name": "singayyanapalya",
+          "lat": 12.9882,
+          "lng": 77.706,
+          "time_elapsed": 578.7160002441407,
+          "cumulative_meters": 2209.7320301126674
+        },
+        {
+          "name": "Krishnarajapura",
+          "recorded_name": "krishnarajapura",
+          "lat": 12.9899,
+          "lng": 77.6935,
+          "time_elapsed": 724.511,
+          "cumulative_meters": 3577.232401335773
+        },
+        {
+          "name": "Benniganahalli",
+          "recorded_name": "benniganahalli",
+          "lat": 12.9902,
+          "lng": 77.6827,
+          "time_elapsed": 867.103,
+          "cumulative_meters": 4747.880765711985
+        },
+        {
+          "name": "Baiyappanahalli",
+          "recorded_name": "baiyyapanahalli",
+          "lat": 12.9895,
+          "lng": 77.6674,
+          "time_elapsed": 1031.865,
+          "cumulative_meters": 6407.4534845580665
+        },
+        {
+          "name": "Swami Vivekananda Road",
+          "recorded_name": "swami vivekananda",
+          "lat": 12.9758,
+          "lng": 77.6585,
+          "time_elapsed": 1187.4920002441406,
+          "cumulative_meters": 8210.396999806446
+        },
+        {
+          "name": "Indiranagar",
+          "recorded_name": "indiranagar",
+          "lat": 12.9778,
+          "lng": 77.6408,
+          "time_elapsed": 1370.725,
+          "cumulative_meters": 10141.13339038389
+        },
+        {
+          "name": "Halasuru",
+          "recorded_name": "halasuru",
+          "lat": 12.9821,
+          "lng": 77.6211,
+          "time_elapsed": 1532.2600002441407,
+          "cumulative_meters": 12328.59785207169
+        },
+        {
+          "name": "Trinity",
+          "recorded_name": "trinity",
+          "lat": 12.9766,
+          "lng": 77.6183,
+          "time_elapsed": 1637.713,
+          "cumulative_meters": 13011.288614062129
+        },
+        {
+          "name": "M.G. Road",
+          "recorded_name": "mg road",
+          "lat": 12.9756,
+          "lng": 77.6066,
+          "time_elapsed": 1759.7400002441407,
+          "cumulative_meters": 14283.914275923025
+        },
+        {
+          "name": "Cubbon Park",
+          "recorded_name": "cubbon park",
+          "lat": 12.978,
+          "lng": 77.5915,
+          "time_elapsed": 1933.611,
+          "cumulative_meters": 15941.6977081089
+        },
+        {
+          "name": "Vidhana Soudha",
+          "recorded_name": "vidhana soudha",
+          "lat": 12.9788,
+          "lng": 77.5793,
+          "time_elapsed": 2026.651,
+          "cumulative_meters": 17266.611419637647
+        },
+        {
+          "name": "Central College (Vidhana Soudha)",
+          "recorded_name": "central college",
+          "lat": 12.9788,
+          "lng": 77.5793,
+          "time_elapsed": 2130.418,
+          "cumulative_meters": 17266.611419637647
+        },
+        {
+          "name": "Nadaprabhu Kempegowda (Majestic)",
+          "recorded_name": "majestic",
+          "lat": 12.9771,
+          "lng": 77.5711,
+          "time_elapsed": 2259.0200002441406,
+          "cumulative_meters": 18175.005172473626
+        },
+        {
+          "name": "KSR Railway Station (Majestic)",
+          "recorded_name": "krantiveera railway station",
+          "lat": 12.9757,
+          "lng": 77.5718,
+          "time_elapsed": 2351.9480002441405,
+          "cumulative_meters": 18348.172946434617
+        },
+        {
+          "name": "Magadi Road",
+          "recorded_name": "magadi road",
+          "lat": 12.9822,
+          "lng": 77.5482,
+          "time_elapsed": 2499.418,
+          "cumulative_meters": 21005.51254650065
+        },
+        {
+          "name": "Hosahalli",
+          "recorded_name": "hosahalli",
+          "lat": 12.9792,
+          "lng": 77.5404,
+          "time_elapsed": 2632.987,
+          "cumulative_meters": 21914.120663653746
+        },
+        {
+          "name": "Vijayanagar",
+          "recorded_name": "vijaynagar",
+          "lat": 12.9708,
+          "lng": 77.5374,
+          "time_elapsed": 2743.401,
+          "cumulative_meters": 22903.107451531076
+        }
+      ],
+      "polyline_points": [
+        [
+          12.9779,
+          77.723
+        ],
+        [
+          12.9808,
+          77.72
+        ],
+        [
+          12.9838,
+          77.7169
+        ],
+        [
+          12.985,
+          77.7141
+        ],
+        [
+          12.9882,
+          77.706
+        ],
+        [
+          12.9899,
+          77.6935
+        ],
+        [
+          12.9902,
+          77.6827
+        ],
+        [
+          12.9895,
+          77.6674
+        ],
+        [
+          12.9758,
+          77.6585
+        ],
+        [
+          12.9778,
+          77.6408
+        ],
+        [
+          12.9821,
+          77.6211
+        ],
+        [
+          12.9766,
+          77.6183
+        ],
+        [
+          12.9756,
+          77.6066
+        ],
+        [
+          12.978,
+          77.5915
+        ],
+        [
+          12.9788,
+          77.5793
+        ],
+        [
+          12.9788,
+          77.5793
+        ],
+        [
+          12.9771,
+          77.5711
+        ],
+        [
+          12.9757,
+          77.5718
+        ],
+        [
+          12.9822,
+          77.5482
+        ],
+        [
+          12.9792,
+          77.5404
+        ],
+        [
+          12.9708,
+          77.5374
+        ]
+      ],
+      "cumulative_meters": [
+        0.0,
+        457.874651402836,
+        931.2700714513825,
+        1262.7019885158197,
+        2209.7320301126674,
+        3577.232401335773,
+        4747.880765711985,
+        6407.4534845580665,
+        8210.396999806446,
+        10141.13339038389,
+        12328.59785207169,
+        13011.288614062129,
+        14283.914275923025,
+        15941.6977081089,
+        17266.611419637647,
+        17266.611419637647,
+        18175.005172473626,
+        18348.172946434617,
+        21005.51254650065,
+        21914.120663653746,
+        22903.107451531076
+      ],
+      "total_meters": 22903.107451531076,
+      "duration_seconds": 2737.455979248047
+    }
+  ]
+}

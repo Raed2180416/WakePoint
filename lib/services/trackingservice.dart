@@ -50,6 +50,7 @@ import 'package:geowake2/services/deviation_monitor.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
 import 'package:geowake2/services/reroute_constraints.dart';
 import 'package:geowake2/services/tracking_termination_policy.dart';
+import 'package:geowake2/core/ekf/ekf_types.dart';
 // Modular tracking components (Phase 1 refactoring)
 import 'package:geowake2/services/tracking/tracking.dart';
 // ... rest of imports
@@ -58,6 +59,8 @@ import 'package:geowake2/services/tracking/tracking.dart';
 Stream<Position>? testGpsStream;
 @visibleForTesting
 Stream<AccelerometerEvent>? testAccelerometerStream;
+@visibleForTesting
+Stream<GyroscopeEvent>? testGyroscopeStream;
 @visibleForTesting
 Duration gpsDropoutBuffer = const Duration(seconds: 25);
 
@@ -558,6 +561,8 @@ class TrackingService {
     _lastActiveState = null;
     _lastProcessedPosition = null;
     _lastSnapResult = null;
+    _lastEkfState = null;
+    _lastEkfAlarmSnapshot = null;
     _cachedRoutePayload = null;
     _lastRouteBroadcastAt = null;
     // Reset session manager to pick up new isTestMode value
@@ -606,6 +611,8 @@ String? _lastComputedNextEventType;
 double? _lastComputedToNextEventMeters;
 double? _lastComputedPolylineTotalMeters;
 double? _lastComputedStepTotalMeters;
+EkfPublicState? _lastEkfState;
+EkfPublicState? _lastEkfAlarmSnapshot;
 
 // In playground/simulation runs the dashboard can request an alarm reset.
 // If progress jitters slightly backwards due to snapping, we must NOT clear
@@ -918,6 +925,8 @@ void _onStop() async {
   _destinationName = null;
   _alarmMode = null;
   _alarmValue = null;
+  _lastEkfState = null;
+  _lastEkfAlarmSnapshot = null;
 
   // Explicitly stop any playing alarm and vibration
   try {
@@ -1135,6 +1144,17 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
         }
       }
       // -------------------------------------------------
+
+      // Prefer EKF progress for metro legs or when EKF is degraded.
+      final ekfState = _lastEkfState;
+      final useEkfForAlarmProgress =
+          ekfState != null &&
+          ekfState.s.isFinite &&
+          (isMetroStep || ekfState.mode == EkfMode.degraded ||
+              ekfState.mode == EkfMode.metro);
+      if (useEkfForAlarmProgress) {
+        progressMeters = ekfState.s;
+      }
     } else {
       // Fallback to latest cached registry progress
       RouteEntry? best;
@@ -1200,6 +1220,7 @@ Future<void> _checkAndTriggerAlarm(
   _sessionManager.ingestPosition(currentPosition);
 
   // Resolve active route/progress for route-aware alarms.
+  _lastEkfAlarmSnapshot = _lastEkfState;
   final resolved = _resolveAlarmRouteState(currentPosition);
   final double? progressMeters = resolved.progressMeters;
   final String? alarmKey = resolved.activeKey;
@@ -1483,6 +1504,8 @@ void _handleBackgroundStartTracking({
   _cachedRoutePayload = null;
   _lastRouteBroadcastAt = null;
   _alarmController.resetAlarmState();
+  _lastEkfState = null;
+  _lastEkfAlarmSnapshot = null;
   dev.log(
     'DEBUG: After reset anyDestinationAlarmFired=${_alarmController.anyDestinationAlarmFired}',
     name: 'TrackingService',
@@ -1508,6 +1531,7 @@ void _handleBackgroundStartTracking({
   _mgrSwitchSub = _sessionManager.routeSwitchStream.listen((e) {
     // Critical: Migrate alarm history to new key so we don't re-fire alarms
     _alarmController.migrateAlarmState(e.fromKey, e.toKey);
+    _locationStreamHandler.updateRouteGeometryForKey(e.toKey);
     _routeSwitchCtrl.add(e);
   });
   _rerouteSub?.cancel();
@@ -2084,6 +2108,11 @@ Future<void> startLocationStream(ServiceInstance service) async {
     LocationManager().testModeStream = testGpsStream;
   }
   _locationStreamHandler.testAccelerometerStream = testAccelerometerStream;
+  _locationStreamHandler.testGyroscopeStream = testGyroscopeStream;
+
+  _locationStreamHandler.onEkfUpdate = (state) {
+    _lastEkfState = state;
+  };
 
   _locationStreamHandler.onCheckAlarm = (position, svc) async {
     syncGlobalsFromHandler();
@@ -2135,6 +2164,19 @@ Future<void> startLocationStream(ServiceInstance service) async {
           'step_total_m': (_lastComputedStepTotalMeters ?? 0).toStringAsFixed(
             0,
           ),
+        if (_lastEkfState != null) ...{
+          'ekf_s': _lastEkfState!.s.toStringAsFixed(1),
+          'ekf_sigma_s': _lastEkfState!.sigmaS.toStringAsFixed(1),
+          'ekf_v': _lastEkfState!.v.toStringAsFixed(2),
+          'ekf_mode': _lastEkfState!.mode.name,
+          'ekf_motion': _lastEkfState!.motion.name,
+        },
+        if (_lastEkfAlarmSnapshot != null) ...{
+          'ekf_alarm_s': _lastEkfAlarmSnapshot!.s.toStringAsFixed(1),
+          'ekf_alarm_sigma_s': _lastEkfAlarmSnapshot!.sigmaS.toStringAsFixed(1),
+          'ekf_alarm_v': _lastEkfAlarmSnapshot!.v.toStringAsFixed(2),
+          'ekf_alarm_mode': _lastEkfAlarmSnapshot!.mode.name,
+        },
       },
     );
   };
@@ -2179,6 +2221,10 @@ Future<void> startLocationStream(ServiceInstance service) async {
       stepBoundsMeters: _stepBoundsMeters,
       stepDurationsSeconds: _stepDurationsSeconds,
       polylineTotalMeters: _lastComputedPolylineTotalMeters,
+      transitLegStopsByKey: _sessionManager.transitLegStopsByKey,
+      fallbackTransitLegStops:
+          _sessionManager.transitLegStopsByKey.values.firstOrNull ??
+          _transitLegStops,
     ),
   );
 }

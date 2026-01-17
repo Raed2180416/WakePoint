@@ -216,9 +216,16 @@ class SimulationClient {
     List<Map<String, dynamic>>? transitLegs,
     List<Map<String, dynamic>>? inactiveRoutes,
     bool? transitMode,
+    Map<String, dynamic>? routeDebug,
   }) {
     if (!PlaygroundBridgeConfig.enabled || _channel == null) return;
     try {
+      if (routeDebug != null) {
+        dev.log(
+          'broadcastRoute debug: key=$routeKey, $routeDebug',
+          name: 'SimulationClient',
+        );
+      }
       final state = {
         'type': 'route_update',
         if (routeKey != null) 'route_key': routeKey,
@@ -231,6 +238,7 @@ class SimulationClient {
         if (transitLegs != null) 'transit_legs': transitLegs,
         if (inactiveRoutes != null) 'inactive_routes': inactiveRoutes,
         if (transitMode != null) 'transit_mode': transitMode,
+        if (routeDebug != null) 'route_debug': routeDebug,
       };
       _channel!.sink.add(jsonEncode(state));
     } catch (e) {

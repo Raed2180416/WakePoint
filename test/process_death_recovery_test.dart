@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geolocator_platform_interface/geolocator_platform_interface.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 // Mock ServiceInstance without Mockito
 class MockServiceInstance implements ServiceInstance {
@@ -109,6 +110,14 @@ void main() {
   setUp(() {
     GeolocatorPlatform.instance = MockGeolocatorPlatform();
     SharedPreferences.setMockInitialValues({});
+    TrackingService.isTestMode = true;
+    testAccelerometerStream = const Stream<AccelerometerEvent>.empty();
+    testGyroscopeStream = const Stream<GyroscopeEvent>.empty();
+  });
+
+  tearDown(() {
+    testAccelerometerStream = null;
+    testGyroscopeStream = null;
   });
 
   test(
