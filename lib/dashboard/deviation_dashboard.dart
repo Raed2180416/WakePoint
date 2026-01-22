@@ -199,6 +199,69 @@ class _DeviationDashboardState extends State<DeviationDashboard> {
     );
   }
 
+  void _exportConstraintLogs(LogExportFormat format) {
+    final events = ConstraintLogger.instance.events;
+    if (events.isEmpty) {
+      _logInfo('No constraint logs to export');
+      return;
+    }
+
+    final now = DateTime.now().toIso8601String().replaceAll(':', '-');
+    final filename = 'constraint_logs_$now.${format == LogExportFormat.json ? 'json' : 'csv'}';
+
+    if (format == LogExportFormat.json) {
+      final payload = {
+        'generatedAt': DateTime.now().toIso8601String(),
+        'eventCount': events.length,
+        'events': events
+            .map(
+              (e) => {
+                'timestamp': e.timestamp.toIso8601String(),
+                'type': e.type.name,
+                'title': e.title,
+                'description': e.description,
+                'details': e.details,
+              },
+            )
+            .toList(),
+      };
+      final jsonText = const JsonEncoder.withIndent('  ').convert(payload);
+      _downloadTextFile(filename, jsonText, 'application/json');
+      _logInfo('Exported ${events.length} constraint logs (JSON)');
+      return;
+    }
+
+    final header = 'timestamp,type,title,description,details';
+    final rows = events.map((e) {
+      final values = [
+        e.timestamp.toIso8601String(),
+        e.type.name,
+        e.title,
+        e.description ?? '',
+        e.details != null ? jsonEncode(e.details) : '',
+      ];
+      return values.map(_escapeCsv).join(',');
+    });
+    final csv = ([header, ...rows]).join('\n');
+    _downloadTextFile(filename, csv, 'text/csv');
+    _logInfo('Exported ${events.length} constraint logs (CSV)');
+  }
+
+  String _escapeCsv(String value) {
+    final escaped = value.replaceAll('"', '""');
+    return '"$escaped"';
+  }
+
+  void _downloadTextFile(String filename, String content, String mimeType) {
+    final bytes = utf8.encode(content);
+    final blob = html.Blob([bytes], mimeType);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', filename)
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
+
   void _updateSimulationMarker(SimulationTickResult tick) {
     _markers.removeWhere((m) => m.markerId.value == 'sim_position');
     _markers.add(
@@ -642,6 +705,7 @@ class _DeviationDashboardState extends State<DeviationDashboard> {
             isOpen: _drawerOpen,
             onToggle: () => setState(() => _drawerOpen = !_drawerOpen),
             onClear: _clearEvents,
+            onExport: _exportConstraintLogs,
           ),
         ],
       ),

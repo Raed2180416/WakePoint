@@ -22,10 +22,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geolocator/geolocator.dart';
+
+import '../../all_india_stops.dart';
+import 'ekf_types.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ENUMS & TYPES
@@ -47,6 +52,9 @@ enum TestRouteId {
 
   /// Multi-modal: MG Road → Airport (metro + driving, ~35km)
   mgRoadToAirport,
+
+  /// Captured Real Route (JSON Geometry + Log Motion)
+  capturedRealRoute,
 }
 
 /// GPS dropout simulation modes.
@@ -113,7 +121,10 @@ class TestRouteStation {
 
   factory TestRouteStation.fromJson(Map<String, dynamic> json) {
     return TestRouteStation(
-      id: json['id'] ?? json['name']?.toString().toLowerCase().replaceAll(' ', '_') ?? '',
+      id:
+          json['id'] ??
+          json['name']?.toString().toLowerCase().replaceAll(' ', '_') ??
+          '',
       name: json['name'] ?? '',
       position: LatLng(
         (json['lat'] as num).toDouble(),
@@ -154,7 +165,8 @@ class TestRouteLeg {
   });
 
   double get durationSeconds => endTimeSeconds - startTimeSeconds;
-  double get totalMeters => cumulativeMeters.isEmpty ? 0 : cumulativeMeters.last;
+  double get totalMeters =>
+      cumulativeMeters.isEmpty ? 0 : cumulativeMeters.last;
 }
 
 /// Complete test route with all legs.
@@ -164,6 +176,7 @@ class TestRoute {
   final String description;
   final List<TestRouteLeg> legs;
   final List<LatLng> fullPolyline;
+  final List<LatLng> groundTruthPolyline; // Full GPS log path for visualization
   final List<double> fullCumulativeMeters;
   final double totalMeters;
   final double totalDurationSeconds;
@@ -174,6 +187,7 @@ class TestRoute {
     required this.description,
     required this.legs,
     required this.fullPolyline,
+    this.groundTruthPolyline = const [],
     required this.fullCumulativeMeters,
     required this.totalMeters,
     required this.totalDurationSeconds,
@@ -284,6 +298,126 @@ class ReplayLogEntry {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LOG PARSING
+// ─────────────────────────────────────────────────────────────────────────────
+
+class LogLocation {
+  final int timeNs;
+  final double secondsElapsed;
+  final double bearingAccuracy;
+  final double speedAccuracy;
+  final double speed;
+  final double bearing;
+  final double altitude;
+  final double longitude;
+  final double latitude;
+
+  const LogLocation({
+    required this.timeNs,
+    required this.secondsElapsed,
+    required this.bearingAccuracy,
+    required this.speedAccuracy,
+    required this.speed,
+    required this.bearing,
+    required this.altitude,
+    required this.longitude,
+    required this.latitude,
+  });
+}
+
+class LogImu {
+  final int timeNs;
+  final double secondsElapsed;
+  final double x;
+  final double y;
+  final double z;
+
+  const LogImu({
+    required this.timeNs,
+    required this.secondsElapsed,
+    required this.x,
+    required this.y,
+    required this.z,
+  });
+}
+
+class LogParser {
+  static Future<List<LogLocation>> parseLocationLog(String path) async {
+    // Use rootBundle to load assets, as File() generally doesn't work for bundled assets
+    final content = await rootBundle.loadString(path);
+    final lines = const LineSplitter().convert(content);
+    final result = <LogLocation>[];
+
+    // Skip header
+    for (var i = 1; i < lines.length; i++) {
+      final parts = lines[i].split(',');
+      if (parts.length < 9) continue;
+
+      try {
+        result.add(
+          LogLocation(
+            timeNs: int.parse(parts[0]),
+            secondsElapsed: double.parse(parts[1]),
+            bearingAccuracy: double.parse(parts[2]),
+            speedAccuracy: double.parse(parts[3]),
+            // parts[4] is verticalAccuracy
+            // parts[5] is horizontalAccuracy
+            speed: double.parse(parts[6]),
+            bearing: double.parse(parts[7]),
+            altitude: double.parse(parts[8]),
+            longitude: double.parse(parts[9]),
+            latitude: double.parse(parts[10]),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error parsing location line $i: $e');
+      }
+    }
+    return result;
+  }
+
+  static Future<List<LogImu>> parseImuLog(String path) async {
+    final content = await rootBundle.loadString(path);
+    final lines = const LineSplitter().convert(content);
+    final result = <LogImu>[];
+
+    // Skip header
+    for (var i = 1; i < lines.length; i++) {
+      final parts = lines[i].split(',');
+      if (parts.length < 5) continue;
+
+      try {
+        result.add(
+          LogImu(
+            timeNs: int.parse(parts[0]),
+            secondsElapsed: double.parse(parts[1]),
+
+            // Let's assume standard sensors_plus order but mapping based on header analysis from user logs
+            // User log header: time,seconds_elapsed,z,y,x
+            // But standard is x,y,z.
+            // Implementation Note: Code uses x, y, z. We will map strictly by position.
+            // IF the file is z,y,x:
+            // parts[2] = z
+            // parts[3] = y
+            // parts[4] = x
+            x: double.parse(parts[4]),
+            y: double.parse(parts[3]),
+            z: double.parse(parts[2]),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error parsing IMU line $i: $e');
+      }
+    }
+    return result;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMU REPLAY ENGINE V2
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
 // IMU REPLAY ENGINE V2
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -299,6 +433,11 @@ class ImuReplayEngineV2 {
   /// Time warp factor (1.0 = realtime, 2.0 = 2x speed).
   double warpFactor = 1.0;
 
+  /// Whether to use deterministic fixed-step replay (simulation time).
+  /// When true, IMU/GPS timestamps and dt are derived from a fixed step,
+  /// not wall-clock time. This makes replay deterministic across runs.
+  bool deterministicReplay = true;
+
   /// Whether to add realistic noise to IMU data.
   bool enableImuNoise = true;
 
@@ -311,6 +450,18 @@ class ImuReplayEngineV2 {
   /// Callback for external EKF state injection.
   void Function(double progressMeters, double velocity)? onEkfStateRequest;
 
+  // Log Replay State
+  bool _isLogReplayMode = false;
+  List<LogLocation> _logLocations = [];
+  List<LogImu> _logAccels = [];
+  List<LogImu> _logGyros = [];
+  int _logLocIndex = 0;
+  int _logAccelIndex = 0;
+  int _logGyroIndex = 0;
+  double _logStartTimeSeconds = 0.0;
+  LogImu? _lastLogAccel;
+  LogImu? _lastLogGyro;
+
   // ─────────────────────────────────────────────────────────────────────────
   // State
   // ─────────────────────────────────────────────────────────────────────────
@@ -321,6 +472,7 @@ class ImuReplayEngineV2 {
   Timer? _playbackTimer;
   DateTime? _lastTickTime;
   final math.Random _random = math.Random(42); // Seeded for reproducibility
+  static const double _fixedTickSeconds = 0.01; // 100 Hz fixed step
 
   // GPS dropout state
   // ignore: unused_field - Reserved for GPS timing analysis
@@ -330,6 +482,10 @@ class ImuReplayEngineV2 {
   bool _inTunnel = false;
   double _nextIntermittentDropout = 0;
   double _intermittentDropoutEnd = 0;
+  
+  // Track if completeDropout has emitted its initial GPS (resets when mode changes)
+  bool _completeDropoutInitialEmitted = false;
+  GpsDropoutMode _lastDropoutMode = GpsDropoutMode.normal;
 
   // Motion state
   SimulatedMotionState _motionState = SimulatedMotionState.stationary;
@@ -338,7 +494,6 @@ class ImuReplayEngineV2 {
 
   // Logging
   final List<ReplayLogEntry> _logs = [];
-  static const int _maxLogs = 1000;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Stream Controllers
@@ -349,6 +504,7 @@ class ImuReplayEngineV2 {
   final _gpsController = StreamController<Position>.broadcast();
   final _tickController = StreamController<ReplayTickResultV2>.broadcast();
   final _logController = StreamController<ReplayLogEntry>.broadcast();
+  final _imuSampleController = StreamController<ImuSample>.broadcast();
 
   // ─────────────────────────────────────────────────────────────────────────
   // Public Streams
@@ -359,6 +515,7 @@ class ImuReplayEngineV2 {
   Stream<Position> get gpsStream => _gpsController.stream;
   Stream<ReplayTickResultV2> get tickStream => _tickController.stream;
   Stream<ReplayLogEntry> get logStream => _logController.stream;
+  Stream<ImuSample> get imuSampleStream => _imuSampleController.stream;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Public Properties
@@ -367,9 +524,10 @@ class ImuReplayEngineV2 {
   TestRoute? get route => _route;
   bool get isPlaying => _isPlaying;
   double get elapsedSeconds => _elapsedSeconds;
-  double get progress => _route == null
-      ? 0.0
-      : (_elapsedSeconds / _route!.totalDurationSeconds).clamp(0.0, 1.0);
+  double get progress =>
+      _route == null
+          ? 0.0
+          : (_elapsedSeconds / _route!.totalDurationSeconds).clamp(0.0, 1.0);
   double get progressMeters => progress * (_route?.totalMeters ?? 0);
   List<ReplayLogEntry> get logs => List.unmodifiable(_logs);
   SimulatedMotionState get motionState => _motionState;
@@ -385,15 +543,22 @@ class ImuReplayEngineV2 {
 
     switch (routeId) {
       case TestRouteId.majesticToNallurHalli:
-      case TestRouteId.rajajinargarToNallurHalli:
-      case TestRouteId.nallurHalliToVijayanagar:
         await _loadMetroRoute(routeId);
+        break;
+      case TestRouteId.rajajinargarToNallurHalli:
+        await _loadMetroRoute(routeId);
+        break;
+      case TestRouteId.nallurHalliToVijayanagar:
+        // Placeholder for pure log replay where route is derived from log
         break;
       case TestRouteId.koramangalaToIndiranagar:
         await _loadNonMetroRoute(routeId);
         break;
       case TestRouteId.mgRoadToAirport:
         await _loadMultiModalRoute(routeId);
+        break;
+      case TestRouteId.capturedRealRoute:
+        // Special mode: Loaded via separate method loadCapturedRouteReplay
         break;
     }
 
@@ -406,6 +571,252 @@ class ImuReplayEngineV2 {
     });
   }
 
+  /// Loads a special replay mode fusing a JSON ground truth route with CSV logs.
+  Future<void> loadCapturedRouteReplay(
+    String routeJsonPath,
+    String logDir,
+  ) async {
+    _reset();
+    _isLogReplayMode = true;
+
+    // 1. Load Ground Truth Geometry from JSON
+    try {
+      final jsonString = await rootBundle.loadString(routeJsonPath);
+      final jsonMap = jsonDecode(jsonString);
+      final routes = jsonMap['routes'] as List;
+      if (routes.isEmpty) throw Exception('No routes in JSON');
+
+      final polylinePoints = <LatLng>[];
+      // Decode overview polyline or legs? Directions API usually has 'overview_polyline'
+      // But the file content shown earlier had 'routes' -> 'legs' -> 'steps' structure possibly.
+      // Let's look for overview_polyline points first, or recursively decode legs.
+      // Based on typical Directions API:
+      if (routes[0]['overview_polyline'] != null) {
+        final encoded = routes[0]['overview_polyline']['points'];
+        polylinePoints.addAll(_decodePolyline(encoded));
+      } else {
+        // Fallback to leg steps if overview missing
+        final legs = routes[0]['legs'] as List;
+        for (final leg in legs) {
+          final steps = leg['steps'] as List;
+          for (final step in steps) {
+            final encoded = step['polyline']['points'];
+            polylinePoints.addAll(_decodePolyline(encoded));
+          }
+        }
+      }
+
+      if (polylinePoints.isEmpty) throw Exception('Failed to decode polyline');
+
+      // Calculate cumulative meters for the route
+      final cumMeters = _computeCumulativeMeters(polylinePoints);
+
+      _route = TestRoute(
+        id: TestRouteId.capturedRealRoute,
+        name: 'Captured Real Route',
+        description: 'Ground Truth from JSON + Real Logs',
+        legs: [], // We treat it as one giant leg for now
+        fullPolyline: polylinePoints,
+        fullCumulativeMeters: cumMeters,
+        totalMeters: cumMeters.last,
+        totalDurationSeconds: 0, // Will be updated from log
+      );
+    } catch (e) {
+      debugPrint('Error loading route JSON: $e');
+      return;
+    }
+
+    // 2. Load Logs
+    await _loadLogFiles(logDir);
+
+    // 3. Align and Fuse
+    // Set total duration based on log duration
+    if (_route != null && _logAccels.isNotEmpty) {
+      final duration =
+          _logAccels.last.secondsElapsed - _logAccels.first.secondsElapsed;
+
+      // Load stations from all_india_stops.dart snapped to the route
+      final stations = _findAndSnapStations(_route!.fullPolyline);
+
+      // Create a single leg to hold the data (geometry + stations)
+      final leg = TestRouteLeg(
+        id: 'captured_leg_0',
+        type: LegType.metro,
+        name: 'Captured Metro Leg',
+        polyline: _route!.fullPolyline,
+        cumulativeMeters: _route!.fullCumulativeMeters,
+        stations: stations,
+        startTimeSeconds: 0,
+        endTimeSeconds: duration,
+        averageSpeedMps: _route!.totalMeters / duration,
+        hasGpsInTunnel: false,
+      );
+
+      // Re-create route with proper leg
+      _route = TestRoute(
+        id: _route!.id,
+        name: _route!.name,
+        description: _route!.description,
+        legs: [leg],
+        fullPolyline: _route!.fullPolyline,
+        fullCumulativeMeters: _route!.fullCumulativeMeters,
+        totalMeters: _route!.totalMeters,
+        totalDurationSeconds: duration,
+      );
+    }
+  }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> points = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
+
+  Future<void> _loadLogFiles(String directory) async {
+    _logLocations = await LogParser.parseLocationLog('$directory/Location.csv');
+    _logAccels = await LogParser.parseImuLog('$directory/Accelerometer.csv');
+    _logGyros = await LogParser.parseImuLog('$directory/Gyroscope.csv');
+
+    if (_logLocations.isEmpty)
+      throw Exception('No location data found in logs');
+    if (_logAccels.isEmpty)
+      throw Exception('No accelerometer data found in logs');
+    if (_logGyros.isEmpty) throw Exception('No gyroscope data found in logs');
+
+    _logStartTimeSeconds = _logLocations.first.secondsElapsed;
+  }
+
+  Future<void> loadFromLog(String logDirectory, TestRouteId routeId) async {
+    _log('LOAD', 'INFO', 'Loading log from: $logDirectory');
+
+    // 1. Parse Logs FIRST to get the GPS data
+    try {
+      _logLocations = await LogParser.parseLocationLog(
+        '$logDirectory/Location.csv',
+      );
+      _logAccels = await LogParser.parseImuLog(
+        '$logDirectory/Accelerometer.csv',
+      );
+      _logGyros = await LogParser.parseImuLog('$logDirectory/Gyroscope.csv');
+
+      if (_logLocations.isEmpty) throw Exception('No location data found');
+
+      // 2. Build route polyline from log GPS data (sampled every ~50m or 10 points)
+      final logPolyline = <LatLng>[];
+      final logCumulativeMeters = <double>[];
+      final groundTruthPolyline = <LatLng>[]; // Full density for visualization
+      double cumulativeDistance = 0.0;
+      LatLng? lastPoint;
+
+      final definedGroundTruth = await _tryLoadGroundTruthPolyline(routeId);
+      if (definedGroundTruth != null) {
+        _log(
+          'LOAD',
+          'INFO',
+          'Using defined ground truth (${definedGroundTruth.length} pts)',
+        );
+        groundTruthPolyline.addAll(definedGroundTruth);
+      }
+
+      for (int i = 0; i < _logLocations.length; i++) {
+        final loc = _logLocations[i];
+        final point = LatLng(loc.latitude, loc.longitude);
+
+        if (lastPoint != null) {
+          final dist = _haversineDistance(lastPoint, point);
+          cumulativeDistance += dist;
+        }
+
+        // Only use log as ground truth if we don't have a defined one
+        if (definedGroundTruth == null) {
+          groundTruthPolyline.add(point);
+        }
+
+        // Sample every 10 points or at minimum distance of 30m (for playback)
+        if (i == 0 || i == _logLocations.length - 1 || i % 10 == 0) {
+          logPolyline.add(point);
+          logCumulativeMeters.add(cumulativeDistance);
+        }
+        lastPoint = point;
+      }
+
+      final totalDuration =
+          _logLocations.last.secondsElapsed -
+          _logLocations.first.secondsElapsed;
+      final totalMeters = cumulativeDistance;
+
+      // 3. Create a simple route from the log data
+      final leg = TestRouteLeg(
+        id: 'log_replay',
+        type: LegType.metro,
+        name: 'Log Replay: $logDirectory',
+        polyline: logPolyline,
+        cumulativeMeters: logCumulativeMeters,
+        stations: await _tryLoadStations(routeId) ?? [],
+        startTimeSeconds: 0,
+        endTimeSeconds: totalDuration,
+        averageSpeedMps: totalMeters / totalDuration,
+        hasGpsInTunnel: false,
+      );
+
+      _route = TestRoute(
+        id: routeId,
+        name: 'Log Replay Route',
+        description: 'Route reconstructed from GPS log data',
+        legs: [leg],
+        fullPolyline:
+            groundTruthPolyline.isNotEmpty ? groundTruthPolyline : logPolyline,
+        groundTruthPolyline:
+            groundTruthPolyline, // Use the preferred ground truth
+        fullCumulativeMeters: logCumulativeMeters,
+        totalMeters: totalMeters,
+        totalDurationSeconds: totalDuration,
+      );
+
+      _isLogReplayMode = true;
+      _logStartTimeSeconds = _logLocations.first.secondsElapsed;
+
+      _log('LOAD', 'EVENT', 'Log loaded successfully', {
+        'locations': _logLocations.length,
+        'accels': _logAccels.length,
+        'gyros': _logGyros.length,
+        'polylinePoints': logPolyline.length,
+        'totalMeters': totalMeters.toStringAsFixed(0),
+        'duration': totalDuration.toStringAsFixed(0),
+      });
+
+      _reset();
+    } catch (e) {
+      _log('LOAD', 'ERROR', 'Failed to load logs: $e');
+      _isLogReplayMode = false;
+      rethrow;
+    }
+  }
+
   Future<void> _loadMetroRoute(TestRouteId routeId) async {
     final jsonStr = await rootBundle.loadString(
       'assets/ekf_test_routes/bengaluru_metro_routes.json',
@@ -413,11 +824,12 @@ class ImuReplayEngineV2 {
     final data = json.decode(jsonStr) as Map<String, dynamic>;
     final routes = data['routes'] as List<dynamic>;
 
-    final routeIdStr = {
-      TestRouteId.majesticToNallurHalli: 'majestic_to_nallur_halli',
-      TestRouteId.rajajinargarToNallurHalli: 'rajajinagar_to_nallur_halli',
-      TestRouteId.nallurHalliToVijayanagar: 'nallur_halli_to_vijayanagar',
-    }[routeId]!;
+    final routeIdStr =
+        {
+          TestRouteId.majesticToNallurHalli: 'majestic_to_nallur_halli',
+          TestRouteId.rajajinargarToNallurHalli: 'rajajinagar_to_nallur_halli',
+          TestRouteId.nallurHalliToVijayanagar: 'nallur_halli_to_vijayanagar',
+        }[routeId]!;
 
     final routeData = routes.firstWhere(
       (r) => r['id'] == routeIdStr,
@@ -425,21 +837,30 @@ class ImuReplayEngineV2 {
     );
 
     // Parse stations
-    final stations = (routeData['stations'] as List<dynamic>)
-        .map((s) => TestRouteStation.fromJson(s as Map<String, dynamic>))
-        .toList();
+    final stations =
+        (routeData['stations'] as List<dynamic>)
+            .map((s) => TestRouteStation.fromJson(s as Map<String, dynamic>))
+            .toList();
 
     // Parse polyline with proper interpolation
-    final rawPolyline = (routeData['polyline_points'] as List<dynamic>)
-        .map((p) => LatLng((p[0] as num).toDouble(), (p[1] as num).toDouble()))
-        .toList();
+    final rawPolyline =
+        (routeData['polyline_points'] as List<dynamic>)
+            .map(
+              (p) => LatLng((p[0] as num).toDouble(), (p[1] as num).toDouble()),
+            )
+            .toList();
 
-    final cumMeters = (routeData['cumulative_meters'] as List<dynamic>)
-        .map((m) => (m as num).toDouble())
-        .toList();
+    final cumMeters =
+        (routeData['cumulative_meters'] as List<dynamic>)
+            .map((m) => (m as num).toDouble())
+            .toList();
 
     // Interpolate polyline for smoother simulation
-    final (interpolated, interpolatedCum) = _interpolatePolyline(rawPolyline, cumMeters, 10.0);
+    final (interpolated, interpolatedCum) = _interpolatePolyline(
+      rawPolyline,
+      cumMeters,
+      10.0,
+    );
 
     final duration = (routeData['duration_seconds'] as num).toDouble();
     final totalMeters = (routeData['total_meters'] as num).toDouble();
@@ -461,13 +882,210 @@ class ImuReplayEngineV2 {
     _route = TestRoute(
       id: routeId,
       name: routeData['name'] as String,
-      description: 'Metro route from ${stations.first.name} to ${stations.last.name}',
+      description:
+          'Metro route from ${stations.first.name} to ${stations.last.name}',
       legs: [leg],
       fullPolyline: interpolated,
       fullCumulativeMeters: interpolatedCum,
       totalMeters: totalMeters,
       totalDurationSeconds: duration,
     );
+  }
+
+  /// Try to load ground truth polyline from routes JSON
+  Future<List<LatLng>?> _tryLoadGroundTruthPolyline(TestRouteId routeId) async {
+    try {
+      final jsonStr = await rootBundle.loadString(
+        'assets/ekf_test_routes/bengaluru_metro_routes.json',
+      );
+      final data = json.decode(jsonStr) as Map<String, dynamic>;
+      final routes = data['routes'] as List<dynamic>;
+
+      final routeIdStr =
+          {
+            TestRouteId.nallurHalliToVijayanagar: 'nallur_halli_to_vijayanagar',
+          }[routeId];
+
+      if (routeIdStr == null) return null;
+
+      final routeData = routes.firstWhere(
+        (r) => r['id'] == routeIdStr,
+        orElse: () => null,
+      );
+
+      if (routeData == null) return null;
+
+      final rawPolyline =
+          (routeData['polyline_points'] as List<dynamic>)
+              .map(
+                (p) =>
+                    LatLng((p[0] as num).toDouble(), (p[1] as num).toDouble()),
+              )
+              .toList();
+
+      return rawPolyline.isNotEmpty ? rawPolyline : null;
+    } catch (e) {
+      _log('LOAD', 'WARN', 'Failed to load ground truth for $routeId: $e');
+      return null;
+    }
+  }
+
+  Future<List<TestRouteStation>?> _tryLoadStations(TestRouteId routeId) async {
+    try {
+      final jsonStr = await rootBundle.loadString(
+        'assets/ekf_test_routes/bengaluru_metro_routes.json',
+      );
+      final data = json.decode(jsonStr) as Map<String, dynamic>;
+      final routes = data['routes'] as List<dynamic>;
+
+      // Determine the JSON ID for the requested route
+      final routeIdStr =
+          {
+            TestRouteId.majesticToNallurHalli: 'majestic_to_nallur_halli',
+            TestRouteId.rajajinargarToNallurHalli:
+                'rajajinagar_to_nallur_halli',
+            TestRouteId.nallurHalliToVijayanagar: 'nallur_halli_to_vijayanagar',
+            // Default logical mapping for others if needed
+          }[routeId];
+
+      if (routeIdStr == null) return null;
+
+      final routeData = routes.firstWhere(
+        (r) => r['id'] == routeIdStr,
+        orElse: () => null,
+      );
+
+      if (routeData == null) return null;
+
+      return (routeData['stations'] as List<dynamic>)
+          .map((s) => TestRouteStation.fromJson(s as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      _log('LOAD', 'WARN', 'Failed to load stations for $routeId: $e');
+      return null;
+    }
+  }
+
+  /// Finds stations from all_india_stops.dart within 500m of the polyline
+  /// and snaps them to the closest point on the route.
+  List<TestRouteStation> _findAndSnapStations(List<LatLng> polyline) {
+    if (polyline.isEmpty) return [];
+
+    final routeStations = <TestRouteStation>[];
+    const double captureRadiusMeters = 500.0;
+
+    // Convert all_india_stops to potential candidates
+    // Performance: Filter by bounding box first if optimization needed, but 1200 stops is fast enough.
+    for (final stop in allIndiaStops) {
+      final stopPos = LatLng(
+        (stop['lat'] as num).toDouble(),
+        (stop['lng'] as num).toDouble(),
+      );
+
+      // 1. Check if ANY point on polyline is within 500m
+      // Improve efficiency: only snap if 'near'
+      final (
+        closestPoint,
+        distMeters,
+        progressMeters,
+      ) = _findClosestPointOnPolyline(stopPos, polyline);
+
+      if (distMeters <= captureRadiusMeters) {
+        // Calculate arrival time based on progress (assuming avg speed of ~9m/s or 32km/h for simplicity)
+        // Ideally we'd map this to the log's timeline, but linear estimation is sufficient for station markers.
+        // We know total distance is _route!.totalMeters and total duration is pre-calculated.
+        double avgSpeed = 10.0;
+        if (_route != null && _route!.totalDurationSeconds > 0) {
+          avgSpeed = _route!.totalMeters / _route!.totalDurationSeconds;
+        }
+
+        routeStations.add(
+          TestRouteStation(
+            id: stop['id']?.toString() ?? 'unknown',
+            name: stop['name']?.toString() ?? 'Unknown Station',
+            // Use the SNAPPED position on the route for the test engine logic
+            position: closestPoint,
+            cumulativeMeters: progressMeters,
+            // Calculate approximate arrival time
+            arrivalTimeSeconds: progressMeters / avgSpeed,
+            dwellTimeSeconds: 25.0,
+            isUnderground:
+                true, // Assume metro is underground for simplicity in this test
+          ),
+        );
+      }
+    }
+
+    // Sort by order of appearance on path
+    routeStations.sort(
+      (a, b) => a.cumulativeMeters.compareTo(b.cumulativeMeters),
+    );
+
+    _log(
+      'LOAD',
+      'EVENT',
+      'Snapped ${routeStations.length} stations from all_india_stops',
+    );
+    return routeStations;
+  }
+
+  /// Returns (ProjectedPoint, DistanceToPolyline, CumulativeDistAlongPolyline)
+  (LatLng, double, double) _findClosestPointOnPolyline(
+    LatLng point,
+    List<LatLng> polyline,
+  ) {
+    double minDst = double.infinity;
+    LatLng bestProj = polyline.first;
+    double bestProgress = 0.0;
+
+    // Pre-calculate cumulative distances for accuracy
+    // (This is expensive to do for every point, ideally cached)
+    final polyDist = _computeCumulativeMeters(polyline);
+
+    for (int i = 0; i < polyline.length - 1; i++) {
+      final p1 = polyline[i];
+      final p2 = polyline[i + 1];
+
+      final (proj, tFraction) = _projectPointOnSegment(point, p1, p2);
+      final dist = _haversineDistance(point, proj);
+
+      if (dist < minDst) {
+        minDst = dist;
+        bestProj = proj;
+        // tFraction is 0..1 fraction of segment.
+        // Segment length:
+        final segLen = polyDist[i + 1] - polyDist[i];
+        bestProgress = polyDist[i] + (segLen * tFraction);
+      }
+    }
+
+    return (bestProj, minDst, bestProgress);
+  }
+
+  (LatLng, double) _projectPointOnSegment(LatLng p, LatLng a, LatLng b) {
+    final ap = _toCartesian(p.latitude - a.latitude, p.longitude - a.longitude);
+    final ab = _toCartesian(b.latitude - a.latitude, b.longitude - a.longitude);
+
+    final dot = ap.x * ab.x + ap.y * ab.y;
+    final lenSq = ab.x * ab.x + ab.y * ab.y;
+
+    double t = (lenSq == 0) ? 0.0 : (dot / lenSq);
+    t = t.clamp(0.0, 1.0);
+
+    final lat = a.latitude + (b.latitude - a.latitude) * t;
+    final lng = a.longitude + (b.longitude - a.longitude) * t;
+
+    return (LatLng(lat, lng), t);
+  }
+
+  math.Point<double> _toCartesian(double dLat, double dLng) {
+    // Determine approx meters
+    // Lat deg ~ 111000m
+    // Lng deg ~ 111000 * cos(lat)
+    const metersPerLat = 111320.0;
+    // rough approx at equator/mid-lat, sufficient for small segments
+    const metersPerLng = 111320.0;
+    return math.Point(dLat * metersPerLat, dLng * metersPerLng);
   }
 
   Future<void> _loadNonMetroRoute(TestRouteId routeId) async {
@@ -513,10 +1131,7 @@ class ImuReplayEngineV2 {
     );
 
     final fullPoly = [...walkPoints, ...autoPoints];
-    final fullCum = [
-      ...walkCum,
-      ...autoCum.map((m) => m + walkCum.last),
-    ];
+    final fullCum = [...walkCum, ...autoCum.map((m) => m + walkCum.last)];
 
     _route = TestRoute(
       id: routeId,
@@ -668,7 +1283,11 @@ class ImuReplayEngineV2 {
     if (_route == null || _isPlaying) return;
 
     _isPlaying = true;
-    _lastTickTime = DateTime.now();
+    if (!deterministicReplay) {
+      _lastTickTime = DateTime.now();
+    } else {
+      _lastTickTime = null;
+    }
     _playbackTimer?.cancel();
     _playbackTimer = Timer.periodic(
       const Duration(milliseconds: 10), // 100 Hz
@@ -713,6 +1332,17 @@ class ImuReplayEngineV2 {
     _stationaryDuration = 0.0;
     _nextIntermittentDropout = 10 + _random.nextDouble() * 20;
     _intermittentDropoutEnd = 0;
+
+    if (_isLogReplayMode) {
+      _logLocIndex = 0;
+      _logAccelIndex = 0;
+      _logGyroIndex = 0;
+      _lastLogAccel = null;
+      _lastLogGyro = null;
+      // Initialize elapsed time to start of log relative to 0
+      // Actually we want playback _elapsedSeconds to run from 0 to Duration
+      // We will map _elapsedSeconds to log.secondsElapsed
+    }
   }
 
   void dispose() {
@@ -722,6 +1352,7 @@ class ImuReplayEngineV2 {
     _gpsController.close();
     _tickController.close();
     _logController.close();
+    _imuSampleController.close();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -734,13 +1365,29 @@ class ImuReplayEngineV2 {
 
     // Calculate warped delta
     final now = DateTime.now();
-    final realDelta = _lastTickTime == null
-        ? 0.01
-        : (now.difference(_lastTickTime!).inMicroseconds / 1000000.0);
-    _lastTickTime = now;
+    final realDelta =
+        _lastTickTime == null
+            ? _fixedTickSeconds
+            : (now.difference(_lastTickTime!).inMicroseconds / 1000000.0);
+    if (!deterministicReplay) {
+      _lastTickTime = now;
+    }
 
-    final warpedDelta = realDelta * warpFactor;
+    final warpedDelta =
+        (deterministicReplay ? _fixedTickSeconds : realDelta) * warpFactor;
     _elapsedSeconds += warpedDelta;
+
+    final simTime =
+        deterministicReplay
+            ? DateTime.fromMicrosecondsSinceEpoch(
+              (_elapsedSeconds * 1e6).round(),
+            )
+            : now;
+
+    if (_isLogReplayMode) {
+      _tickLogReplay(warpedDelta);
+      return;
+    }
 
     // Check for end
     if (_elapsedSeconds >= route.totalDurationSeconds) {
@@ -764,24 +1411,39 @@ class ImuReplayEngineV2 {
     final (gyroX, gyroY, gyroZ) = _generateGyroscope(warpedDelta, bearing);
 
     // Emit IMU
-    _accelController.add(AccelerometerEvent(accelX, accelY, accelZ, now));
-    _gyroController.add(GyroscopeEvent(gyroX, gyroY, gyroZ, now));
+    _accelController.add(AccelerometerEvent(accelX, accelY, accelZ, simTime));
+    _gyroController.add(GyroscopeEvent(gyroX, gyroY, gyroZ, simTime));
+    _imuSampleController.add(
+      ImuSample(
+        ax: accelX,
+        ay: accelY,
+        az: accelZ,
+        gx: gyroX,
+        gy: gyroY,
+        gz: gyroZ,
+        timestamp: Duration(microseconds: simTime.microsecondsSinceEpoch),
+      ),
+    );
 
     // GPS handling
     final gpsResult = _computeGpsState(position, leg);
     if (gpsResult.shouldEmit) {
-      _gpsController.add(_createPosition(
-        position,
-        bearing,
-        _currentSpeed,
-        gpsResult.accuracy,
-      ));
-      _lastGpsTime = now;
+      _gpsController.add(
+        _createPosition(
+          position,
+          bearing,
+          _currentSpeed,
+          gpsResult.accuracy,
+          simTime,
+        ),
+      );
+      _lastGpsTime = simTime;
       _lastGpsElapsed = _elapsedSeconds;
     }
 
     // ZUPT detection
-    final isZupt = _stationaryDuration > 0.5; // 500ms stationary = ZUPT candidate
+    final isZupt =
+        _stationaryDuration > 0.5; // 500ms stationary = ZUPT candidate
     final isAtStation = _motionState == SimulatedMotionState.stopped;
 
     if (isZupt && logVerbosity >= 2) {
@@ -814,9 +1476,13 @@ class ImuReplayEngineV2 {
       gpsAccuracy: gpsResult.accuracy,
       gpsAvailable: gpsResult.shouldEmit,
       dropoutMode: gpsDropoutMode,
-      timeSinceLastGps: _lastGpsElapsed != null
-          ? Duration(milliseconds: ((_elapsedSeconds - _lastGpsElapsed!) * 1000).round())
-          : null,
+      timeSinceLastGps:
+          _lastGpsElapsed != null
+              ? Duration(
+                milliseconds:
+                    ((_elapsedSeconds - _lastGpsElapsed!) * 1000).round(),
+              )
+              : null,
       accelX: accelX,
       accelY: accelY,
       accelZ: accelZ,
@@ -858,7 +1524,9 @@ class ImuReplayEngineV2 {
         break;
       }
     }
-    if (idx >= route.fullPolyline.length - 1) idx = route.fullPolyline.length - 2;
+    if (idx >= route.fullPolyline.length - 1) {
+      idx = route.fullPolyline.length - 2;
+    }
 
     final segStart = route.fullCumulativeMeters[idx];
     final segEnd = route.fullCumulativeMeters[idx + 1];
@@ -888,7 +1556,9 @@ class ImuReplayEngineV2 {
         break;
       }
     }
-    if (idx >= route.fullPolyline.length - 1) idx = route.fullPolyline.length - 2;
+    if (idx >= route.fullPolyline.length - 1) {
+      idx = route.fullPolyline.length - 2;
+    }
 
     final p1 = route.fullPolyline[idx];
     final p2 = route.fullPolyline[idx + 1];
@@ -906,15 +1576,20 @@ class ImuReplayEngineV2 {
     for (final station in route.allStations) {
       if (station.arrivalTimeSeconds <= elapsed) {
         last = station;
-      } else if (next == null) {
-        next = station;
+      } else {
+        next ??= station;
       }
     }
 
     return (last, next);
   }
 
-  void _updateMotionState(double delta, TestRouteLeg? leg, TestRouteStation? last, TestRouteStation? next) {
+  void _updateMotionState(
+    double delta,
+    TestRouteLeg? leg,
+    TestRouteStation? last,
+    TestRouteStation? next,
+  ) {
     final route = _route;
     if (route == null || leg == null) return;
 
@@ -940,9 +1615,10 @@ class ImuReplayEngineV2 {
         _motionState = SimulatedMotionState.braking;
       } else {
         targetSpeed = leg.averageSpeedMps;
-        _motionState = _currentSpeed < targetSpeed * 0.9
-            ? SimulatedMotionState.accelerating
-            : SimulatedMotionState.cruising;
+        _motionState =
+            _currentSpeed < targetSpeed * 0.9
+                ? SimulatedMotionState.accelerating
+                : SimulatedMotionState.cruising;
       }
     } else {
       targetSpeed = leg.averageSpeedMps;
@@ -978,16 +1654,30 @@ class ImuReplayEngineV2 {
   // GPS Simulation
   // ─────────────────────────────────────────────────────────────────────────
 
-  ({LatLng? position, double accuracy, bool shouldEmit}) _computeGpsState(LatLng truePosition, TestRouteLeg? leg) {
+  ({LatLng? position, double accuracy, bool shouldEmit}) _computeGpsState(
+    LatLng truePosition,
+    TestRouteLeg? leg,
+  ) {
     final isMetro = leg?.type == LegType.metro;
 
     switch (gpsDropoutMode) {
       case GpsDropoutMode.normal:
+        // Reset dropout tracking when back to normal mode
+        if (_lastDropoutMode != GpsDropoutMode.normal) {
+          _lastDropoutMode = GpsDropoutMode.normal;
+          _completeDropoutInitialEmitted = false;
+        }
         return (position: truePosition, accuracy: 10.0, shouldEmit: true);
 
       case GpsDropoutMode.completeDropout:
-        if (_lastGpsElapsed == null) {
-          // Emit one initial position
+        // Reset flag if mode just changed to completeDropout
+        if (_lastDropoutMode != GpsDropoutMode.completeDropout) {
+          _completeDropoutInitialEmitted = false;
+          _lastDropoutMode = GpsDropoutMode.completeDropout;
+        }
+        if (!_completeDropoutInitialEmitted) {
+          // Emit one initial position, then stop
+          _completeDropoutInitialEmitted = true;
           return (position: truePosition, accuracy: 10.0, shouldEmit: true);
         }
         return (position: null, accuracy: 0.0, shouldEmit: false);
@@ -998,7 +1688,8 @@ class ImuReplayEngineV2 {
           final (_, next) = _stationsAtTime(_elapsedSeconds);
           if (next != null) {
             final metersToNext = next.cumulativeMeters - progressMeters;
-            if (metersToNext < 50 || metersToNext > (next.cumulativeMeters - 50)) {
+            if (metersToNext < 50 ||
+                metersToNext > (next.cumulativeMeters - 50)) {
               // Near station - GPS available briefly
               return (position: truePosition, accuracy: 25.0, shouldEmit: true);
             }
@@ -1012,10 +1703,13 @@ class ImuReplayEngineV2 {
             _elapsedSeconds < _intermittentDropoutEnd) {
           return (position: null, accuracy: 0.0, shouldEmit: false);
         }
-        if (_elapsedSeconds >= _intermittentDropoutEnd && _intermittentDropoutEnd > 0) {
+        if (_elapsedSeconds >= _intermittentDropoutEnd &&
+            _intermittentDropoutEnd > 0) {
           // Schedule next dropout
-          _nextIntermittentDropout = _elapsedSeconds + 10 + _random.nextDouble() * 20;
-          _intermittentDropoutEnd = _nextIntermittentDropout + 5 + _random.nextDouble() * 10;
+          _nextIntermittentDropout =
+              _elapsedSeconds + 10 + _random.nextDouble() * 20;
+          _intermittentDropoutEnd =
+              _nextIntermittentDropout + 5 + _random.nextDouble() * 10;
         }
         return (position: truePosition, accuracy: 12.0, shouldEmit: true);
 
@@ -1038,7 +1732,13 @@ class ImuReplayEngineV2 {
     }
   }
 
-  Position _createPosition(LatLng pos, double bearing, double speed, double accuracy) {
+  Position _createPosition(
+    LatLng pos,
+    double bearing,
+    double speed,
+    double accuracy,
+    DateTime timestamp,
+  ) {
     return Position(
       latitude: pos.latitude,
       longitude: pos.longitude,
@@ -1049,7 +1749,7 @@ class ImuReplayEngineV2 {
       altitudeAccuracy: 3.0,
       headingAccuracy: 10.0,
       speedAccuracy: 0.5,
-      timestamp: DateTime.now(),
+      timestamp: timestamp,
     );
   }
 
@@ -1097,7 +1797,10 @@ class ImuReplayEngineV2 {
     return (x, y, z);
   }
 
-  (double x, double y, double z) _generateGyroscope(double delta, double bearing) {
+  (double x, double y, double z) _generateGyroscope(
+    double delta,
+    double bearing,
+  ) {
     double x = 0.0;
     double y = 0.0;
     double z = 0.0;
@@ -1138,10 +1841,12 @@ class ImuReplayEngineV2 {
         final segments = (dist / maxSegmentLength).ceil();
         for (int j = 1; j <= segments; j++) {
           final t = j / segments;
-          result.add(LatLng(
-            p1.latitude + t * (p2.latitude - p1.latitude),
-            p1.longitude + t * (p2.longitude - p1.longitude),
-          ));
+          result.add(
+            LatLng(
+              p1.latitude + t * (p2.latitude - p1.latitude),
+              p1.longitude + t * (p2.longitude - p1.longitude),
+            ),
+          );
           resultCum.add(cumMeters[i] + t * dist);
         }
       } else {
@@ -1157,10 +1862,12 @@ class ImuReplayEngineV2 {
     final result = <LatLng>[];
     for (int i = 0; i <= numPoints; i++) {
       final t = i / numPoints;
-      result.add(LatLng(
-        start.latitude + t * (end.latitude - start.latitude),
-        start.longitude + t * (end.longitude - start.longitude),
-      ));
+      result.add(
+        LatLng(
+          start.latitude + t * (end.latitude - start.latitude),
+          start.longitude + t * (end.longitude - start.longitude),
+        ),
+      );
     }
     return result;
   }
@@ -1178,7 +1885,8 @@ class ImuReplayEngineV2 {
     const R = 6371000.0;
     final dLat = _degToRad(p2.latitude - p1.latitude);
     final dLon = _degToRad(p2.longitude - p1.longitude);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_degToRad(p1.latitude)) *
             math.cos(_degToRad(p2.latitude)) *
             math.sin(dLon / 2) *
@@ -1193,7 +1901,8 @@ class ImuReplayEngineV2 {
     final lat2 = _degToRad(p2.latitude);
 
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
 
     return (_radToDeg(math.atan2(y, x)) + 360) % 360;
@@ -1206,13 +1915,249 @@ class ImuReplayEngineV2 {
   // Logging
   // ─────────────────────────────────────────────────────────────────────────
 
-  void _log(String category, String level, String message, [Map<String, dynamic>? data]) {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Log Replay Logic
+  // ─────────────────────────────────────────────────────────────────────────
+
+  void _tickLogReplay(double delta) {
+    if (_route == null) return;
+
+    // Current replay time in log time domain
+    final logTime = _logStartTimeSeconds + _elapsedSeconds;
+
+    // 1. Process IMU Events up to current time
+    // Accelerometer
+    while (_logAccelIndex < _logAccels.length &&
+        _logAccels[_logAccelIndex].secondsElapsed <= logTime) {
+      final sample = _logAccels[_logAccelIndex];
+      // Use log timestamp converted to DateTime for proper EKF integration
+      final sampleTime = DateTime.fromMicrosecondsSinceEpoch(
+        (sample.secondsElapsed * 1e6).round(),
+      );
+      _accelController.add(
+        AccelerometerEvent(sample.x, sample.y, sample.z, sampleTime),
+      );
+      _lastLogAccel = sample;
+      _logAccelIndex++;
+    }
+
+    // Gyroscope
+    while (_logGyroIndex < _logGyros.length &&
+        _logGyros[_logGyroIndex].secondsElapsed <= logTime) {
+      final sample = _logGyros[_logGyroIndex];
+      // Use log timestamp converted to DateTime for proper EKF integration
+      final sampleTime = DateTime.fromMicrosecondsSinceEpoch(
+        (sample.secondsElapsed * 1e6).round(),
+      );
+      _gyroController.add(
+        GyroscopeEvent(sample.x, sample.y, sample.z, sampleTime),
+      );
+      _lastLogGyro = sample;
+      if (_lastLogAccel != null) {
+        _imuSampleController.add(
+          ImuSample(
+            ax: _lastLogAccel!.x,
+            ay: _lastLogAccel!.y,
+            az: _lastLogAccel!.z,
+            gx: sample.x,
+            gy: sample.y,
+            gz: sample.z,
+            timestamp: Duration(
+              microseconds: sampleTime.microsecondsSinceEpoch,
+            ),
+          ),
+        );
+      }
+      _logGyroIndex++;
+    }
+
+    // 2. Process Location (Interpolate if needed, but for now just taking latest valid)
+    // Find latest location sample <= logTime
+    LogLocation? currentLoc;
+    while (_logLocIndex < _logLocations.length &&
+        _logLocations[_logLocIndex].secondsElapsed <= logTime) {
+      currentLoc = _logLocations[_logLocIndex];
+      _logLocIndex++;
+    }
+
+    // If we have a current location, process it
+    if (currentLoc != null) {
+      final rawPos = LatLng(currentLoc.latitude, currentLoc.longitude);
+
+      // Snap to Ground Truth
+      // Returns (ProjectedPoint, DistanceToPolyline, CumulativeDistAlongPolyline)
+      final (snappedPos, _, pm) = _findClosestPointOnPolyline(
+        rawPos,
+        _route!.fullPolyline,
+      );
+
+      final progressMeters = pm;
+      final progress =
+          _route!.totalMeters > 0 ? progressMeters / _route!.totalMeters : 0.0;
+
+      // Identify ZUPT
+      final isZupt = currentLoc.speed < 0.8; // Relaxed threshold for log noise
+      if (isZupt) {
+        _stationaryDuration += delta;
+      } else {
+        _stationaryDuration = 0.0;
+      }
+
+      // ───────────────────────────────────────────────────────────────────────
+      // NEW: Station Proximity & Snap Logic
+      // ───────────────────────────────────────────────────────────────────────
+
+      // Find nearest station
+      TestRouteStation? nearestStation;
+      double minStationDist = double.infinity;
+
+      for (final station in _route!.allStations) {
+        final dist = _haversineDistance(snappedPos, station.position);
+        if (dist < minStationDist) {
+          minStationDist = dist;
+          nearestStation = station;
+        }
+      }
+
+      // Define "At Station" logic:
+      // 1. Within 50m of station center
+      // 2. Speed is low (< 2.0 m/s) OR we are stationary
+      // 3. Optional: We haven't just left this station (hysteresis could be added but simpler for now)
+      final isNearStation = minStationDist < 50.0;
+      final isSlow = currentLoc.speed < 2.0;
+
+      final isAtStation = isNearStation && (isSlow || isZupt);
+
+      // Populate last/next stations for UI context
+      // If we are at a station, it's the "last" one we visited (or current)
+      // If we are moving, logic is more complex without strictly ordered legs,
+      // but nearest is a good proxy for "current/next" in this replay context.
+      TestRouteStation? lastStation;
+      TestRouteStation? nextStation;
+
+      if (nearestStation != null) {
+        if (progressMeters > nearestStation.cumulativeMeters) {
+          lastStation = nearestStation;
+          // We'd need to find the NEXT one in the list
+          // Simple lookup:
+          final idx = _route!.allStations.indexOf(nearestStation);
+          if (idx != -1 && idx < _route!.allStations.length - 1) {
+            nextStation = _route!.allStations[idx + 1];
+          }
+        } else {
+          nextStation = nearestStation;
+          final idx = _route!.allStations.indexOf(nearestStation);
+          if (idx != -1 && idx > 0) {
+            lastStation = _route!.allStations[idx - 1];
+          }
+        }
+      }
+
+      // Emit Tick
+      final result = ReplayTickResultV2(
+        elapsedSeconds: _elapsedSeconds,
+        progress: progress,
+        progressMeters: progressMeters,
+        position: snappedPos, // Ground Truth for visualization
+        bearing: currentLoc.bearing,
+        speedMps: currentLoc.speed,
+        motionState:
+            isZupt
+                ? SimulatedMotionState.stopped
+                : SimulatedMotionState.cruising,
+
+        // GPS Output Logic
+        // In Log Replay, 'gpsPosition' is the RAW LOG position (noisy)
+        // 'position' above is the SNAPPED/GROUND TRUTH position
+        gpsPosition: gpsDropoutMode == GpsDropoutMode.completeDropout ? null : rawPos,
+        gpsAccuracy:
+            currentLoc
+                .speedAccuracy, // Using speed accuracy as proxy or default? Log has bearing/speed acc.
+        // Let's use a default if position acc missing, but we have bearingAcc/speedAcc.
+        // Actually log header had bearingAccuracy, speedAccuracy.
+        // Let's assume 10m if missing.
+        gpsAvailable: gpsDropoutMode != GpsDropoutMode.completeDropout,
+        dropoutMode: gpsDropoutMode,
+
+        accelX:
+            _logAccels.isNotEmpty
+                ? _logAccels[math.min(_logAccelIndex, _logAccels.length - 1)].x
+                : 0,
+        accelY:
+            _logAccels.isNotEmpty
+                ? _logAccels[math.min(_logAccelIndex, _logAccels.length - 1)].y
+                : 0,
+        accelZ:
+            _logAccels.isNotEmpty
+                ? _logAccels[math.min(_logAccelIndex, _logAccels.length - 1)].z
+                : 9.8,
+
+        gyroX:
+            _logGyros.isNotEmpty
+                ? _logGyros[math.min(_logGyroIndex, _logGyros.length - 1)].x
+                : 0,
+        gyroY:
+            _logGyros.isNotEmpty
+                ? _logGyros[math.min(_logGyroIndex, _logGyros.length - 1)].y
+                : 0,
+        gyroZ:
+            _logGyros.isNotEmpty
+                ? _logGyros[math.min(_logGyroIndex, _logGyros.length - 1)].z
+                : 0,
+
+        isZuptCandidate: isZupt,
+        zuptDurationSeconds: isZupt ? _stationaryDuration : null,
+        // Calculate stations...
+        isAtStation: isAtStation,
+        lastStation: lastStation,
+        nextStation: nextStation,
+      );
+
+      _tickController.add(result);
+
+      // Emit GPS event if enabled
+      if (result.gpsAvailable) {
+        // Apply manual dropout if requested (Dashboard "Deactivate GPS")
+        if (gpsDropoutMode != GpsDropoutMode.completeDropout) {
+          final gpsTime = DateTime.fromMicrosecondsSinceEpoch(
+            (currentLoc.secondsElapsed * 1e6).round(),
+          );
+          _gpsController.add(
+            Position(
+              latitude: rawPos.latitude,
+              longitude: rawPos.longitude,
+              timestamp: gpsTime,
+              accuracy: 10.0, // Default or estimate
+              altitude: currentLoc.altitude,
+              heading: currentLoc.bearing,
+              speed: currentLoc.speed,
+              speedAccuracy: currentLoc.speedAccuracy,
+              headingAccuracy: currentLoc.bearingAccuracy,
+              altitudeAccuracy: 0.0,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _log(
+    String category,
+    String level,
+    String message, [
+    Map<String, dynamic>? data,
+  ]) {
     if (logVerbosity == 0) return;
     if (logVerbosity == 1 && level != 'EVENT') return;
     if (logVerbosity == 2 && level == 'DEBUG') return;
 
     final entry = ReplayLogEntry(
-      timestamp: DateTime.now(),
+      timestamp:
+          deterministicReplay
+              ? DateTime.fromMicrosecondsSinceEpoch(
+                (_elapsedSeconds * 1e6).round(),
+              )
+              : DateTime.now(),
       elapsedSeconds: _elapsedSeconds,
       category: category,
       level: level,
@@ -1221,9 +2166,6 @@ class ImuReplayEngineV2 {
     );
 
     _logs.add(entry);
-    if (_logs.length > _maxLogs) {
-      _logs.removeAt(0);
-    }
 
     _logController.add(entry);
   }

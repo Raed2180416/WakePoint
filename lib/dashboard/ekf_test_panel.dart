@@ -7,8 +7,14 @@
 // - Time warp is controlled externally from main dashboard
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:html' as html;
+
+import '../services/trackingservice.dart' as ts;
 
 import '../core/ekf/ekf_test_controller.dart';
 import '../core/ekf/imu_replay_engine_v2.dart';
@@ -17,19 +23,26 @@ import '../core/ekf/imu_replay_engine_v2.dart';
 enum CuratedRoute {
   /// Purple Line: Majestic to Nallur Halli (Metro)
   purpleLine,
+
   /// Green Line: Nagasandra to Silk Institute (Metro)
   greenLine,
+
   /// Non-Metro: Koramangala to Indiranagar (Auto/Cab)
   nonMetro,
+
+  /// Log Replay: Nallur Halli to Vijayanagar (Real Data)
+  logReplay,
 }
 
 /// Widget providing simplified EKF testing controls for the dashboard.
 class EkfTestPanel extends StatefulWidget {
   /// Callback when GPS position should be injected.
-  final void Function(LatLng position, double accuracy, double speed)? onInjectGps;
+  final void Function(LatLng position, double accuracy, double speed)?
+  onInjectGps;
 
   /// Callback when route polyline/stations change.
-  final void Function(List<LatLng> polyline, List<LatLng> stations)? onRouteChanged;
+  final void Function(List<LatLng> polyline, List<LatLng> stations)?
+  onRouteChanged;
 
   /// Callback when visualization updates.
   final void Function(EkfTestVisualization)? onVisualizationUpdate;
@@ -54,9 +67,10 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   final ScrollController _logScrollController = ScrollController();
 
   // UI State
-  CuratedRoute _selectedRoute = CuratedRoute.purpleLine;
+  CuratedRoute _selectedRoute = CuratedRoute.logReplay;
   bool _isInitialized = false;
   bool _isPlaying = false;
+  bool _gpsEnabled = true; // Toggle for GPS on/off
 
   // Visualization state
   EkfTestVisualization? _lastViz;
@@ -100,11 +114,7 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
 
     // Inject GPS if available
     if (viz.gpsAvailable && viz.gpsPosition != null) {
-      widget.onInjectGps?.call(
-        viz.gpsPosition!,
-        15.0,
-        viz.speedMps,
-      );
+      widget.onInjectGps?.call(viz.gpsPosition!, 15.0, viz.speedMps);
     }
 
     widget.onVisualizationUpdate?.call(viz);
@@ -113,7 +123,7 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   void _onLogEntry(EkfTestLogEntry entry) {
     // Only show important logs (ZUPT, stations, alarms)
     if (entry.category == EkfTestLogCategory.imu) return;
-    
+
     setState(() {
       _displayLogs.insert(0, entry);
       if (_displayLogs.length > _maxDisplayLogs) {
@@ -127,13 +137,23 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       CuratedRoute.purpleLine => TestRouteId.majesticToNallurHalli,
       CuratedRoute.greenLine => TestRouteId.rajajinargarToNallurHalli,
       CuratedRoute.nonMetro => TestRouteId.koramangalaToIndiranagar,
+      CuratedRoute.logReplay => TestRouteId.nallurHalliToVijayanagar,
     };
   }
 
   Future<void> _loadRoute() async {
     try {
       final testRouteId = _mapCuratedToTestRoute(_selectedRoute);
-      await _controller.loadRoute(testRouteId);
+
+      if (_selectedRoute == CuratedRoute.logReplay) {
+        // Hardcoded path for the specific log requirement
+        await _controller.loadLog(
+          'assets/logs/Nallur_to_Vijaynagar',
+          testRouteId,
+        );
+      } else {
+        await _controller.loadRoute(testRouteId);
+      }
 
       final route = _controller.route;
       if (route != null) {
@@ -152,6 +172,16 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   }
 
   void _startTest() {
+    // Wire up streams to TrackingService for injection
+    // ignore: invalid_use_of_visible_for_testing_member
+    ts.testAccelerometerStream = _controller.accelerometerStream;
+    // ignore: invalid_use_of_visible_for_testing_member
+    ts.testGyroscopeStream = _controller.gyroscopeStream;
+    // Note: GPS is injected via onInjectGps callback which calls LocationManager,
+    // but we can also set the stream here for completeness if TrackingService uses it directly.
+    // _controller.gpsStream is a stream of Positions.
+    // ts.testGpsStream = _controller.gpsStream; // GPS is injected via callback
+
     if (!_isInitialized) {
       _loadRoute().then((_) {
         if (_isInitialized) {
@@ -167,6 +197,13 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
 
   void _stopTest() {
     _controller.stop();
+    // Clean up injection streams
+    // ignore: invalid_use_of_visible_for_testing_member
+    ts.testAccelerometerStream = null;
+    // ignore: invalid_use_of_visible_for_testing_member
+    ts.testGyroscopeStream = null;
+    ts.testGpsStream = null;
+
     _displayLogs.clear();
     setState(() {
       _isPlaying = false;
@@ -178,6 +215,72 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
+  }
+
+  void _exportEkfLogs(String format) {
+    final logs = _controller.logs;
+    if (logs.isEmpty) {
+      _showError('No EKF logs to export');
+      return;
+    }
+
+    final now = DateTime.now().toIso8601String().replaceAll(':', '-');
+    final filename = 'ekf_logs_$now.$format';
+
+    if (format == 'json') {
+      final payload = {
+        'generatedAt': DateTime.now().toIso8601String(),
+        'scenario': _controller.scenario.name,
+        'warpFactor': _controller.warpFactor,
+        'logCount': logs.length,
+        'logs': logs
+            .map(
+              (l) => {
+                'timestamp': l.timestamp.toIso8601String(),
+                'elapsedSeconds': l.elapsedSeconds,
+                'category': l.category.name,
+                'level': l.level,
+                'message': l.message,
+                'data': l.data,
+              },
+            )
+            .toList(),
+      };
+      final jsonText = const JsonEncoder.withIndent('  ').convert(payload);
+      _downloadTextFile(filename, jsonText, 'application/json');
+      return;
+    }
+
+    final header =
+        'timestamp,elapsedSeconds,category,level,message,data';
+    final rows = logs.map((l) {
+      final values = [
+        l.timestamp.toIso8601String(),
+        l.elapsedSeconds.toStringAsFixed(3),
+        l.category.name,
+        l.level,
+        l.message,
+        l.data != null ? jsonEncode(l.data) : '',
+      ];
+      return values.map(_escapeCsv).join(',');
+    });
+    final csv = ([header, ...rows]).join('\n');
+    _downloadTextFile(filename, csv, 'text/csv');
+  }
+
+  String _escapeCsv(String value) {
+    final escaped = value.replaceAll('"', '""');
+    return '"$escaped"';
+  }
+
+  void _downloadTextFile(String filename, String content, String mimeType) {
+    final bytes = utf8.encode(content);
+    final blob = html.Blob([bytes], mimeType);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', filename)
+      ..click();
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -200,6 +303,8 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                     _buildRouteSelector(),
                     const SizedBox(height: 16),
                     _buildStartStopButton(),
+                    const SizedBox(height: 12),
+                    _buildGpsToggle(),
                     const SizedBox(height: 16),
                     _buildProgressIndicator(),
                     const SizedBox(height: 16),
@@ -240,9 +345,10 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   }
 
   Widget _buildStateChip() {
-    final (color, label) = _isPlaying
-        ? (Colors.green, 'RUNNING')
-        : _isInitialized
+    final (color, label) =
+        _isPlaying
+            ? (Colors.green, 'RUNNING')
+            : _isInitialized
             ? (Colors.blue, 'READY')
             : (Colors.grey, 'SELECT ROUTE');
 
@@ -269,11 +375,12 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Select Test Route',
+          'Test Route',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
         ),
         const SizedBox(height: 8),
-        ...CuratedRoute.values.map((route) => _buildRouteOption(route)),
+        // Restricted to Log Replay only
+        _buildRouteOption(CuratedRoute.logReplay),
       ],
     );
   }
@@ -283,19 +390,23 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     final (icon, name, description, color) = _routeInfo(route);
 
     return GestureDetector(
-      onTap: _isPlaying
-          ? null
-          : () {
-              setState(() {
-                _selectedRoute = route;
-                _isInitialized = false;
-              });
-            },
+      onTap:
+          _isPlaying
+              ? null
+              : () {
+                setState(() {
+                  _selectedRoute = route;
+                  _isInitialized = false;
+                });
+              },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.05),
+          color:
+              isSelected
+                  ? color.withValues(alpha: 0.15)
+                  : Colors.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? color : Colors.grey.withValues(alpha: 0.3),
@@ -331,16 +442,12 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                   const SizedBox(height: 2),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
-            if (isSelected)
-              Icon(Icons.check_circle, color: color, size: 24),
+            if (isSelected) Icon(Icons.check_circle, color: color, size: 24),
           ],
         ),
       ),
@@ -367,6 +474,12 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
         'Koramangala → Indiranagar (no fixed stations)',
         Colors.orange,
       ),
+      CuratedRoute.logReplay => (
+        '📼',
+        'Log Replay (Real Data)',
+        'Nallur Halli → Vijayanagar (Ground Truth vs Log)',
+        Colors.blue,
+      ),
     };
   }
 
@@ -385,6 +498,67 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
           _isPlaying ? 'STOP TEST' : 'START TEST',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGpsToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color:
+            _gpsEnabled
+                ? Colors.green.withValues(alpha: 0.1)
+                : Colors.orange.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _gpsEnabled ? Colors.green : Colors.orange,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            _gpsEnabled ? Icons.gps_fixed : Icons.gps_off,
+            color: _gpsEnabled ? Colors.green : Colors.orange,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _gpsEnabled ? 'GPS Active' : 'GPS Disabled',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: _gpsEnabled ? Colors.green[700] : Colors.orange[700],
+                  ),
+                ),
+                Text(
+                  _gpsEnabled
+                      ? 'Toggle off to test EKF without GPS'
+                      : 'EKF is estimating position from IMU only',
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _gpsEnabled,
+            activeColor: Colors.green,
+            onChanged:
+                _isPlaying
+                    ? (value) {
+                      setState(() {
+                        _gpsEnabled = value;
+                      });
+                      _controller.toggleGpsDropout();
+                    }
+                    : null,
+          ),
+        ],
       ),
     );
   }
@@ -466,9 +640,17 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
               ),
               Row(
                 children: [
-                  _buildStatBadge('ZUPT', stats['zuptEvents']?.toString() ?? '0', Colors.purple),
+                  _buildStatBadge(
+                    'ZUPT',
+                    stats['zuptEvents']?.toString() ?? '0',
+                    Colors.purple,
+                  ),
                   const SizedBox(width: 8),
-                  _buildStatBadge('SNAPS', stats['stationSnaps']?.toString() ?? '0', Colors.orange),
+                  _buildStatBadge(
+                    'SNAPS',
+                    stats['stationSnaps']?.toString() ?? '0',
+                    Colors.orange,
+                  ),
                 ],
               ),
             ],
@@ -477,18 +659,67 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
           if (viz != null) ...[
             Row(
               children: [
-                Expanded(child: _buildMetricTile('Speed', '${(viz.speedMps * 3.6).toStringAsFixed(1)}', 'km/h', Icons.speed)),
+                Expanded(
+                  child: _buildMetricTile(
+                    'EKF Speed',
+                    (viz.speedMps * 3.6).toStringAsFixed(1),
+                    'km/h',
+                    Icons.speed,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildMetricTile('Distance', '${(viz.trueProgressMeters / 1000).toStringAsFixed(2)}', 'km', Icons.straighten)),
+                Expanded(
+                  child: _buildMetricTile(
+                    'EKF Dist',
+                    ((viz.ekfProgressMeters ?? 0) / 1000).toStringAsFixed(2),
+                    'km',
+                    Icons.straighten,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _buildMetricTile('Motion', viz.motionState.name, '', Icons.directions_walk)),
+                Expanded(
+                  child: _buildMetricTile(
+                    'σ_pos',
+                    viz.ekfSigmaS?.toStringAsFixed(0) ?? '-',
+                    'm',
+                    Icons.radar,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: _buildMetricTile('GPS', viz.gpsAvailable ? 'Active' : 'Dropout', '', 
-                  viz.gpsAvailable ? Icons.gps_fixed : Icons.gps_off)),
+                Expanded(
+                  child: _buildMetricTile(
+                    'σ_vel',
+                    viz.ekfSigmaV?.toStringAsFixed(2) ?? '-',
+                    'm/s',
+                    Icons.show_chart,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    'GPS',
+                    viz.gpsAvailable ? 'Active' : 'Dropout',
+                    '',
+                    viz.gpsAvailable ? Icons.gps_fixed : Icons.gps_off,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildMetricTile(
+                    'EKF Mode',
+                    viz.ekfDegraded ? 'DEGRADED' : 'Normal',
+                    '',
+                    viz.ekfDegraded ? Icons.warning : Icons.check_circle,
+                  ),
+                ),
               ],
             ),
             if (viz.currentStation != null || viz.nextStation != null) ...[
@@ -496,9 +727,17 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
               const Divider(),
               const SizedBox(height: 4),
               if (viz.currentStation != null)
-                _buildStationRow('Last Station', viz.currentStation!.name, viz.isAtStation),
+                _buildStationRow(
+                  'Last Station',
+                  viz.currentStation!.name,
+                  viz.isAtStation,
+                ),
               if (viz.nextStation != null && viz.metersToNext != null)
-                _buildStationRow('Next Station', '${viz.nextStation!.name} (${viz.metersToNext!.toStringAsFixed(0)}m)', false),
+                _buildStationRow(
+                  'Next Station',
+                  '${viz.nextStation!.name} (${viz.metersToNext!.toStringAsFixed(0)}m)',
+                  false,
+                ),
             ],
           ] else
             const Center(
@@ -521,12 +760,21 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       ),
       child: Text(
         '$label: $value',
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
       ),
     );
   }
 
-  Widget _buildMetricTile(String label, String value, String unit, IconData icon) {
+  Widget _buildMetricTile(
+    String label,
+    String value,
+    String unit,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -542,12 +790,24 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 9, color: Colors.grey[600])),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                ),
                 Row(
                   children: [
-                    Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     if (unit.isNotEmpty)
-                      Text(' $unit', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                      Text(
+                        ' $unit',
+                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                      ),
                   ],
                 ),
               ],
@@ -591,7 +851,11 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
               ),
               child: const Text(
                 'AT STATION',
-                style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 8,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],
@@ -610,13 +874,34 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
               'Event Log',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 18),
-              tooltip: 'Clear logs',
-              onPressed: () {
-                _controller.clearLogs();
-                setState(() => _displayLogs.clear());
-              },
+            Row(
+              children: [
+                if (_controller.logs.isNotEmpty)
+                  PopupMenuButton<String>(
+                    tooltip: 'Export logs',
+                    icon: const Icon(Icons.download, size: 18),
+                    onSelected: _exportEkfLogs,
+                    itemBuilder:
+                        (context) => const [
+                          PopupMenuItem(
+                            value: 'json',
+                            child: Text('Export JSON'),
+                          ),
+                          PopupMenuItem(
+                            value: 'csv',
+                            child: Text('Export CSV'),
+                          ),
+                        ],
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  tooltip: 'Clear logs',
+                  onPressed: () {
+                    _controller.clearLogs();
+                    setState(() => _displayLogs.clear());
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -626,29 +911,30 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
             color: Colors.grey[900],
             borderRadius: BorderRadius.circular(6),
           ),
-          child: _displayLogs.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Events will appear here...',
-                    style: TextStyle(color: Colors.grey, fontSize: 11),
+          child:
+              _displayLogs.isEmpty
+                  ? const Center(
+                    child: Text(
+                      'Events will appear here...',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  )
+                  : ListView.builder(
+                    controller: _logScrollController,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: _displayLogs.length,
+                    itemBuilder: (ctx, i) {
+                      final entry = _displayLogs[i];
+                      return Text(
+                        entry.toColoredString(),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontFamily: 'monospace',
+                          color: _logColor(entry.category),
+                        ),
+                      );
+                    },
                   ),
-                )
-              : ListView.builder(
-                  controller: _logScrollController,
-                  padding: const EdgeInsets.all(8),
-                  itemCount: _displayLogs.length,
-                  itemBuilder: (ctx, i) {
-                    final entry = _displayLogs[i];
-                    return Text(
-                      entry.toColoredString(),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontFamily: 'monospace',
-                        color: _logColor(entry.category),
-                      ),
-                    );
-                  },
-                ),
         ),
       ],
     );

@@ -104,12 +104,40 @@ class MotionClassifier {
     required double ekfWeight,
     double innovationHighSeconds = 0.0,
     bool fftEnabled = true,
+    double? ekfVelocity,  // EKF velocity for hard gate
+    bool isDegraded = false,  // GPS dropout mode - velocity may be wrong
+    double? recentMaxAFwd,  // Max forward accel magnitude in recent window
   }) {
+    // Velocity hard gate: if moving fast, cannot be stationary.
+    // BUT: Lower the threshold to 1.0 m/s (3.6 km/h) to allow ZUPT detection
+    // during station approach and initial stop. Station stops have decel phase
+    // where velocity drops from cruising to zero.
+    //
+    // CRITICAL: During GPS dropout (degraded mode), velocity drifts due to accel bias.
+    // Skip the velocity hard gate and rely on IMU variance instead.
+    if (!isDegraded && ekfVelocity != null && ekfVelocity.abs() > 1.0) {
+      // Moving at > 1 m/s = definitely not stationary (only in normal mode)
+      return MotionState.vehicle;
+    }
+    
+    // CRITICAL: During GPS dropout, if we see significant forward acceleration,
+    // the train is clearly moving - do NOT classify as stationary!
+    // This prevents velocity from getting stuck at 0 during DR.
+    // Threshold: 0.15 m/s² is typical train vibration during cruising.
+    if (isDegraded && recentMaxAFwd != null && recentMaxAFwd > 0.15) {
+      // Seeing > 0.15 m/s² accel during GPS dropout = train is moving
+      return MotionState.vehicle;
+    }
+    
+    // Thresholds for stationary detection calibrated from real station stop data
+    // Real station stops: accelVar 0.15-0.5 (train vibration, HVAC), gyroVar 0.03-0.1 (phone jitter)
+    // Metro cruising: accelVar 0.5+, gyroVar 0.1+
     final imuStationary =
-        accelVariance < 4e-4 && gyroVariance < 7.62e-5;
-    final ekfStationary = sigmaV < 0.15 && recentZupt;
+        accelVariance < 0.5 && gyroVariance < 0.10;
+    // EKF stationary: low velocity uncertainty indicates we've been corrected to near-zero
+    final ekfStationary = sigmaV < 0.5;
     final stationaryScore =
-        0.7 * (imuStationary ? 1.0 : 0.0) + ekfWeight * (ekfStationary ? 1.0 : 0.0);
+        0.7 * (imuStationary ? 1.0 : 0.0) + 0.3 * (ekfStationary ? 1.0 : 0.0);
 
     if (stationaryScore >= 0.5) {
       return MotionState.stationary;

@@ -72,6 +72,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   final List<double> _stepBoundariesMeters =
       []; // Cumulative meters at step ends.
   final List<double> _stepDurationsSeconds = []; // Step durations in seconds.
+    List<Map<String, dynamic>> _rawSegments = const []; // Raw route segments.
+    List<double> _segmentStartMeters = const []; // Segment start meters.
+    List<double> _segmentEndMeters = const []; // Segment end meters.
+    double? _lastProgressMeters; // Last progress used to trim polylines.
 
   @override
   void initState() {
@@ -212,21 +216,21 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       if (_metroMode) {
         // Metro-specific segmentation (colors, styles per mode).
         final directionService = DirectionService(); // Instantiate.
-        // 1. Build simplified polylines for UI rendering
-        final segmentedPolylines = directionService.buildSegmentedPolylines(
-          directions!,
-          true,
-          simplify: false,
-        );
-        // 2. Build raw high-res segments for physics/snapping
+        // 1. Build raw high-res segments for physics/snapping
         final rawSegments = directionService.buildRawSegments(
           directions!,
           true,
           simplify: false,
         );
+        // 2. Build simplified polylines for UI rendering
+        final segmentedPolylines =
+            directionService.buildSegmentedPolylinesFromRawSegments(
+              rawSegments,
+            );
 
         setState(() {
           _polylines = segmentedPolylines.toSet(); // Assign set for Map.
+          _storeRawSegments(rawSegments); // Keep for trimming.
           // Flatten raw high-res points for accurate snapping
           _routePoints = rawSegments
               .expand<LatLng>((s) {
@@ -246,14 +250,19 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       } else {
         try {
           final directionService = DirectionService(); // Instantiate.
-          final segmentedPolylines = directionService.buildSegmentedPolylines(
+          final rawSegments = directionService.buildRawSegments(
             directions!,
             false,
-          ); // Driving/walking segmentation.
+          );
+          final segmentedPolylines =
+              directionService.buildSegmentedPolylinesFromRawSegments(
+                rawSegments,
+              ); // Driving/walking segmentation.
           if (segmentedPolylines.isNotEmpty) {
             // Normal path.
             setState(() {
               _polylines = segmentedPolylines.toSet(); // Draw polylines.
+              _storeRawSegments(rawSegments); // Keep for trimming.
               _routePoints = segmentedPolylines
                   .expand((p) => p.points)
                   .toList(growable: false); // Flatten for snapping.
@@ -280,6 +289,17 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                   width: 4,
                 ),
               };
+              _storeRawSegments([
+                {
+                  'mode': 'driving',
+                  'points':
+                      points
+                          .map(
+                            (p) => {'lat': p.latitude, 'lng': p.longitude},
+                          )
+                          .toList(),
+                },
+              ]);
               _routePoints = points; // Flatten.
               _isLoading = false; // Done.
             });
@@ -551,11 +571,23 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         }
       }
 
+      Set<Polyline>? remainingPolylines;
+      if (_rawSegments.isNotEmpty) {
+        if (_lastProgressMeters == null ||
+            (progress - _lastProgressMeters!).abs() >= 5.0) {
+          remainingPolylines = _buildRemainingPolylines(progress, markerPos);
+          _lastProgressMeters = progress;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _etaText = etaStr;
           _distanceText = distStr;
           _switchNotice = switchMsg;
+          if (remainingPolylines != null) {
+            _polylines = remainingPolylines!;
+          }
         });
       }
     }
@@ -684,6 +716,113 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _routeLengthMeters = sum; // Store total.
   }
 
+  void _storeRawSegments(List<Map<String, dynamic>> rawSegments) {
+    _rawSegments = rawSegments;
+    _segmentStartMeters = [];
+    _segmentEndMeters = [];
+    double cum = 0.0;
+    for (final seg in rawSegments) {
+      final pts = _segmentPointsFromRaw(seg);
+      final len = _segmentLengthMeters(pts);
+      _segmentStartMeters.add(cum);
+      cum += len;
+      _segmentEndMeters.add(cum);
+    }
+  }
+
+  List<LatLng> _segmentPointsFromRaw(Map<String, dynamic> seg) {
+    final pointsData = (seg['points'] as List?) ?? const [];
+    return pointsData
+        .map(
+          (p) => LatLng(
+            (p['lat'] as num).toDouble(),
+            (p['lng'] as num).toDouble(),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  double _segmentLengthMeters(List<LatLng> pts) {
+    if (pts.length < 2) return 0.0;
+    double sum = 0.0;
+    for (int i = 1; i < pts.length; i++) {
+      sum += Geolocator.distanceBetween(
+        pts[i - 1].latitude,
+        pts[i - 1].longitude,
+        pts[i].latitude,
+        pts[i].longitude,
+      );
+    }
+    return sum;
+  }
+
+  List<LatLng> _trimPolylineFromMeters(
+    List<LatLng> pts,
+    double offsetMeters,
+  ) {
+    if (pts.length < 2 || offsetMeters <= 0) return pts;
+    double traveled = 0.0;
+    for (int i = 1; i < pts.length; i++) {
+      final a = pts[i - 1];
+      final b = pts[i];
+      final seg = Geolocator.distanceBetween(
+        a.latitude,
+        a.longitude,
+        b.latitude,
+        b.longitude,
+      );
+      if (traveled + seg >= offsetMeters) {
+        final t = seg == 0 ? 0.0 : (offsetMeters - traveled) / seg;
+        final lat = a.latitude + (b.latitude - a.latitude) * t;
+        final lng = a.longitude + (b.longitude - a.longitude) * t;
+        final trimmed = <LatLng>[LatLng(lat, lng)];
+        trimmed.addAll(pts.sublist(i));
+        return trimmed;
+      }
+      traveled += seg;
+    }
+    return const [];
+  }
+
+  Set<Polyline>? _buildRemainingPolylines(
+    double progressMeters,
+    LatLng snappedPoint,
+  ) {
+    if (_rawSegments.isEmpty) return null;
+    if (_segmentStartMeters.isEmpty || _segmentEndMeters.isEmpty) return null;
+    final remaining = <Map<String, dynamic>>[];
+    for (int i = 0; i < _rawSegments.length; i++) {
+      final start = _segmentStartMeters[i];
+      final end = _segmentEndMeters[i];
+      if (progressMeters >= end) {
+        continue; // Segment fully behind.
+      }
+      final seg = _rawSegments[i];
+      final pts = _segmentPointsFromRaw(seg);
+      if (progressMeters <= start) {
+        remaining.add(seg);
+        continue;
+      }
+      final offset = progressMeters - start;
+      final trimmed = _trimPolylineFromMeters(pts, offset);
+      if (trimmed.isEmpty) continue;
+      trimmed[0] = snappedPoint;
+      remaining.add({
+        'mode': seg['mode'],
+        'points':
+            trimmed
+                .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+                .toList(),
+        'transit_line': seg['transit_line'],
+        'vehicle_type': seg['vehicle_type'],
+      });
+    }
+    if (remaining.isEmpty) return {};
+    final polylines = DirectionService()
+        .buildSegmentedPolylinesFromRawSegments(remaining);
+    return polylines.toSet();
+  }
+
   void _buildTransferBoundariesFromDirections() {
     // Populate transfer boundaries for metro notifications.
     _transferBoundariesMeters
@@ -770,6 +909,13 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
         body: const Center(child: Text("Invalid or missing destination data.")),
       );
     }
+    final cs = Theme.of(context).colorScheme;
+    final endTrackingStyle = ElevatedButton.styleFrom(
+      backgroundColor: cs.errorContainer,
+      foregroundColor: cs.onErrorContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    );
     return PopScope(
       // Intercept back button.
       canPop: false, // Prevent pop.
@@ -949,20 +1095,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                           child: SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.onError,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 18,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              style: endTrackingStyle,
                               onPressed: () async {
                                 // Stop alarm sounds and vibration
                                 await AlarmPlayer.stop();
@@ -1049,20 +1182,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                           // End Tracking Button
                           Expanded(
                             child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
-                                foregroundColor:
-                                    Theme.of(context).colorScheme.onError,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              style: endTrackingStyle,
                               onPressed: () async {
                                 // Stop alarm sounds and vibration
                                 await AlarmPlayer.stop();

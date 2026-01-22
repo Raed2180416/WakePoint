@@ -21,17 +21,19 @@ void main() {
       expect(state, MotionState.stationary);
     });
 
-    test('classifies human when walk band dominates', () {
+    test('classifies human when walk band dominates and not stationary', () {
       final classifier = MotionClassifier();
+      // Use higher variances to avoid stationary detection
       final state = classifier.classify(
-        accelVariance: 1e-3,
-        gyroVariance: 1e-3,
+        accelVariance: 0.8,  // Above 0.5 threshold
+        gyroVariance: 0.15,  // Above 0.10 threshold
         fftWalkEnergy: 10.0,
         fftTrainEnergy: 1.0,
-        sigmaV: 1.0,
+        sigmaV: 2.0,  // Above 0.5 threshold
         recentZupt: false,
         innovationSigma: 1.0,
         ekfWeight: 0.3,
+        fftEnabled: true,
       );
 
       expect(state, MotionState.human);
@@ -39,19 +41,79 @@ void main() {
 
     test('suppresses vehicle when innovation stays high', () {
       final classifier = MotionClassifier();
+      // Use higher variances to avoid stationary detection
       final state = classifier.classify(
-        accelVariance: 1e-3,
-        gyroVariance: 1e-3,
+        accelVariance: 0.8,  // Above stationary threshold
+        gyroVariance: 0.15,  // Above stationary threshold
         fftWalkEnergy: 0.1,
         fftTrainEnergy: 1.0,
-        sigmaV: 1.0,
+        sigmaV: 2.0,  // High uncertainty
         recentZupt: false,
         innovationSigma: 4.0,
         innovationHighSeconds: 12.0,
         ekfWeight: 0.3,
+        fftEnabled: true,
       );
 
       expect(state, MotionState.human);
+    });
+    
+    test('velocity hard gate returns vehicle when moving fast', () {
+      final classifier = MotionClassifier();
+      final state = classifier.classify(
+        accelVariance: 0.1,  // Low variance (would be stationary)
+        gyroVariance: 0.05,
+        fftWalkEnergy: 0.1,
+        fftTrainEnergy: 0.1,
+        sigmaV: 0.1,
+        recentZupt: false,
+        innovationSigma: 1.0,
+        ekfWeight: 0.3,
+        ekfVelocity: 5.0,  // Moving fast
+        isDegraded: false,
+      );
+
+      expect(state, MotionState.vehicle);
+    });
+    
+    test('skips velocity hard gate during degraded mode', () {
+      final classifier = MotionClassifier();
+      final state = classifier.classify(
+        accelVariance: 0.1,  // Low variance
+        gyroVariance: 0.05,
+        fftWalkEnergy: 0.1,
+        fftTrainEnergy: 0.1,
+        sigmaV: 0.3,
+        recentZupt: false,
+        innovationSigma: 1.0,
+        ekfWeight: 0.3,
+        ekfVelocity: 5.0,  // Moving fast (would trigger hard gate normally)
+        isDegraded: true,  // But degraded mode skips velocity gate
+        recentMaxAFwd: 0.05,  // No recent acceleration
+      );
+
+      // Should be stationary despite high velocity (velocity is drifted in DR)
+      expect(state, MotionState.stationary);
+    });
+    
+    test('uses aFwd to detect movement during degraded mode', () {
+      final classifier = MotionClassifier();
+      final state = classifier.classify(
+        accelVariance: 0.1,  // Low variance
+        gyroVariance: 0.05,
+        fftWalkEnergy: 0.1,
+        fftTrainEnergy: 0.1,
+        sigmaV: 0.3,
+        recentZupt: false,
+        innovationSigma: 1.0,
+        ekfWeight: 0.3,
+        ekfVelocity: 0.0,  // Velocity stuck at 0
+        isDegraded: true,
+        recentMaxAFwd: 0.5,  // But significant forward accel observed
+      );
+
+      // Should be vehicle because aFwd indicates movement
+      expect(state, MotionState.vehicle);
     });
   });
 

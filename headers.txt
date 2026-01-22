@@ -1,0 +1,2 @@
+time,seconds_elapsed,bearingAccuracy,speedAccuracy,verticalAccuracy,horizontalAccuracy,speed,bearing,altitude,longitude,latitude
+1766330538937000000,0.225,45,1.5,2.0873727798461914,34.85100173950195,0,0,834,77.7188955,12.9768785

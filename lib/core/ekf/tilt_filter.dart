@@ -46,9 +46,10 @@ class TiltFilter {
       return _lastOutput(sample.timestamp);
     }
 
-    final dt = _lastTs == null
-        ? null
-        : (sample.timestamp - _lastTs!).inMicroseconds / 1e6;
+    final dt =
+        _lastTs == null
+            ? null
+            : (sample.timestamp - _lastTs!).inMicroseconds / 1e6;
 
     _lastTs = sample.timestamp;
 
@@ -65,16 +66,63 @@ class TiltFilter {
     final accelMag = math.sqrt(ax * ax + ay * ay + az * az);
     _pushAccelMag(accelMag, dt ?? 0.01);
 
-    final gMeas = _accelLpf != null
-        ? _normalize(_accelLpf!)
-        : _normalize([ax, ay, az]);
+    final gMeas =
+        _accelLpf != null ? _normalize(_accelLpf!) : _normalize([ax, ay, az]);
 
     if (_gHat == null) {
       _gHat = gMeas;
     } else if (dt != null) {
       final gPred = _integrateGyro(_gHat!, sample.gx, sample.gy, sample.gz, dt);
-      if (_accelVariance() <= accelVarThreshold) {
-        _gHat = _normalize(_blend(gPred, gMeas, alpha));
+
+      // Divergence Check:
+      // Even if variance is low (smooth ride), if Accel vector disagrees with Gyro vector
+      // by more than a small margin, it's likely Lateral/Longitudinal Acceleration, not Tilt drift.
+      // 0.5 m/s² ~ 0.05 rad. We set threshold to 0.01 rad (~0.6 deg or ~0.1 m/s²).
+      final dot =
+          gPred[0] * gMeas[0] + gPred[1] * gMeas[1] + gPred[2] * gMeas[2];
+      // clamp for acos safety
+      final clampedDot = dot.clamp(-1.0, 1.0);
+      final divergence = math.acos(clampedDot);
+
+      // Motion-Gated Gravity Reference:
+      // - Stationary (Variance Low AND Low Divergence): Trust accelerometer (alpha = 0.05)
+      // - Vehicle (High Divergence OR High Variance): Mostly trust gyro (alpha = minAlpha)
+      //
+      // CRITICAL FIX: Pure gyro integration (alpha=0.0) causes 1-3°/min drift.
+      // This translates to ~0.26 m/s² error after 5 min → 468m position error after 60s.
+      // Solution: Always blend a tiny amount of accel reference when |a| ≈ g (±0.3 m/s²).
+      // The minAlpha=0.002 corrects ~0.12°/s drift with negligible lateral accel leak.
+
+      // Note: We override _motionState if divergence is high.
+      final isDivergent = divergence > 0.01;
+      final effectiveStationary =
+          _motionState == MotionState.stationary &&
+          _accelVariance() <= accelVarThreshold &&
+          !isDivergent;
+
+      // Check if accel magnitude is close to gravity (9.81 ± 0.3 m/s²)
+      // This indicates no significant lateral/longitudinal acceleration,
+      // so we can safely blend in a small amount of accel reference.
+      final accelMag = _accelLpf != null ? _norm(_accelLpf!) : _norm([ax, ay, az]);
+      const gravityMag = 9.81;
+      const gravityTol = 0.3; // Allow ±0.3 m/s² deviation
+      final accelNearGravity = (accelMag - gravityMag).abs() <= gravityTol;
+      
+      // Minimum alpha when accel magnitude ≈ gravity (even during vehicle motion)
+      // This prevents pure gyro integration drift while being safe from lateral accel
+      const minAlpha = 0.002;
+      
+      double currentAlpha;
+      if (effectiveStationary) {
+        currentAlpha = 0.05; // Strong correction when stationary
+      } else if (accelNearGravity && !isDivergent) {
+        currentAlpha = minAlpha; // Tiny correction during smooth vehicle motion
+      } else {
+        currentAlpha = 0.0; // Pure gyro during acceleration/braking
+      }
+
+      if (currentAlpha > 0) {
+        _gHat = _normalize(_blend(gPred, gMeas, currentAlpha));
       } else {
         _gHat = _normalize(gPred);
       }
@@ -87,7 +135,10 @@ class TiltFilter {
       _gHat = gMeas;
     }
 
-    final pitch = math.atan2(-_gHat![0], math.sqrt(_gHat![1] * _gHat![1] + _gHat![2] * _gHat![2]));
+    final pitch = math.atan2(
+      -_gHat![0],
+      math.sqrt(_gHat![1] * _gHat![1] + _gHat![2] * _gHat![2]),
+    );
     final roll = math.atan2(_gHat![1], _gHat![2]);
     final r = _rotationFromPitchRoll(pitch, roll);
 
@@ -100,6 +151,12 @@ class TiltFilter {
     );
   }
 
+  void setMotionState(MotionState state) {
+    _motionState = state;
+  }
+
+  MotionState _motionState = MotionState.vehicle;
+
   void reset() {
     _lastTs = null;
     _gHat = null;
@@ -107,11 +164,15 @@ class TiltFilter {
     _accelMagWindow.clear();
     _accelMagSum = 0.0;
     _accelMagSumSq = 0.0;
+    _motionState = MotionState.vehicle;
   }
 
   TiltFilterOutput? _lastOutput(Duration ts) {
     if (_gHat == null) return null;
-    final pitch = math.atan2(-_gHat![0], math.sqrt(_gHat![1] * _gHat![1] + _gHat![2] * _gHat![2]));
+    final pitch = math.atan2(
+      -_gHat![0],
+      math.sqrt(_gHat![1] * _gHat![1] + _gHat![2] * _gHat![2]),
+    );
     final roll = math.atan2(_gHat![1], _gHat![2]);
     return TiltFilterOutput(
       gravityDevice: _gHat!,
@@ -122,7 +183,13 @@ class TiltFilter {
     );
   }
 
-  List<double> _updateLowPass(List<double>? prev, double ax, double ay, double az, double dt) {
+  List<double> _updateLowPass(
+    List<double>? prev,
+    double ax,
+    double ay,
+    double az,
+    double dt,
+  ) {
     final rc = 1.0 / (2 * math.pi * lpfCutoffHz);
     final k = dt <= 0 ? 1.0 : dt / (rc + dt);
     if (prev == null) {
@@ -156,17 +223,19 @@ class TiltFilter {
     return (meanSq - mean * mean).abs();
   }
 
-  List<double> _integrateGyro(List<double> g, double gx, double gy, double gz, double dt) {
+  List<double> _integrateGyro(
+    List<double> g,
+    double gx,
+    double gy,
+    double gz,
+    double dt,
+  ) {
     final cross = [
       gy * g[2] - gz * g[1],
       gz * g[0] - gx * g[2],
       gx * g[1] - gy * g[0],
     ];
-    return [
-      g[0] + cross[0] * dt,
-      g[1] + cross[1] * dt,
-      g[2] + cross[2] * dt,
-    ];
+    return [g[0] + cross[0] * dt, g[1] + cross[1] * dt, g[2] + cross[2] * dt];
   }
 
   List<double> _blend(List<double> a, List<double> b, double t) {
@@ -183,7 +252,8 @@ class TiltFilter {
     return [v[0] / n, v[1] / n, v[2] / n];
   }
 
-  double _norm(List<double> v) => math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  double _norm(List<double> v) =>
+      math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 
   List<List<double>> _rotationFromPitchRoll(double pitch, double roll) {
     final cp = math.cos(pitch);

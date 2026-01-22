@@ -1,29 +1,23 @@
 // lib/services/sensor_fusion.dart
 //
 // ============================================================================
-// ⚠️  DEPRECATED - DO NOT USE IN PRODUCTION  ⚠️
+// 🚀 PRODUCTION EKF SENSOR FUSION MANAGER
 // ============================================================================
 //
-// This file contains a PLACEHOLDER dead reckoning implementation that has
-// fundamental accuracy issues:
+// This class orchestrates the Extended Kalman Filter (EKF) pipeline for
+// robust 1D progress tracking on transit routes.
 //
-// 1. UNBOUNDED DRIFT: Accelerometer integration accumulates error rapidly
-// 2. 10-SECOND RESET: Position "snaps back" to anchor every 10 seconds
-// 3. NO SENSOR CALIBRATION: Raw accelerometer values are used directly
-// 4. NO ORIENTATION TRACKING: Assumes device is always level
-// 5. NO GPS FUSION: This runs independently, not fused with GPS
+// Responsibilities:
+// 1. Manages IMU streams (accelerometer + gyroscope).
+// 2. Maintains EKF state (EkfOrchestrator).
+// 3. Fuses GPS updates, ZUPT events, and Station Snaps.
+// 4. Provides continuous progress estimates even during GPS dropouts.
 //
-// This will be COMPLETELY REPLACED with a proper Extended Kalman Filter (EKF)
-// implementation that:
-// - Fuses GPS, accelerometer, gyroscope, and magnetometer
-// - Properly handles sensor biases and calibration
-// - Provides uncertainty estimates (covariance)
-// - Gracefully handles GPS dropout with bounded drift
+// Architecture:
+// - Wiring: LocationStreamHandler -> SensorFusionManager -> EkfOrchestrator
+// - Outputs: ekfStateStream (consumed by LocationStreamHandler/TrackingService)
 //
-// See: docs/ekf_planning/ for the replacement implementation plan.
-//
-// CURRENT STATUS: NOT WIRED INTO TRACKING SERVICE
-// The TrackingService does NOT call this class. It exists only for reference.
+// See: docs/ekf_planning/ for architectural details.
 // ============================================================================
 
 import 'dart:async';
@@ -36,18 +30,8 @@ import 'package:geowake2/core/ekf/ekf_types.dart';
 import 'package:geowake2/core/ekf/route_geometry.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
-/// @deprecated This class will be completely replaced with EKF implementation.
-///
-/// A basic dead reckoning implementation using accelerometer data.
-///
-/// ⚠️ WARNING: This implementation has severe accuracy limitations:
-/// - Drift accumulates within seconds
-/// - Position resets every 10 seconds (loses all progress)
-/// - No sensor calibration or bias compensation
-/// - No orientation tracking (assumes level device)
-///
-/// DO NOT RELY ON THIS FOR PRODUCTION USE.
-@Deprecated('Will be replaced with EKF implementation - see docs/ekf_planning/')
+/// Orchestrates the EKF pipeline, fusing GPS, IMU, and Route Geometry.
+/// Replaces the legacy dead reckoning placeholder.
 class SensorFusionManager {
   late double _initialLat;
   late double _initialLon;
@@ -77,10 +61,13 @@ class SensorFusionManager {
 
   /// Accept an optional accelerometer stream (for testing).
   final Stream<AccelerometerEvent>? accelerometerStream;
+
   /// Accept an optional gyroscope stream (for testing).
   final Stream<GyroscopeEvent>? gyroscopeStream;
+
   /// Optional EKF route geometry (enables EKF path when provided).
   RouteGeometry? _routeGeometry;
+
   /// Flag to enable EKF path (default false to avoid regression).
   bool _enableEkf;
 
@@ -99,8 +86,8 @@ class SensorFusionManager {
     required LatLng initialPosition,
     Stream<AccelerometerEvent>? accelerometerStream,
     Stream<GyroscopeEvent>? gyroscopeStream,
-     RouteGeometry? routeGeometry,
-     bool enableEkf = false,
+    RouteGeometry? routeGeometry,
+    bool enableEkf = false,
   }) : accelerometerStream = accelerometerStream,
        gyroscopeStream = gyroscopeStream,
        _routeGeometry = routeGeometry,
@@ -146,7 +133,8 @@ class SensorFusionManager {
     final ekf = _ekfOrchestrator;
     if (ekf == null) return;
     final timestamp = Duration(
-      microseconds: _imuClock?.elapsedMicroseconds ??
+      microseconds:
+          _imuClock?.elapsedMicroseconds ??
           DateTime.now().millisecondsSinceEpoch * 1000,
     );
     final sGps = _routeGeometry?.projectLatLng(
@@ -234,7 +222,8 @@ class SensorFusionManager {
           final ekf = _ekfOrchestrator;
           if (ekf != null) {
             final timestamp = Duration(
-              microseconds: _imuClock?.elapsedMicroseconds ??
+              microseconds:
+                  _imuClock?.elapsedMicroseconds ??
                   now.millisecondsSinceEpoch * 1000,
             );
             final gx = _lastGyro?.x ?? 0.0;
@@ -264,16 +253,18 @@ class SensorFusionManager {
       );
 
       final gyroStream = gyroscopeStream ?? gyroscopeEvents;
-      _gyroscopeSubscription = gyroStream.handleError((_) {}).listen(
-        (GyroscopeEvent event) {
-          _lastGyro = event;
-        },
-        onError: (_) {
-          _gyroscopeSubscription?.cancel();
-          _gyroscopeSubscription = null;
-        },
-        cancelOnError: true,
-      );
+      _gyroscopeSubscription = gyroStream
+          .handleError((_) {})
+          .listen(
+            (GyroscopeEvent event) {
+              _lastGyro = event;
+            },
+            onError: (_) {
+              _gyroscopeSubscription?.cancel();
+              _gyroscopeSubscription = null;
+            },
+            cancelOnError: true,
+          );
     } catch (_) {
       // In widget/unit tests or unsupported platforms, sensors_plus may not be registered.
       // Treat sensor fusion as unavailable instead of crashing.

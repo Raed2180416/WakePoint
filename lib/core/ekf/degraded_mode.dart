@@ -25,12 +25,14 @@ class DegradedMode {
     required Duration timestamp,
     required double sigmaS,
     required bool gpsRecovered,
+    double? thresholdOverride,
   }) {
+    final limit = thresholdOverride ?? maxSigmaMeters;
     final noZuptTooLong = _lastZupt == null
         ? true
         : timestamp - _lastZupt! >= maxZuptGap;
 
-    if (sigmaS >= maxSigmaMeters || noZuptTooLong) {
+    if (sigmaS >= limit || noZuptTooLong) {
       _degraded = true;
     }
 

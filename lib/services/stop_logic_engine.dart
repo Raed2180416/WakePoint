@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geowake2/services/transfer_utils.dart'; // RouteEventBoundary
@@ -219,11 +220,20 @@ class StopLogicEngine {
     required int userThreshold,
     required List<TransitLegStops> transitLegs,
   }) {
+    dev.log(
+      'Stops-mode metro-leg validation: threshold=$userThreshold, legs=${transitLegs.length}',
+      name: 'StopLogicEngine',
+    );
+
     // Filter to metro legs only
     final metroLegs = transitLegs.where((leg) => leg.isMetro).toList();
 
     if (metroLegs.isEmpty) {
       // No metro legs - threshold validation not applicable
+      dev.log(
+        'No metro legs found; skipping metro-leg threshold validation.',
+        name: 'StopLogicEngine',
+      );
       return (isValid: true, errorMessage: null, minMetroStops: 99);
     }
 
@@ -241,6 +251,10 @@ class StopLogicEngine {
       // Total stops including target = numStops + 1
       // (numStops = intermediate stops, +1 for the final/target station)
       final totalStops = leg.numStops + 1;
+      dev.log(
+        'Metro leg: name=${leg.lineName}, numStops=${leg.numStops}, totalStops=$totalStops, start=${leg.legStartMeters.toStringAsFixed(0)}, end=${leg.legEndMeters.toStringAsFixed(0)}',
+        name: 'StopLogicEngine',
+      );
       if (totalStops < minStopsOnAnyMetroLeg) {
         minStopsOnAnyMetroLeg = totalStops;
         shortestLegName = leg.lineName ?? 'Metro leg';
@@ -251,6 +265,10 @@ class StopLogicEngine {
     // because if threshold >= minStops, the alarm would fire immediately
     // or not have any meaningful "N stops prior" warning.
     if (userThreshold >= minStopsOnAnyMetroLeg) {
+      dev.log(
+        'Threshold invalid: threshold=$userThreshold, minStops=$minStopsOnAnyMetroLeg, shortestLeg=$shortestLegName',
+        name: 'StopLogicEngine',
+      );
       return (
         isValid: false,
         errorMessage:
@@ -258,6 +276,11 @@ class StopLogicEngine {
         minMetroStops: minStopsOnAnyMetroLeg,
       );
     }
+
+    dev.log(
+      'Threshold valid: threshold=$userThreshold, minStops=$minStopsOnAnyMetroLeg, shortestLeg=$shortestLegName',
+      name: 'StopLogicEngine',
+    );
 
     return (
       isValid: true,

@@ -78,6 +78,7 @@ flutter:
     - assets/ringtones/
     - assets/osm/
     - assets/ekf_test_routes/
+    - assets/logs/Nallur_to_Vijaynagar/
 
 flutter_native_splash:
   color: "#FFFFFF" # Match this with your custom splash background

@@ -692,6 +692,16 @@ class HomeScreenState extends State<HomeScreen> {
         // NEW: Validate threshold against minimum stops on any metro leg
         // Rule: User cannot choose n >= min(stops across all metro legs)
         final transitLegs = TransferUtils.extractTransitLegStops(directions);
+        dev.log(
+          'Stops-mode legs extracted: count=${transitLegs.length}',
+          name: 'StopLogicEngine',
+        );
+        for (final leg in transitLegs) {
+          dev.log(
+            'Leg: name=${leg.lineName}, isMetro=${leg.isMetro}, numStops=${leg.numStops}, totalStops=${leg.numStops + 1}, start=${leg.legStartMeters.toStringAsFixed(0)}, end=${leg.legEndMeters.toStringAsFixed(0)}',
+            name: 'StopLogicEngine',
+          );
+        }
         final metroLegResult = engine.validateThresholdAgainstMetroLegs(
           userThreshold: alarmValue.toInt(),
           transitLegs: transitLegs,
@@ -917,8 +927,25 @@ class HomeScreenState extends State<HomeScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     final Color searchBarFillColor =
         isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
+    final Color clearSearchIconColor =
+      isDarkMode
+        ? colorScheme.onSurface.withOpacity(0.75)
+        : Colors.black54;
+    final Color clearChipBg =
+      isDarkMode
+        ? colorScheme.surfaceVariant.withOpacity(0.45)
+        : Colors.grey.shade200;
+    final Color clearChipBorder =
+      isDarkMode
+        ? colorScheme.outline.withOpacity(0.5)
+        : Colors.grey.shade300;
+    final Color clearChipIconColor =
+      isDarkMode
+        ? colorScheme.onSurfaceVariant.withOpacity(0.9)
+        : Colors.grey.shade700;
 
     return Scaffold(
       drawer: SettingsDrawer(
@@ -988,32 +1015,52 @@ class HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                TextField(
-                  focusNode: _searchFocus,
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Enter your destination',
-                    prefixIcon: const Icon(Icons.search),
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: screenHeight * 0.015,
-                      horizontal: screenWidth * 0.04,
-                    ),
-                    filled: true,
-                    fillColor: searchBarFillColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                    hintStyle: TextStyle(
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                    ),
-                    prefixIconColor:
-                        isDarkMode ? Colors.white70 : Colors.black54,
-                  ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _searchController,
+                  builder: (context, value, _) {
+                    final hasText = value.text.isNotEmpty;
+                    return TextField(
+                      focusNode: _searchFocus,
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Enter your destination',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon:
+                            hasText
+                                ? IconButton(
+                                  tooltip: 'Clear search',
+                                  icon: Icon(
+                                    Icons.close,
+                                    color: clearSearchIconColor,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    if (mounted) _showTopRecentLocations();
+                                  },
+                                )
+                                : null,
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: screenHeight * 0.015,
+                          horizontal: screenWidth * 0.04,
+                        ),
+                        filled: true,
+                        fillColor: searchBarFillColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        hintStyle: TextStyle(
+                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                        ),
+                        prefixIconColor:
+                            isDarkMode ? Colors.white70 : Colors.black54,
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: screenHeight * 0.01),
                 if (_autocompleteResults.isNotEmpty)
@@ -1039,10 +1086,18 @@ class HomeScreenState extends State<HomeScreen> {
                                     child: Container(
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.grey.shade400,
+                                        color: clearChipBg,
+                                        border: Border.all(
+                                          color: clearChipBorder,
+                                          width: 0.8,
+                                        ),
                                       ),
                                       padding: const EdgeInsets.all(4),
-                                      child: const Icon(Icons.close, size: 16),
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: clearChipIconColor,
+                                      ),
                                     ),
                                   )
                                   : null,

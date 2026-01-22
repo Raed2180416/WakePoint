@@ -117,6 +117,27 @@ class RouteGeometry {
     return _tangents[segIndex];
   }
 
+  /// Returns LatLng position along the route for progress s (meters).
+  /// Uses the same cumulative meters used by EKF projection to avoid scale mismatch.
+  LatLng positionAt(double sMeters) {
+    if (_points.isEmpty) return const LatLng(0.0, 0.0);
+    if (_points.length == 1) return _points.first;
+
+    final s = sMeters.clamp(0.0, totalLengthMeters);
+    final segIndex = _segmentIndexForS(s);
+    final segStart = _cumMeters[segIndex];
+    final segLen = _segmentLengths[segIndex];
+    if (segLen <= 0) return _points[segIndex];
+
+    final t = ((s - segStart) / segLen).clamp(0.0, 1.0);
+    final a = _points[segIndex];
+    final b = _points[segIndex + 1];
+    return LatLng(
+      a.latitude + (b.latitude - a.latitude) * t,
+      a.longitude + (b.longitude - a.longitude) * t,
+    );
+  }
+
   int _segmentIndexForS(double s) {
     for (var i = 0; i < _cumMeters.length - 1; i++) {
       if (s <= _cumMeters[i + 1]) return i;

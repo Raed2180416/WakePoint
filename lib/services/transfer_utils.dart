@@ -762,7 +762,8 @@ class TransferUtils {
 
           cumM += stepMeters;
 
-          if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT') {
+          if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT' &&
+              _isMetroTransitStep(step)) {
             final td = (step['transit_details'] as Map<String, dynamic>?);
             final ns = td != null ? td['num_stops'] as num? : null;
             if (ns != null) cumStops += ns.toDouble();
@@ -809,7 +810,7 @@ class TransferUtils {
         for (final s in steps) {
           final step = s as Map<String, dynamic>;
           final mode = step['travel_mode']?.toString().toUpperCase();
-          if (mode == 'TRANSIT') {
+          if (mode == 'TRANSIT' && _isMetroTransitStep(step)) {
             // Return the cumulative "virtual stops" accrued before boarding.
             return cumStops;
           }
@@ -914,8 +915,8 @@ class TransferUtils {
           }
         } catch (_) {}
 
-        // Create TransitLegStops for transit steps
-        if (mode == 'TRANSIT') {
+        // Create TransitLegStops for metro/rail transit steps only
+        if (mode == 'TRANSIT' && _isMetroTransitStep(step)) {
           final td = step['transit_details'] as Map<String, dynamic>?;
           final numStops = (td?['num_stops'] as num?)?.toInt() ?? 0;
 

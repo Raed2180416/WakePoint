@@ -3,8 +3,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'polyline_decoder.dart';
 import 'polyline_simplifier.dart';
-import 'package:geowake2/services/api_client.dart'; // ADD THIS IMPORT
+import 'package:geowake2/services/api_client.dart';
 import 'package:geowake2/services/route_cache.dart';
+import 'package:geowake2/services/route_logger.dart';
 import 'dart:convert' show utf8;
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:developer' as dev;
@@ -328,6 +329,25 @@ class DirectionService {
       } catch (e) {
         dev.log('Failed to persist route cache: $e', name: 'DirectionService');
       }
+
+      // Log route for reconstruction (when enabled)
+      try {
+        await RouteLogger.instance.logRoute(
+          directions: directions,
+          origin: origin,
+          destination: dest,
+          transitMode: transitMode,
+          metadata: {
+            'transitVariant': transitVariant,
+            'departureTime': departureTime,
+            'isDistanceMode': isDistanceMode,
+            'threshold': threshold,
+          },
+        );
+      } catch (e) {
+        dev.log('Failed to log route: $e', name: 'DirectionService');
+      }
+
       return directions;
     } catch (e) {
       dev.log(

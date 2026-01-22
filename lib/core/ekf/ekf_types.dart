@@ -86,6 +86,7 @@ class EkfConfig {
     this.sigmaAccel = 0.15,
     this.sigmaBias = 0.001,
     this.gpsFloorVar = 625.0,
+    this.gpsSpeedVar = 1.0, // (1.0 m/s)^2 speed measurement variance
     this.zuptVar = 0.0025, // (0.05 m/s)^2
     this.stationVar = 100.0, // (10 m)^2
     this.minDt = 0.001,
@@ -102,6 +103,7 @@ class EkfConfig {
   final double sigmaAccel;
   final double sigmaBias;
   final double gpsFloorVar;
+  final double gpsSpeedVar;
   final double zuptVar;
   final double stationVar;
   final double minDt;

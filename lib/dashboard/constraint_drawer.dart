@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import 'constraint_logger.dart';
 
+enum LogExportFormat { json, csv }
+
 /// Slide-out drawer showing constraint events.
 class ConstraintDrawer extends StatelessWidget {
   const ConstraintDrawer({
@@ -13,6 +15,7 @@ class ConstraintDrawer extends StatelessWidget {
     required this.isOpen,
     required this.onToggle,
     this.onClear,
+    this.onExport,
     this.width = 400,
   });
 
@@ -27,6 +30,9 @@ class ConstraintDrawer extends StatelessWidget {
 
   /// Called when clear button is pressed.
   final VoidCallback? onClear;
+
+  /// Called when export is requested.
+  final void Function(LogExportFormat format)? onExport;
 
   /// Width of the open drawer.
   final double width;
@@ -117,6 +123,23 @@ class ConstraintDrawer extends StatelessWidget {
                   onPressed: onClear,
                   tooltip: 'Clear logs',
                   iconSize: 20,
+                ),
+              if (events.isNotEmpty && onExport != null)
+                PopupMenuButton<LogExportFormat>(
+                  tooltip: 'Export logs',
+                  icon: const Icon(Icons.download, size: 20),
+                  onSelected: onExport,
+                  itemBuilder:
+                      (context) => const [
+                        PopupMenuItem(
+                          value: LogExportFormat.json,
+                          child: Text('Export JSON'),
+                        ),
+                        PopupMenuItem(
+                          value: LogExportFormat.csv,
+                          child: Text('Export CSV'),
+                        ),
+                      ],
                 ),
               Text(
                 '${events.length} events',
