@@ -460,7 +460,6 @@ class ImuReplayEngineV2 {
   int _logGyroIndex = 0;
   double _logStartTimeSeconds = 0.0;
   LogImu? _lastLogAccel;
-  LogImu? _lastLogGyro;
 
   // ─────────────────────────────────────────────────────────────────────────
   // State
@@ -1338,7 +1337,6 @@ class ImuReplayEngineV2 {
       _logAccelIndex = 0;
       _logGyroIndex = 0;
       _lastLogAccel = null;
-      _lastLogGyro = null;
       // Initialize elapsed time to start of log relative to 0
       // Actually we want playback _elapsedSeconds to run from 0 to Duration
       // We will map _elapsedSeconds to log.secondsElapsed
@@ -1952,7 +1950,6 @@ class ImuReplayEngineV2 {
       _gyroController.add(
         GyroscopeEvent(sample.x, sample.y, sample.z, sampleTime),
       );
-      _lastLogGyro = sample;
       if (_lastLogAccel != null) {
         _imuSampleController.add(
           ImuSample(

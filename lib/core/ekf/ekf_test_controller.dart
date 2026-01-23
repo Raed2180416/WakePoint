@@ -481,42 +481,6 @@ class EkfTestController {
       _ekfOrchestrator!.onImuSample(sample);
     });
     _log(EkfTestLogCategory.ekf, 'EVENT', 'Subscribed to combined IMU stream');
-    return;
-    
-    // Track combined accel+gyro samples for ImuSample
-    double? lastAx, lastAy, lastAz;
-    Duration? lastAccelTime;
-    
-    // Subscribe to accelerometer - store and wait for matching gyro
-    _accelSub = _engine!.accelerometerStream.listen((event) {
-      lastAx = event.x;
-      lastAy = event.y;
-      lastAz = event.z;
-      // Convert DateTime to Duration (microseconds since epoch as log time)
-      lastAccelTime = Duration(microseconds: event.timestamp.microsecondsSinceEpoch);
-    });
-    
-    // Subscribe to gyroscope - combine with latest accel and feed to EKF
-    _gyroSub = _engine!.gyroscopeStream.listen((event) {
-      if (lastAx == null || lastAccelTime == null) return;
-      
-      // Use gyro timestamp for the combined sample
-      final timestamp = Duration(microseconds: event.timestamp.microsecondsSinceEpoch);
-      
-      final imuSample = ImuSample(
-        ax: lastAx!,
-        ay: lastAy!,
-        az: lastAz!,
-        gx: event.x,
-        gy: event.y,
-        gz: event.z,
-        timestamp: timestamp,
-      );
-      
-      _ekfOrchestrator!.onImuSample(imuSample);
-    });
-    
-    _log(EkfTestLogCategory.ekf, 'EVENT', 'Subscribed to raw IMU streams');
   }
 
   /// Called when EKF confirms a station snap (for purple dots).
@@ -930,13 +894,6 @@ class EkfTestController {
         });
       }
     }
-  }
-
-  /// Project meters along route to LatLng position.
-  LatLng? _projectMetersToLatLng(double meters) {
-    final route = _engine?.route;
-    if (route == null || route.fullPolyline.isEmpty) return null;
-    return _projectMetersToPosition(meters, route);
   }
 
   void _onEngineLog(ReplayLogEntry entry) {

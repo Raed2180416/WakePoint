@@ -701,8 +701,14 @@ class TransferUtils {
 
   // Returns a tuple-like map with step boundaries in meters (cumulative across all steps),
   // cumulative stops at each boundary, and step duration in seconds.
+  //
+  // When [metroOnly] is true, only Metro/Rail transit stops are counted (Bus stops ignored).
+  // This is used for stops-mode validation when user has metro mode enabled.
   static ({List<double> bounds, List<double> stops, List<int> durations})
-  buildStepBoundariesAndStops(Map<String, dynamic> directions) {
+  buildStepBoundariesAndStops(
+    Map<String, dynamic> directions, {
+    bool metroOnly = false,
+  }) {
     final bounds = <double>[];
     final stops = <double>[];
     final durations = <int>[];
@@ -762,11 +768,15 @@ class TransferUtils {
 
           cumM += stepMeters;
 
-          if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT' &&
-              _isMetroTransitStep(step)) {
-            final td = (step['transit_details'] as Map<String, dynamic>?);
-            final ns = td != null ? td['num_stops'] as num? : null;
-            if (ns != null) cumStops += ns.toDouble();
+          if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT') {
+            // Only count stops if this is the right type of transit
+            final shouldCount =
+                !metroOnly || _isMetroTransitStep(step);
+            if (shouldCount) {
+              final td = (step['transit_details'] as Map<String, dynamic>?);
+              final ns = td != null ? td['num_stops'] as num? : null;
+              if (ns != null) cumStops += ns.toDouble();
+            }
           }
           bounds.add(cumM);
           stops.add(cumStops);
@@ -810,7 +820,7 @@ class TransferUtils {
         for (final s in steps) {
           final step = s as Map<String, dynamic>;
           final mode = step['travel_mode']?.toString().toUpperCase();
-          if (mode == 'TRANSIT' && _isMetroTransitStep(step)) {
+          if (mode == 'TRANSIT') {
             // Return the cumulative "virtual stops" accrued before boarding.
             return cumStops;
           }
@@ -915,8 +925,8 @@ class TransferUtils {
           }
         } catch (_) {}
 
-        // Create TransitLegStops for metro/rail transit steps only
-        if (mode == 'TRANSIT' && _isMetroTransitStep(step)) {
+        // Create TransitLegStops for transit steps
+        if (mode == 'TRANSIT') {
           final td = step['transit_details'] as Map<String, dynamic>?;
           final numStops = (td?['num_stops'] as num?)?.toInt() ?? 0;
 

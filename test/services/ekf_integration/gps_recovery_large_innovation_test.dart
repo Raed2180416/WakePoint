@@ -271,6 +271,8 @@ void main() {
       final sigmaAfterRecovery = orchestrator.publicState.sigmaS;
       // GPS fusion should reduce uncertainty (if not soft-gated)
       // At minimum, uncertainty should be bounded
+        expect(sigmaAfterRecovery, lessThan(sigmaBeforeRecovery),
+          reason: 'GPS recovery should reduce uncertainty');
       expect(sigmaAfterRecovery, lessThan(200),
           reason: 'GPS recovery should bound uncertainty');
     });

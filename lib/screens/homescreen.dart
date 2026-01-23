@@ -640,7 +640,15 @@ class HomeScreenState extends State<HomeScreen> {
 
       // Stops-mode validation
       if (alarmMode == 'stops') {
-        final stepData = TransferUtils.buildStepBoundariesAndStops(directions);
+        debugPrint(
+          '[StopsValidation] begin: threshold=$alarmValue metroMode=$_metroMode',
+        );
+        // When in metro mode, only count metro stops (ignore bus stops)
+        // This ensures threshold validation uses the correct stop counts
+        final stepData = TransferUtils.buildStepBoundariesAndStops(
+          directions,
+          metroOnly: _metroMode,
+        );
         final events = TransferUtils.buildRouteEvents(directions);
 
         // Add destination event if missing (TransferUtils might miss it if single leg)
@@ -655,6 +663,10 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           );
         }
+
+        debugPrint(
+          '[StopsValidation] events=${events.length} stepBounds=${stepData.bounds.length} totalStops=${stepData.stops.isNotEmpty ? stepData.stops.last : 0}',
+        );
 
         dev.log(
           '[StartupPerf] Stops & Events Built: ${stopwatch.elapsedMilliseconds}ms',
@@ -675,6 +687,20 @@ class HomeScreenState extends State<HomeScreen> {
         );
 
         if (!result.isValid) {
+          debugPrint(
+            '[StopsValidation] FAIL first-segment: threshold=$alarmValue maxStops=${result.maxStops} bounds=${stepData.bounds.length} stops=${stepData.stops.length} events=${events.length}',
+          );
+          dev.log(
+            'Stops-mode validation failed: threshold=$alarmValue, maxStops=${result.maxStops}, bounds=${stepData.bounds.length}, stops=${stepData.stops.length}, events=${events.length}',
+            name: 'StopLogicEngine',
+          );
+          if (events.isNotEmpty) {
+            final first = events.first;
+            dev.log(
+              'First event: type=${first.type}, meters=${first.meters.toStringAsFixed(0)}, label=${first.label}',
+              name: 'StopLogicEngine',
+            );
+          }
           _showErrorDialog(
             "Invalid Stops Threshold",
             result.errorMessage ??
@@ -708,6 +734,16 @@ class HomeScreenState extends State<HomeScreen> {
         );
 
         if (!metroLegResult.isValid) {
+          debugPrint(
+            '[StopsValidation] FAIL metro-leg: threshold=$alarmValue minMetroStops=${metroLegResult.minMetroStops} legs=${transitLegs.length}',
+          );
+          final metroCount =
+              transitLegs.where((leg) => leg.isMetro).length;
+          final nonMetroCount = transitLegs.length - metroCount;
+          dev.log(
+            'Metro-leg validation failed: threshold=$alarmValue, metroCount=$metroCount, nonMetroCount=$nonMetroCount, minMetroStops=${metroLegResult.minMetroStops}',
+            name: 'StopLogicEngine',
+          );
           _showErrorDialog(
             "Invalid Stops Threshold",
             metroLegResult.errorMessage ??
@@ -857,6 +893,13 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _showErrorDialog(String title, String message) {
     if (!mounted) return;
+    debugPrint(
+      '[ShowErrorDialog] title="$title" message="$message" mode=${_useDistanceMode ? (_metroMode ? "stops" : "distance") : "time"} threshold=${_useDistanceMode ? (_metroMode ? _stopsSliderValue.toStringAsFixed(0) : _distanceSliderValue.toStringAsFixed(1)) : _timeSliderValue.toStringAsFixed(0)} metroMode=$_metroMode',
+    );
+    dev.log(
+      'ShowErrorDialog: title="$title" message="$message" mode=${_useDistanceMode ? (_metroMode ? "stops" : "distance") : "time"} threshold=${_useDistanceMode ? (_metroMode ? _stopsSliderValue.toStringAsFixed(0) : _distanceSliderValue.toStringAsFixed(1)) : _timeSliderValue.toStringAsFixed(0)} metroMode=$_metroMode',
+      name: 'HomeScreen',
+    );
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {

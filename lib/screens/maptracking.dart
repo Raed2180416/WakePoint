@@ -46,6 +46,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   String? _switchNotice; // Upcoming transfer notice.
   bool _hasValidArgs = false; // Ensures args present.
   bool _finalAlarmActive = false; // Destination alarm UI mode.
+  bool _isEndingTracking = false; // Prevents UI flicker during end tracking.
 
   Map<String, dynamic>? directions; // Raw directions payload.
 
@@ -89,7 +90,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   }
 
   Future<void> _refreshFinalAlarmState() async {
-    if (!mounted) return;
+    if (!mounted || _isEndingTracking) return;
     final isPlaying = AlarmPlayer.isPlaying.value;
     if (!isPlaying) {
       if (_finalAlarmActive) {
@@ -586,7 +587,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
           _distanceText = distStr;
           _switchNotice = switchMsg;
           if (remainingPolylines != null) {
-            _polylines = remainingPolylines!;
+            _polylines = remainingPolylines;
           }
         });
       }
@@ -1097,6 +1098,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                             child: ElevatedButton.icon(
                               style: endTrackingStyle,
                               onPressed: () async {
+                                // Prevent UI flicker during shutdown
+                                setState(() {
+                                  _isEndingTracking = true;
+                                });
+
                                 // Stop alarm sounds and vibration
                                 await AlarmPlayer.stop();
 
@@ -1184,6 +1190,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                             child: ElevatedButton.icon(
                               style: endTrackingStyle,
                               onPressed: () async {
+                                // Prevent UI flicker during shutdown
+                                setState(() {
+                                  _isEndingTracking = true;
+                                });
+
                                 // Stop alarm sounds and vibration
                                 await AlarmPlayer.stop();
 

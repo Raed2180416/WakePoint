@@ -227,6 +227,11 @@ class StopLogicEngine {
 
     // Filter to metro legs only
     final metroLegs = transitLegs.where((leg) => leg.isMetro).toList();
+    final nonMetroLegs = transitLegs.where((leg) => !leg.isMetro).toList();
+    dev.log(
+      'Stops-mode legs: metro=${metroLegs.length}, nonMetro=${nonMetroLegs.length}',
+      name: 'StopLogicEngine',
+    );
 
     if (metroLegs.isEmpty) {
       // No metro legs - threshold validation not applicable

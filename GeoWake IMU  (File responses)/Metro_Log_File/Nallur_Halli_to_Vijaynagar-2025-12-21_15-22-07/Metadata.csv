@@ -1,2 +1,0 @@
-version,device name,recording epoch time,recording time,recording timezone,platform,appVersion,device id,sensors,sampleRateMs,standardisation
-3,iPhone 15,1766330527562,2025-12-21_15-22-07,Asia/Kolkata,ios,1.50,4548ff0b-90c4-444f-9286-676963406d74,Accelerometer|Gyroscope|Orientation|Magnetometer|Compass|Location|Battery|Annotation|MagnetometerUncalibrated|GyroscopeUncalibrated|AccelerometerUncalibrated,10|10|10|10|10|0|1000||10|10|10,true

@@ -238,7 +238,7 @@ class _DeviationDashboardState extends State<DeviationDashboard> {
         e.type.name,
         e.title,
         e.description ?? '',
-        e.details != null ? jsonEncode(e.details) : '',
+        jsonEncode(e.details),
       ];
       return values.map(_escapeCsv).join(',');
     });
@@ -256,7 +256,7 @@ class _DeviationDashboardState extends State<DeviationDashboard> {
     final bytes = utf8.encode(content);
     final blob = html.Blob([bytes], mimeType);
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..setAttribute('download', filename)
       ..click();
     html.Url.revokeObjectUrl(url);
