@@ -9,6 +9,7 @@ import 'package:geowake2/services/route_logger.dart';
 import 'dart:convert' show utf8;
 import 'package:crypto/crypto.dart' as crypto;
 import 'dart:developer' as dev;
+import 'package:geowake2/metro_color_map.dart';
 
 class DirectionService {
   final ApiClient _apiClient = ApiClient.instance;
@@ -548,12 +549,24 @@ class DirectionService {
       if (mode == 'transit') {
         zIndex = 3;
         if (transitLine != null) {
-          if (!transitColorMap.containsKey(transitLine)) {
-            transitColorMap[transitLine] =
-                transitColors[transitColorIndex % transitColors.length];
-            transitColorIndex++;
+          // Attempt fast O(1) lookup
+          Color? realColor;
+          try {
+            final c = _getLineColor(transitLine);
+            if (c != Colors.indigo) realColor = c;
+          } catch (_) {}
+
+          if (realColor != null) {
+            color = realColor;
+          } else {
+            // Safe fallback to cycling
+            if (!transitColorMap.containsKey(transitLine)) {
+              transitColorMap[transitLine] =
+                  transitColors[transitColorIndex % transitColors.length];
+              transitColorIndex++;
+            }
+            color = transitColorMap[transitLine]!;
           }
-          color = transitColorMap[transitLine]!;
         } else {
           // Safe fallback
           color = Colors.blue;
@@ -580,6 +593,42 @@ class DirectionService {
     return polylines;
   }
 
+  String _normalizeLineName(String input) {
+    try {
+      var s = input.toLowerCase();
+      s = s.replaceAll(RegExp(r'[^a-z0-9]'), '');
+      return s;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Color _getLineColor(String lineName) {
+    try {
+      final normalized = _normalizeLineName(lineName);
+
+      // 1. Direct normalized match check
+      for (final key in metroLineColors.keys) {
+        if (_normalizeLineName(key) == normalized) {
+          return metroLineColors[key]!;
+        }
+      }
+
+      // 2. Fuzzy match (if input is substring of key or vice versa)
+      for (final key in metroLineColors.keys) {
+        final normKey = _normalizeLineName(key);
+        if (normKey.isNotEmpty &&
+            (normKey.contains(normalized) || normalized.contains(normKey))) {
+          return metroLineColors[key]!;
+        }
+      }
+
+      return Colors.indigo;
+    } catch (e) {
+      return Colors.indigo;
+    }
+  }
+
   // Decode an encoded polyline and optionally simplify it.
   // Cached keyed by md5 of input+tol.
   // If toleranceMeters <= 0, simplification is skipped.
@@ -600,7 +649,7 @@ class DirectionService {
   }
 
   String _polyKey(String encoded, double tol) {
-    final bytes = utf8.encode('$tol|' + encoded);
+    final bytes = utf8.encode('$tol|$encoded');
     final digest = crypto.md5.convert(bytes).toString();
     return '${encoded.length}:$digest';
   }

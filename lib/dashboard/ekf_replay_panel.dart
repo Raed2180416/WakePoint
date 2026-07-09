@@ -247,7 +247,7 @@ class _EkfReplayPanelState extends State<EkfReplayPanel> {
 
             // Route selector
             DropdownButtonFormField<String>(
-              value: _selectedRouteId,
+              initialValue: _selectedRouteId,
               decoration: const InputDecoration(
                 labelText: 'Test Route',
                 border: OutlineInputBorder(),

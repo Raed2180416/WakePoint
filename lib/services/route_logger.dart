@@ -5,6 +5,7 @@
 /// - Call [logRoute] whenever a directions response is received
 /// - Files are saved to the app's documents directory under 'route_logs/'
 /// - Each log contains the complete API response + metadata for full reconstruction
+library;
 
 import 'dart:convert';
 import 'dart:io';

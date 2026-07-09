@@ -89,10 +89,10 @@ void main() {
 
       final sInit = ekf.publicState.s;
 
-      // Very large innovation (> 5σ = > 50m with σ=10m)
+      // Very large innovation (> 15σ hard-reset threshold)
       ekf.onGpsFix(const GpsFix(
         lat: 12.0,
-        lng: 77.002, // ~220m - definitely > 5σ
+        lng: 77.018, // ~2km (end of route) - definitely > 15σ
         accuracyMeters: 10.0,
         speedMps: 15.0,
         timestamp: Duration(seconds: 1),

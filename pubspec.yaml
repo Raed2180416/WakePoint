@@ -60,6 +60,7 @@ dependencies:
   http: ^1.4.0
   sensors_plus: ^7.0.0
   web_socket_channel: ^3.0.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:
@@ -77,8 +78,8 @@ flutter:
     - assets/geowake.png
     - assets/ringtones/
     - assets/osm/
-    - assets/ekf_test_routes/
-    - assets/logs/Nallur_to_Vijaynagar/
+    - route_log_extracted.json
+    - docs/Sandalsoap-whitefield/
 
 flutter_native_splash:
   color: "#FFFFFF" # Match this with your custom splash background

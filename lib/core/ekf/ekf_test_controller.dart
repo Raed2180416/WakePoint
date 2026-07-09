@@ -7,6 +7,7 @@
 // - Test scenario presets (GPS dropout patterns, station stopping, etc.)
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -109,8 +110,9 @@ class EkfTestVisualization {
   final TestRouteStation? currentStation;
   final TestRouteStation? nextStation;
   final double? metersToNext;
-  final List<LatLng> routePolyline;
+  final List<LatLng> routePolyline; // Google Maps ground truth (orange)
   final List<LatLng> groundTruthPolyline; // Full GPS log path (purple line)
+  final List<LatLng> rawGpsTrail; // Raw GPS fixes as they happen (green)
   final List<TestRouteStation> allStations;
   final List<LatLng>
   ekfSnappedStations; // EKF-detected station positions (purple dots)
@@ -139,6 +141,7 @@ class EkfTestVisualization {
     this.metersToNext,
     required this.routePolyline,
     this.groundTruthPolyline = const [],
+    this.rawGpsTrail = const [],
     required this.allStations,
     this.ekfSnappedStations = const [],
     this.zuptPositions = const [],
@@ -212,7 +215,7 @@ class EkfTestController {
   double _warpFactor = 1.0;
   double get warpFactor => _warpFactor;
   set warpFactor(double value) {
-    _warpFactor = value.clamp(0.1, 20.0);
+    _warpFactor = value.clamp(0.1, 200.0);
     _engine?.warpFactor = _warpFactor;
   }
 
@@ -245,8 +248,8 @@ class EkfTestController {
   StreamSubscription? _tickSub;
   StreamSubscription? _logSub;
   StreamSubscription? _accelSub; // Raw IMU from engine
-  StreamSubscription? _gyroSub;  // Raw IMU from engine
-  StreamSubscription? _imuSub;   // Combined IMU samples
+  StreamSubscription? _gyroSub; // Raw IMU from engine
+  StreamSubscription? _imuSub; // Combined IMU samples
 
   // External stream injection (for TrackingService)
   final _gpsController = StreamController<Position>.broadcast();
@@ -280,6 +283,7 @@ class EkfTestController {
   // Visualization tracking - positions for map markers
   final List<LatLng> _zuptPositions = [];
   final List<LatLng> _ekfSnappedStations = [];
+  final List<LatLng> _rawGpsTrail = []; // Raw GPS fixes for green trail
   LatLng? _lastRawGpsPosition;
   DateTime? _lastZuptLogTime;
 
@@ -361,9 +365,7 @@ class EkfTestController {
 
   /// Load a specific route for custom testing.
   Future<void> loadRoute(TestRouteId routeId) async {
-    if (_engine == null) {
-      _engine = ImuReplayEngineV2();
-    }
+    _engine ??= ImuReplayEngineV2();
     await _engine!.loadTestRoute(routeId);
     _resetStatistics();
 
@@ -380,7 +382,7 @@ class EkfTestController {
 
     // Initialize EKF with route geometry
     _initializeEkf();
-    
+
     // Subscribe to raw IMU streams for high-frequency EKF updates
     _subscribeToEngineImu();
 
@@ -399,6 +401,30 @@ class EkfTestController {
     );
   }
 
+  /// Load a unified log (JSON) for replay.
+  Future<void> loadUnifiedLog(String jsonPath) async {
+    _scenario = TestScenario.logReplay;
+    _engine = ImuReplayEngineV2();
+    _engine!.logVerbosity = logVerbosity;
+
+    await _engine!.loadUnifiedRouteLog(jsonPath);
+
+    // Initialize EKF with route geometry
+    _initializeEkf();
+
+    // Subscribe to raw IMU streams
+    _subscribeToEngineImu();
+
+    // Subscribe to engine events
+    _tickSub = _engine!.tickStream.listen(_onTick);
+    _logSub = _engine!.logStream.listen(_onEngineLog);
+
+    _isActive = true;
+    _resetStatistics();
+
+    _log(EkfTestLogCategory.control, 'EVENT', 'Loaded Unified Log: $jsonPath');
+  }
+
   /// Load captured real route replay (JSON + Log).
   Future<void> loadCapturedReplay() async {
     _scenario = TestScenario.logReplay;
@@ -412,7 +438,7 @@ class EkfTestController {
 
     // Initialize EKF with route geometry
     _initializeEkf();
-    
+
     // Subscribe to raw IMU streams for high-frequency EKF updates
     _subscribeToEngineImu();
 
@@ -448,9 +474,8 @@ class EkfTestController {
     );
 
     // Configure station context for metro leg
-    final stationMeters = route.allStations
-        .map((s) => s.cumulativeMeters)
-        .toList();
+    final stationMeters =
+        route.allStations.map((s) => s.cumulativeMeters).toList();
     _ekfOrchestrator!.setStationContext(
       stationMeters: stationMeters,
       isMetroLeg: true, // Metro route for now
@@ -462,15 +487,17 @@ class EkfTestController {
     _log(EkfTestLogCategory.ekf, 'EVENT', 'EKF initialized', {
       'routeLength': _routeGeometry!.totalLengthMeters.toStringAsFixed(0),
       'stations': stationMeters.length,
-      'stationMeters': stationMeters.take(5).map((m) => m.toStringAsFixed(0)).join(', ') + (stationMeters.length > 5 ? '...' : ''),
+      'stationMeters':
+          stationMeters.take(5).map((m) => m.toStringAsFixed(0)).join(', ') +
+          (stationMeters.length > 5 ? '...' : ''),
     });
   }
-  
+
   /// Subscribe to raw IMU streams from the engine for high-frequency EKF updates.
   /// This is critical for proper dead reckoning - IMU must be fed at ~50Hz, not tick rate.
   void _subscribeToEngineImu() {
     if (_engine == null || _ekfOrchestrator == null) return;
-    
+
     // Cancel existing subscriptions
     _accelSub?.cancel();
     _gyroSub?.cancel();
@@ -553,9 +580,10 @@ class EkfTestController {
     _logs.clear();
     _zuptPositions.clear();
     _ekfSnappedStations.clear();
+    _rawGpsTrail.clear();
     _lastRawGpsPosition = null;
     _lastZuptLogTime = null;
-    
+
     // Reset EKF orchestrator if exists
     _ekfOrchestrator?.reset();
   }
@@ -645,18 +673,18 @@ class EkfTestController {
     LatLng? ekfPosition;
     double? ekfProgressMeters;
     double ekfVelocityMps = tick.speedMps; // Fallback to GPS speed
-    
+
     if (_ekfOrchestrator != null && _routeGeometry != null) {
       final ekfState = _ekfOrchestrator!.publicState;
       ekfProgressMeters = ekfState.s;
       ekfVelocityMps = ekfState.v;
-      
+
       // Project EKF progress (meters along route) to LatLng for ghost marker
       if (!ekfState.s.isNaN && ekfState.s >= 0) {
         ekfPosition = _routeGeometry!.positionAt(ekfState.s);
       }
     }
-    
+
     // ─────────────────────────────────────────────────────────────────────
     // 3.5 DETAILED TICK COMPARISON LOGGING
     // - Every 50 ticks when GPS available
@@ -669,24 +697,29 @@ class EkfTestController {
       final trueProgress = tick.progressMeters;
       final ekfS = ekfState.s;
       final error = ekfS.isNaN ? double.nan : (ekfS - trueProgress);
-      final isDegraded = _ekfOrchestrator!.gpsDegraded || ekfState.mode == EkfMode.degraded;
+      final isDegraded =
+          _ekfOrchestrator!.gpsDegraded || ekfState.mode == EkfMode.degraded;
       final predEnabled = _ekfOrchestrator!.predictionEnabled;
-      
-      _log(EkfTestLogCategory.ekf, 'COMPARE', 
-        '📊 tick $_tickCount: true=${trueProgress.toStringAsFixed(0)} ekf=${ekfS.toStringAsFixed(0)} err=${error.toStringAsFixed(0)} v=${ekfState.v.toStringAsFixed(2)} σs=${ekfState.sigmaS.toStringAsFixed(0)} mode=${ekfState.mode.name} degraded=$isDegraded gps=${tick.gpsAvailable} pred=$predEnabled', {
-        'tick': _tickCount,
-        'trueProgress': trueProgress.toStringAsFixed(0),
-        'ekfProgress': ekfS.toStringAsFixed(0),
-        'error': error.toStringAsFixed(0),
-        'velocity': ekfState.v.toStringAsFixed(2),
-        'sigmaS': ekfState.sigmaS.toStringAsFixed(0),
-        'sigmaV': ekfState.sigmaV.toStringAsFixed(2),
-        'mode': ekfState.mode.name,
-        'degraded': isDegraded,
-        'gpsAvailable': tick.gpsAvailable,
-        'bias': ekfState.biasA.toStringAsFixed(4),
-        'predictionEnabled': predEnabled,
-      });
+
+      _log(
+        EkfTestLogCategory.ekf,
+        'COMPARE',
+        '📊 tick $_tickCount: true=${trueProgress.toStringAsFixed(0)} ekf=${ekfS.toStringAsFixed(0)} err=${error.toStringAsFixed(0)} v=${ekfState.v.toStringAsFixed(2)} σs=${ekfState.sigmaS.toStringAsFixed(0)} mode=${ekfState.mode.name} degraded=$isDegraded gps=${tick.gpsAvailable} pred=$predEnabled',
+        {
+          'tick': _tickCount,
+          'trueProgress': trueProgress.toStringAsFixed(0),
+          'ekfProgress': ekfS.toStringAsFixed(0),
+          'error': error.toStringAsFixed(0),
+          'velocity': ekfState.v.toStringAsFixed(2),
+          'sigmaS': ekfState.sigmaS.toStringAsFixed(0),
+          'sigmaV': ekfState.sigmaV.toStringAsFixed(2),
+          'mode': ekfState.mode.name,
+          'degraded': isDegraded,
+          'gpsAvailable': tick.gpsAvailable,
+          'bias': ekfState.biasA.toStringAsFixed(4),
+          'predictionEnabled': predEnabled,
+        },
+      );
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -764,25 +797,29 @@ class EkfTestController {
       final accelVar = _ekfOrchestrator!.currentAccelVariance;
       final gyroVar = _ekfOrchestrator!.currentGyroVariance;
       final ekfMotion = _ekfOrchestrator!.currentMotionState;
-      _log(EkfTestLogCategory.zupt, 'STATION_STOP',
-        '🚉 Engine at station: ${tick.lastStation?.name ?? "unknown"}', {
-        'simSpeed': tick.speedMps.toStringAsFixed(2),
-        'simMotion': tick.motionState.name,
-        'ekfMotion': ekfMotion.name,  // <-- What EKF thinks motion is
-        'accelVar': accelVar.toStringAsExponential(2),  // <-- Current variance
-        'gyroVar': gyroVar.toStringAsExponential(2),
-        'ekfV': ekfState.v.toStringAsFixed(2),
-        'ekfMode': ekfState.mode.name,
-        'gpsAvailable': tick.gpsAvailable,
-        'predictionEnabled': _ekfOrchestrator!.predictionEnabled,
-      });
+      _log(
+        EkfTestLogCategory.zupt,
+        'STATION_STOP',
+        '🚉 Engine at station: ${tick.lastStation?.name ?? "unknown"}',
+        {
+          'simSpeed': tick.speedMps.toStringAsFixed(2),
+          'simMotion': tick.motionState.name,
+          'ekfMotion': ekfMotion.name, // <-- What EKF thinks motion is
+          'accelVar': accelVar.toStringAsExponential(2), // <-- Current variance
+          'gyroVar': gyroVar.toStringAsExponential(2),
+          'ekfV': ekfState.v.toStringAsFixed(2),
+          'ekfMode': ekfState.mode.name,
+          'gpsAvailable': tick.gpsAvailable,
+          'predictionEnabled': _ekfOrchestrator!.predictionEnabled,
+        },
+      );
 
       // During GPS dropout, force a ZUPT on station dwell to reduce drift.
       if (!tick.gpsAvailable && tick.speedMps.abs() < 0.3) {
         _ekfOrchestrator!.forceZupt(tickDuration, source: 'station_dwell');
       }
     }
-    
+
     // ─────────────────────────────────────────────────────────────────────
     // 7. TRACK ZUPT FROM EKF (not primitive speed threshold)
     // ─────────────────────────────────────────────────────────────────────
@@ -792,7 +829,7 @@ class EkfTestController {
       // EKF detects ZUPT when velocity is very low and uncertainty is low
       // NOTE: Don't add markers for every ZUPT - only station snaps are meaningful
       ekfZuptActive = ekfState.v.abs() < 0.3 && ekfState.sigmaV < 1.0;
-      
+
       if (ekfZuptActive && ekfPosition != null) {
         final now = DateTime.now();
         if (_lastZuptLogTime == null ||
@@ -804,15 +841,22 @@ class EkfTestController {
           _log(EkfTestLogCategory.zupt, 'EVENT', 'EKF ZUPT detected', {
             'ekfVelocity': ekfState.v.toStringAsFixed(2),
             'sigmaV': ekfState.sigmaV.toStringAsFixed(2),
-            'position': '${ekfPosition.latitude.toStringAsFixed(5)}, ${ekfPosition.longitude.toStringAsFixed(5)}',
+            'position':
+                '${ekfPosition.latitude.toStringAsFixed(5)}, ${ekfPosition.longitude.toStringAsFixed(5)}',
           });
         }
       }
     }
 
-    // Track raw GPS position for ghost marker comparison
+    // Track raw GPS position for ghost marker comparison and GPS trail
     if (tick.gpsPosition != null) {
       _lastRawGpsPosition = tick.gpsPosition;
+      // Add to raw GPS trail for green polyline visualization
+      // Only add if significantly different from last point (>5m) to avoid clutter
+      if (_rawGpsTrail.isEmpty ||
+          _haversineDistance(_rawGpsTrail.last, tick.gpsPosition!) > 5.0) {
+        _rawGpsTrail.add(tick.gpsPosition!);
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -821,27 +865,27 @@ class EkfTestController {
     double? ekfSigmaS;
     double? ekfSigmaV;
     bool ekfDegraded = false;
-    
+
     if (_ekfOrchestrator != null) {
       final ekfState = _ekfOrchestrator!.publicState;
       ekfSigmaS = ekfState.sigmaS;
       ekfSigmaV = ekfState.sigmaV;
       ekfDegraded = _ekfOrchestrator!.gpsDegraded;
     }
-    
+
     final viz = EkfTestVisualization(
-      truePosition: tick.position,  // Ground truth (snapped to route)
-      gpsPosition: tick.gpsPosition,  // Raw GPS from log
-      ekfPosition: ekfPosition,  // EKF estimated position (ghost marker)
+      truePosition: tick.position, // Ground truth (snapped to route)
+      gpsPosition: tick.gpsPosition, // Raw GPS from log
+      ekfPosition: ekfPosition, // EKF estimated position (ghost marker)
       rawGpsPosition: _lastRawGpsPosition,
       trueProgressMeters: tick.progressMeters,
       gpsProgressMeters: tick.gpsAvailable ? tick.progressMeters : null,
-      ekfProgressMeters: ekfProgressMeters,  // EKF estimated progress
-      speedMps: ekfVelocityMps,  // EKF velocity (not GPS speed)
+      ekfProgressMeters: ekfProgressMeters, // EKF estimated progress
+      speedMps: ekfVelocityMps, // EKF velocity (not GPS speed)
       ekfSigmaS: ekfSigmaS,
       ekfSigmaV: ekfSigmaV,
       gpsAvailable: tick.gpsAvailable,
-      isZuptCandidate: ekfZuptActive,  // From EKF, not primitive threshold
+      isZuptCandidate: ekfZuptActive, // From EKF, not primitive threshold
       isAtStation: tick.isAtStation,
       motionState: tick.motionState,
       currentStation: tick.lastStation,
@@ -849,6 +893,7 @@ class EkfTestController {
       metersToNext: tick.metersToNextStation,
       routePolyline: _engine?.route?.fullPolyline ?? [],
       groundTruthPolyline: _engine?.route?.groundTruthPolyline ?? [],
+      rawGpsTrail: List.unmodifiable(_rawGpsTrail),
       allStations: _engine?.route?.allStations ?? [],
       ekfSnappedStations: List.unmodifiable(_ekfSnappedStations),
       zuptPositions: List.unmodifiable(_zuptPositions),
@@ -869,17 +914,20 @@ class EkfTestController {
       if ((tick.elapsedSeconds * 10).round() % logPeriod == 0) {
         // Calculate GPS progress for comparison
         double? gpsProgress;
-        if (tick.gpsAvailable && tick.gpsPosition != null && _routeGeometry != null) {
+        if (tick.gpsAvailable &&
+            tick.gpsPosition != null &&
+            _routeGeometry != null) {
           gpsProgress = _routeGeometry!.projectLatLng(
-            tick.gpsPosition!.latitude, 
+            tick.gpsPosition!.latitude,
             tick.gpsPosition!.longitude,
           );
         }
-        
-        final errorM = (gpsProgress != null && !ekfState.s.isNaN)
-            ? (ekfState.s - gpsProgress).abs().toStringAsFixed(1)
-            : 'N/A';
-        
+
+        final errorM =
+            (gpsProgress != null && !ekfState.s.isNaN)
+                ? (ekfState.s - gpsProgress).abs().toStringAsFixed(1)
+                : 'N/A';
+
         _log(EkfTestLogCategory.ekf, 'COMPARE', 'GPS vs EKF', {
           'ekf_s': ekfState.s.toStringAsFixed(0),
           'gps_s': gpsProgress?.toStringAsFixed(0) ?? 'N/A',
@@ -995,7 +1043,14 @@ class EkfTestController {
     // Also print to console in debug mode
     // Print EVENT/COMPARE/MODE/ZUPT/STATION_STOP level always, and PIPELINE/IMU for detailed EKF debugging
     if (kDebugMode) {
-      if (level == 'EVENT' || level == 'COMPARE' || level == 'MODE' || level == 'ZUPT' || level == 'STATION_STOP' || level == 'PIPELINE' || level == 'IMU' || level == 'PHYSICS') {
+      if (level == 'EVENT' ||
+          level == 'COMPARE' ||
+          level == 'MODE' ||
+          level == 'ZUPT' ||
+          level == 'STATION_STOP' ||
+          level == 'PIPELINE' ||
+          level == 'IMU' ||
+          level == 'PHYSICS') {
         debugPrint(entry.toColoredString());
       }
     }
@@ -1004,6 +1059,25 @@ class EkfTestController {
   void clearLogs() {
     _logs.clear();
     _engine?.clearLogs();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Utility Functions
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Haversine distance between two LatLng points in meters.
+  double _haversineDistance(LatLng a, LatLng b) {
+    const R = 6371000.0; // Earth radius in meters
+    final lat1 = a.latitude * math.pi / 180;
+    final lat2 = b.latitude * math.pi / 180;
+    final dLat = (b.latitude - a.latitude) * math.pi / 180;
+    final dLng = (b.longitude - a.longitude) * math.pi / 180;
+
+    final h = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1) * math.cos(lat2) * math.sin(dLng / 2) * math.sin(dLng / 2);
+    final c = 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h));
+
+    return R * c;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

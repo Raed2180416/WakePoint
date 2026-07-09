@@ -23,7 +23,7 @@ import 'package:geowake2/services/notification_service.dart';
 /// Manages foreground-to-background isolate communication.
 /// Handles reliable invoke with ACKs, heartbeat sending, and event forwarding.
 class ForegroundBridge {
-  final FlutterBackgroundService _service;
+  final FlutterBackgroundService? _service;
   final bool Function() _isTestMode;
 
   bool _ackListenersRegistered = false;
@@ -43,7 +43,7 @@ class ForegroundBridge {
   onAlarmTrigger;
 
   ForegroundBridge({
-    required FlutterBackgroundService service,
+    required FlutterBackgroundService? service,
     required bool Function() isTestMode,
   }) : _service = service,
        _isTestMode = isTestMode;
@@ -56,7 +56,7 @@ class ForegroundBridge {
   /// Ensures all ACK and event listeners are registered on the service.
   /// Call this before any invoke operations.
   void ensureListenersRegistered() {
-    if (_ackListenersRegistered || _isTestMode()) return;
+    if (_ackListenersRegistered || _isTestMode() || _service == null) return;
     _ackListenersRegistered = true;
 
     // ACK listeners for reliable invokes
@@ -288,7 +288,7 @@ class ForegroundBridge {
       _pendingAcks[requestId] = completer;
 
       try {
-        _service.invoke(method, {...args, 'requestId': requestId});
+        _service?.invoke(method, {...args, 'requestId': requestId});
       } catch (_) {
         _pendingAcks.remove(requestId);
       }
@@ -315,7 +315,7 @@ class ForegroundBridge {
     if (_isTestMode()) return;
     _heartbeatSendTimer?.cancel();
 
-    final running = await _service.isRunning();
+    final running = await _service?.isRunning() ?? false;
     if (!running) return;
 
     // Send initial heartbeat immediately
@@ -328,10 +328,10 @@ class ForegroundBridge {
 
   void _sendHeartbeat() async {
     if (_isTestMode()) return;
-    final running = await _service.isRunning();
+    final running = await _service?.isRunning() ?? false;
     if (!running) return;
     try {
-      _service.invoke('foregroundHeartbeat', {
+      _service?.invoke('foregroundHeartbeat', {
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
     } catch (_) {}
@@ -346,10 +346,10 @@ class ForegroundBridge {
   /// Notify background that foreground has resumed.
   Future<void> notifyForegroundResumed() async {
     if (_isTestMode()) return;
-    final running = await _service.isRunning();
+    final running = await _service?.isRunning() ?? false;
     if (running) {
       try {
-        _service.invoke('foregroundResumed', {});
+        _service?.invoke('foregroundResumed', {});
       } catch (e) {
         trackingLog.debug(
           'foregroundResumed invoke failed',
@@ -363,12 +363,12 @@ class ForegroundBridge {
   void invoke(String method, [Map<String, dynamic>? args]) {
     if (_isTestMode()) return;
     try {
-      _service.invoke(method, args);
+      _service?.invoke(method, args);
     } catch (_) {}
   }
 
   /// Check if background service is running.
-  Future<bool> isRunning() => _service.isRunning();
+  Future<bool> isRunning() async => await _service?.isRunning() ?? false;
 
   void dispose() {
     stopHeartbeat();

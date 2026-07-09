@@ -10,7 +10,6 @@ import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:vibration/vibration.dart';
-import 'package:meta/meta.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -229,7 +228,7 @@ class NotificationService {
 
       final nav = NavigationService.navigatorKey.currentState;
       if (nav != null) {
-        nav.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
+        await _navigateToMapTrackingWithArgs(nav);
       }
       return;
     }
@@ -272,7 +271,9 @@ class NotificationService {
         if (allowNavigation) {
           try {
             final nav = NavigationService.navigatorKey.currentState;
-            nav?.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
+            if (nav != null) {
+              await _navigateToMapTrackingWithArgs(nav);
+            }
           } catch (_) {}
         }
         return;
@@ -310,6 +311,38 @@ class NotificationService {
           name: 'NotificationService',
         );
         return;
+    }
+  }
+
+  Future<void> _navigateToMapTrackingWithArgs(NavigatorState nav) async {
+    try {
+      final snapshot = await TrackingStateStore.loadSnapshot();
+      if (snapshot != null) {
+        nav.pushNamedAndRemoveUntil(
+          '/mapTracking',
+          (route) => false,
+          arguments: {
+            'lat': snapshot.destinationLat,
+            'lng': snapshot.destinationLng,
+            'destination': snapshot.destinationName,
+            'directions': snapshot.directions,
+            'metroMode': snapshot.metroMode,
+            'mode': snapshot.alarmMode,
+            'userLat': snapshot.userLat,
+            'userLng': snapshot.userLng,
+          },
+        );
+      } else {
+        // Fallback if no snapshot
+        nav.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
+      }
+    } catch (e) {
+      dev.log(
+        'Error navigating to map tracking: $e',
+        name: 'NotificationService',
+      );
+      // Fallback on error
+      nav.pushNamedAndRemoveUntil('/mapTracking', (route) => false);
     }
   }
 

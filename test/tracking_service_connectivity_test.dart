@@ -30,9 +30,9 @@ void main() {
   group('TrackingService Connectivity Simulation', () {
     late StreamController<Position> gpsController;
     late TrackingService trackingService;
-    late Duration _originalGpsDropoutBuffer;
+    late Duration originalGpsDropoutBuffer;
 
-    Future<void> _eventuallyBool(
+    Future<void> eventuallyBool(
       bool Function() getValue,
       bool expected, {
       Duration timeout = const Duration(seconds: 5),
@@ -50,7 +50,7 @@ void main() {
       TestWidgetsFlutterBinding.ensureInitialized();
       SharedPreferences.setMockInitialValues({});
       TrackingService.isTestMode = true;
-      _originalGpsDropoutBuffer = gpsDropoutBuffer;
+      originalGpsDropoutBuffer = gpsDropoutBuffer;
       gpsDropoutBuffer = Duration(seconds: 2);
       // Create a fake GPS stream.
       gpsController = StreamController<Position>();
@@ -74,7 +74,7 @@ void main() {
       await gpsController.close();
       testGpsStream = null;
       testAccelerometerStream = null;
-      gpsDropoutBuffer = _originalGpsDropoutBuffer;
+      gpsDropoutBuffer = originalGpsDropoutBuffer;
     });
 
     test(
@@ -92,7 +92,7 @@ void main() {
           alarmValue: 100.0,
         );
 
-        await _eventuallyBool(
+        await eventuallyBool(
           () => trackingService.fusionActive,
           true,
           timeout: const Duration(seconds: 2),
@@ -102,7 +102,7 @@ void main() {
         final resumedPos = fakePosition(37.423, -122.083);
         gpsController.add(resumedPos);
         logStep('GPS resumes; fusion stays active');
-        await _eventuallyBool(
+        await eventuallyBool(
           () => trackingService.fusionActive,
           true,
           timeout: const Duration(seconds: 3),

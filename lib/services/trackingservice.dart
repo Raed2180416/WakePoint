@@ -21,6 +21,7 @@
 // +----------------------------------------------------------------------------+
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -107,7 +108,27 @@ class TrackingService {
   static final TrackingService _instance = TrackingService._internal();
   factory TrackingService() => _instance;
   TrackingService._internal();
-  final FlutterBackgroundService _service = FlutterBackgroundService();
+
+  /// Whether to bypass strict termination rules (for simulation/dashboard usage).
+  bool _isSimulationMode = false;
+  bool get isSimulationMode => _isSimulationMode;
+
+  /// Enable/disable simulation mode (bypasses termination policies).
+  void setSimulationMode(bool enabled) {
+    _isSimulationMode = enabled;
+    dev.log(
+      'Simulation mode set to: $enabled (UI Isolate)',
+      name: 'TrackingService',
+    );
+
+    // Propagate to background service if running
+    if (!kIsWeb && _service != null) {
+      _service.invoke('setSimulationMode', {'enabled': enabled});
+    }
+  }
+
+  final FlutterBackgroundService? _service =
+      kIsWeb ? null : FlutterBackgroundService();
 
   /// Manages foreground-to-background isolate communication.
   late final ForegroundBridge _foregroundBridge = ForegroundBridge(
@@ -185,14 +206,14 @@ class TrackingService {
   Future<void> initializeService() async {
     if (isTestMode) return;
     _ensureAckListenersRegistered(); // Ensure bridge is wired up
-    await _service.configure(
+    await _service?.configure(
       androidConfiguration: AndroidConfiguration(
         onStart: _onStart,
-        isForegroundMode: true,
         autoStart: false,
+        isForegroundMode: true,
         notificationChannelId: 'geowake_tracking_channel_v2',
         initialNotificationTitle: 'GeoWake Tracking',
-        initialNotificationContent: 'Starting�',
+        initialNotificationContent: 'Initializing...',
         foregroundServiceNotificationId: 888,
       ),
       iosConfiguration: IosConfiguration(
@@ -221,10 +242,10 @@ class TrackingService {
       'destinationLat': destination.latitude,
       'destinationLng': destination.longitude,
       'destinationName': destinationName,
-      'alarmMode': alarmMode,
       'alarmValue': alarmValue,
       'transitMode': transitMode,
       'useInjectedPositions': useInjectedPositions,
+      'isSimulationMode': _isSimulationMode,
     };
     dev.log(
       'DEBUG: setAlarm - values: mode=$alarmMode value=$alarmValue useInjected=$useInjectedPositions',
@@ -251,8 +272,8 @@ class TrackingService {
       await _onStart(TestServiceInstance(), initialData: params);
       return;
     }
-    if (!await _service.isRunning()) {
-      await _service.startService();
+    if (!await (_service?.isRunning() ?? Future.value(false))) {
+      await _service?.startService();
     }
     try {
       // Ensure notification state is unmuted for a new session
@@ -286,7 +307,7 @@ class TrackingService {
     if (!acked) {
       // Fallback: best-effort invoke (older background or unexpected ack failures)
       try {
-        _service.invoke('startTracking', params);
+        _service?.invoke('startTracking', params);
       } catch (e) {
         trackingLog.error('startTracking fallback invoke failed', error: e);
       }
@@ -296,6 +317,10 @@ class TrackingService {
   }
 
   Future<void> stopTracking({bool stopServiceInstance = true}) async {
+    dev.log(
+      'STOP TRACKING CALLED. StackTrace: ${StackTrace.current}',
+      name: 'TrackingService',
+    );
     _trackingSessionActive = false;
     // Stop heartbeat sending
     _stopForegroundHeartbeat();
@@ -314,9 +339,10 @@ class TrackingService {
       _onStop();
       return;
     }
-    final running = await _service.isRunning();
+
+    final running = await _service?.isRunning() ?? false;
     if (running) {
-      _service.invoke("stopTracking", {'stopSelf': stopServiceInstance});
+      _service?.invoke("stopTracking", {'stopSelf': stopServiceInstance});
     } else {
       // If service already stopped, still clear foreground state
       _onStop();
@@ -384,11 +410,11 @@ class TrackingService {
         }
 
         if (!TrackingService.isTestMode) {
-          final running = await _service.isRunning();
+          final running = await _service?.isRunning() ?? false;
           if (!running) {
-            await _service.startService();
+            await _service?.startService();
           }
-          _service.invoke('startTracking', {
+          _service?.invoke('startTracking', {
             'destinationLat': snapshot.destinationLat,
             'destinationLng': snapshot.destinationLng,
             'destinationName': snapshot.destinationName,
@@ -453,11 +479,12 @@ class TrackingService {
         name: 'TrackingService',
       );
       _startForegroundHeartbeat();
+      _startForegroundHeartbeat();
       // Also tell background we're back
-      final running = await _service.isRunning();
+      final running = await _service?.isRunning() ?? false;
       if (running) {
         try {
-          _service.invoke('foregroundResumed', {});
+          _service?.invoke('foregroundResumed', {});
         } catch (e) {
           trackingLog.debug(
             'foregroundResumed invoke failed',
@@ -1056,7 +1083,7 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
 
     if (active != null && _lastProcessedPosition != null) {
       print(
-        'SNAP_DEBUG: Snapping to route ${active.key}, pos=${_lastProcessedPosition}',
+        'SNAP_DEBUG: Snapping to route ${active.key}, pos=$_lastProcessedPosition',
       );
       final snap = SnapToRouteEngine.snap(
         point: _lastProcessedPosition!,
@@ -1150,7 +1177,8 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
       final useEkfForAlarmProgress =
           ekfState != null &&
           ekfState.s.isFinite &&
-          (isMetroStep || ekfState.mode == EkfMode.degraded ||
+          (isMetroStep ||
+              ekfState.mode == EkfMode.degraded ||
               ekfState.mode == EkfMode.metro);
       if (useEkfForAlarmProgress) {
         progressMeters = ekfState.s;
@@ -1312,22 +1340,28 @@ Future<void> _handleRerouteDecision(RerouteDecision decision) async {
   );
 
   try {
-    // Check termination policy first
-    final terminationDecision = _terminationPolicy.shouldTerminate(
-      currentPosition: currentPosition,
-      speedMps: _lastSpeedMps ?? 0,
+    // Check termination policy first (unless in simulation mode)
+    dev.log(
+      'REROUTE: Checking termination. SimMode=${TrackingService().isSimulationMode}',
+      name: 'TrackingService',
     );
+    if (!TrackingService().isSimulationMode) {
+      final terminationDecision = _terminationPolicy.shouldTerminate(
+        currentPosition: currentPosition,
+        speedMps: _lastSpeedMps ?? 0,
+      );
 
-    if (terminationDecision.shouldTerminate) {
-      dev.log(
-        'REROUTE: Termination policy triggered: ${terminationDecision.reason}',
-        name: 'TrackingService',
-      );
-      await _terminateTrackingWithMessage(
-        terminationDecision.userMessage ??
-            'Tracking ended due to extended deviation',
-      );
-      return;
+      if (terminationDecision.shouldTerminate) {
+        dev.log(
+          'REROUTE: Termination policy triggered: ${terminationDecision.reason}',
+          name: 'TrackingService',
+        );
+        await _terminateTrackingWithMessage(
+          terminationDecision.userMessage ??
+              'Tracking ended due to extended deviation',
+        );
+        return;
+      }
     }
 
     // Fetch new directions
@@ -1838,8 +1872,19 @@ Future<void> _onStart(
         required String alarmMode,
         required double alarmValue,
         required bool transitMode,
+        bool isSimulationMode = false,
         required ServiceInstance service,
       }) async {
+        if (isSimulationMode) {
+          TrackingService()._isSimulationMode = true;
+          dev.log(
+            'Simulation mode enabled via onStartTracking params',
+            name: 'TrackingService',
+          );
+        } else {
+          TrackingService()._isSimulationMode = false;
+        }
+
         _handleBackgroundStartTracking(
           destination: destination,
           destinationName: destinationName,
@@ -1900,6 +1945,13 @@ Future<void> _onStart(
       },
       onForegroundResumed: () async {
         await _handleBackgroundForegroundResumed(service);
+      },
+      onSetSimulationMode: (bool enabled) {
+        TrackingService()._isSimulationMode = enabled;
+        dev.log(
+          'DEBUG: Background received setSimulationMode: $enabled',
+          name: 'TrackingService',
+        );
       },
     ),
   ).registerAll();
@@ -2504,10 +2556,10 @@ extension TrackingServiceRouteOps on TrackingService {
 
       // Best-effort fallback: still try to send to background even if ACK is missing.
       try {
-        if (!await _service.isRunning()) {
-          await _service.startService();
+        if (!await (_service?.isRunning() ?? Future.value(false))) {
+          await _service?.startService();
         }
-        _service.invoke('registerRouteDirections', args);
+        _service?.invoke('registerRouteDirections', args);
       } catch (e) {
         trackingLog.error(
           'registerRouteFromDirections fallback invoke failed',

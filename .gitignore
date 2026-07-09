@@ -27,6 +27,7 @@
 *.apk
 *.aab
 /android/app/build/
+/android/build/
 /android/.gradle
 android/local.properties
 
@@ -58,3 +59,12 @@ app.*.map.json
 **/google-services.json
 **/GoogleService-Info.plist
 android/key.properties
+
+# Node dependencies (must never be committed; installed via npm/pnpm)
+node_modules/
+**/node_modules/
+
+# Python virtualenvs and local setup markers
+.venv/
+.venv-1/
+.nix-android-setup-done

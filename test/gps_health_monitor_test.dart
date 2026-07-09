@@ -15,7 +15,7 @@ void main() {
       monitor.dispose();
     });
 
-    Position _makePosition({double accuracy = 5.0}) {
+    Position makePosition({double accuracy = 5.0}) {
       return Position(
         latitude: 28.6139,
         longitude: 77.2090,
@@ -35,10 +35,10 @@ void main() {
     });
 
     test('stays healthy with good GPS updates', () {
-      monitor.ingestGpsUpdate(_makePosition(accuracy: 5.0));
+      monitor.ingestGpsUpdate(makePosition(accuracy: 5.0));
       expect(monitor.currentState, equals(GpsHealthState.healthy));
 
-      monitor.ingestGpsUpdate(_makePosition(accuracy: 10.0));
+      monitor.ingestGpsUpdate(makePosition(accuracy: 10.0));
       expect(monitor.currentState, equals(GpsHealthState.healthy));
     });
 
@@ -47,7 +47,7 @@ void main() {
       final sub = monitor.stateStream.listen(states.add);
 
       // Start with a GPS update
-      monitor.ingestGpsUpdate(_makePosition());
+      monitor.ingestGpsUpdate(makePosition());
       
       // Simulate going unavailable (no GPS for 25+ seconds)
       // We use a fake approach: manually set internal state for testing
@@ -59,21 +59,21 @@ void main() {
     test('reports correct silent duration', () {
       expect(monitor.silentDuration, isNull);
       
-      monitor.ingestGpsUpdate(_makePosition());
+      monitor.ingestGpsUpdate(makePosition());
       expect(monitor.silentDuration, isNotNull);
       expect(monitor.silentDuration!.inSeconds, lessThan(1));
     });
 
     test('tracks last accuracy', () {
-      monitor.ingestGpsUpdate(_makePosition(accuracy: 15.0));
+      monitor.ingestGpsUpdate(makePosition(accuracy: 15.0));
       expect(monitor.lastAccuracy, equals(15.0));
 
-      monitor.ingestGpsUpdate(_makePosition(accuracy: 8.0));
+      monitor.ingestGpsUpdate(makePosition(accuracy: 8.0));
       expect(monitor.lastAccuracy, equals(8.0));
     });
 
     test('reset clears state', () {
-      monitor.ingestGpsUpdate(_makePosition());
+      monitor.ingestGpsUpdate(makePosition());
       expect(monitor.silentDuration, isNotNull);
 
       monitor.reset();

@@ -402,7 +402,7 @@ class EkfLogger {
   Future<void> _flushToFile() async {
     if (_currentFile == null || _buffer.isEmpty) return;
     try {
-      final content = _buffer.join('\n') + '\n';
+      final content = '${_buffer.join('\n')}\n';
       await _currentFile!.writeAsString(content, mode: FileMode.append);
     } catch (_) {
       // Fail silently.

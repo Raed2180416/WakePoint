@@ -63,13 +63,13 @@ class TransitLegStops {
         return stableId;
       }
 
-      String _snap(double v) => v.toStringAsFixed(3);
+      String snap(double v) => v.toStringAsFixed(3);
 
       if (stopPositions.isNotEmpty) {
         final start = stopPositions.first;
         final end = stopPositions.last;
         final id =
-            '${lineName ?? "Leg"}_${_snap(start.latitude)},${_snap(start.longitude)}_${_snap(end.latitude)},${_snap(end.longitude)}';
+            '${lineName ?? "Leg"}_${snap(start.latitude)},${snap(start.longitude)}_${snap(end.latitude)},${snap(end.longitude)}';
         // print('🔑 legId: Using geometry-based ID: $id'); // Noisy
         return id;
       } else {
@@ -233,6 +233,21 @@ class RouteEventBoundary {
 }
 
 class TransferUtils {
+  static bool _isActiveStop(Map<String, dynamic> stop) {
+    final raw = stop['status']?.toString().trim().toLowerCase() ?? '';
+    if (raw.isEmpty) return true; // Default to active if missing
+    if (raw == 'active' || raw == 'operational' || raw == 'open') return true;
+    if (raw == 'upcoming' ||
+        raw == 'under construction' ||
+        raw == 'under-construction' ||
+        raw == 'planned' ||
+        raw == 'proposed' ||
+        raw == 'approved') {
+      return false;
+    }
+    return true;
+  }
+
   static bool _isMetroTransitStep(Map<String, dynamic> step) {
     try {
       final mode = (step['travel_mode'] as String?)?.toUpperCase();
@@ -770,8 +785,7 @@ class TransferUtils {
 
           if (step['travel_mode']?.toString().toUpperCase() == 'TRANSIT') {
             // Only count stops if this is the right type of transit
-            final shouldCount =
-                !metroOnly || _isMetroTransitStep(step);
+            final shouldCount = !metroOnly || _isMetroTransitStep(step);
             if (shouldCount) {
               final td = (step['transit_details'] as Map<String, dynamic>?);
               final ns = td != null ? td['num_stops'] as num? : null;
@@ -1161,7 +1175,7 @@ class TransferUtils {
 
       // Load OSM stops as the SINGLE source of truth
       final List<Stop> loadedStops =
-          allIndiaStops.map((m) {
+          allIndiaStops.where(_isActiveStop).map((m) {
             return Stop(
               id: m['id'] as String,
               name: m['name'] as String,
@@ -1263,14 +1277,49 @@ class TransferUtils {
 
           // Filter out stops too close to endpoints (within 50m of start/end)
           // These are likely the boarding/alighting stations, not intermediate stops
+          //
+          // MUMBAI FIX: Also filter out stops that belong to the NEXT metro leg.
+          // If there's a walk between metro legs (DN Nagar → walk → Andheri West),
+          // Andheri West stops should NOT be included in the first leg's intermediate stops.
           const endpointToleranceMeters = 50.0;
+
+          // Calculate leg length for stop filtering
+          final legLength = leg.legEndMeters - leg.legStartMeters;
+
+          // Check if next leg is also metro (indicating a transfer with potential walk)
+          final nextLegIsMetro =
+              i + 1 < legs.length && legs[i + 1].isMetro;
+          final nextLegStartMeters =
+              nextLegIsMetro ? legs[i + 1].legStartMeters : double.infinity;
+
           final intermediateStops =
               uniqueOrdered
                   .where(
-                    (s) =>
-                        s.metersAlongPolyline > endpointToleranceMeters &&
-                        s.metersAlongPolyline <
-                            (polylineTotalMeters - endpointToleranceMeters),
+                    (s) {
+                      // Basic endpoint filtering
+                      if (s.metersAlongPolyline <= endpointToleranceMeters ||
+                          s.metersAlongPolyline >= (polylineTotalMeters - endpointToleranceMeters)) {
+                        return false;
+                      }
+
+                      // MUMBAI FIX: If next leg is metro and there's a gap (walk),
+                      // exclude stops that are closer to next leg start than current leg end
+                      if (nextLegIsMetro) {
+                        final progress = (s.metersAlongPolyline / polylineTotalMeters).clamp(0.0, 1.0);
+                        final absoluteMeters = leg.legStartMeters + (progress * legLength);
+
+                        // If this stop is beyond current leg end and close to next leg start,
+                        // it belongs to the next leg, not this one
+                        if (absoluteMeters > leg.legEndMeters) {
+                          final distToNextLeg = (nextLegStartMeters - absoluteMeters).abs();
+                          if (distToNextLeg < 300.0) { // Within 300m of next leg start
+                            return false;
+                          }
+                        }
+                      }
+
+                      return true;
+                    },
                   )
                   .toList();
 
@@ -1281,7 +1330,6 @@ class TransferUtils {
           );
 
           // Build stop data directly from OSM matches - NO INTERPOLATION
-          final legLength = leg.legEndMeters - leg.legStartMeters;
           final stopPositions = <LatLng>[];
           final stopMeters = <double>[];
           final stopNames = <String>[];

@@ -379,7 +379,7 @@ class ImuReplayEngine {
 
   /// Set the warp factor (playback speed multiplier).
   void setWarpFactor(double factor) {
-    _warpFactor = factor.clamp(0.1, 20.0);
+    _warpFactor = factor.clamp(0.1, 200.0);
   }
 
   /// Enable/disable GPS dropout simulation.

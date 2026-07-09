@@ -21,7 +21,7 @@ class SimulationEngine {
   bool get hasRoute => _route.isNotEmpty;
 
   // Distance Cache
-  List<double> _segmentDistances = [];
+  final List<double> _segmentDistances = [];
   double _totalDistance = 0.0;
 
   void loadRoute(List<LatLng> route) {

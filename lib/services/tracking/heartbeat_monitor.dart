@@ -9,6 +9,7 @@ import 'dart:developer' as dev;
 import 'package:geowake2/core/logging/app_logger.dart';
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/services/trackingservice.dart';
 
 class HeartbeatMonitor {
   final bool Function() isEnabled;
@@ -60,6 +61,15 @@ class HeartbeatMonitor {
         if (!active || alreadyPaused) {
           dev.log(
             'DEBUG: Not showing pause - active=$active, paused=$alreadyPaused',
+            name: 'HeartbeatMonitor',
+          );
+          return;
+        }
+
+        // Skip heartbeat timeout in simulation mode to avoid interference
+        if (TrackingService().isSimulationMode) {
+          dev.log(
+            'DEBUG: Heartbeat timeout ignored (Simulation Mode)',
             name: 'HeartbeatMonitor',
           );
           return;

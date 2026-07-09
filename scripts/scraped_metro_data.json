@@ -1,0 +1,4448 @@
+[
+  {
+    "city": "delhi",
+    "name": "Shaheed Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6766296,
+    "lng": 77.3337608,
+    "url": "https://yometro.com/shaheed-nagar-metro-station-110008"
+  },
+  {
+    "city": "delhi",
+    "name": "Shyam park",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6782,
+    "lng": 77.37024,
+    "url": "https://yometro.com/shyam-park-metro-station-110005"
+  },
+  {
+    "city": "delhi",
+    "name": "Major Mohit Sharma Rajendra Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.67762,
+    "lng": 77.35828,
+    "url": "https://yometro.com/major-mohit-sharma-metro-station-110006"
+  },
+  {
+    "city": "delhi",
+    "name": "Rithala",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.72077,
+    "lng": 77.10716,
+    "url": "https://yometro.com/rithala-metro-station-110029"
+  },
+  {
+    "city": "delhi",
+    "name": "Shaheed Sthal (New Bus Adda)",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6704414,
+    "lng": 77.4164838,
+    "url": "https://yometro.com/shaheed-sthal-metro-station-110001"
+  },
+  {
+    "city": "delhi",
+    "name": "Raj Bagh",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.67703,
+    "lng": 77.34658,
+    "url": "https://yometro.com/raj-bagh-metro-station-110007"
+  },
+  {
+    "city": "delhi",
+    "name": "Arthala",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.676927,
+    "lng": 77.391773,
+    "url": "https://yometro.com/arthala-metro-station-110003"
+  },
+  {
+    "city": "delhi",
+    "name": "Mohan Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.67848,
+    "lng": 77.383933,
+    "url": "https://yometro.com/mohan-nagar-metro-station-110004"
+  },
+  {
+    "city": "delhi",
+    "name": "Mansarovar Park",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6754,
+    "lng": 77.30098,
+    "url": "https://yometro.com/mansarovar-park-metro-station-110011"
+  },
+  {
+    "city": "delhi",
+    "name": "Shahdara",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.67345,
+    "lng": 77.28988,
+    "url": "https://yometro.com/shahdara-metro-station-110012"
+  },
+  {
+    "city": "delhi",
+    "name": "Dilshad Garden",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6758978,
+    "lng": 77.3215165,
+    "url": "https://yometro.com/dilshad-garden-metro-station-110009"
+  },
+  {
+    "city": "delhi",
+    "name": "Kashmere Gate",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.66747,
+    "lng": 77.22824,
+    "url": "https://yometro.com/kashmere-gate-metro-station-110016"
+  },
+  {
+    "city": "delhi",
+    "name": "Welcome",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6717615,
+    "lng": 77.27765889999999,
+    "url": "https://yometro.com/welcome-metro-station-110013"
+  },
+  {
+    "city": "delhi",
+    "name": "Hindon River",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.673415,
+    "lng": 77.40637,
+    "url": "https://yometro.com/hindon-metro-station-110002"
+  },
+  {
+    "city": "delhi",
+    "name": "Pratap Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.666615,
+    "lng": 77.19888259999999,
+    "url": "https://yometro.com/pratap-nagar-metro-station-110019"
+  },
+  {
+    "city": "delhi",
+    "name": "Jhilmil",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6758364,
+    "lng": 77.3127075,
+    "url": "https://yometro.com/jhilmil-metro-station-110010"
+  },
+  {
+    "city": "delhi",
+    "name": "Shastri Park",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6683013,
+    "lng": 77.2502654,
+    "url": "https://yometro.com/shastri-park-metro-station-110015"
+  },
+  {
+    "city": "delhi",
+    "name": "Pulbangash",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6664,
+    "lng": 77.20737,
+    "url": "https://yometro.com/pul-bangash-metro-station-110018"
+  },
+  {
+    "city": "delhi",
+    "name": "Kanhaiya Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.68237,
+    "lng": 77.16481,
+    "url": "https://yometro.com/kanhiya-nagar-metro-station-110022"
+  },
+  {
+    "city": "delhi",
+    "name": "Tis Hazari",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.66719,
+    "lng": 77.21665999999999,
+    "url": "https://yometro.com/tis-hazari-metro-station-110017"
+  },
+  {
+    "city": "delhi",
+    "name": "Shastri Nagar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6700467,
+    "lng": 77.1818562,
+    "url": "https://yometro.com/shastri-nagar-metro-station-110020"
+  },
+  {
+    "city": "delhi",
+    "name": "Pitampura",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.70311,
+    "lng": 77.13247,
+    "url": "https://yometro.com/pitam-pura-metro-station-110026"
+  },
+  {
+    "city": "delhi",
+    "name": "Keshav Puram",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6888267,
+    "lng": 77.16167589999999,
+    "url": "https://yometro.com/keshav-puram-metro-station-110023"
+  },
+  {
+    "city": "delhi",
+    "name": "Rohini West",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.714869,
+    "lng": 77.115484,
+    "url": "https://yometro.com/rohini-west-metro-station-110028"
+  },
+  {
+    "city": "delhi",
+    "name": "Rohini East",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.7076722,
+    "lng": 77.1259106,
+    "url": "https://yometro.com/rohini-east-metro-station-110027"
+  },
+  {
+    "city": "delhi",
+    "name": "Kohat Enclave",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.69799,
+    "lng": 77.14063999999999,
+    "url": "https://yometro.com/kohat-enclave-metro-station-110025"
+  },
+  {
+    "city": "delhi",
+    "name": "Netaji Subhash Place",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.69605,
+    "lng": 77.15259,
+    "url": "https://yometro.com/netaji-subhash-place-metro-station-110024"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka",
+    "line": "\u25d9  Grey Line",
+    "lineColor": "0xFF808080",
+    "lat": 28.61492,
+    "lng": 77.02271999999999,
+    "url": "https://yometro.com/dwarka-metro-station-110135"
+  },
+  {
+    "city": "delhi",
+    "name": "Dhansa Bus Stand",
+    "line": "\u25d9  Grey Line",
+    "lineColor": "0xFF808080",
+    "lat": 28.6119,
+    "lng": 76.978,
+    "url": "https://yometro.com/dhansa-bus-stand-metro-station-110349"
+  },
+  {
+    "city": "delhi",
+    "name": "Nangli",
+    "line": "\u25d9  Grey Line",
+    "lineColor": "0xFF808080",
+    "lat": 28.617239,
+    "lng": 77.01039999999999,
+    "url": "https://yometro.com/nangli-metro-station-110347"
+  },
+  {
+    "city": "delhi",
+    "name": "Janakpuri West",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.62947,
+    "lng": 77.07777,
+    "url": "https://yometro.com/janakpuri-west-metro-station-110130"
+  },
+  {
+    "city": "delhi",
+    "name": "Inderlok",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6735427,
+    "lng": 77.1702925,
+    "url": "https://yometro.com/inderlok-metro-station-110021"
+  },
+  {
+    "city": "delhi",
+    "name": "Dashrathpuri",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.60235,
+    "lng": 77.08254,
+    "url": "https://yometro.com/dashrath-puri-metro-station-110300"
+  },
+  {
+    "city": "delhi",
+    "name": "Palam",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.58907,
+    "lng": 77.08296,
+    "url": "https://yometro.com/palam-metro-station-110301"
+  },
+  {
+    "city": "delhi",
+    "name": "Seelampur",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 28.6698,
+    "lng": 77.26680999999999,
+    "url": "https://yometro.com/seelampur-metro-station-110014"
+  },
+  {
+    "city": "delhi",
+    "name": "Sadar Bazar Cantonment",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5771153,
+    "lng": 77.1113517,
+    "url": "https://yometro.com/sadar-bazaar-cantonment-metro-station-110302"
+  },
+  {
+    "city": "delhi",
+    "name": "Najafgarh",
+    "line": "\u25d9  Grey Line",
+    "lineColor": "0xFF808080",
+    "lat": 28.6125955,
+    "lng": 76.986314,
+    "url": "https://yometro.com/najafgarh-metro-station-110348"
+  },
+  {
+    "city": "delhi",
+    "name": "Dabri Mor Janakpuri South",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.615906,
+    "lng": 77.085257,
+    "url": "https://yometro.com/dabri-mor-metro-station-110299"
+  },
+  {
+    "city": "delhi",
+    "name": "Botanical Garden",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5640331,
+    "lng": 77.33427999999999,
+    "url": "https://yometro.com/botanical-garden-metro-station-110102"
+  },
+  {
+    "city": "delhi",
+    "name": "Terminal 1 IGI Airport",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5653,
+    "lng": 77.12238099999999,
+    "url": "https://yometro.com/terminal-1-igi-airport-metro-station-110303"
+  },
+  {
+    "city": "delhi",
+    "name": "Vasant Vihar",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.557829,
+    "lng": 77.16099,
+    "url": "https://yometro.com/vasant-vihar-metro-station-110305"
+  },
+  {
+    "city": "delhi",
+    "name": "Munirka",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5578944,
+    "lng": 77.173968,
+    "url": "https://yometro.com/munirka-metro-station-110306"
+  },
+  {
+    "city": "delhi",
+    "name": "Shankar Vihar",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5608126,
+    "lng": 77.140345,
+    "url": "https://yometro.com/shankar-vihar-metro-station-110304"
+  },
+  {
+    "city": "delhi",
+    "name": "Panchsheel Park",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.542338,
+    "lng": 77.220507,
+    "url": "https://yometro.com/panchsheel-park-metro-station-110310"
+  },
+  {
+    "city": "delhi",
+    "name": "RK Puram",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5503497,
+    "lng": 77.18514859999999,
+    "url": "https://yometro.com/rk-puram-metro-station-110307"
+  },
+  {
+    "city": "delhi",
+    "name": "Nehru Enclave",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5450734,
+    "lng": 77.2506133,
+    "url": "https://yometro.com/nehru-enclave-metro-station-110313"
+  },
+  {
+    "city": "delhi",
+    "name": "Greater Kailash",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5417874,
+    "lng": 77.238186,
+    "url": "https://yometro.com/greater-kailash-metro-station-110312"
+  },
+  {
+    "city": "delhi",
+    "name": "Hauz Khas",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5439504,
+    "lng": 77.2062395,
+    "url": "https://yometro.com/hauz-khas-metro-station-110059"
+  },
+  {
+    "city": "delhi",
+    "name": "Krishna Park Extension",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.647423,
+    "lng": 77.08504599999999,
+    "url": "https://yometro.com/krishna-park-extension-metro-station-110345"
+  },
+  {
+    "city": "delhi",
+    "name": "Kalkaji Mandir",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.54945,
+    "lng": 77.25922,
+    "url": "https://yometro.com/kalkaji-mandir-metro-station-110225"
+  },
+  {
+    "city": "delhi",
+    "name": "IIT",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.547199,
+    "lng": 77.193817,
+    "url": "https://yometro.com/iit-delhi-metro-station-110308"
+  },
+  {
+    "city": "delhi",
+    "name": "Okhla NSIC",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5544259,
+    "lng": 77.2648833,
+    "url": "https://yometro.com/okhla-nsic-metro-station-110315"
+  },
+  {
+    "city": "delhi",
+    "name": "Okhla Vihar",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.56109,
+    "lng": 77.29189,
+    "url": "https://yometro.com/okhla-vihar-metro-station-110318"
+  },
+  {
+    "city": "delhi",
+    "name": "Jamia Milia Islamiya",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5629395,
+    "lng": 77.2862287,
+    "url": "https://yometro.com/jamia-millia-islamia-metro-station-110317"
+  },
+  {
+    "city": "delhi",
+    "name": "Chirag Delhi",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.541227,
+    "lng": 77.229382,
+    "url": "https://yometro.com/chirag-delhi-metro-station-110311"
+  },
+  {
+    "city": "delhi",
+    "name": "Okhla Bird Sanctuary",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5528635,
+    "lng": 77.3216503,
+    "url": "https://yometro.com/okhla-bird-sanctuary-metro-station-110321"
+  },
+  {
+    "city": "delhi",
+    "name": "Jasola Vihar Shaheen Bagh",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.545815,
+    "lng": 77.2967367,
+    "url": "https://yometro.com/jasola-vihar-shaheen-bagh-metro-station-110319"
+  },
+  {
+    "city": "delhi",
+    "name": "Shiv Vihar",
+    "line": "\u25d9  Pink Branch Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.7216122,
+    "lng": 77.2894938,
+    "url": "https://yometro.com/shiv-vihar-metro-station-110290"
+  },
+  {
+    "city": "delhi",
+    "name": "Sukhdev Vihar",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.5598037,
+    "lng": 77.2751163,
+    "url": "https://yometro.com/sukhdev-vihar-metro-station-110316"
+  },
+  {
+    "city": "delhi",
+    "name": "Johri Enclave",
+    "line": "\u25d9  Pink Branch Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.71318,
+    "lng": 77.29006,
+    "url": "https://yometro.com/johri-enclave-metro-station-110289"
+  },
+  {
+    "city": "delhi",
+    "name": "Kalindi Kunj",
+    "line": "\u25d9  Magenta Line",
+    "lineColor": "0xFFF300F3",
+    "lat": 28.542835,
+    "lng": 77.310175,
+    "url": "https://yometro.com/kalindi-kunj-metro-station-110320"
+  },
+  {
+    "city": "delhi",
+    "name": "Gokulpuri",
+    "line": "\u25d9  Pink Branch Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.70241,
+    "lng": 77.28598,
+    "url": "https://yometro.com/gokulpuri-metro-station-110288"
+  },
+  {
+    "city": "delhi",
+    "name": "East Azad Nagar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.66479,
+    "lng": 77.28479999999999,
+    "url": "https://yometro.com/east-azad-nagar-metro-station-110284"
+  },
+  {
+    "city": "delhi",
+    "name": "Welcome",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6717615,
+    "lng": 77.27765889999999,
+    "url": "https://yometro.com/welcome-metro-station-110013"
+  },
+  {
+    "city": "delhi",
+    "name": "Maujpur Babarpur",
+    "line": "\u25d9  Pink Branch Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6921031,
+    "lng": 77.279612,
+    "url": "https://yometro.com/maujpur-babarpur-metro-station-110244"
+  },
+  {
+    "city": "delhi",
+    "name": "Majlis Park",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.72416,
+    "lng": 77.18204999999999,
+    "url": "https://yometro.com/majlis-park-metro-station-110253"
+  },
+  {
+    "city": "delhi",
+    "name": "Krishna Nagar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6580393,
+    "lng": 77.29002969999999,
+    "url": "https://yometro.com/krishna-nagar-metro-station-110283"
+  },
+  {
+    "city": "delhi",
+    "name": "Karkarduma Court",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.65359,
+    "lng": 77.29558999999999,
+    "url": "https://yometro.com/karkarduma-court-metro-station-110282"
+  },
+  {
+    "city": "delhi",
+    "name": "Mandawali West Vinod Nagar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.624877,
+    "lng": 77.304372,
+    "url": "https://yometro.com/mandawali-west-vinod-nagar-metro-station-110278"
+  },
+  {
+    "city": "delhi",
+    "name": "IP Extension",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6319356,
+    "lng": 77.31075659999999,
+    "url": "https://yometro.com/ip-extension-metro-station-110279"
+  },
+  {
+    "city": "delhi",
+    "name": "Jafrabad",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6827585,
+    "lng": 77.2747474,
+    "url": "https://yometro.com/jaffrabad-metro-station-110286"
+  },
+  {
+    "city": "delhi",
+    "name": "Anand Vihar ISBT",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6469527,
+    "lng": 77.3159156,
+    "url": "https://yometro.com/anand-vihar-metro-station-110148"
+  },
+  {
+    "city": "delhi",
+    "name": "Trilokpuri Sanjay Lake",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.61359,
+    "lng": 77.30884,
+    "url": "https://yometro.com/trilokpuri-sanjay-lake-metro-station-110276"
+  },
+  {
+    "city": "delhi",
+    "name": "Mayur Vihar Pocket I",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6042259,
+    "lng": 77.289608,
+    "url": "https://yometro.com/mayur-vihar-pocket-i-metro-station-110275"
+  },
+  {
+    "city": "delhi",
+    "name": "Ashram",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.5735755,
+    "lng": 77.2575,
+    "url": "https://yometro.com/ashram-metro-station-110272"
+  },
+  {
+    "city": "delhi",
+    "name": "Sarai Kale Khan Nizamuddin",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.58936,
+    "lng": 77.25712999999999,
+    "url": "https://yometro.com/sarai-kale-khan-nizamuddin-metro-station-110273"
+  },
+  {
+    "city": "delhi",
+    "name": "East Vinod Nagar Mayur Vihar II",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.620057,
+    "lng": 77.30527,
+    "url": "https://yometro.com/east-vinod-nagar-mayur-vihar-ii-metro-station-110277"
+  },
+  {
+    "city": "delhi",
+    "name": "Karkarduma",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.64849,
+    "lng": 77.30557999999999,
+    "url": "https://yometro.com/karkarduma-metro-station-110147"
+  },
+  {
+    "city": "delhi",
+    "name": "Maujpur Babarpur",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6921031,
+    "lng": 77.279612,
+    "url": "https://yometro.com/maujpur-babarpur-metro-station-110244"
+  },
+  {
+    "city": "delhi",
+    "name": "Vinobapuri",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.565944,
+    "lng": 77.250502,
+    "url": "https://yometro.com/vinobapuri-metro-station-110271"
+  },
+  {
+    "city": "delhi",
+    "name": "Mayur Vihar I",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6042259,
+    "lng": 77.289608,
+    "url": "https://yometro.com/mayur-vihar-i-metro-station-110108"
+  },
+  {
+    "city": "delhi",
+    "name": "Lajpat Nagar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.5713351,
+    "lng": 77.2426897,
+    "url": "https://yometro.com/lajpat-nagar-metro-station-110221"
+  },
+  {
+    "city": "delhi",
+    "name": "Delhi Haat INA",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.5744494,
+    "lng": 77.2096224,
+    "url": "https://yometro.com/delhi-haat-ina-metro-station-110056"
+  },
+  {
+    "city": "delhi",
+    "name": "Sir Vishweshwaraiah Moti Bagh",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.578504,
+    "lng": 77.175726,
+    "url": "https://yometro.com/sir-vishweshwaraiah-moti-bagh-metro-station-110265"
+  },
+  {
+    "city": "delhi",
+    "name": "Bhikaji Cama Place",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.570211,
+    "lng": 77.187888,
+    "url": "https://yometro.com/bhikaji-cama-place-metro-station-110266"
+  },
+  {
+    "city": "delhi",
+    "name": "Durgabai Deshmukh South Campus",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.58938,
+    "lng": 77.16951999999999,
+    "url": "https://yometro.com/durgabai-deshmukh-south-campus-metro-station-110264"
+  },
+  {
+    "city": "delhi",
+    "name": "Delhi Cantt",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6086915,
+    "lng": 77.1404225,
+    "url": "https://yometro.com/delhi-cantonment-metro-station-110263"
+  },
+  {
+    "city": "delhi",
+    "name": "Naraina Vihar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6229661,
+    "lng": 77.1369436,
+    "url": "https://yometro.com/naraina-vihar-metro-station-110262"
+  },
+  {
+    "city": "delhi",
+    "name": "South Extension",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.568611,
+    "lng": 77.220265,
+    "url": "https://yometro.com/south-extension-metro-station-110269"
+  },
+  {
+    "city": "delhi",
+    "name": "Sarojini Nagar",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.575807,
+    "lng": 77.198571,
+    "url": "https://yometro.com/sarojini-nagar-metro-station-110267"
+  },
+  {
+    "city": "delhi",
+    "name": "ESI Basaidarapur",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.65816,
+    "lng": 77.12732,
+    "url": "https://yometro.com/esi-hospital-metro-station-110259"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajouri Garden",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6506713,
+    "lng": 77.12430739999999,
+    "url": "https://yometro.com/rajouri-garden-metro-station-110125"
+  },
+  {
+    "city": "delhi",
+    "name": "Shakurpur",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6857688,
+    "lng": 77.14963589999999,
+    "url": "https://yometro.com/shakurpur-metro-station-110257"
+  },
+  {
+    "city": "delhi",
+    "name": "Mayapuri",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.637099,
+    "lng": 77.129741,
+    "url": "https://yometro.com/mayapuri-metro-station-110261"
+  },
+  {
+    "city": "delhi",
+    "name": "Shalimar Bagh",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.702018,
+    "lng": 77.16477019999999,
+    "url": "https://yometro.com/shalimar-bagh-metro-station-110255"
+  },
+  {
+    "city": "delhi",
+    "name": "Azadpur",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.70709,
+    "lng": 77.18029609999999,
+    "url": "https://yometro.com/azadpur-metro-station-110040"
+  },
+  {
+    "city": "delhi",
+    "name": "Yashobhoomi Dwarka Sector 25",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.55105,
+    "lng": 77.04538,
+    "url": "https://yometro.com/yashobhoomi-dwarka-secto-25-metro-station-110082"
+  },
+  {
+    "city": "delhi",
+    "name": "Netaji Subhash Place",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.69605,
+    "lng": 77.15259,
+    "url": "https://yometro.com/netaji-subhash-place-metro-station-110024"
+  },
+  {
+    "city": "delhi",
+    "name": "Punjabi Bagh West",
+    "line": "\u25d9  Pink Main Line",
+    "lineColor": "0xFFED91C9",
+    "lat": 28.6737863,
+    "lng": 77.1402669,
+    "url": "https://yometro.com/punjabi-bagh-west-metro-station-110258"
+  },
+  {
+    "city": "delhi",
+    "name": "Delhi Aerocity",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.54888,
+    "lng": 77.12077,
+    "url": "https://yometro.com/delhi-aerocity-metro-station-110804"
+  },
+  {
+    "city": "delhi",
+    "name": "Dhaula Kuan",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.59189,
+    "lng": 77.16167,
+    "url": "https://yometro.com/dhaula-kuan-metro-station-110803"
+  },
+  {
+    "city": "delhi",
+    "name": "New Delhi",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.6437208,
+    "lng": 77.2229898,
+    "url": "https://yometro.com/new-delhi-metro-station-110049"
+  },
+  {
+    "city": "delhi",
+    "name": "Shivaji Stadium",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.6287699,
+    "lng": 77.21141209999999,
+    "url": "https://yometro.com/shivaji-stadium-metro-station-110802"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 21",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.5522057,
+    "lng": 77.0583048,
+    "url": "https://yometro.com/dwarka-sector-21-metro-station-110083"
+  },
+  {
+    "city": "delhi",
+    "name": "Airport T3",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 28.55709,
+    "lng": 77.08684,
+    "url": "https://yometro.com/igi-airport-metro-station-110805"
+  },
+  {
+    "city": "delhi",
+    "name": "Kashmere Gate",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.66747,
+    "lng": 77.22824,
+    "url": "https://yometro.com/kashmere-gate-metro-station-110016"
+  },
+  {
+    "city": "delhi",
+    "name": "Raja Nahar Singh Ballabhgarh",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.339801,
+    "lng": 77.316446,
+    "url": "https://yometro.com/raja-nahar-singh-ballabhgarh-metro-station-110243"
+  },
+  {
+    "city": "delhi",
+    "name": "ITO",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.62839,
+    "lng": 77.24118,
+    "url": "https://yometro.com/ito-metro-station-110214"
+  },
+  {
+    "city": "delhi",
+    "name": "Janpath",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.625061,
+    "lng": 77.219184,
+    "url": "https://yometro.com/janpath-metro-station-110216"
+  },
+  {
+    "city": "delhi",
+    "name": "Jama Masjid",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.64955,
+    "lng": 77.23801999999999,
+    "url": "https://yometro.com/jama-masjid-metro-station-110212"
+  },
+  {
+    "city": "delhi",
+    "name": "Central Secretariat",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.6151511,
+    "lng": 77.21226349999999,
+    "url": "https://yometro.com/central-secretariat-metro-station-110052"
+  },
+  {
+    "city": "delhi",
+    "name": "Lal Quila",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.6568551,
+    "lng": 77.2368125,
+    "url": "https://yometro.com/lal-qila-metro-station-110211"
+  },
+  {
+    "city": "delhi",
+    "name": "Mandi House",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.62569,
+    "lng": 77.23375999999999,
+    "url": "https://yometro.com/mandi-house-metro-station-110113"
+  },
+  {
+    "city": "delhi",
+    "name": "Khan Market",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.602151,
+    "lng": 77.229019,
+    "url": "https://yometro.com/khan-market-metro-station-110218"
+  },
+  {
+    "city": "delhi",
+    "name": "Kailash Colony",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.5553874,
+    "lng": 77.2419541,
+    "url": "https://yometro.com/kailash-colony-metro-station-110223"
+  },
+  {
+    "city": "delhi",
+    "name": "Moolchand",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.564012,
+    "lng": 77.234245,
+    "url": "https://yometro.com/moolchand-metro-station-110222"
+  },
+  {
+    "city": "delhi",
+    "name": "Jangpura",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.583698,
+    "lng": 77.238436,
+    "url": "https://yometro.com/jangpura-metro-station-110220"
+  },
+  {
+    "city": "delhi",
+    "name": "Govind Puri",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.5444,
+    "lng": 77.26435,
+    "url": "https://yometro.com/govind-puri-metro-station-110226"
+  },
+  {
+    "city": "delhi",
+    "name": "JLN Stadium",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.589363,
+    "lng": 77.23356199999999,
+    "url": "https://yometro.com/jawaharlal-nehru-stadium-metro-station-110219"
+  },
+  {
+    "city": "delhi",
+    "name": "Kalkaji Mandir",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.54945,
+    "lng": 77.25922,
+    "url": "https://yometro.com/kalkaji-mandir-metro-station-110225"
+  },
+  {
+    "city": "delhi",
+    "name": "Lajpat Nagar",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.5713351,
+    "lng": 77.2426897,
+    "url": "https://yometro.com/lajpat-nagar-metro-station-110221"
+  },
+  {
+    "city": "delhi",
+    "name": "Delhi Gate",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.64008,
+    "lng": 77.24051,
+    "url": "https://yometro.com/delhi-gate-metro-station-110213"
+  },
+  {
+    "city": "delhi",
+    "name": "Nehru Place",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.5508595,
+    "lng": 77.2518285,
+    "url": "https://yometro.com/nehru-place-metro-station-110224"
+  },
+  {
+    "city": "delhi",
+    "name": "Jasola Apollo",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.53813,
+    "lng": 77.2833,
+    "url": "https://yometro.com/jasola-apollo-metro-station-110228"
+  },
+  {
+    "city": "delhi",
+    "name": "Badarpur Border",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.4936903,
+    "lng": 77.3028946,
+    "url": "https://yometro.com/badarpur-metro-station-110232"
+  },
+  {
+    "city": "delhi",
+    "name": "Mohan Estate",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.51952,
+    "lng": 77.29455999999999,
+    "url": "https://yometro.com/mohan-estate-metro-station-110230"
+  },
+  {
+    "city": "delhi",
+    "name": "Tughlakabad Station",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.50254,
+    "lng": 77.2993,
+    "url": "https://yometro.com/tughlakabad-metro-station-110231"
+  },
+  {
+    "city": "delhi",
+    "name": "Mewala Maharajpur",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.448566,
+    "lng": 77.308055,
+    "url": "https://yometro.com/mewla-maharajpur-metro-station-110235"
+  },
+  {
+    "city": "delhi",
+    "name": "NHPC Chowk",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.4576983,
+    "lng": 77.30743489999999,
+    "url": "https://yometro.com/nhpc-chowk-metro-station-110234"
+  },
+  {
+    "city": "delhi",
+    "name": "Sarita Vihar",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.52873,
+    "lng": 77.28822,
+    "url": "https://yometro.com/sarita-vihar-metro-station-110229"
+  },
+  {
+    "city": "delhi",
+    "name": "Harkesh Nagar Okhla",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.54292,
+    "lng": 77.27503999999999,
+    "url": "https://yometro.com/harkesh-nagar-metro-station-110227"
+  },
+  {
+    "city": "delhi",
+    "name": "Sarai",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.4776759,
+    "lng": 77.3050212,
+    "url": "https://yometro.com/sarai-metro-station-110233"
+  },
+  {
+    "city": "delhi",
+    "name": "Sector 28",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.438383,
+    "lng": 77.308402,
+    "url": "https://yometro.com/sector-28-metro-station-110236"
+  },
+  {
+    "city": "delhi",
+    "name": "Badkal Mor",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.4227532,
+    "lng": 77.31035729999999,
+    "url": "https://yometro.com/badkhal-mor-metro-station-110237"
+  },
+  {
+    "city": "delhi",
+    "name": "Bata Chowk",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.38599,
+    "lng": 77.31342,
+    "url": "https://yometro.com/bata-chowk-metro-station-110240"
+  },
+  {
+    "city": "delhi",
+    "name": "Neelam Chowk Ajronda",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.397668,
+    "lng": 77.312365,
+    "url": "https://yometro.com/neelam-chowk-ajronda-metro-station-110239"
+  },
+  {
+    "city": "delhi",
+    "name": "Sant Surdas Sihi",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.3547392,
+    "lng": 77.31620099999999,
+    "url": "https://yometro.com/sant-surdas-sihi-metro-station-110242"
+  },
+  {
+    "city": "delhi",
+    "name": "Kirti Nagar",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6556764,
+    "lng": 77.1508142,
+    "url": "https://yometro.com/kirti-nagar-metro-station-110122"
+  },
+  {
+    "city": "delhi",
+    "name": "Escorts Mujesar",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.37016,
+    "lng": 77.31493999999999,
+    "url": "https://yometro.com/escorts-mujesar-metro-station-110241"
+  },
+  {
+    "city": "delhi",
+    "name": "Satguru Ram Singh Marg",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.66213,
+    "lng": 77.15765999999999,
+    "url": "https://yometro.com/satguru-ram-singh-marg-metro-station-110199"
+  },
+  {
+    "city": "delhi",
+    "name": "Ashok Park Main",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.671441,
+    "lng": 77.155776,
+    "url": "https://yometro.com/ashok-park-main-metro-station-110155"
+  },
+  {
+    "city": "delhi",
+    "name": "Madipur",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.67634,
+    "lng": 77.11974,
+    "url": "https://yometro.com/madipur-metro-station-110158"
+  },
+  {
+    "city": "delhi",
+    "name": "Shivaji Park",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.674939,
+    "lng": 77.13058199999999,
+    "url": "https://yometro.com/shivaji-park-metro-station-110157"
+  },
+  {
+    "city": "delhi",
+    "name": "Punjabi Bagh",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6737863,
+    "lng": 77.1402669,
+    "url": "https://yometro.com/punjabi-bagh-metro-station-110156"
+  },
+  {
+    "city": "delhi",
+    "name": "Punjabi Bagh West",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6737863,
+    "lng": 77.1402669,
+    "url": "https://yometro.com/punjabi-bagh-west-metro-station-110258"
+  },
+  {
+    "city": "delhi",
+    "name": "Maharaja Surajmal Stadium",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68182,
+    "lng": 77.07396,
+    "url": "https://yometro.com/surajmal-stadium-metro-station-110163"
+  },
+  {
+    "city": "delhi",
+    "name": "Paschim Vihar West",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6786,
+    "lng": 77.10231,
+    "url": "https://yometro.com/paschim-vihar-west-metro-station-110160"
+  },
+  {
+    "city": "delhi",
+    "name": "Paschim Vihar East",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.67727,
+    "lng": 77.11241,
+    "url": "https://yometro.com/paschim-vihar-east-metro-station-110159"
+  },
+  {
+    "city": "delhi",
+    "name": "Peeragarhi",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6798557,
+    "lng": 77.09200419999999,
+    "url": "https://yometro.com/peera-garhi-metro-station-110161"
+  },
+  {
+    "city": "delhi",
+    "name": "Nangloi",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68233,
+    "lng": 77.06481,
+    "url": "https://yometro.com/nangloi-metro-station-110164"
+  },
+  {
+    "city": "delhi",
+    "name": "Brigadier Hoshiar Singh",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.69741,
+    "lng": 76.91927,
+    "url": "https://yometro.com/brigadier-hoshiyar-singh-metro-station-110174"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajdhani Park",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6822794,
+    "lng": 77.044007,
+    "url": "https://yometro.com/rajdhani-park-metro-station-110166"
+  },
+  {
+    "city": "delhi",
+    "name": "Udyog Nagar",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.681048,
+    "lng": 77.08086399999999,
+    "url": "https://yometro.com/udyog-nagar-metro-station-110162"
+  },
+  {
+    "city": "delhi",
+    "name": "Nangloi Railway Station",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.682133,
+    "lng": 77.05622,
+    "url": "https://yometro.com/nangloi-railway-station-metro-station-110165"
+  },
+  {
+    "city": "delhi",
+    "name": "Tikri Kalan",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68688,
+    "lng": 76.97726999999999,
+    "url": "https://yometro.com/tikri-kalan-metro-station-110170"
+  },
+  {
+    "city": "delhi",
+    "name": "Mundka",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68239,
+    "lng": 77.03034,
+    "url": "https://yometro.com/mundka-metro-station-110167"
+  },
+  {
+    "city": "delhi",
+    "name": "Ghevra",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6850626,
+    "lng": 76.9965484,
+    "url": "https://yometro.com/ghevra-metro-station-110169"
+  },
+  {
+    "city": "delhi",
+    "name": "Mundka Industrial Area",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68343,
+    "lng": 77.01715,
+    "url": "https://yometro.com/mundka-industrial-area-metro-station-110168"
+  },
+  {
+    "city": "delhi",
+    "name": "Bahadurgarh City",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.69074,
+    "lng": 76.93538,
+    "url": "https://yometro.com/bahadurgarh-city-metro-station-110173"
+  },
+  {
+    "city": "delhi",
+    "name": "Tikri Border",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6880203,
+    "lng": 76.9640989,
+    "url": "https://yometro.com/tikri-border-metro-station-110171"
+  },
+  {
+    "city": "delhi",
+    "name": "Ashok Park Main",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.671441,
+    "lng": 77.155776,
+    "url": "https://yometro.com/ashok-park-main-metro-station-110155"
+  },
+  {
+    "city": "delhi",
+    "name": "Old Faridabad",
+    "line": "\u25d9  Violet Line",
+    "lineColor": "0xFF8115FF",
+    "lat": 28.41067,
+    "lng": 77.3112953,
+    "url": "https://yometro.com/faridabad-old-metro-station-110238"
+  },
+  {
+    "city": "delhi",
+    "name": "Pandit Shree Ram Sharma",
+    "line": "\u25d9  Green Branch Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.689242,
+    "lng": 76.95114699999999,
+    "url": "https://yometro.com/pandit-shree-ram-sharma-metro-station-110172"
+  },
+  {
+    "city": "delhi",
+    "name": "Punjabi Bagh West",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6737863,
+    "lng": 77.1402669,
+    "url": "https://yometro.com/punjabi-bagh-west-metro-station-110258"
+  },
+  {
+    "city": "delhi",
+    "name": "Inderlok",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6735427,
+    "lng": 77.1702925,
+    "url": "https://yometro.com/inderlok-metro-station-110021"
+  },
+  {
+    "city": "delhi",
+    "name": "Brigadier Hoshiar Singh",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.69741,
+    "lng": 76.91927,
+    "url": "https://yometro.com/brigadier-hoshiyar-singh-metro-station-110174"
+  },
+  {
+    "city": "delhi",
+    "name": "Shivaji Park",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.674939,
+    "lng": 77.13058199999999,
+    "url": "https://yometro.com/shivaji-park-metro-station-110157"
+  },
+  {
+    "city": "delhi",
+    "name": "Madipur",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.67634,
+    "lng": 77.11974,
+    "url": "https://yometro.com/madipur-metro-station-110158"
+  },
+  {
+    "city": "delhi",
+    "name": "Paschim Vihar East",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.67727,
+    "lng": 77.11241,
+    "url": "https://yometro.com/paschim-vihar-east-metro-station-110159"
+  },
+  {
+    "city": "delhi",
+    "name": "Paschim Vihar West",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6786,
+    "lng": 77.10231,
+    "url": "https://yometro.com/paschim-vihar-west-metro-station-110160"
+  },
+  {
+    "city": "delhi",
+    "name": "Udyog Nagar",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.681048,
+    "lng": 77.08086399999999,
+    "url": "https://yometro.com/udyog-nagar-metro-station-110162"
+  },
+  {
+    "city": "delhi",
+    "name": "Maharaja Surajmal Stadium",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68182,
+    "lng": 77.07396,
+    "url": "https://yometro.com/surajmal-stadium-metro-station-110163"
+  },
+  {
+    "city": "delhi",
+    "name": "Punjabi Bagh",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.67274,
+    "lng": 77.13918,
+    "url": "https://yometro.com/punjabi-bagh-metro-station-110156"
+  },
+  {
+    "city": "delhi",
+    "name": "Peeragarhi",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6798557,
+    "lng": 77.09200419999999,
+    "url": "https://yometro.com/peera-garhi-metro-station-110161"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajdhani Park",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6822794,
+    "lng": 77.044007,
+    "url": "https://yometro.com/rajdhani-park-metro-station-110166"
+  },
+  {
+    "city": "delhi",
+    "name": "Mundka",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68239,
+    "lng": 77.03034,
+    "url": "https://yometro.com/mundka-metro-station-110167"
+  },
+  {
+    "city": "delhi",
+    "name": "Nangloi Railway Station",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.682133,
+    "lng": 77.05622,
+    "url": "https://yometro.com/nangloi-railway-station-metro-station-110165"
+  },
+  {
+    "city": "delhi",
+    "name": "Tikri Border",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6880203,
+    "lng": 76.9640989,
+    "url": "https://yometro.com/tikri-border-metro-station-110171"
+  },
+  {
+    "city": "delhi",
+    "name": "Pandit Shree Ram Sharma",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6896351,
+    "lng": 76.9509898,
+    "url": "https://yometro.com/pandit-shree-ram-sharma-metro-station-110172"
+  },
+  {
+    "city": "delhi",
+    "name": "Bahadurgarh City",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.69074,
+    "lng": 76.93538,
+    "url": "https://yometro.com/bahadurgarh-city-metro-station-110173"
+  },
+  {
+    "city": "delhi",
+    "name": "Ghevra",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.6850626,
+    "lng": 76.9965484,
+    "url": "https://yometro.com/ghevra-metro-station-110169"
+  },
+  {
+    "city": "delhi",
+    "name": "Mundka Industrial Area",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68343,
+    "lng": 77.01715,
+    "url": "https://yometro.com/mundka-industrial-area-metro-station-110168"
+  },
+  {
+    "city": "delhi",
+    "name": "Vaishali",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6504312,
+    "lng": 77.33927369999999,
+    "url": "https://yometro.com/vaishali-metro-station-110150"
+  },
+  {
+    "city": "delhi",
+    "name": "Kaushambi",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64548,
+    "lng": 77.32436,
+    "url": "https://yometro.com/kaushambi-metro-station-110149"
+  },
+  {
+    "city": "delhi",
+    "name": "Karkarduma",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64849,
+    "lng": 77.30557999999999,
+    "url": "https://yometro.com/karkarduma-metro-station-110147"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 21",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5522057,
+    "lng": 77.0583048,
+    "url": "https://yometro.com/dwarka-sector-21-metro-station-110083"
+  },
+  {
+    "city": "delhi",
+    "name": "Tikri Kalan",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68688,
+    "lng": 76.97726999999999,
+    "url": "https://yometro.com/tikri-kalan-metro-station-110170"
+  },
+  {
+    "city": "delhi",
+    "name": "Preet Vihar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64171,
+    "lng": 77.29543,
+    "url": "https://yometro.com/preet-vihar-metro-station-110146"
+  },
+  {
+    "city": "delhi",
+    "name": "Anand Vihar ISBT",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6469527,
+    "lng": 77.3159156,
+    "url": "https://yometro.com/anand-vihar-metro-station-110148"
+  },
+  {
+    "city": "delhi",
+    "name": "Nangloi",
+    "line": "\u25d9  Green Main Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 28.68233,
+    "lng": 77.06481,
+    "url": "https://yometro.com/nangloi-metro-station-110164"
+  },
+  {
+    "city": "delhi",
+    "name": "Laxmi Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63068,
+    "lng": 77.27762,
+    "url": "https://yometro.com/laxmi-nagar-metro-station-110144"
+  },
+  {
+    "city": "delhi",
+    "name": "Yamuna Bank",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6234351,
+    "lng": 77.26876089999999,
+    "url": "https://yometro.com/yamuna-bank-metro-station-110110"
+  },
+  {
+    "city": "delhi",
+    "name": "Barakhambha Road",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62994,
+    "lng": 77.22449999999999,
+    "url": "https://yometro.com/barakhambha-road-metro-station-110114"
+  },
+  {
+    "city": "delhi",
+    "name": "Indraprastha",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6207156,
+    "lng": 77.24988979999999,
+    "url": "https://yometro.com/indraprastha-metro-station-110111"
+  },
+  {
+    "city": "delhi",
+    "name": "Mandi House",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62569,
+    "lng": 77.23375999999999,
+    "url": "https://yometro.com/mandi-house-metro-station-110113"
+  },
+  {
+    "city": "delhi",
+    "name": "Nirman Vihar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63663,
+    "lng": 77.28683,
+    "url": "https://yometro.com/nirman-vihar-metro-station-110145"
+  },
+  {
+    "city": "delhi",
+    "name": "Supreme Court (Pragati Maidan)",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6231754,
+    "lng": 77.24292849999999,
+    "url": "https://yometro.com/pragati-maidan-metro-station-110112"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajiv Chowk",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6329849,
+    "lng": 77.2193723,
+    "url": "https://yometro.com/rajiv-chowk-metro-station-110050"
+  },
+  {
+    "city": "delhi",
+    "name": "RK Ashram Marg",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63924,
+    "lng": 77.20855999999999,
+    "url": "https://yometro.com/ramakrishna-ashram-marg-metro-station-110116"
+  },
+  {
+    "city": "delhi",
+    "name": "Karol Bagh",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6439593,
+    "lng": 77.18849019999999,
+    "url": "https://yometro.com/karol-bagh-metro-station-110118"
+  },
+  {
+    "city": "delhi",
+    "name": "Jhandewalan",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64429,
+    "lng": 77.19991999999999,
+    "url": "https://yometro.com/jhandewalan-metro-station-110117"
+  },
+  {
+    "city": "delhi",
+    "name": "Shadipur",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.65162,
+    "lng": 77.15823,
+    "url": "https://yometro.com/shadipur-metro-station-110121"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajendra Place",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6425289,
+    "lng": 77.1782406,
+    "url": "https://yometro.com/rajendra-place-metro-station-110119"
+  },
+  {
+    "city": "delhi",
+    "name": "Ramesh Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6527066,
+    "lng": 77.13205889999999,
+    "url": "https://yometro.com/ramesh-nagar-metro-station-110124"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajouri Garden",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6506713,
+    "lng": 77.12430739999999,
+    "url": "https://yometro.com/rajouri-garden-metro-station-110125"
+  },
+  {
+    "city": "delhi",
+    "name": "Subhash Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64039,
+    "lng": 77.10495,
+    "url": "https://yometro.com/arnold-subhash-nagar-metro-station-110127"
+  },
+  {
+    "city": "delhi",
+    "name": "Kirti Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6556764,
+    "lng": 77.1508142,
+    "url": "https://yometro.com/kirti-nagar-metro-station-110122"
+  },
+  {
+    "city": "delhi",
+    "name": "Janakpuri West",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62947,
+    "lng": 77.07777,
+    "url": "https://yometro.com/janakpuri-west-metro-station-110130"
+  },
+  {
+    "city": "delhi",
+    "name": "Moti Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.65796,
+    "lng": 77.14267,
+    "url": "https://yometro.com/moti-nagar-metro-station-110123"
+  },
+  {
+    "city": "delhi",
+    "name": "Uttam Nagar West",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6217542,
+    "lng": 77.0558111,
+    "url": "https://yometro.com/uttam-nagar-west-metro-station-110132"
+  },
+  {
+    "city": "delhi",
+    "name": "Tagore Garden",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.643754,
+    "lng": 77.1128805,
+    "url": "https://yometro.com/tagore-garden-metro-station-110126"
+  },
+  {
+    "city": "delhi",
+    "name": "Tilak Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.636568,
+    "lng": 77.09648,
+    "url": "https://yometro.com/tilak-nagar-metro-station-110128"
+  },
+  {
+    "city": "delhi",
+    "name": "Janakpuri East",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63306,
+    "lng": 77.08672,
+    "url": "https://yometro.com/janakpuri-east-metro-station-110129"
+  },
+  {
+    "city": "delhi",
+    "name": "Uttam Nagar East",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.624633,
+    "lng": 77.0649681,
+    "url": "https://yometro.com/uttam-nagar-east-metro-station-110131"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 11",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5864967,
+    "lng": 77.0494739,
+    "url": "https://yometro.com/dwarka-sector-11-metro-station-110139"
+  },
+  {
+    "city": "delhi",
+    "name": "Patel Nagar",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6450319,
+    "lng": 77.169271,
+    "url": "https://yometro.com/patel-nagar-metro-station-110120"
+  },
+  {
+    "city": "delhi",
+    "name": "Nawada",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62026,
+    "lng": 77.04507,
+    "url": "https://yometro.com/nawada-metro-station-110133"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Mor",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6192938,
+    "lng": 77.0333266,
+    "url": "https://yometro.com/dwarka-mor-metro-station-110134"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 12",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.59231,
+    "lng": 77.04063,
+    "url": "https://yometro.com/dwarka-sector-12-metro-station-110138"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 14",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.60222,
+    "lng": 77.02593999999999,
+    "url": "https://yometro.com/dwarka-sector-14-metro-station-110136"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.61492,
+    "lng": 77.02271999999999,
+    "url": "https://yometro.com/dwarka-metro-station-110135"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 10",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5812094,
+    "lng": 77.0572559,
+    "url": "https://yometro.com/dwarka-sector-10-metro-station-110140"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 9",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.57428,
+    "lng": 77.06528,
+    "url": "https://yometro.com/dwarka-sector-9-metro-station-110141"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 13",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5972,
+    "lng": 77.03332999999999,
+    "url": "https://yometro.com/dwarka-sector-13-metro-station-110137"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Electronic City",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.627941,
+    "lng": 77.37492999999999,
+    "url": "https://yometro.com/noida-electronic-city-metro-station-110094"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 59",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.606493,
+    "lng": 77.372726,
+    "url": "https://yometro.com/noida-sector-59-metro-station-110096"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 61",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5979733,
+    "lng": 77.37219069999999,
+    "url": "https://yometro.com/noida-sector-61-metro-station-110097"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 8",
+    "line": "\u25d9  Blue Branch Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5679435,
+    "lng": 77.0663345,
+    "url": "https://yometro.com/dwarka-sector-8-metro-station-110142"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 52",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.586708,
+    "lng": 77.3727699,
+    "url": "https://yometro.com/noida-sector-52-metro-station-110098"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 62",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.616995,
+    "lng": 77.37361,
+    "url": "https://yometro.com/noida-sector-62-metro-station-110095"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida City Centre",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5747031,
+    "lng": 77.3562654,
+    "url": "https://yometro.com/noida-city-centre-metro-station-110100"
+  },
+  {
+    "city": "delhi",
+    "name": "Botanical Garden",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5640331,
+    "lng": 77.33427999999999,
+    "url": "https://yometro.com/botanical-garden-metro-station-110102"
+  },
+  {
+    "city": "delhi",
+    "name": "Golf Course",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.56719,
+    "lng": 77.34597,
+    "url": "https://yometro.com/golf-course-metro-station-110101"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 34",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.580118,
+    "lng": 77.363486,
+    "url": "https://yometro.com/noida-sector-34-metro-station-110099"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 16",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5782353,
+    "lng": 77.31771979999999,
+    "url": "https://yometro.com/noida-sector-16-metro-station-110104"
+  },
+  {
+    "city": "delhi",
+    "name": "Mayur Vihar Extension",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5941991,
+    "lng": 77.2947135,
+    "url": "https://yometro.com/mayur-vihar-extension-metro-station-110107"
+  },
+  {
+    "city": "delhi",
+    "name": "New Ashok Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.58916,
+    "lng": 77.30214,
+    "url": "https://yometro.com/new-ashok-nagar-metro-station-110106"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 21",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5522057,
+    "lng": 77.0583048,
+    "url": "https://yometro.com/dwarka-sector-21-metro-station-110083"
+  },
+  {
+    "city": "delhi",
+    "name": "Mayur Vihar I",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6042259,
+    "lng": 77.289608,
+    "url": "https://yometro.com/mayur-vihar-i-metro-station-110108"
+  },
+  {
+    "city": "delhi",
+    "name": "Mandi House",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62569,
+    "lng": 77.23375999999999,
+    "url": "https://yometro.com/mandi-house-metro-station-110113"
+  },
+  {
+    "city": "delhi",
+    "name": "Yamuna Bank",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6234351,
+    "lng": 77.26876089999999,
+    "url": "https://yometro.com/yamuna-bank-metro-station-110110"
+  },
+  {
+    "city": "delhi",
+    "name": "Barakhambha Road",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62994,
+    "lng": 77.22449999999999,
+    "url": "https://yometro.com/barakhambha-road-metro-station-110114"
+  },
+  {
+    "city": "delhi",
+    "name": "Akshardham",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6181544,
+    "lng": 77.2794251,
+    "url": "https://yometro.com/akshardham-metro-station-110109"
+  },
+  {
+    "city": "delhi",
+    "name": "Supreme Court (Pragati Maidan)",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6231754,
+    "lng": 77.24292849999999,
+    "url": "https://yometro.com/pragati-maidan-metro-station-110112"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajiv Chowk",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6329849,
+    "lng": 77.2193723,
+    "url": "https://yometro.com/rajiv-chowk-metro-station-110050"
+  },
+  {
+    "city": "delhi",
+    "name": "Indraprastha",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6207156,
+    "lng": 77.24988979999999,
+    "url": "https://yometro.com/indraprastha-metro-station-110111"
+  },
+  {
+    "city": "delhi",
+    "name": "RK Ashram Marg",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63924,
+    "lng": 77.20855999999999,
+    "url": "https://yometro.com/ramakrishna-ashram-marg-metro-station-110116"
+  },
+  {
+    "city": "delhi",
+    "name": "Karol Bagh",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6439593,
+    "lng": 77.18849019999999,
+    "url": "https://yometro.com/karol-bagh-metro-station-110118"
+  },
+  {
+    "city": "delhi",
+    "name": "Jhandewalan",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64429,
+    "lng": 77.19991999999999,
+    "url": "https://yometro.com/jhandewalan-metro-station-110117"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajendra Place",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6425289,
+    "lng": 77.1782406,
+    "url": "https://yometro.com/rajendra-place-metro-station-110119"
+  },
+  {
+    "city": "delhi",
+    "name": "Shadipur",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.65162,
+    "lng": 77.15823,
+    "url": "https://yometro.com/shadipur-metro-station-110121"
+  },
+  {
+    "city": "delhi",
+    "name": "Patel Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6450319,
+    "lng": 77.169271,
+    "url": "https://yometro.com/patel-nagar-metro-station-110120"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 18",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.570751,
+    "lng": 77.326188,
+    "url": "https://yometro.com/noida-sector-18-metro-station-110103"
+  },
+  {
+    "city": "delhi",
+    "name": "Tagore Garden",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.643754,
+    "lng": 77.1128805,
+    "url": "https://yometro.com/tagore-garden-metro-station-110126"
+  },
+  {
+    "city": "delhi",
+    "name": "Kirti Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6556764,
+    "lng": 77.1508142,
+    "url": "https://yometro.com/kirti-nagar-metro-station-110122"
+  },
+  {
+    "city": "delhi",
+    "name": "Moti Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.65796,
+    "lng": 77.14267,
+    "url": "https://yometro.com/moti-nagar-metro-station-110123"
+  },
+  {
+    "city": "delhi",
+    "name": "Janakpuri East",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.63306,
+    "lng": 77.08672,
+    "url": "https://yometro.com/janakpuri-east-metro-station-110129"
+  },
+  {
+    "city": "delhi",
+    "name": "Subhash Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.64039,
+    "lng": 77.10495,
+    "url": "https://yometro.com/arnold-subhash-nagar-metro-station-110127"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajouri Garden",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6506713,
+    "lng": 77.12430739999999,
+    "url": "https://yometro.com/rajouri-garden-metro-station-110125"
+  },
+  {
+    "city": "delhi",
+    "name": "Janakpuri West",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62947,
+    "lng": 77.07777,
+    "url": "https://yometro.com/janakpuri-west-metro-station-110130"
+  },
+  {
+    "city": "delhi",
+    "name": "Noida Sector 15",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.58509,
+    "lng": 77.31159,
+    "url": "https://yometro.com/noida-sector-15-metro-station-110105"
+  },
+  {
+    "city": "delhi",
+    "name": "Uttam Nagar West",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6217542,
+    "lng": 77.0558111,
+    "url": "https://yometro.com/uttam-nagar-west-metro-station-110132"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Mor",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6192938,
+    "lng": 77.0333266,
+    "url": "https://yometro.com/dwarka-mor-metro-station-110134"
+  },
+  {
+    "city": "delhi",
+    "name": "Nawada",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.62026,
+    "lng": 77.04507,
+    "url": "https://yometro.com/nawada-metro-station-110133"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 14",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.60222,
+    "lng": 77.02593999999999,
+    "url": "https://yometro.com/dwarka-sector-14-metro-station-110136"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 12",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.59231,
+    "lng": 77.04063,
+    "url": "https://yometro.com/dwarka-sector-12-metro-station-110138"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.61492,
+    "lng": 77.02271999999999,
+    "url": "https://yometro.com/dwarka-metro-station-110135"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 11",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5864967,
+    "lng": 77.0494739,
+    "url": "https://yometro.com/dwarka-sector-11-metro-station-110139"
+  },
+  {
+    "city": "delhi",
+    "name": "Uttam Nagar East",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.624633,
+    "lng": 77.0649681,
+    "url": "https://yometro.com/uttam-nagar-east-metro-station-110131"
+  },
+  {
+    "city": "delhi",
+    "name": "Ramesh Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.6527066,
+    "lng": 77.13205889999999,
+    "url": "https://yometro.com/ramesh-nagar-metro-station-110124"
+  },
+  {
+    "city": "delhi",
+    "name": "Tilak Nagar",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.636568,
+    "lng": 77.09648,
+    "url": "https://yometro.com/tilak-nagar-metro-station-110128"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 8",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5679435,
+    "lng": 77.0663345,
+    "url": "https://yometro.com/dwarka-sector-8-metro-station-110142"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 13",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5972,
+    "lng": 77.03332999999999,
+    "url": "https://yometro.com/dwarka-sector-13-metro-station-110137"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 10",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.5812094,
+    "lng": 77.0572559,
+    "url": "https://yometro.com/dwarka-sector-10-metro-station-110140"
+  },
+  {
+    "city": "delhi",
+    "name": "Samaypur Badli",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.744638,
+    "lng": 77.13829299999999,
+    "url": "https://yometro.com/samaypur-badli-metro-station-110035"
+  },
+  {
+    "city": "delhi",
+    "name": "Haiderpur Badli Mor",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.7300015,
+    "lng": 77.1491765,
+    "url": "https://yometro.com/haiderpur-badli-mor-metro-station-110037"
+  },
+  {
+    "city": "delhi",
+    "name": "Dwarka Sector 9",
+    "line": "\u25d9  Blue Main Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 28.57428,
+    "lng": 77.06528,
+    "url": "https://yometro.com/dwarka-sector-9-metro-station-110141"
+  },
+  {
+    "city": "delhi",
+    "name": "Millennium City Centre (HUDA City Centre)",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4592,
+    "lng": 77.07248,
+    "url": "https://yometro.com/huda-city-centre-metro-station-110071"
+  },
+  {
+    "city": "delhi",
+    "name": "Adarsh Nagar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.71441,
+    "lng": 77.1668625,
+    "url": "https://yometro.com/adarsh-nagar-metro-station-110039"
+  },
+  {
+    "city": "delhi",
+    "name": "Rohini Sector 18 19",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.73838,
+    "lng": 77.13986,
+    "url": "https://yometro.com/rohini-sector-18-19-metro-station-110036"
+  },
+  {
+    "city": "delhi",
+    "name": "GTB Nagar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6981558,
+    "lng": 77.207424,
+    "url": "https://yometro.com/gtb-nagar-metro-station-110042"
+  },
+  {
+    "city": "delhi",
+    "name": "Azadpur",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.70709,
+    "lng": 77.18029609999999,
+    "url": "https://yometro.com/azadpur-metro-station-110040"
+  },
+  {
+    "city": "delhi",
+    "name": "Vidhan Sabha",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6872142,
+    "lng": 77.2217283,
+    "url": "https://yometro.com/vidhan-sabha-metro-station-110044"
+  },
+  {
+    "city": "delhi",
+    "name": "Kashmere Gate",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.66747,
+    "lng": 77.22824,
+    "url": "https://yometro.com/kashmere-gate-metro-station-110016"
+  },
+  {
+    "city": "delhi",
+    "name": "Chawri Bazar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6488,
+    "lng": 77.2263,
+    "url": "https://yometro.com/chawri-bazar-metro-station-110048"
+  },
+  {
+    "city": "delhi",
+    "name": "Jahangirpuri",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.72586,
+    "lng": 77.16279,
+    "url": "https://yometro.com/jahangirpuri-metro-station-110038"
+  },
+  {
+    "city": "delhi",
+    "name": "Rajiv Chowk",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6329849,
+    "lng": 77.2193723,
+    "url": "https://yometro.com/rajiv-chowk-metro-station-110050"
+  },
+  {
+    "city": "delhi",
+    "name": "Chandni Chowk",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6586869,
+    "lng": 77.2302866,
+    "url": "https://yometro.com/chandni-chowk-metro-station-110047"
+  },
+  {
+    "city": "delhi",
+    "name": "Vishwavidyalaya",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.69519,
+    "lng": 77.21450999999999,
+    "url": "https://yometro.com/vishwa-vidyalaya-metro-station-110043"
+  },
+  {
+    "city": "delhi",
+    "name": "Model Town",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.7028569,
+    "lng": 77.1937134,
+    "url": "https://yometro.com/model-town-metro-station-110041"
+  },
+  {
+    "city": "delhi",
+    "name": "Lok Kalyan Marg",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5980212,
+    "lng": 77.21143789999999,
+    "url": "https://yometro.com/lok-kalyan-marg-metro-station-110054"
+  },
+  {
+    "city": "delhi",
+    "name": "Patel Chowk",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6233506,
+    "lng": 77.2145072,
+    "url": "https://yometro.com/patel-chowk-metro-station-110051"
+  },
+  {
+    "city": "delhi",
+    "name": "Central Secretariat",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6151511,
+    "lng": 77.21226349999999,
+    "url": "https://yometro.com/central-secretariat-metro-station-110052"
+  },
+  {
+    "city": "delhi",
+    "name": "New Delhi",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.6437208,
+    "lng": 77.2229898,
+    "url": "https://yometro.com/new-delhi-metro-station-110049"
+  },
+  {
+    "city": "delhi",
+    "name": "Delhi Haat INA",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5744494,
+    "lng": 77.2096224,
+    "url": "https://yometro.com/delhi-haat-ina-metro-station-110056"
+  },
+  {
+    "city": "delhi",
+    "name": "Jor Bagh",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5858902,
+    "lng": 77.2125106,
+    "url": "https://yometro.com/jor-bagh-metro-station-110055"
+  },
+  {
+    "city": "delhi",
+    "name": "Hauz Khas",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5439504,
+    "lng": 77.2062395,
+    "url": "https://yometro.com/hauz-khas-metro-station-110059"
+  },
+  {
+    "city": "delhi",
+    "name": "Udyog Bhawan",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.61071,
+    "lng": 77.21188,
+    "url": "https://yometro.com/udyog-bhawan-metro-station-110053"
+  },
+  {
+    "city": "delhi",
+    "name": "Malviya Nagar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5295808,
+    "lng": 77.20443879999999,
+    "url": "https://yometro.com/malviya-nagar-metro-station-110060"
+  },
+  {
+    "city": "delhi",
+    "name": "Saket",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5221236,
+    "lng": 77.2031466,
+    "url": "https://yometro.com/saket-metro-station-110061"
+  },
+  {
+    "city": "delhi",
+    "name": "Qutab Minar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.51302,
+    "lng": 77.18639999999999,
+    "url": "https://yometro.com/qutub-minar-metro-station-110062"
+  },
+  {
+    "city": "delhi",
+    "name": "Chhatarpur",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5061232,
+    "lng": 77.17520429999999,
+    "url": "https://yometro.com/chhatarpur-metro-station-110063"
+  },
+  {
+    "city": "delhi",
+    "name": "Guru Dronacharya",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4831211,
+    "lng": 77.1019951,
+    "url": "https://yometro.com/guru-dronacharya-metro-station-110067"
+  },
+  {
+    "city": "delhi",
+    "name": "Ghitorni",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.493814,
+    "lng": 77.14917539999999,
+    "url": "https://yometro.com/ghitorni-metro-station-110065"
+  },
+  {
+    "city": "delhi",
+    "name": "Sultanpur",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4991503,
+    "lng": 77.1615439,
+    "url": "https://yometro.com/sultanpur-metro-station-110064"
+  },
+  {
+    "city": "delhi",
+    "name": "Green Park",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5598225,
+    "lng": 77.2068305,
+    "url": "https://yometro.com/green-park-metro-station-110058"
+  },
+  {
+    "city": "delhi",
+    "name": "AIIMS",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.5678,
+    "lng": 77.20776,
+    "url": "https://yometro.com/aiims-metro-station-110057"
+  },
+  {
+    "city": "delhi",
+    "name": "Arjan Garh",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4808416,
+    "lng": 77.1258701,
+    "url": "https://yometro.com/arjan-garh-metro-station-110066"
+  },
+  {
+    "city": "delhi",
+    "name": "IFFCO Chowk",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.47224,
+    "lng": 77.0724,
+    "url": "https://yometro.com/iffco-chowk-metro-station-110070"
+  },
+  {
+    "city": "delhi",
+    "name": "Sikandarpur",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4802429,
+    "lng": 77.09434499999999,
+    "url": "https://yometro.com/sikandarpur-metro-station-110068"
+  },
+  {
+    "city": "delhi",
+    "name": "MG Road",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 28.4803783,
+    "lng": 77.08011909999999,
+    "url": "https://yometro.com/mg-road-metro-station-110069"
+  },
+  {
+    "city": "mumbai",
+    "name": "Andheri",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.120561,
+    "lng": 72.8487279,
+    "url": "https://yometro.com/andheri-metro-station-140004"
+  },
+  {
+    "city": "mumbai",
+    "name": "DN Nagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.128316,
+    "lng": 72.8303036,
+    "url": "https://yometro.com/dn-nagar-metro-station-140002"
+  },
+  {
+    "city": "mumbai",
+    "name": "Airport Road",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.102033,
+    "lng": 72.874445,
+    "url": "https://yometro.com/airport-road-metro-station-140007"
+  },
+  {
+    "city": "mumbai",
+    "name": "Versova",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.1303249,
+    "lng": 72.82140489999999,
+    "url": "https://yometro.com/versova-metro-station-140001"
+  },
+  {
+    "city": "mumbai",
+    "name": "Chakala JB Nagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.1120538,
+    "lng": 72.8676571,
+    "url": "https://yometro.com/chakala-jb-nagar-metro-station-140006"
+  },
+  {
+    "city": "mumbai",
+    "name": "Western Express Highway",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.115875,
+    "lng": 72.85647999999999,
+    "url": "https://yometro.com/western-express-highway-metro-station-140005"
+  },
+  {
+    "city": "mumbai",
+    "name": "Ghatkopar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.0867792,
+    "lng": 72.9080649,
+    "url": "https://yometro.com/ghatkopar-metro-station-140012"
+  },
+  {
+    "city": "mumbai",
+    "name": "Saki Naka",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.1034835,
+    "lng": 72.8879697,
+    "url": "https://yometro.com/saki-naka-metro-station-140009"
+  },
+  {
+    "city": "mumbai",
+    "name": "Azad Nagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.1268998,
+    "lng": 72.83769819999999,
+    "url": "https://yometro.com/azad-nagar-metro-station-140003"
+  },
+  {
+    "city": "mumbai",
+    "name": "Anand Nagar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.257239,
+    "lng": 72.865966,
+    "url": "https://yometro.com/anand-nagar-metro-station-140014"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dahisar East",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.2509583,
+    "lng": 72.8668387,
+    "url": "https://yometro.com/dahisar-east-metro-station-140013"
+  },
+  {
+    "city": "mumbai",
+    "name": "Marol Naka",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.1081288,
+    "lng": 72.8794774,
+    "url": "https://yometro.com/marol-naka-metro-station-140008"
+  },
+  {
+    "city": "mumbai",
+    "name": "Kandarpada",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.25658,
+    "lng": 72.85057499999999,
+    "url": "https://yometro.com/kandarpada-metro-station-140015"
+  },
+  {
+    "city": "mumbai",
+    "name": "Andheri West",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.1291522,
+    "lng": 72.8313367,
+    "url": "https://yometro.com/andheri-west-metro-station-140029"
+  },
+  {
+    "city": "mumbai",
+    "name": "Jagruti Nagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.0924711,
+    "lng": 72.90186419999999,
+    "url": "https://yometro.com/jagruti-nagar-metro-station-140011"
+  },
+  {
+    "city": "mumbai",
+    "name": "Eksar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.240398,
+    "lng": 72.843481,
+    "url": "https://yometro.com/eksar-metro-station-140017"
+  },
+  {
+    "city": "mumbai",
+    "name": "Mandapeshwar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.249385,
+    "lng": 72.84568,
+    "url": "https://yometro.com/mandapeshwar-metro-station-140016"
+  },
+  {
+    "city": "mumbai",
+    "name": "Borivali West",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.231312,
+    "lng": 72.840864,
+    "url": "https://yometro.com/borivali-west-metro-station-140018"
+  },
+  {
+    "city": "mumbai",
+    "name": "Shimpoli",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.222828,
+    "lng": 72.840914,
+    "url": "https://yometro.com/pahadi-eksar-metro-station-140019"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dahanukarwadi",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.206103,
+    "lng": 72.83475299999999,
+    "url": "https://yometro.com/dahanukarwadi-metro-station-140021"
+  },
+  {
+    "city": "mumbai",
+    "name": "Kandivali West",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.2140051,
+    "lng": 72.837311,
+    "url": "https://yometro.com/kandivali-west-metro-station-140020"
+  },
+  {
+    "city": "mumbai",
+    "name": "Lower Malad",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.172919,
+    "lng": 72.836405,
+    "url": "https://yometro.com/lower-malad-metro-station-140024"
+  },
+  {
+    "city": "mumbai",
+    "name": "Malad West",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.1858281,
+    "lng": 72.835771,
+    "url": "https://yometro.com/malad-west-metro-station-140023"
+  },
+  {
+    "city": "mumbai",
+    "name": "Bangur Nagar",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.1622718,
+    "lng": 72.8347514,
+    "url": "https://yometro.com/bangur-nagar-metro-station-140025"
+  },
+  {
+    "city": "mumbai",
+    "name": "Asalpha",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 19.0963497,
+    "lng": 72.89487919999999,
+    "url": "https://yometro.com/asalpha-metro-station-140010"
+  },
+  {
+    "city": "mumbai",
+    "name": "Lower Oshiwara",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.140646,
+    "lng": 72.831695,
+    "url": "https://yometro.com/lower-oshiwara-metro-station-140028"
+  },
+  {
+    "city": "mumbai",
+    "name": "Valnai",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.196907,
+    "lng": 72.83386899999999,
+    "url": "https://yometro.com/valnai-metro-station-140022"
+  },
+  {
+    "city": "mumbai",
+    "name": "Oshiwara",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.146041,
+    "lng": 72.833945,
+    "url": "https://yometro.com/oshiwara-metro-station-140027"
+  },
+  {
+    "city": "mumbai",
+    "name": "Cuffe Parade",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9139715,
+    "lng": 72.8210277,
+    "url": "https://yometro.com/cuffe-parade-metro-station-140096"
+  },
+  {
+    "city": "mumbai",
+    "name": "Goregaon West",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 19.1487269,
+    "lng": 72.8326135,
+    "url": "https://yometro.com/goregaon-west-metro-station-140026"
+  },
+  {
+    "city": "mumbai",
+    "name": "Aarey JVLR",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.1308411,
+    "lng": 72.8843837,
+    "url": "https://yometro.com/aarey-jvlr-metro-station-140065"
+  },
+  {
+    "city": "mumbai",
+    "name": "Marol Naka",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.1081288,
+    "lng": 72.8794774,
+    "url": "https://yometro.com/marol-naka-metro-station-140008"
+  },
+  {
+    "city": "mumbai",
+    "name": "SEEPZ",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.1257536,
+    "lng": 72.873437,
+    "url": "https://yometro.com/seepz-metro-station-140066"
+  },
+  {
+    "city": "mumbai",
+    "name": "Sahar Road",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.102106,
+    "lng": 72.8647785,
+    "url": "https://yometro.com/sahar-road-metro-station-140069"
+  },
+  {
+    "city": "mumbai",
+    "name": "MIDC Andheri",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.117373,
+    "lng": 72.873829,
+    "url": "https://yometro.com/midc-andheri-metro-station-140067"
+  },
+  {
+    "city": "mumbai",
+    "name": "CSMI Airport T2",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.102033,
+    "lng": 72.874445,
+    "url": "https://yometro.com/chhatrapati-shivaji-maharaj-international-airport-terminal-2-metro-station-140070"
+  },
+  {
+    "city": "mumbai",
+    "name": "Santacruz",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0786458,
+    "lng": 72.8470675,
+    "url": "https://yometro.com/santacruz-metro-station-140071"
+  },
+  {
+    "city": "mumbai",
+    "name": "CSMI Airport T1",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.093908,
+    "lng": 72.853554,
+    "url": "https://yometro.com/chhatrapati-shivaji-maharaj-international-airport-terminal-1-metro-station-140072"
+  },
+  {
+    "city": "mumbai",
+    "name": "Bandra Colony",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0701331,
+    "lng": 72.849336,
+    "url": "https://yometro.com/bandra-colony-metro-station-140074"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dharavi",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0461986,
+    "lng": 72.84980209999999,
+    "url": "https://yometro.com/dharavi-metro-station-140201"
+  },
+  {
+    "city": "mumbai",
+    "name": "Bandra Kurla Complex",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0598651,
+    "lng": 72.85516439999999,
+    "url": "https://yometro.com/bandra-kurla-complex-metro-station-140038"
+  },
+  {
+    "city": "mumbai",
+    "name": "Siddhivinayak",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0165474,
+    "lng": 72.8297123,
+    "url": "https://yometro.com/siddhivinayak-temple-metro-station-140077"
+  },
+  {
+    "city": "mumbai",
+    "name": "Shitla Devi Mandir",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0395229,
+    "lng": 72.84164779999999,
+    "url": "https://yometro.com/shitladevi-temple-metro-station-140075"
+  },
+  {
+    "city": "mumbai",
+    "name": "Worli",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.0086969,
+    "lng": 72.8193881,
+    "url": "https://yometro.com/worli-metro-station-140078"
+  },
+  {
+    "city": "mumbai",
+    "name": "Jagannath Shankar Sheth",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.970603,
+    "lng": 72.821382,
+    "url": "https://yometro.com/jagannath-shankar-sheth-metro-station-140083"
+  },
+  {
+    "city": "mumbai",
+    "name": "Mahalaxmi",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.979485,
+    "lng": 72.825295,
+    "url": "https://yometro.com/mahalaxmi-metro-station-140081"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dadar",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 19.023667,
+    "lng": 72.8393,
+    "url": "https://yometro.com/dadar-metro-station-140076"
+  },
+  {
+    "city": "mumbai",
+    "name": "Science Museum",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9918142,
+    "lng": 72.82072459999999,
+    "url": "https://yometro.com/science-museum-metro-station-140080"
+  },
+  {
+    "city": "mumbai",
+    "name": "Acharya Atre Chowk",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9975536,
+    "lng": 72.81799029999999,
+    "url": "https://yometro.com/acharya-atrey-chowk-metro-station-140079"
+  },
+  {
+    "city": "mumbai",
+    "name": "Kalbadevi",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9470909,
+    "lng": 72.8262888,
+    "url": "https://yometro.com/kalbadevi-metro-station-140086"
+  },
+  {
+    "city": "mumbai",
+    "name": "Grant Road",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9632288,
+    "lng": 72.8180096,
+    "url": "https://yometro.com/grant-road-metro-station-140084"
+  },
+  {
+    "city": "mumbai",
+    "name": "Girgaon",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.951929,
+    "lng": 72.822606,
+    "url": "https://yometro.com/girgaon-metro-station-140085"
+  },
+  {
+    "city": "mumbai",
+    "name": "Chhatrapati Shivaji Maharaj Terminus (CST)",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9398446,
+    "lng": 72.8354475,
+    "url": "https://yometro.com/chhatrapati-shivaji-maharaj-terminus-metro-station-140087"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dahisar East",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.250958,
+    "lng": 72.866839,
+    "url": "https://yometro.com/dahisar-east-metro-station-140013"
+  },
+  {
+    "city": "mumbai",
+    "name": "Vidhan Bhavan",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9240959,
+    "lng": 72.8250061,
+    "url": "https://yometro.com/vidhan-bhavan-metro-station-140094"
+  },
+  {
+    "city": "mumbai",
+    "name": "Hutatma Chowk",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.934579,
+    "lng": 72.832826,
+    "url": "https://yometro.com/hutatma-chowk-metro-station-140091"
+  },
+  {
+    "city": "mumbai",
+    "name": "Badhwar Park",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.9192197,
+    "lng": 72.8271568,
+    "url": "https://yometro.com/badhwar-park-metro-station-140095"
+  },
+  {
+    "city": "mumbai",
+    "name": "Churchgate",
+    "line": "\u25d9  Aqua Line",
+    "lineColor": "0xFF00FFFF",
+    "lat": 18.930663,
+    "lng": 72.826163,
+    "url": "https://yometro.com/churchgate-metro-station-140092"
+  },
+  {
+    "city": "mumbai",
+    "name": "Gundavali",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.1140948,
+    "lng": 72.85483649999999,
+    "url": "https://yometro.com/gundavali-metro-station-140062"
+  },
+  {
+    "city": "mumbai",
+    "name": "Ovaripada",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.243269,
+    "lng": 72.864199,
+    "url": "https://yometro.com/ovaripada-metro-station-140050"
+  },
+  {
+    "city": "mumbai",
+    "name": "Poisar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.203847,
+    "lng": 72.86340299999999,
+    "url": "https://yometro.com/poisar-metro-station-140054"
+  },
+  {
+    "city": "mumbai",
+    "name": "Dindoshi",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.179639,
+    "lng": 72.85825799999999,
+    "url": "https://yometro.com/dindoshi-metro-station-140057"
+  },
+  {
+    "city": "mumbai",
+    "name": "Rashtriya Udyan",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.2346662,
+    "lng": 72.86313109999999,
+    "url": "https://yometro.com/rashtriya-udyan-metro-station-140051"
+  },
+  {
+    "city": "mumbai",
+    "name": "Devipada",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.22424,
+    "lng": 72.864231,
+    "url": "https://yometro.com/devipada-metro-station-140052"
+  },
+  {
+    "city": "mumbai",
+    "name": "Akurli",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.198211,
+    "lng": 72.86064999999999,
+    "url": "https://yometro.com/akurli-metro-station-140055"
+  },
+  {
+    "city": "mumbai",
+    "name": "Mogra",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.128656,
+    "lng": 72.855361,
+    "url": "https://yometro.com/mogra-metro-station-140061"
+  },
+  {
+    "city": "mumbai",
+    "name": "Goregaon East",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.152507,
+    "lng": 72.856522,
+    "url": "https://yometro.com/goregaon-east-metro-station-140059"
+  },
+  {
+    "city": "mumbai",
+    "name": "Aarey",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.1308411,
+    "lng": 72.8843837,
+    "url": "https://yometro.com/aarey-metro-station-140058"
+  },
+  {
+    "city": "mumbai",
+    "name": "Jogeshwari East",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.142824,
+    "lng": 72.855085,
+    "url": "https://yometro.com/jogeshwari-east-metro-station-140060"
+  },
+  {
+    "city": "mumbai",
+    "name": "Kurar",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.187198,
+    "lng": 72.85845599999999,
+    "url": "https://yometro.com/kurar-metro-station-140056"
+  },
+  {
+    "city": "mumbai",
+    "name": "Magathane",
+    "line": "\u25d9  Red Line",
+    "lineColor": "0xFFC0282C",
+    "lat": 19.217179,
+    "lng": 72.866723,
+    "url": "https://yometro.com/magathane-metro-station-140053"
+  },
+  {
+    "city": "chennai",
+    "name": "New Washermanpet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.1347734,
+    "lng": 80.29295499999999,
+    "url": "https://yometro.com/new-washermanpet-metro-station-170019"
+  },
+  {
+    "city": "chennai",
+    "name": "Wimco Nagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.184291,
+    "lng": 80.3091132,
+    "url": "https://yometro.com/wimco-nagar-metro-station-170025"
+  },
+  {
+    "city": "chennai",
+    "name": "Thiruvottriyur",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.1722675,
+    "lng": 80.30536049999999,
+    "url": "https://yometro.com/tiruvottiyur-metro-station-170024"
+  },
+  {
+    "city": "chennai",
+    "name": "Wimco Nagar Depot",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.184291,
+    "lng": 80.3091132,
+    "url": "https://yometro.com/wimco-nagar-depot-metro-station-170026"
+  },
+  {
+    "city": "chennai",
+    "name": "Kaladipet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.15102,
+    "lng": 80.2995,
+    "url": "https://yometro.com/kaladipet-metro-station-170022"
+  },
+  {
+    "city": "chennai",
+    "name": "Tollgate",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.14347,
+    "lng": 80.29639999999999,
+    "url": "https://yometro.com/toll-gate-metro-station-170021"
+  },
+  {
+    "city": "chennai",
+    "name": "Thiruvottriyur Theradi",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.159868,
+    "lng": 80.302402,
+    "url": "https://yometro.com/tiruvottriyur-theradi-metro-station-170023"
+  },
+  {
+    "city": "chennai",
+    "name": "Tondiarpet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.1238112,
+    "lng": 80.28819899999999,
+    "url": "https://yometro.com/tondiarpet-metro-station-170020"
+  },
+  {
+    "city": "chennai",
+    "name": "Mannadi",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0951661,
+    "lng": 80.28616029999999,
+    "url": "https://yometro.com/mannadi-metro-station-170002"
+  },
+  {
+    "city": "chennai",
+    "name": "Chennai International Airport",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 12.9808255,
+    "lng": 80.1642095,
+    "url": "https://yometro.com/chennai-international-airport-metro-station-170017"
+  },
+  {
+    "city": "chennai",
+    "name": "Sir Theagaraya College",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.1165979,
+    "lng": 80.2851276,
+    "url": "https://yometro.com/sir-theagaraya-college-metro-station-170018"
+  },
+  {
+    "city": "chennai",
+    "name": "Washermanpet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.107629,
+    "lng": 80.28090499999999,
+    "url": "https://yometro.com/washermanpet-metro-station-170001"
+  },
+  {
+    "city": "chennai",
+    "name": "MGR Central (Chennai Central)",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0851617,
+    "lng": 80.275155,
+    "url": "https://yometro.com/chennai-central-metro-station-170004"
+  },
+  {
+    "city": "chennai",
+    "name": "LIC",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0645232,
+    "lng": 80.2660489,
+    "url": "https://yometro.com/lic-metro-station-170006"
+  },
+  {
+    "city": "chennai",
+    "name": "Government Estate",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0688569,
+    "lng": 80.2721928,
+    "url": "https://yometro.com/government-estate-metro-station-170005"
+  },
+  {
+    "city": "chennai",
+    "name": "High Court",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.087394,
+    "lng": 80.28506399999999,
+    "url": "https://yometro.com/high-court-metro-station-170003"
+  },
+  {
+    "city": "chennai",
+    "name": "AG DMS",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0446825,
+    "lng": 80.2480329,
+    "url": "https://yometro.com/ag-dms-metro-station-170008"
+  },
+  {
+    "city": "chennai",
+    "name": "Thousand Lights",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0583557,
+    "lng": 80.2585174,
+    "url": "https://yometro.com/thousand-lights-metro-station-170007"
+  },
+  {
+    "city": "chennai",
+    "name": "Teynampet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0373532,
+    "lng": 80.24665089999999,
+    "url": "https://yometro.com/teynampet-metro-station-170009"
+  },
+  {
+    "city": "chennai",
+    "name": "Little Mount",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.014505,
+    "lng": 80.223857,
+    "url": "https://yometro.com/little-mount-metro-station-170012"
+  },
+  {
+    "city": "chennai",
+    "name": "Nandanam",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.03165,
+    "lng": 80.24104,
+    "url": "https://yometro.com/nandanam-metro-station-170010"
+  },
+  {
+    "city": "chennai",
+    "name": "Guindy",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.0093336,
+    "lng": 80.2131005,
+    "url": "https://yometro.com/guindy-metro-station-170013"
+  },
+  {
+    "city": "chennai",
+    "name": "Saidapet",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.023618,
+    "lng": 80.22810799999999,
+    "url": "https://yometro.com/saidapet-metro-station-170011"
+  },
+  {
+    "city": "chennai",
+    "name": "St Thomas Mount",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 12.9947758,
+    "lng": 80.1974178,
+    "url": "https://yometro.com/st-thomas-mount-metro-station-170042"
+  },
+  {
+    "city": "chennai",
+    "name": "Arignar Anna Alandur",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 13.004218,
+    "lng": 80.201461,
+    "url": "https://yometro.com/alandur-metro-station-170014"
+  },
+  {
+    "city": "chennai",
+    "name": "Nanganallur Road",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 12.999961,
+    "lng": 80.194037,
+    "url": "https://yometro.com/nanganallur-road-metro-station-170015"
+  },
+  {
+    "city": "chennai",
+    "name": "Meenambakkam",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 12.987735,
+    "lng": 80.1764,
+    "url": "https://yometro.com/meenambakkam-metro-station-170016"
+  },
+  {
+    "city": "chennai",
+    "name": "Kilpauk Medical College",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.077685,
+    "lng": 80.242809,
+    "url": "https://yometro.com/kilpauk-medical-college-metro-station-170029"
+  },
+  {
+    "city": "chennai",
+    "name": "Nehru Park",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0786275,
+    "lng": 80.2508538,
+    "url": "https://yometro.com/nehru-park-metro-station-170028"
+  },
+  {
+    "city": "chennai",
+    "name": "MGR Central (Chennai Central)",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0851617,
+    "lng": 80.275155,
+    "url": "https://yometro.com/chennai-central-metro-station-170004"
+  },
+  {
+    "city": "chennai",
+    "name": "Anna Nagar East",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0847633,
+    "lng": 80.2196589,
+    "url": "https://yometro.com/anna-nagar-east-metro-station-170032"
+  },
+  {
+    "city": "chennai",
+    "name": "Egmore",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0790573,
+    "lng": 80.2611065,
+    "url": "https://yometro.com/egmore-metro-station-170027"
+  },
+  {
+    "city": "chennai",
+    "name": "Anna Nagar Tower",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.085009,
+    "lng": 80.208891,
+    "url": "https://yometro.com/anna-nagar-tower-metro-station-170033"
+  },
+  {
+    "city": "chennai",
+    "name": "Pachaiyappa College",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0755739,
+    "lng": 80.2323145,
+    "url": "https://yometro.com/pachaiyappa-college-metro-station-170030"
+  },
+  {
+    "city": "chennai",
+    "name": "Thirumangalam",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0852626,
+    "lng": 80.201574,
+    "url": "https://yometro.com/thirumangalam-metro-station-170034"
+  },
+  {
+    "city": "chennai",
+    "name": "Arumbakkam",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0620745,
+    "lng": 80.2116729,
+    "url": "https://yometro.com/arumbakkam-metro-station-170037"
+  },
+  {
+    "city": "chennai",
+    "name": "Koyambedu",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.073496,
+    "lng": 80.194867,
+    "url": "https://yometro.com/koyambedu-metro-station-170035"
+  },
+  {
+    "city": "chennai",
+    "name": "CMBT",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.068594,
+    "lng": 80.203913,
+    "url": "https://yometro.com/cmbt-metro-station-170036"
+  },
+  {
+    "city": "chennai",
+    "name": "Vadapalani",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0507344,
+    "lng": 80.2120723,
+    "url": "https://yometro.com/vadapalani-metro-station-170038"
+  },
+  {
+    "city": "chennai",
+    "name": "Ekkattuthangal",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0165829,
+    "lng": 80.20527589999999,
+    "url": "https://yometro.com/ekkattuthangal-metro-station-170040"
+  },
+  {
+    "city": "chennai",
+    "name": "Ashok Nagar",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0355384,
+    "lng": 80.211135,
+    "url": "https://yometro.com/ashok-nagar-metro-station-170039"
+  },
+  {
+    "city": "chennai",
+    "name": "Shenoy Nagar",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.0786997,
+    "lng": 80.2251345,
+    "url": "https://yometro.com/shenoy-nagar-metro-station-170031"
+  },
+  {
+    "city": "chennai",
+    "name": "Arignar Anna Alandur",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 13.004218,
+    "lng": 80.201461,
+    "url": "https://yometro.com/alandur-metro-station-170014"
+  },
+  {
+    "city": "kolkata",
+    "name": "Dakshineswar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.6538276,
+    "lng": 88.3636977,
+    "url": "https://yometro.com/dakshineswar-metro-station-190001"
+  },
+  {
+    "city": "kolkata",
+    "name": "Girish Park",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5871415,
+    "lng": 88.3630842,
+    "url": "https://yometro.com/girish-park-metro-station-190008"
+  },
+  {
+    "city": "kolkata",
+    "name": "Shyambazaar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.6006027,
+    "lng": 88.3702928,
+    "url": "https://yometro.com/shyambazaar-metro-station-190006"
+  },
+  {
+    "city": "kolkata",
+    "name": "Noapara",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.6400119,
+    "lng": 88.394145,
+    "url": "https://yometro.com/noapara-metro-station-190003"
+  },
+  {
+    "city": "kolkata",
+    "name": "Shobhabazar Sutanuti",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5960254,
+    "lng": 88.3652848,
+    "url": "https://yometro.com/shobhabazar-sutanuti-metro-station-190007"
+  },
+  {
+    "city": "kolkata",
+    "name": "Belgachhia",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.605973,
+    "lng": 88.386353,
+    "url": "https://yometro.com/belgachhia-metro-station-190005"
+  },
+  {
+    "city": "kolkata",
+    "name": "Baranagar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.6532849,
+    "lng": 88.3803724,
+    "url": "https://yometro.com/baranagar-metro-station-190002"
+  },
+  {
+    "city": "kolkata",
+    "name": "Kavi Subhash",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4721747,
+    "lng": 88.3978668,
+    "url": "https://yometro.com/kavi-subhash-metro-station-190026"
+  },
+  {
+    "city": "kolkata",
+    "name": "Central",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5725237,
+    "lng": 88.3582423,
+    "url": "https://yometro.com/central-metro-station-190010"
+  },
+  {
+    "city": "kolkata",
+    "name": "Maidan",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5493137,
+    "lng": 88.3485261,
+    "url": "https://yometro.com/maidan-metro-station-190014"
+  },
+  {
+    "city": "kolkata",
+    "name": "Park Street",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.55445,
+    "lng": 88.34984999999999,
+    "url": "https://yometro.com/park-street-metro-station-190013"
+  },
+  {
+    "city": "kolkata",
+    "name": "Mahatma Gandhi Road",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.580696,
+    "lng": 88.36138129999999,
+    "url": "https://yometro.com/mahatma-gandhi-road-metro-station-190009"
+  },
+  {
+    "city": "kolkata",
+    "name": "Dum Dum",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.6214614,
+    "lng": 88.3928043,
+    "url": "https://yometro.com/dum-dum-metro-station-190004"
+  },
+  {
+    "city": "kolkata",
+    "name": "Esplanade",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5649419,
+    "lng": 88.3516987,
+    "url": "https://yometro.com/esplanade-metro-station-190012"
+  },
+  {
+    "city": "kolkata",
+    "name": "Rabindra Sadan",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5412251,
+    "lng": 88.3472736,
+    "url": "https://yometro.com/rabindra-sadan-metro-station-190015"
+  },
+  {
+    "city": "kolkata",
+    "name": "Chandni Chowk",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5666067,
+    "lng": 88.3536527,
+    "url": "https://yometro.com/chandni-chowk-metro-station-190011"
+  },
+  {
+    "city": "kolkata",
+    "name": "Netaji Bhavan",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.532977,
+    "lng": 88.3457124,
+    "url": "https://yometro.com/netaji-bhavan-metro-station-190016"
+  },
+  {
+    "city": "kolkata",
+    "name": "Jatin Das Park",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.524262,
+    "lng": 88.34648899999999,
+    "url": "https://yometro.com/jatin-das-park-metro-station-190017"
+  },
+  {
+    "city": "kolkata",
+    "name": "Rabindra Sarobar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5057252,
+    "lng": 88.34515359999999,
+    "url": "https://yometro.com/rabindra-sarobar-metro-station-190019"
+  },
+  {
+    "city": "kolkata",
+    "name": "Mahanayak Uttam Kumar",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4944519,
+    "lng": 88.34515379999999,
+    "url": "https://yometro.com/mahanayak-uttam-kumar-metro-station-190020"
+  },
+  {
+    "city": "kolkata",
+    "name": "Masterda Surya Sen",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4734883,
+    "lng": 88.3608039,
+    "url": "https://yometro.com/masterda-surya-sen-metro-station-190022"
+  },
+  {
+    "city": "kolkata",
+    "name": "Kalighat",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.5189716,
+    "lng": 88.346053,
+    "url": "https://yometro.com/kalighat-metro-station-190018"
+  },
+  {
+    "city": "kolkata",
+    "name": "Netaji",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4809362,
+    "lng": 88.3459611,
+    "url": "https://yometro.com/netaji-metro-station-190021"
+  },
+  {
+    "city": "kolkata",
+    "name": "Shahid Khudiram",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4660094,
+    "lng": 88.3916655,
+    "url": "https://yometro.com/shahid-khudiram-metro-station-190025"
+  },
+  {
+    "city": "kolkata",
+    "name": "Salt Lake Sector V",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.580939,
+    "lng": 88.429052,
+    "url": "https://yometro.com/salt-lake-sector-v-metro-station-190032"
+  },
+  {
+    "city": "kolkata",
+    "name": "Gitanjali",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.469425,
+    "lng": 88.3699223,
+    "url": "https://yometro.com/gitanjali-metro-station-190023"
+  },
+  {
+    "city": "kolkata",
+    "name": "Kavi Nazrul",
+    "line": "\u25d9  Blue Line",
+    "lineColor": "0xFF3B76C0",
+    "lat": 22.4642442,
+    "lng": 88.3806582,
+    "url": "https://yometro.com/kavi-nazrul-metro-station-190024"
+  },
+  {
+    "city": "kolkata",
+    "name": "Karunamoyee",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5862825,
+    "lng": 88.4214022,
+    "url": "https://yometro.com/karunamoyee-metro-station-190033"
+  },
+  {
+    "city": "kolkata",
+    "name": "Phoolbagan",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5721631,
+    "lng": 88.3903024,
+    "url": "https://yometro.com/phoolbagan-metro-station-190038"
+  },
+  {
+    "city": "kolkata",
+    "name": "Bengal Chemical",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5800328,
+    "lng": 88.40132419999999,
+    "url": "https://yometro.com/bengal-chemical-metro-station-190036"
+  },
+  {
+    "city": "kolkata",
+    "name": "City Centre",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5870411,
+    "lng": 88.40786539999999,
+    "url": "https://yometro.com/city-centre-metro-station-190035"
+  },
+  {
+    "city": "kolkata",
+    "name": "Esplanade",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5649419,
+    "lng": 88.3516987,
+    "url": "https://yometro.com/esplanade-metro-station-190012"
+  },
+  {
+    "city": "kolkata",
+    "name": "Salt Lake Stadium",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.573016,
+    "lng": 88.4030255,
+    "url": "https://yometro.com/salt-lake-stadium-metro-station-190037"
+  },
+  {
+    "city": "kolkata",
+    "name": "Sealdah",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5665619,
+    "lng": 88.37069389999999,
+    "url": "https://yometro.com/sealdah-metro-station-190039"
+  },
+  {
+    "city": "kolkata",
+    "name": "Central Park",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5903952,
+    "lng": 88.4155095,
+    "url": "https://yometro.com/central-park-metro-station-190034"
+  },
+  {
+    "city": "kolkata",
+    "name": "Howrah Maidan",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5833782,
+    "lng": 88.3337983,
+    "url": "https://yometro.com/howrah-maidan-metro-station-190043"
+  },
+  {
+    "city": "kolkata",
+    "name": "Howrah",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5837,
+    "lng": 88.34214,
+    "url": "https://yometro.com/howrah-metro-station-190042"
+  },
+  {
+    "city": "kolkata",
+    "name": "Majerhat",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.519219,
+    "lng": 88.323742,
+    "url": "https://yometro.com/majerhat-metro-station-190052"
+  },
+  {
+    "city": "kolkata",
+    "name": "Behala Bazar",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.500378,
+    "lng": 88.3172706,
+    "url": "https://yometro.com/behala-bazar-metro-station-190050"
+  },
+  {
+    "city": "kolkata",
+    "name": "Thakurpukur",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.4642826,
+    "lng": 88.30748489999999,
+    "url": "https://yometro.com/thakurpukur-metro-station-190047"
+  },
+  {
+    "city": "kolkata",
+    "name": "Joka",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.4519191,
+    "lng": 88.30158039999999,
+    "url": "https://yometro.com/joka-metro-station-190046"
+  },
+  {
+    "city": "kolkata",
+    "name": "Behala Chowrasta",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.4870602,
+    "lng": 88.3131928,
+    "url": "https://yometro.com/behala-chowrasta-metro-station-190049"
+  },
+  {
+    "city": "kolkata",
+    "name": "Sakherbazar",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.4747597,
+    "lng": 88.3099273,
+    "url": "https://yometro.com/sakherbazar-metro-station-190048"
+  },
+  {
+    "city": "kolkata",
+    "name": "Noapara",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 22.6400119,
+    "lng": 88.394145,
+    "url": "https://yometro.com/noapara-metro-station-190003"
+  },
+  {
+    "city": "kolkata",
+    "name": "Mahakaran",
+    "line": "\u25d9  Green Line",
+    "lineColor": "0xFF54AB55",
+    "lat": 22.5724588,
+    "lng": 88.35082709999999,
+    "url": "https://yometro.com/new-mahakaran-metro-station-190041"
+  },
+  {
+    "city": "kolkata",
+    "name": "Jai Hind (Airport)",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 22.6467674,
+    "lng": 88.4372813,
+    "url": "https://yometro.com/jai-hind-metro-station-190060"
+  },
+  {
+    "city": "kolkata",
+    "name": "Beliaghata",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.5506998,
+    "lng": 88.4040364,
+    "url": "https://yometro.com/beliaghata-metro-station-190090"
+  },
+  {
+    "city": "kolkata",
+    "name": "Dum Dum Cantonment",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 22.6369865,
+    "lng": 88.4125389,
+    "url": "https://yometro.com/dum-dum-cantonment-metro-station-190058"
+  },
+  {
+    "city": "kolkata",
+    "name": "Ritwik Ghatak",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.532913,
+    "lng": 88.39644,
+    "url": "https://yometro.com/ritwik-ghatak-metro-station-190092"
+  },
+  {
+    "city": "kolkata",
+    "name": "Taratala",
+    "line": "\u25d9  Purple Line",
+    "lineColor": "0xFFA020F0",
+    "lat": 22.507687,
+    "lng": 88.320279,
+    "url": "https://yometro.com/taratala-metro-station-190051"
+  },
+  {
+    "city": "kolkata",
+    "name": "Hemanta Mukhopadhyay",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.514684,
+    "lng": 88.40160399999999,
+    "url": "https://yometro.com/hemanta-mukherjee-metro-station-190094"
+  },
+  {
+    "city": "kolkata",
+    "name": "VIP Bazaar",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.524986,
+    "lng": 88.396273,
+    "url": "https://yometro.com/vip-bazaar-metro-station-190093"
+  },
+  {
+    "city": "kolkata",
+    "name": "Barun Sengupta",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.5438141,
+    "lng": 88.39925099999999,
+    "url": "https://yometro.com/barun-sengupta-metro-station-190091"
+  },
+  {
+    "city": "kolkata",
+    "name": "Kavi Sukanta",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.505602,
+    "lng": 88.401066,
+    "url": "https://yometro.com/kavi-sukanta-metro-station-190095"
+  },
+  {
+    "city": "kolkata",
+    "name": "Kavi Subhash",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.4721747,
+    "lng": 88.3978668,
+    "url": "https://yometro.com/kavi-subhash-metro-station-190026"
+  },
+  {
+    "city": "kolkata",
+    "name": "Jessore Road",
+    "line": "\u25d9  Yellow Line",
+    "lineColor": "0xFFF6D71A",
+    "lat": 22.6395465,
+    "lng": 88.42959739999999,
+    "url": "https://yometro.com/jessore-road-metro-station-190059"
+  },
+  {
+    "city": "kolkata",
+    "name": "Jyotirindra Nandi",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.49595,
+    "lng": 88.398611,
+    "url": "https://yometro.com/jyotirindra-nath-nandi-metro-station-190096"
+  },
+  {
+    "city": "kolkata",
+    "name": "Satyajit Ray",
+    "line": "\u25d9  Orange Line",
+    "lineColor": "0xFFF46808",
+    "lat": 22.4839198,
+    "lng": 88.3922501,
+    "url": "https://yometro.com/satyajit-ray-metro-station-190097"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Belpada",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.0254324,
+    "lng": 73.0552703,
+    "url": "https://yometro.com/belpada-metro-station-360003"
+  },
+  {
+    "city": "navimumbai",
+    "name": "RBI Colony",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.022964,
+    "lng": 73.047933,
+    "url": "https://yometro.com/rbi-colony-metro-station-360002"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Kharghar village",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.043315,
+    "lng": 73.074466,
+    "url": "https://yometro.com/kharghar-village-metro-station-360006"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Pendhar",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.0719003,
+    "lng": 73.098191,
+    "url": "https://yometro.com/pendhar-metro-station-360011"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Pethpada",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.06401,
+    "lng": 73.077462,
+    "url": "https://yometro.com/pethpada-metro-station-360008"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Belapur Terminal",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.020537,
+    "lng": 73.040086,
+    "url": "https://yometro.com/belapur-terminal-metro-station-360001"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Central park",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.0534526,
+    "lng": 73.07596389999999,
+    "url": "https://yometro.com/central-park-metro-station-360007"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Utsav Chowk",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.032727,
+    "lng": 73.05909799999999,
+    "url": "https://yometro.com/utsav-chowk-metro-station-360004"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Kendriya vihar",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.0378055,
+    "lng": 73.0640243,
+    "url": "https://yometro.com/kendriya-vihar-metro-station-360005"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Amandoot",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.0736851,
+    "lng": 73.08176739999999,
+    "url": "https://yometro.com/amandoot-metro-station-360009"
+  },
+  {
+    "city": "navimumbai",
+    "name": "Pethali taloja",
+    "line": "\u25d9  Line 1 Line",
+    "lineColor": "0xFF000000",
+    "lat": 19.074664,
+    "lng": 73.090764,
+    "url": "https://yometro.com/pethali-taloja-metro-station-360010"
+  }
+]

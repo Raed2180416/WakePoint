@@ -65,8 +65,9 @@ class EtaUtils {
           stepBoundariesMeters[idx] <= meters) {
         idx++;
       }
-      if (idx >= stepBoundariesMeters.length)
+      if (idx >= stepBoundariesMeters.length) {
         return stepBoundariesMeters.length - 1;
+      }
       return idx;
     }
 

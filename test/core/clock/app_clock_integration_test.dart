@@ -3,6 +3,7 @@
 /// These tests verify that the time warp feature correctly accelerates
 /// time-dependent logic in the deviation/reroute/alarm pipeline while
 /// maintaining correct real-world behavior at 1x warp.
+library;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 

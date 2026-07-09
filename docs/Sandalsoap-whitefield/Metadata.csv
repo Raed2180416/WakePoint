@@ -1,0 +1,2 @@
+version,device name,recording epoch time,recording time,recording timezone,platform,appVersion,device id,sensors,sampleRateMs,standardisation
+3,A059P,1769154248337,2026-01-23_07-44-08,Asia/Calcutta,android,1.51.0,d1b356e2-994a-4431-a97d-360e1f9c117c,Accelerometer|Gravity|Gyroscope|Orientation|Location|Battery|Annotation|TotalAcceleration|GyroscopeUncalibrated|AccelerometerUncalibrated,10|10|10|10|0|1000||10|10|10,true

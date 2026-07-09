@@ -23,6 +23,7 @@ class BackgroundHandlerCallbacks {
     required String alarmMode,
     required double alarmValue,
     required bool transitMode,
+    bool isSimulationMode,
     required ServiceInstance service,
   })
   onStartTracking;
@@ -61,6 +62,9 @@ class BackgroundHandlerCallbacks {
   /// Invoked when foreground resumed
   final Future<void> Function() onForegroundResumed;
 
+  /// Invoked when simulation mode is set
+  final void Function(bool enabled) onSetSimulationMode;
+
   BackgroundHandlerCallbacks({
     required this.onStartTracking,
     required this.onStopTracking,
@@ -69,6 +73,7 @@ class BackgroundHandlerCallbacks {
     required this.onStopAlarm,
     required this.onForegroundHeartbeat,
     required this.onForegroundResumed,
+    required this.onSetSimulationMode,
   });
 }
 
@@ -113,6 +118,12 @@ class BackgroundHandlers {
     _service.on('foregroundResumed').listen((_) async {
       await _callbacks.onForegroundResumed();
     });
+
+    _service.on('setSimulationMode').listen((event) {
+      if (event != null) {
+        _callbacks.onSetSimulationMode(event['enabled'] == true);
+      }
+    });
   }
 
   void _handleStartTracking(Map<String, dynamic>? data) {
@@ -138,6 +149,7 @@ class BackgroundHandlers {
     final alarmMode = data['alarmMode'] as String;
     final alarmValue = (data['alarmValue'] as num).toDouble();
     final transitMode = data['transitMode'] as bool? ?? false;
+    final isSimulationMode = data['isSimulationMode'] as bool? ?? false;
 
     _callbacks.onStartTracking(
       destination: destination,
@@ -145,6 +157,7 @@ class BackgroundHandlers {
       alarmMode: alarmMode,
       alarmValue: alarmValue,
       transitMode: transitMode,
+      isSimulationMode: isSimulationMode,
       service: _service,
     );
   }

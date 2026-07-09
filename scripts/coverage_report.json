@@ -1,0 +1,841 @@
+{
+  "agra": {
+    "total_entries": 8,
+    "unique_active_stations": 8,
+    "interchanges": [],
+    "lines": {
+      "Yellow Line": 6
+    }
+  },
+  "ahmedabad": {
+    "total_entries": 52,
+    "unique_active_stations": 52,
+    "interchanges": [],
+    "lines": {
+      "Red Line": 12,
+      "Yellow Line": 17,
+      "Blue Line": 16,
+      "Violet Line,   Yellow Line": 1,
+      "Violet Line": 2,
+      "Red Line,   Yellow Line": 1,
+      "Blue Line,   Red Line": 1,
+      "Blue Line,   Yellow Line": 1
+    }
+  },
+  "bengaluru": {
+    "total_entries": 84,
+    "unique_active_stations": 84,
+    "interchanges": [],
+    "lines": {
+      "Purple Line": 27,
+      "Yellow Line": 14,
+      "Green Line": 23,
+      "": 18,
+      "Purple Line,   Green Line": 1,
+      "Green Line,   Yellow Line": 1
+    }
+  },
+  "chennai": {
+    "total_entries": 43,
+    "unique_active_stations": 41,
+    "interchanges": [
+      {
+        "name": "MGR Central (Chennai Central)",
+        "lines": [
+          "Blue Line",
+          "Green Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Arignar Anna Alandur",
+        "lines": [
+          "Blue Line",
+          "Green Line"
+        ],
+        "count": 2
+      }
+    ],
+    "lines": {
+      "Blue Line": 26,
+      "Green Line": 17
+    }
+  },
+  "delhi": {
+    "total_entries": 311,
+    "unique_active_stations": 231,
+    "interchanges": [
+      {
+        "name": "Kashmere Gate",
+        "lines": [
+          "Violet Line",
+          "Red Line",
+          "Yellow Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Welcome",
+        "lines": [
+          "Red Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Netaji Subhash Place",
+        "lines": [
+          "Red Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka",
+        "lines": [
+          "Grey Line",
+          "Blue Branch Line",
+          "Blue Main Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Janakpuri West",
+        "lines": [
+          "Blue Main Line",
+          "Magenta Line",
+          "Blue Branch Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Inderlok",
+        "lines": [
+          "Green Main Line",
+          "Red Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Botanical Garden",
+        "lines": [
+          "Blue Main Line",
+          "Magenta Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Hauz Khas",
+        "lines": [
+          "Magenta Line",
+          "Yellow Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Kalkaji Mandir",
+        "lines": [
+          "Violet Line",
+          "Magenta Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Maujpur Babarpur",
+        "lines": [
+          "Pink Branch Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Anand Vihar ISBT",
+        "lines": [
+          "Blue Branch Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Karkarduma",
+        "lines": [
+          "Blue Branch Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Mayur Vihar I",
+        "lines": [
+          "Blue Main Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Lajpat Nagar",
+        "lines": [
+          "Violet Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Delhi Haat INA",
+        "lines": [
+          "Yellow Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Rajouri Garden",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line",
+          "Pink Main Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Azadpur",
+        "lines": [
+          "Yellow Line",
+          "Pink Main Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Punjabi Bagh West",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line",
+          "Pink Main Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "New Delhi",
+        "lines": [
+          "Orange Line",
+          "Yellow Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 21",
+        "lines": [
+          "Orange Line",
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Central Secretariat",
+        "lines": [
+          "Violet Line",
+          "Yellow Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Mandi House",
+        "lines": [
+          "Violet Line",
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Kirti Nagar",
+        "lines": [
+          "Green Branch Line",
+          "Blue Branch Line",
+          "Blue Main Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "Ashok Park Main",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Madipur",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Shivaji Park",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Punjabi Bagh",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Maharaja Surajmal Stadium",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Paschim Vihar West",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Paschim Vihar East",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Peeragarhi",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Nangloi",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Brigadier Hoshiar Singh",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Rajdhani Park",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Udyog Nagar",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Nangloi Railway Station",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Tikri Kalan",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Mundka",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Ghevra",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Mundka Industrial Area",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Bahadurgarh City",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Tikri Border",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Pandit Shree Ram Sharma",
+        "lines": [
+          "Green Main Line",
+          "Green Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Yamuna Bank",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Barakhambha Road",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Indraprastha",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Supreme Court (Pragati Maidan)",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Rajiv Chowk",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line",
+          "Yellow Line"
+        ],
+        "count": 3
+      },
+      {
+        "name": "RK Ashram Marg",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Karol Bagh",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Jhandewalan",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Shadipur",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Rajendra Place",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Ramesh Nagar",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Subhash Nagar",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Moti Nagar",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Uttam Nagar West",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Tagore Garden",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Tilak Nagar",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Janakpuri East",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Uttam Nagar East",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 11",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Patel Nagar",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Nawada",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Mor",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 12",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 14",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 10",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 9",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 13",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Dwarka Sector 8",
+        "lines": [
+          "Blue Main Line",
+          "Blue Branch Line"
+        ],
+        "count": 2
+      }
+    ],
+    "lines": {
+      "Red Line": 29,
+      "Grey Line": 4,
+      "Magenta Line": 26,
+      "Pink Branch Line": 4,
+      "Pink Main Line": 35,
+      "Orange Line": 7,
+      "Violet Line": 34,
+      "Green Branch Line": 23,
+      "Green Main Line": 22,
+      "Blue Branch Line": 41,
+      "Blue Main Line": 50,
+      "Yellow Line": 36
+    }
+  },
+  "delhimeerutrrts": {
+    "total_entries": 4,
+    "unique_active_stations": 4,
+    "interchanges": [],
+    "lines": {
+      "Line 1 Line,   Line 2 Line": 2,
+      "Line 2 Line": 1,
+      "Line 1 Line": 1
+    }
+  },
+  "gurugram": {
+    "total_entries": 11,
+    "unique_active_stations": 11,
+    "interchanges": [],
+    "lines": {
+      "Rapid Line": 11
+    }
+  },
+  "hyderabad": {
+    "total_entries": 56,
+    "unique_active_stations": 56,
+    "interchanges": [],
+    "lines": {
+      "Red Line,   Blue Line": 1,
+      "Red Line": 25,
+      "Blue Line": 21,
+      "Green Line": 7,
+      "Blue Line,   Green Line": 1,
+      "Red Line,   Green Line": 1
+    }
+  },
+  "indore": {
+    "total_entries": 5,
+    "unique_active_stations": 5,
+    "interchanges": [],
+    "lines": {
+      "Yellow Line": 5
+    }
+  },
+  "jaipur": {
+    "total_entries": 11,
+    "unique_active_stations": 11,
+    "interchanges": [],
+    "lines": {
+      "Pink Line": 11
+    }
+  },
+  "kanpur": {
+    "total_entries": 14,
+    "unique_active_stations": 14,
+    "interchanges": [],
+    "lines": {
+      "Orange Line": 14
+    }
+  },
+  "kochi": {
+    "total_entries": 25,
+    "unique_active_stations": 25,
+    "interchanges": [],
+    "lines": {
+      "Line 1 Line": 24,
+      "Blue Line": 1
+    }
+  },
+  "kolkata": {
+    "total_entries": 58,
+    "unique_active_stations": 55,
+    "interchanges": [
+      {
+        "name": "Noapara",
+        "lines": [
+          "Blue Line",
+          "Yellow Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Kavi Subhash",
+        "lines": [
+          "Orange Line",
+          "Blue Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Esplanade",
+        "lines": [
+          "Blue Line",
+          "Green Line"
+        ],
+        "count": 2
+      }
+    ],
+    "lines": {
+      "Blue Line": 26,
+      "Green Line": 12,
+      "Purple Line": 7,
+      "Yellow Line": 4,
+      "Orange Line": 9
+    }
+  },
+  "lucknow": {
+    "total_entries": 21,
+    "unique_active_stations": 21,
+    "interchanges": [],
+    "lines": {
+      "Red Line": 20
+    }
+  },
+  "mumbai": {
+    "total_entries": 71,
+    "unique_active_stations": 69,
+    "interchanges": [
+      {
+        "name": "Dahisar East",
+        "lines": [
+          "Red Line",
+          "Yellow Line"
+        ],
+        "count": 2
+      },
+      {
+        "name": "Marol Naka",
+        "lines": [
+          "Aqua Line",
+          "Blue Line"
+        ],
+        "count": 2
+      }
+    ],
+    "lines": {
+      "Blue Line": 12,
+      "Yellow Line": 17,
+      "Aqua Line": 28,
+      "Red Line": 14
+    }
+  },
+  "nagpur": {
+    "total_entries": 37,
+    "unique_active_stations": 37,
+    "interchanges": [],
+    "lines": {
+      "Aqua Line": 18,
+      "Orange Line": 17,
+      "Orange Line,   Aqua Line": 2
+    }
+  },
+  "navimumbai": {
+    "total_entries": 11,
+    "unique_active_stations": 11,
+    "interchanges": [],
+    "lines": {
+      "Line 1 Line": 11
+    }
+  },
+  "noida": {
+    "total_entries": 21,
+    "unique_active_stations": 21,
+    "interchanges": [],
+    "lines": {
+      "Aqua Line": 21
+    }
+  },
+  "patna": {
+    "total_entries": 3,
+    "unique_active_stations": 3,
+    "interchanges": [],
+    "lines": {
+      "Blue Line": 3
+    }
+  },
+  "pune": {
+    "total_entries": 29,
+    "unique_active_stations": 29,
+    "interchanges": [],
+    "lines": {
+      "Aqua Line": 15,
+      "Purple Line": 13
+    }
+  }
+}

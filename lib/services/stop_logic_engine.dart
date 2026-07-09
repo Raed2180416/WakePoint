@@ -40,7 +40,7 @@ class StopLogicEngine {
 
     // 1. Find the next unfired event (inclusive with small tolerance so
     // arriving exactly at the boundary still counts as pending).
-    const double _metersTolerance = 5.0;
+    const double metersTolerance = 5.0;
     final double routeEndMeters = stepBoundsMeters.last;
 
     final entries =
@@ -52,7 +52,7 @@ class StopLogicEngine {
             .where(
               (e) =>
                   !firedEventIndexes.contains(e.key) &&
-                  e.value.meters >= (progressMeters - _metersTolerance),
+                  e.value.meters >= (progressMeters - metersTolerance),
             )
             .toList();
 
@@ -277,7 +277,7 @@ class StopLogicEngine {
       return (
         isValid: false,
         errorMessage:
-            'Threshold ${userThreshold} is too high. The $shortestLegName segment only has $minStopsOnAnyMetroLeg stop${minStopsOnAnyMetroLeg == 1 ? '' : 's'}. Please choose a value less than $minStopsOnAnyMetroLeg.',
+            'Threshold $userThreshold is too high. The $shortestLegName segment only has $minStopsOnAnyMetroLeg stop${minStopsOnAnyMetroLeg == 1 ? '' : 's'}. Please choose a value less than $minStopsOnAnyMetroLeg.',
         minMetroStops: minStopsOnAnyMetroLeg,
       );
     }

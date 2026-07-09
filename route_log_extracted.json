@@ -1,0 +1,530 @@
+{
+    "version": 1,
+    "timestamp": "2026-01-24T12:04:47.736052",
+    "metadata": {
+        "origin": {
+            "lat": 13.0148547,
+            "lng": 77.5545643
+        },
+        "destination": {
+            "lat": 12.995232,
+            "lng": 77.757887
+        },
+        "destination_name": null,
+        "transit_mode": true,
+        "transitVariant": "rail",
+        "departureTime": null,
+        "isDistanceMode": true,
+        "threshold": 2.0
+    },
+    "directions": {
+        "geocoded_waypoints": [
+            {
+                "geocoder_status": "OK",
+                "place_id": "ChIJ1Yosybs9rjsR24EJ902Ours",
+                "types": [
+                    "atm",
+                    "establishment",
+                    "finance",
+                    "point_of_interest"
+                ]
+            },
+            {
+                "geocoder_status": "OK",
+                "place_id": "ChIJq1z7mBcOrjsR6iTO_w7rTAU",
+                "types": [
+                    "establishment",
+                    "point_of_interest",
+                    "transit_station"
+                ]
+            }
+        ],
+        "routes": [
+            {
+                "bounds": {
+                    "northeast": {
+                        "lat": 13.014823,
+                        "lng": 77.757887
+                    },
+                    "southwest": {
+                        "lat": 12.9725911,
+                        "lng": 77.5486659
+                    }
+                },
+                "copyrights": "Powered by Google, ©2026 Google",
+                "fare": {
+                    "currency": "INR",
+                    "text": "₹90.00",
+                    "value": 90
+                },
+                "legs": [
+                    {
+                        "arrival_time": {
+                            "text": "1:35 PM",
+                            "time_zone": "Asia/Calcutta",
+                            "value": 1769241953
+                        },
+                        "departure_time": {
+                            "text": "12:12 PM",
+                            "time_zone": "Asia/Calcutta",
+                            "value": 1769236921
+                        },
+                        "distance": {
+                            "text": "33.3 km",
+                            "value": 33277
+                        },
+                        "duration": {
+                            "text": "1 hour 24 mins",
+                            "value": 5032
+                        },
+                        "end_address": "Kadugodi, Kadugodi Colony, Kadugodi, Bengaluru, Karnataka 560067, India",
+                        "end_location": {
+                            "lat": 12.995232,
+                            "lng": 77.757887
+                        },
+                        "start_address": "Metro Station Sandal Soap Factory, Rajajinagar, Bengaluru, Karnataka 560055, India",
+                        "start_location": {
+                            "lat": 13.0148189,
+                            "lng": 77.554563
+                        },
+                        "steps": [
+                            {
+                                "distance": {
+                                    "text": "0.4 km",
+                                    "value": 403
+                                },
+                                "duration": {
+                                    "text": "6 mins",
+                                    "value": 355
+                                },
+                                "end_location": {
+                                    "lat": 13.014704,
+                                    "lng": 77.553922
+                                },
+                                "html_instructions": "Walk to Sandal Soap Factory",
+                                "polyline": {
+                                    "points": "s}lnA_kjxM?VXA\\?T?Z?NF~A?D?R?NAPAHADCFCDCFCB\\QDE@CACAMAyFvA"
+                                },
+                                "start_location": {
+                                    "lat": 13.0148189,
+                                    "lng": 77.554563
+                                },
+                                "steps": [
+                                    {
+                                        "distance": {
+                                            "text": "13 m",
+                                            "value": 13
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 9
+                                        },
+                                        "end_location": {
+                                            "lat": 13.014823,
+                                            "lng": 77.554441
+                                        },
+                                        "html_instructions": "Head <b>west</b><div style=\"font-size:0.9em\">Restricted usage road</div>",
+                                        "polyline": {
+                                            "points": "s}lnA_kjxM?V"
+                                        },
+                                        "start_location": {
+                                            "lat": 13.0148189,
+                                            "lng": 77.554563
+                                        },
+                                        "travel_mode": "WALKING"
+                                    },
+                                    {
+                                        "distance": {
+                                            "text": "0.2 km",
+                                            "value": 183
+                                        },
+                                        "duration": {
+                                            "text": "2 mins",
+                                            "value": 138
+                                        },
+                                        "end_location": {
+                                            "lat": 13.013244,
+                                            "lng": 77.5545222
+                                        },
+                                        "html_instructions": "Turn <b>left</b> at Ashwaveega News 24x7 &amp; Ashwaramanuja Media Pvt.Ltd<div style=\"font-size:0.9em\">Restricted usage road</div><div style=\"font-size:0.9em\">Pass by Metro Station Sandal Soap Factory (on the right in 32m)</div>",
+                                        "maneuver": "turn-left",
+                                        "polyline": {
+                                            "points": "s}lnAgjjxMXA\\?T?Z?NF~A?D?R?NAPAHADCFCDCFC"
+                                        },
+                                        "start_location": {
+                                            "lat": 13.014823,
+                                            "lng": 77.554441
+                                        },
+                                        "travel_mode": "WALKING"
+                                    },
+                                    {
+                                        "distance": {
+                                            "text": "28 m",
+                                            "value": 28
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 21
+                                        },
+                                        "end_location": {
+                                            "lat": 13.013225,
+                                            "lng": 77.55437400000001
+                                        },
+                                        "html_instructions": "Turn <b>right</b> at Mysore Sandal Soap Factory<div style=\"font-size:0.9em\">Restricted usage road</div>",
+                                        "maneuver": "turn-right",
+                                        "polyline": {
+                                            "points": "wslnAwjjxMB\\"
+                                        },
+                                        "start_location": {
+                                            "lat": 13.013244,
+                                            "lng": 77.5545222
+                                        },
+                                        "travel_mode": "WALKING"
+                                    },
+                                    {
+                                        "distance": {
+                                            "text": "32 m",
+                                            "value": 32
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 28
+                                        },
+                                        "end_location": {
+                                            "lat": 13.0133767,
+                                            "lng": 77.55435059999999
+                                        },
+                                        "html_instructions": "At the roundabout, take the <b>1st</b> exit<div style=\"font-size:0.9em\">Pass by Rathishkumar G (on the right)</div>",
+                                        "maneuver": "roundabout-left",
+                                        "polyline": {
+                                            "points": "sslnAyijxMQDE@CACA"
+                                        },
+                                        "start_location": {
+                                            "lat": 13.013225,
+                                            "lng": 77.55437400000001
+                                        },
+                                        "travel_mode": "WALKING"
+                                    },
+                                    {
+                                        "distance": {
+                                            "text": "0.1 km",
+                                            "value": 147
+                                        },
+                                        "duration": {
+                                            "text": "3 mins",
+                                            "value": 159
+                                        },
+                                        "end_location": {
+                                            "lat": 13.014704,
+                                            "lng": 77.553922
+                                        },
+                                        "html_instructions": "Take entrance <span class=\"location\">Entrance A</span>",
+                                        "polyline": {
+                                            "points": "aulnAwijxMyFvA"
+                                        },
+                                        "start_location": {
+                                            "lat": 13.013448,
+                                            "lng": 77.554358
+                                        },
+                                        "travel_mode": "WALKING"
+                                    }
+                                ],
+                                "travel_mode": "WALKING"
+                            },
+                            {
+                                "distance": {
+                                    "text": "6.5 km",
+                                    "value": 6455
+                                },
+                                "duration": {
+                                    "text": "12 mins",
+                                    "value": 719
+                                },
+                                "end_location": {
+                                    "lat": 12.975927,
+                                    "lng": 77.57256799999999
+                                },
+                                "html_instructions": "Metro rail towards Silk Institute",
+                                "polyline": {
+                                    "points": "{|lnA_gjxMAQv@E~@CXAZ@b@APBND@?PDRDPHXLVLb@`@LPFHJRN`@LXLZ\\z@r@hBj@tAfAlC\\z@LZ\\t@PZRXNNJL^^h@`@`@TZPLFRHVHVJ^Hd@Hb@Dh@Ff@D^Dn@HhAFf@DV@V@d@Dd@Bl@@ZAZCVCZCLCbAKz@GhAMjBQz@Kx@IHA^EPA\\Cv@INAjBMlCWhAMrEa@HAt@IjBS~@GjAGv@MZKd@STINMPMHKHIP[HQDODOBQBK@M?G@IAUAUASE[Kq@[cC?COgAEU?GG[E_@CUo@eFWgCEm@@u@Bq@@]NeBFe@Ho@TsAFa@Pw@j@uBj@sBNe@V{@FWFWBITw@@AJ_@Pe@Xu@Vm@J]JUJYHYJe@?EDWBi@DgBHmAB]Di@PwAP{ABe@@]?[AIIwAKy@Eq@Ae@Be@FWHW@ETg@V]XWf@]b@WbAm@bAo@bBiAxA}@zBoAJEzA}@~@k@bAo@vA}@tA}@z@k@x@k@b@YpAy@l@e@j@a@^U`@Sf@S\\IZG`@G@?VCZCdEMlEMpAA|GMb@?|CG`CIb@C|GWb@CxYgAfDSDr@"
+                                },
+                                "start_location": {
+                                    "lat": 13.014704,
+                                    "lng": 77.553922
+                                },
+                                "transit_details": {
+                                    "arrival_stop": {
+                                        "location": {
+                                            "lat": 12.975927,
+                                            "lng": 77.57256799999999
+                                        },
+                                        "name": "Nadaprabhu Kempegowda Metro Station, Majestic"
+                                    },
+                                    "arrival_time": {
+                                        "text": "12:29 PM",
+                                        "time_zone": "Asia/Calcutta",
+                                        "value": 1769237996
+                                    },
+                                    "departure_stop": {
+                                        "location": {
+                                            "lat": 13.014704,
+                                            "lng": 77.553922
+                                        },
+                                        "name": "Sandal Soap Factory"
+                                    },
+                                    "departure_time": {
+                                        "text": "12:17 PM",
+                                        "time_zone": "Asia/Calcutta",
+                                        "value": 1769237277
+                                    },
+                                    "headsign": "Silk Institute",
+                                    "line": {
+                                        "agencies": [
+                                            {
+                                                "name": "BMRCL",
+                                                "phone": "011 91 1800 4251 2345",
+                                                "url": "http://english.bmrc.co.in/"
+                                            }
+                                        ],
+                                        "color": "#099b46",
+                                        "short_name": "Green Line",
+                                        "text_color": "#ffffff",
+                                        "vehicle": {
+                                            "icon": "//maps.gstatic.com/mapfiles/transit/iw2/6/metro.png",
+                                            "name": "Metro rail",
+                                            "type": "SUBWAY"
+                                        }
+                                    },
+                                    "num_stops": 6
+                                },
+                                "travel_mode": "TRANSIT"
+                            },
+                            {
+                                "distance": {
+                                    "text": "40 m",
+                                    "value": 40
+                                },
+                                "duration": {
+                                    "text": "1 min",
+                                    "value": 66
+                                },
+                                "end_location": {
+                                    "lat": 12.975565,
+                                    "lng": 77.572555
+                                },
+                                "html_instructions": "Walk to Nadaprabhu Kempegowda Metro Station, Majestic",
+                                "polyline": {
+                                    "points": "qjenAq{mxMfAB"
+                                },
+                                "start_location": {
+                                    "lat": 12.975927,
+                                    "lng": 77.57256799999999
+                                },
+                                "steps": [
+                                    {
+                                        "distance": {
+                                            "text": "40 m",
+                                            "value": 40
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 66
+                                        },
+                                        "end_location": {
+                                            "lat": 12.975565,
+                                            "lng": 77.572555
+                                        },
+                                        "polyline": {
+                                            "points": "qjenAq{mxMfAB"
+                                        },
+                                        "start_location": {
+                                            "lat": 12.975927,
+                                            "lng": 77.57256799999999
+                                        },
+                                        "travel_mode": "WALKING"
+                                    }
+                                ],
+                                "travel_mode": "WALKING"
+                            },
+                            {
+                                "distance": {
+                                    "text": "26.3 km",
+                                    "value": 26291
+                                },
+                                "duration": {
+                                    "text": "53 mins",
+                                    "value": 3156
+                                },
+                                "end_location": {
+                                    "lat": 12.9956053,
+                                    "lng": 77.757769
+                                },
+                                "html_instructions": "Metro rail towards Whitefield (Kadugodi)",
+                                "polyline": {
+                                    "points": "ihenAm{mxMYC@SPsELcFB{@L_AXcBZeAl@eBf@cBdBaFjBqFbAoC`@eBNs@@s@E{@Ge@Ww@Qi@Wo@}A{Co@eB{CmIcEwKaDuHcBaD}@}AiAyAeDkDeC}Bw@u@aFuEaCeCQYEOAc@?CB]PgA^wB|@gE^yAhAqEl@qCx@kDZ{@\\c@^QrDeA~Ae@pA[t@Sj@SRK\\UVWRYR]Rg@La@Ji@P_AZqCXuBVmARkAPuA\\gBJy@V}Ad@_DRoAVkAZ_B^yBRwAZuBNkAXaB?AX{AL{@LuAL{@\\mBRgAJk@HeAXqB`@sCd@oC^{B@G^sC\\oCFq@D_AAoAGuCMcBOuAa@uBc@aBQi@y@kBq@mAgBeDwB}Ds@yAe@q@_@c@_@WyAaAy@g@_CuAa@Ys@o@g@s@]m@g@aAm@mAWq@Ga@C]Aa@@UNaDPuEV_FBcAAk@Ao@GyCAcECqDC_DCgDE{F?AGiDA[EUE[KWOYQQc@a@A?[QA?A?_@Mc@Es@?w@BoA@qBDuBB_CD_CHyBDe@@OAA?QASAa@Mg@YUSAA?AW_@i@}Aq@wBo@yBoAyD]eAaAqDs@eCe@gBW_Aq@aCSu@Q]KWAAQ]UU?ASSAA_@WWOc@So@Q_B[yAYi@OYMA?AA_@WYW]i@?A[w@_AkEg@yBg@uDc@{BGUMi@_@_CY_BQs@Qi@A??AS_@a@e@w@{@c@g@w@_Am@eA_@o@iAuBm@qA[s@_@{@i@eAa@aAe@eAk@wAk@sAa@eAu@iBWs@Y}@Ou@KwAAg@?k@D}@PuANcANsADk@@a@?eAEi@Ee@Iy@O{@Ms@Qu@}@sDe@}Ak@eBq@kBa@gAW}@Me@@A?CKm@C_@G}@Gk@Ga@IWSo@A??Ag@mAY{@sAoDi@qAyAuD}AeEw@uBa@aA]gAGWIs@?AGuBC}AGgCEoC?uBAgCCg@Aa@Ea@CU?AWcBUeCCw@?u@?}DBcEDgBHwBPiBTkAZ{@j@mAj@{@v@{@rAmAz@{@f@q@N[^m@p@}Ad@kAj@}A\\}@X}@V}@d@yB`@}Ap@sCr@oCd@qAx@cCXoANkAR{BVqDP}AJm@?CRy@La@f@qBZwAb@kCl@uDf@wCXcBp@{DDS|@aFTiBF_AFcCD{C@uD@}CDyDFiD@q@@[LaAZcCR_At@{C\\wARa@Za@XU^Q@Ad@Md@IXA@?^@VDZD^NTNTPRV`@l@p@zAp@xArBfE@BzBtEv@zAPZ@?b@h@@@@Bd@`@d@^h@ZfAb@tBt@hAZhARnAF|A@~BA`CC|@CdAKlBU`B[bASzAY~Be@|Bc@fASj@Qh@]VWVe@L_@Nq@H}@LsBPkDXeENoCZsDRiCDo@XeDLaCH_DLsDLwCPaENeDNyCDeBJeAP}AHqALcC?KJmCLcC@{@Ac@EWGUM]QY?AAASUe@[YMQEq@Kc@C_CAuBBiBF_A?m@C}@OsBWUCgBS_Cc@uAUA?A?w@UAA_A_@k@_@qAw@uAaAcCoByAwAu@}@g@}@}@mBo@qAYe@?ASWAAAAWWi@_@q@c@A?AAe@]AAA?YYW_@Sc@Ms@Gi@?[RgC?AVyCLcBBwA?uA?_C?yAA_@@gCAsBBuC@_AHcAPiAZiBh@kDr@iEr@oEXkBV{Ab@iB\\sAj@qB`AoDp@{Bv@eDj@aCt@_D^}AFk@@i@Cw@Gm@Ic@O_@MYg@q@]_@m@c@s@[y@U{C_AqBi@]MsBq@}Bs@wFkB}Am@gAo@?AA?AAaAq@AAi@a@sBwAyAeAi@_@AACAe@[C?_@UAAA?A?ACo@QAAi@MeAQcAUeAWyBc@sCc@KCGT"
+                                },
+                                "start_location": {
+                                    "lat": 12.975565,
+                                    "lng": 77.572555
+                                },
+                                "transit_details": {
+                                    "arrival_stop": {
+                                        "location": {
+                                            "lat": 12.9956053,
+                                            "lng": 77.757769
+                                        },
+                                        "name": "Whitefield (Kadugodi)"
+                                    },
+                                    "arrival_time": {
+                                        "text": "1:33 PM",
+                                        "time_zone": "Asia/Calcutta",
+                                        "value": 1769241816
+                                    },
+                                    "departure_stop": {
+                                        "location": {
+                                            "lat": 12.975565,
+                                            "lng": 77.572555
+                                        },
+                                        "name": "Nadaprabhu Kempegowda Metro Station, Majestic"
+                                    },
+                                    "departure_time": {
+                                        "text": "12:41 PM",
+                                        "time_zone": "Asia/Calcutta",
+                                        "value": 1769238660
+                                    },
+                                    "headsign": "Whitefield (Kadugodi)",
+                                    "line": {
+                                        "agencies": [
+                                            {
+                                                "name": "BMRCL",
+                                                "phone": "011 91 1800 4251 2345",
+                                                "url": "http://english.bmrc.co.in/"
+                                            }
+                                        ],
+                                        "color": "#8b1c7a",
+                                        "short_name": "Purple Line",
+                                        "text_color": "#ffffff",
+                                        "vehicle": {
+                                            "icon": "//maps.gstatic.com/mapfiles/transit/iw2/6/metro.png",
+                                            "name": "Metro rail",
+                                            "type": "SUBWAY"
+                                        }
+                                    },
+                                    "num_stops": 22
+                                },
+                                "travel_mode": "TRANSIT"
+                            },
+                            {
+                                "distance": {
+                                    "text": "88 m",
+                                    "value": 88
+                                },
+                                "duration": {
+                                    "text": "1 min",
+                                    "value": 83
+                                },
+                                "end_location": {
+                                    "lat": 12.995232,
+                                    "lng": 77.757887
+                                },
+                                "html_instructions": "Walk to Kadugodi, Kadugodi Colony, Kadugodi, Bengaluru, Karnataka 560067, India",
+                                "polyline": {
+                                    "points": "qeinAaaryMrBGg@O"
+                                },
+                                "start_location": {
+                                    "lat": 12.9956053,
+                                    "lng": 77.757769
+                                },
+                                "steps": [
+                                    {
+                                        "distance": {
+                                            "text": "64 m",
+                                            "value": 64
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 65
+                                        },
+                                        "end_location": {
+                                            "lat": 12.9950279,
+                                            "lng": 77.7578078
+                                        },
+                                        "html_instructions": "Take exit <span class=\"location\">A</span>",
+                                        "polyline": {
+                                            "points": "qeinAaaryMrBG"
+                                        },
+                                        "start_location": {
+                                            "lat": 12.9956053,
+                                            "lng": 77.757769
+                                        },
+                                        "travel_mode": "WALKING"
+                                    },
+                                    {
+                                        "distance": {
+                                            "text": "24 m",
+                                            "value": 24
+                                        },
+                                        "duration": {
+                                            "text": "1 min",
+                                            "value": 18
+                                        },
+                                        "end_location": {
+                                            "lat": 12.995232,
+                                            "lng": 77.757887
+                                        },
+                                        "polyline": {
+                                            "points": "}ainAiaryMg@O"
+                                        },
+                                        "start_location": {
+                                            "lat": 12.9950279,
+                                            "lng": 77.7578078
+                                        },
+                                        "travel_mode": "WALKING"
+                                    }
+                                ],
+                                "travel_mode": "WALKING"
+                            }
+                        ],
+                        "traffic_speed_entry": [],
+                        "via_waypoint": []
+                    }
+                ],
+                "overview_polyline": {
+                    "points": "s}lnA_kjxM?VXAr@?j@FdB?~@EZOB\\QDI?QCyFvAAQvBIt@?t@@PDpAb@z@n@TZv@jBdEhKj@vAn@pAnAvAtBpAbBh@zC\\`E\\zBL|BGtMqAzK_A|I{@nHq@fBw@ZYZe@XcAFk@K{Aw@aGSyAs@{F]uDDgBPcCn@kE|@mDz@yCj@uBt@_ChAwC`@_BXwFl@{FBiBUqCGwAJ}@J]l@eA`Au@nG_E|HqEpHwEjFkDxAgA`Ai@dA]|@OzFU`R]~GQ`I[|ZkAfDSDr@fABYCRgFP_Hf@cDvEqNnDaKp@yCCoBGe@Ww@i@yA}A{Co@eB_JeVaDuHcBaDgCwDkHiHyGkGsC_DGs@Ba@p@_E|AaHvBcJx@kDZ{@\\c@^QrGkBfCo@~@_@t@m@f@w@`@iA\\iBt@gGj@yCrAuIx@oFr@kD~AsK`A{FZqCp@uDTqBz@eGfBgLd@aEBoCUyFq@kEu@kCkByD_FcJyAkC_A{@sCiBaDoB{AcBeAoBeA_CK_A?w@|@{SMyLQuVGkDGq@Qs@a@k@cAs@a@MwAEoJN_LVw@EiAg@USACW_@i@}AaBqFmB_GsD_NeAwD]u@i@w@mA}@sAe@_B[cCi@YM}@q@]k@[w@_AkEg@yBg@uDk@qCyA}Hg@kAuDiEmAuBwBgEgCwF_DwHmA}Ci@sBM_CDiB`@yCT_C@gBKoAYuB_@iBcBqG}AqEy@eCKg@OqAOiBQy@Uq@uCyHyGcQ_AiCQkAS}IKuLK{Am@iFCmBBaKN_Ff@uDfAiCj@{@v@{@nCiCv@mApAkChCeHpCiLlDuLlAwMJq@`@{AbAiEpAaIxBkMrAkINcENiTH{EN}AZcChA{Ep@yBt@w@`@SjAWZAv@Fz@Tj@`@t@dAbBtDhH|Nx@fAf@d@nAz@|DxArCn@lDH`GEbCOnEq@|KwBrBe@`Au@d@eAXoBhAuRnAsOr@mRv@gR\\cDVuEZyIOqAa@{@y@q@k@SuAOuF@iDFkBSiC[gFw@qCk@aAa@}BwAyEqDoCuCoDcHU[cAy@s@c@g@_@u@{@a@wAGeAx@gKDyXJcCl@sDjDqTz@eEhAeErBkHbBgHtA}FHuAKeBYcAu@kA]_@aB_Ay@UmGiBqC_AuJ_D}Am@gAo@AAcAs@yFaE{BwAu@UuDw@_E{@_Dg@GTrBGg@O"
+                },
+                "summary": "",
+                "warnings": [
+                    "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths."
+                ],
+                "waypoint_order": [],
+                "simplified_polyline": "H4sIAAAAAAAAA4WXOYpVYRCF9/Lipql5cCtiYGTSGJlJ710eJnXOA73pR41/Tffr78fH91+PL+rvojH29vj4+ePxpfs9M7I+3/7FI4ibIlfkboH6jTnq9yb9fbEviyfwkERujfIUnaxfLOS85MWxheKyEcAFkyMt13pMYXBSKD997Nv77nSB/l3imFyxRt5bwJPku/dy1ST9ATyK/St4/Lrx//VvLu825FXX/9Jx4iBf4czj2q8S5lLAB/2brVt8rYH+zWwA7wHeCfltI/87obzasolD9bZlEu//iN/wO5W5I6fyacCjOowL+FJ0DtUxdrvjyduu+ytixDeBL70OmN+g6EeheDY4+TvHfIk4JXezgBe7p3O5JoVXGZdboPtttzlKh4ofslMmRY9jNztlSrOhYXCWWSg/vl+ew+GBeBuJdxVwNj8OfJZ5gP5N5nqz4zb0OgPp8Xnhd3RWiFF4qwa8qXo8Bjg+7oQ6YCquiQRxTeydaQHzTb0xXcDHMLxZKL6YXuJ3r1UsT0ZwPyNoMdy5WllBcz8h+aU81zNvbZZZsfx9nKKxugm1UclrrwbEX4JrveZbmszv3Oi7aKw+v8NH4iT3uZYF0jOmxvzibMSXVZHre4dWTTulBttmhjdu9w1tlhe+XPWrtBE2oWs2gw6CgMzskPWAptmlkbx+zbekBpfd8b5VODswMluVH1ave63OZa13qLV608OrNnBOn3QiJ//FwH9/7eq58S+ld1qQI02/0ck4Zn/sngNPTut+o0A7j8QZ8o5H8u3qli26Bwaj52uyG+xr0T6se620FW+cusduW+3LwrrhWxuH3wOcJrYpitM+HIfobMi9ibuPn9uZrpWsq9/F6HULsutKtTnQ2e3G/t1Tvd3tpfRAffK11Pfa6RAn+YL0vBxbYdd8vtxqcSd+pzrLx40ujWpzYhI4df6kg36Xoc4UkE/hhVdgv/hPKu4+7Wyq/YVLvbOHOUyu7ObBK47yNFnTiO/ntz9FtfhMqA8AAA=="
+            }
+        ],
+        "status": "OK"
+    },
+    "summary": {
+        "total_distance_meters": 33277,
+        "total_duration_seconds": 5032,
+        "start_address": "Metro Station Sandal Soap Factory, Rajajinagar, Bengaluru, Karnataka 560055, India",
+        "end_address": "Kadugodi, Kadugodi Colony, Kadugodi, Bengaluru, Karnataka 560067, India",
+        "overview_polyline_length": 1155,
+        "transit_steps": 2,
+        "walking_steps": 3,
+        "transit_details": [
+            {
+                "line_name": "Green Line",
+                "vehicle_type": "SUBWAY",
+                "departure_stop": "Sandal Soap Factory",
+                "arrival_stop": "Nadaprabhu Kempegowda Metro Station, Majestic",
+                "num_stops": 6
+            },
+            {
+                "line_name": "Purple Line",
+                "vehicle_type": "SUBWAY",
+                "departure_stop": "Nadaprabhu Kempegowda Metro Station, Majestic",
+                "arrival_stop": "Whitefield (Kadugodi)",
+                "num_stops": 22
+            }
+        ]
+    }
+}

@@ -979,7 +979,7 @@ class HomeScreenState extends State<HomeScreen> {
         : Colors.black54;
     final Color clearChipBg =
       isDarkMode
-        ? colorScheme.surfaceVariant.withOpacity(0.45)
+        ? colorScheme.surfaceContainerHighest.withOpacity(0.45)
         : Colors.grey.shade200;
     final Color clearChipBorder =
       isDarkMode

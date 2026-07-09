@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-/// Slider for controlling time warp factor (1x - 50x).
+/// Slider for controlling time warp factor (1x - 200x).
 class TimeWarpSlider extends StatelessWidget {
   const TimeWarpSlider({
     super.key,
@@ -12,7 +12,7 @@ class TimeWarpSlider extends StatelessWidget {
     this.enabled = true,
   });
 
-  /// Current warp factor (1.0 - 50.0).
+  /// Current warp factor (1.0 - 200.0).
   final double warpFactor;
 
   /// Called when warp factor changes.
@@ -22,7 +22,7 @@ class TimeWarpSlider extends StatelessWidget {
   final bool enabled;
 
   /// Preset warp values.
-  static const presets = [1.0, 5.0, 10.0, 20.0, 35.0, 50.0];
+  static const presets = [1.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0];
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +72,10 @@ class TimeWarpSlider extends StatelessWidget {
                 overlayColor: _getWarpColor(warpFactor).withValues(alpha: 0.2),
               ),
               child: Slider(
-                value: warpFactor.clamp(1.0, 50.0),
+                value: warpFactor.clamp(1.0, 200.0),
                 min: 1,
-                max: 50,
-                divisions: 49,
+                max: 200,
+                divisions: 199,
                 label: '${warpFactor.toStringAsFixed(0)}x',
                 onChanged: enabled ? onChanged : null,
               ),

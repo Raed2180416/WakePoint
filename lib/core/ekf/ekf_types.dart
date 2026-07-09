@@ -44,6 +44,39 @@ class ImuSample {
   });
 }
 
+/// Gravity sensor sample (Android TYPE_GRAVITY).
+/// Pre-filtered gravity vector in device frame, m/s².
+/// More reliable than raw accelerometer during motion.
+class GravitySample {
+  final double x;
+  final double y;
+  final double z;
+  final Duration timestamp;
+
+  const GravitySample({
+    required this.x,
+    required this.y,
+    required this.z,
+    required this.timestamp,
+  });
+}
+
+/// Orientation sensor sample (Android TYPE_ORIENTATION).
+/// Device orientation relative to Earth frame.
+class OrientationSample {
+  final double azimuth; // Compass heading (degrees, 0=North)
+  final double pitch; // Device tilt forward/back (degrees)
+  final double roll; // Device tilt left/right (degrees)
+  final Duration timestamp;
+
+  const OrientationSample({
+    required this.azimuth,
+    required this.pitch,
+    required this.roll,
+    required this.timestamp,
+  });
+}
+
 class GpsFix {
   final double lat;
   final double lng;

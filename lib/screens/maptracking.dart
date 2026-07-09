@@ -24,7 +24,7 @@ import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallba
 
 class MapTrackingScreen extends StatefulWidget {
   // Displays map and live tracking details.
-  MapTrackingScreen({Key? key}) : super(key: key);
+  const MapTrackingScreen({super.key});
   @override
   State<MapTrackingScreen> createState() => _MapTrackingScreenState(); // State factory.
 }
@@ -871,8 +871,9 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     // Fit camera to user and destination.
     final GoogleMapController controller =
         await _mapController.future; // Await controller.
-    if (_destinationLat == null || _destinationLng == null)
+    if (_destinationLat == null || _destinationLng == null) {
       return; // Require destination.
+    }
     final bounds = LatLngBounds(
       southwest: LatLng(
         min(userLat, _destinationLat!),

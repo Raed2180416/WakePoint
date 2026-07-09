@@ -58,7 +58,9 @@ class PolylineSimplifier {
 
   // Project point p onto the line and clamp to segment [0,1].
   double u = ((latP - lat1) * dLat + (lngP - lng1) * dLng) / (dLat * dLat + dLng * dLng);
-  if (u < 0.0) u = 0.0; else if (u > 1.0) u = 1.0;
+  if (u < 0.0) {
+    u = 0.0;
+  } else if (u > 1.0) u = 1.0;
 
   // Find the closest point on the segment.
   double latClosest = lat1 + u * dLat;

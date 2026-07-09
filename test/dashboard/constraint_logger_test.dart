@@ -1,4 +1,5 @@
 /// Tests for constraint logger.
+library;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:geowake2/dashboard/constraint_logger.dart';

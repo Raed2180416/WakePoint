@@ -1,0 +1,15 @@
+Trying requests...
+HTML length: 493904
+Found 0 iframes.
+Found 0 divs with 'map' in id.
+Found 'google.com/maps' string in HTML, but no iframe element found by BS4.
+Context: ar Pradesh 201003            </div>
+        </div>
+<div class="mapbox">
+<amp-iframe width="200" height="100"
+    sandbox="allow-scripts allow-same-origin"
+    layout="responsive"
+    src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBCY3GiB2MjOvzS16XfrH3OvWNAFmt9Y9c&q=Shaheed+Sthal+(New+Bus+Adda)+Metro+Station+Ghaziabad&center=28.6705,77.415882" frameborder="0" style="border:0" allowfullsc
+Trying selenium...
+Selenium found 1 iframes.
+Selenium Iframe src: https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-8941409724474888&format=730x320&w=730&h=320&ptt=12&iu=2932075082&adk=39469693&output=html&bc=7&pv=2&wgl=1&asnt=0-29982417821093178541&dff=Tahoma&brdim=10%2C10%2C10%2C10%2C800%2C0%2C780%2C580%2C762%2C432&ifi=1&pfx=0&cookie_enabled=1&adf=2054505250&nhd=0&adx=9&ady=75&oid=2&is_amp=5&amp_v=2512221826001&d_imp=1&c=23339000676&ga_cid=amp-23yIWy3aZufb3jk9duP_Uw&ga_hid=676&dt=1769439648125&biw=762&bih=432&u_aw=800&u_ah=600&u_cd=24&u_w=800&u_h=600&u_tz=330&u_his=2&vis=1&scr_x=0&scr_y=0&url=https%3A%2F%2Fyometro.com%2Fshaheed-sthal-metro-station-110001&bdt=757&uap=Windows&uapv=19.0.0&uaa=x86&uafv=144.0.7559.97&uab=64&dtd=14&__amp_source_origin=https%3A%2F%2Fyometro.com

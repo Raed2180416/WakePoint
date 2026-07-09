@@ -8,16 +8,19 @@ import 'dart:math' as math;
 typedef EkfPipelineLogCallback = void Function(String message);
 
 class EkfPipeline {
-  EkfPipeline({required EkfConfig config, required RouteGeometry route, this.onLog})
-    : _config = config,
-      _route = route;
+  EkfPipeline({
+    required EkfConfig config,
+    required RouteGeometry route,
+    this.onLog,
+  }) : _config = config,
+       _route = route;
 
   final EkfConfig _config;
   final RouteGeometry _route;
-  
+
   /// Optional logging callback for diagnostics.
   EkfPipelineLogCallback? onLog;
-  
+
   int _predictionCount = 0;
 
   bool _initialized = false;
@@ -32,6 +35,13 @@ class EkfPipeline {
 
   List<List<double>> _p = _zeros3();
   Duration? _lastImuTs;
+
+  // Bias observability via GPS-derived acceleration
+  // Reference: El-Sheimy et al. (2004) "Observability Analysis of GPS/INS Integration"
+  double? _lastGpsV;
+  Duration? _lastGpsTick;
+  final List<double> _recentAccels = [];
+  static const int _maxAccelBufferSize = 50; // ~1s at 50Hz
 
   EkfPublicState get publicState {
     final sInternal = _s.isNaN ? 0.0 : _s;
@@ -85,40 +95,64 @@ class EkfPipeline {
     }
 
     final dt = (timestamp - _lastImuTs!).inMicroseconds / 1e6;
-    
+
     // Log dt periodically for debugging
     if (_predictionCount % 500 == 0) {
-      onLog?.call('🕐 dt check: ts=${timestamp.inMicroseconds}us last=${_lastImuTs!.inMicroseconds}us dt=${dt.toStringAsFixed(6)}');
+      onLog?.call(
+        '🕐 dt check: ts=${timestamp.inMicroseconds}us last=${_lastImuTs!.inMicroseconds}us dt=${dt.toStringAsFixed(6)}',
+      );
     }
-    
+
     _lastImuTs = timestamp;
 
+    // STRICT dt bounds checking per Brown & Hwang (1997):
+    // - dt ≤ 0: Impossible, timestamp regression (skip entirely)
+    // - dt > 1s: IMU integration error O(t²), reset velocity/bias
+    // - Normal range: proceed with Kalman predict
+    if (dt <= 0) {
+      onLog?.call(
+        'PIPELINE: Negative/zero dt=$dt (timestamp regression?), skipping',
+      );
+      return;
+    }
+    if (dt > 1.0) {
+      // IMU integration unreliable after 1s gap - position error accumulates O(t²)
+      // Reset velocity and bias, inflate position covariance significantly
+      onLog?.call('PIPELINE: Large dt=$dt > 1s, resetting velocity/bias');
+      _v = 0.0;
+      _b = 0.0;
+      _inflateCovariance(4.0); // 2x σ, 4x variance
+      return;
+    }
     if (dt < _config.minDt || dt > _config.maxDt) {
       _inflateCovariance(1.1);
-      onLog?.call('PIPELINE: Bad dt=$dt (limits: ${_config.minDt}-${_config.maxDt}), inflating covariance');
+      onLog?.call(
+        'PIPELINE: Marginal dt=$dt (limits: ${_config.minDt}-${_config.maxDt}), inflating covariance',
+      );
       return;
     }
 
     _predictionCount++;
-    
+
     final sOld = _s;
     final vOld = _v;
-    
+
     // CRITICAL DEBUG: Log every prediction in degraded mode
-    final shouldLogDegraded = _mode == EkfMode.degraded && _predictionCount % 100 == 0;
-    
+    final shouldLogDegraded =
+        _mode == EkfMode.degraded && _predictionCount % 100 == 0;
+
     if (_mode == EkfMode.degraded) {
       // Allow dead reckoning to continue (v != 0), but inflate covariance gently.
       // This enables tunnel navigation while keeping σs bounded for station association.
-      // 
+      //
       // TUNING: 1.0002 grows σs by ~1% per second at 50Hz:
       //   1.0002^50 ≈ 1.01 after 1s
       //   1.0002^500 ≈ 1.11 after 10s
       //   1.0002^5000 ≈ 2.72 after 100s (from 10m → 27m)
-      // 
+      //
       // This keeps σs under 100m for ~3 minutes of degraded mode,
       // allowing station snaps to still work.
-      // 
+      //
       // Previous: 1.02 → σs hit 10km cap within seconds, breaking snaps!
       _inflateCovariance(1.0002);
       // Continue to integration below
@@ -126,13 +160,13 @@ class EkfPipeline {
 
     final dt2 = dt * dt;
     double aBias = aFwd - _b;
-    
+
     // Apply velocity damping in degraded mode ONLY when stationary.
-    // 
+    //
     // CRITICAL: During GPS dropout while moving, we must preserve velocity for DR!
     // - If motion=vehicle: NO damping - let IMU integration drive position
     // - If motion=stationary: Strong damping - prepare for ZUPT
-    // 
+    //
     // The motion classifier has a velocity hard gate (v > 2 m/s → vehicle)
     // so it correctly identifies motion during cruising.
     double vDamping = 1.0;
@@ -145,10 +179,10 @@ class EkfPipeline {
         // NO damping during active motion - let velocity persist for DR!
         // The accelerometer should handle velocity changes via integration.
         vDamping = 1.0;
-        
+
         // Log pre-clamp values
         final aBiasRaw = aBias;
-        
+
         // Reduced deadband to allow small accelerations through.
         // Only zero out very small noise (<0.1 m/s²).
         if (aBias.abs() < 0.1) {
@@ -157,11 +191,13 @@ class EkfPipeline {
         aBias = aBias.clamp(-1.5, 1.5);
 
         if (_predictionCount % 10 == 0) {
-           onLog?.call('DR_PHYSICS: v=${_v.toStringAsFixed(3)} aBiasRaw=${aBiasRaw.toStringAsFixed(3)} aBiasCloud=${aBias.toStringAsFixed(3)}');
+          onLog?.call(
+            'DR_PHYSICS: v=${_v.toStringAsFixed(3)} aBiasRaw=${aBiasRaw.toStringAsFixed(3)} aBiasCloud=${aBias.toStringAsFixed(3)}',
+          );
         }
       }
     }
-    
+
     _s = _s + _v * dt + 0.5 * aBias * dt2;
     _v = (_v + aBias * dt) * vDamping;
 
@@ -170,15 +206,17 @@ class EkfPipeline {
       if (_v < 0) _v = 0;
       if (_s < sOld) _s = sOld;
     }
-    
+
     // Clamp velocity to reasonable metro speeds (max 90 km/h = 25 m/s)
     _v = _v.clamp(-25.0, 25.0);
-    
+
     // Log detailed prediction info in degraded mode
     if (shouldLogDegraded) {
       final deltaS = _s - sOld;
       final deltaV = _v - vOld;
-      onLog?.call('🔴 DR pred#$_predictionCount: dt=${dt.toStringAsFixed(4)} aFwd=${aFwd.toStringAsFixed(4)} bias=${_b.toStringAsFixed(4)} aBias=${aBias.toStringAsFixed(4)} | v: ${vOld.toStringAsFixed(3)}→${_v.toStringAsFixed(3)} (Δ${deltaV.toStringAsFixed(4)}) | s: ${sOld.toStringAsFixed(0)}→${_s.toStringAsFixed(0)} (Δ${deltaS.toStringAsFixed(2)})');
+      onLog?.call(
+        '🔴 DR pred#$_predictionCount: dt=${dt.toStringAsFixed(4)} aFwd=${aFwd.toStringAsFixed(4)} bias=${_b.toStringAsFixed(4)} aBias=${aBias.toStringAsFixed(4)} | v: ${vOld.toStringAsFixed(3)}→${_v.toStringAsFixed(3)} (Δ${deltaV.toStringAsFixed(4)}) | s: ${sOld.toStringAsFixed(0)}→${_s.toStringAsFixed(0)} (Δ${deltaS.toStringAsFixed(2)})',
+      );
     }
 
     final f = [
@@ -195,16 +233,29 @@ class EkfPipeline {
 
     _p = _add3(_mul3(_mul3(f, _p), _transpose3(f)), q);
 
+    // Track recent forward accelerations for bias observability
+    // Reference: El-Sheimy et al. (2004) "Observability Analysis of GPS/INS Integration"
+    _recentAccels.add(aFwd);
+    while (_recentAccels.length > _maxAccelBufferSize) {
+      _recentAccels.removeAt(0);
+    }
+
     _sanitizeCovariance();
+    _enforceSymmetry();
     _applyStateBounds();
     _applyCovarianceFloors();
     _updatePublicProgress();
   }
 
-  /// Handle GPS fix with innovation gating per §22.13 and §29.1:
-  /// - |nu| > 5σ → hard reset (reinitialize EKF from GPS)
-  /// - 3σ < |nu| ≤ 5σ → soft reject (inflate covariance, preserve state)
-  /// - |nu| ≤ 3σ → normal Kalman update
+  /// Handle GPS fix with robust innovation gating using Huber M-estimator:
+  /// - |nu| > 15σ → hard reset (genuinely bad fix or teleport)
+  /// - 2.5σ < |nu| ≤ 15σ → Huber down-weighted update (handles multipath)
+  /// - |nu| ≤ 2.5σ → normal Kalman update
+  ///
+  /// Scientific basis:
+  /// - GPS multipath produces heavy-tailed (non-Gaussian) errors
+  /// - Hard gates assume Gaussian; Huber M-estimator handles outliers
+  /// - Reference: Huber (1964), Chang (2014) "Robust Kalman filtering"
   ///
   /// Note: GPS updates and station snaps are separate triggers:
   /// GPS updates happen immediately on fix; station snaps happen on ZUPT
@@ -220,19 +271,39 @@ class EkfPipeline {
 
     final sigmaS = _sigmaS();
     final nu = sGps - _s;
-    if (sigmaS > 0 && nu.abs() > _config.hardGateSigma * sigmaS) {
+    final normalizedInnovation = sigmaS > 0 ? nu.abs() / sigmaS : 0.0;
+
+    // Hard gate: only full reset for extreme outliers (>15σ)
+    // This represents teleportation or complete GPS failure, not multipath
+    if (sigmaS > 0 && normalizedInnovation > 15.0) {
+      onLog?.call(
+        'GPS: Extreme outlier (${normalizedInnovation.toStringAsFixed(1)}σ), hard reset',
+      );
       _initializeFromGps(sGps, fix.speedMps);
       return;
     }
-    if (sigmaS > 0 && nu.abs() > _config.softGateSigma * sigmaS) {
-      _inflateCovariance(1.1);
+
+    // Huber robust weighting for innovation
+    // - ≤2.5σ: weight = 1.0 (full trust)
+    // - >2.5σ: weight = 2.5/|norm_nu| (down-weighted)
+    final weight = _huberWeight(normalizedInnovation, c: 2.5);
+
+    if (weight < 0.2) {
+      // Innovation 12.5-15σ range, very low weight - soft reject
+      onLog?.call(
+        'GPS: High innovation (${normalizedInnovation.toStringAsFixed(1)}σ), soft reject',
+      );
+      _inflateCovariance(1.2);
       return;
     }
 
-    final r = math.max(
+    // Apply weighted measurement noise (inflate R inversely with weight)
+    final baseR = math.max(
       fix.accuracyMeters * fix.accuracyMeters,
       _config.gpsFloorVar,
     );
+    final r = baseR / weight; // Inflate R for outliers
+
     final s = _p[0][0] + r;
     if (s <= 0) return;
 
@@ -280,11 +351,77 @@ class EkfPipeline {
       }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Bias Observability via GPS-Derived Acceleration
+    // ─────────────────────────────────────────────────────────────────────────
+    //
+    // Scientific basis:
+    // - In constant-velocity model, bias is unobservable from position/velocity alone
+    // - BUT with consecutive GPS fixes, we can infer acceleration: a_GPS = Δv/Δt
+    // - Compare with IMU average: bias_estimate = aIMU - aGPS
+    //
+    // Reference: El-Sheimy et al. (2004) "Observability Analysis of GPS/INS Integration"
+    //
+    // Constraints:
+    // - Δt must be in [0.5s, 5.0s] for meaningful acceleration inference
+    // - Need sufficient IMU samples in buffer for averaging
+    // - Use low gain (0.05) since GPS-derived accel is noisy
+    // ─────────────────────────────────────────────────────────────────────────
+    if (_lastGpsV != null &&
+        _lastGpsTick != null &&
+        _recentAccels.isNotEmpty) {
+      final dtGps = (fix.timestamp - _lastGpsTick!).inMicroseconds / 1e6;
+      if (dtGps > 0.5 && dtGps < 5.0) {
+        // GPS-derived acceleration
+        final aGps = (fix.speedMps - _lastGpsV!) / dtGps;
+
+        // Average recent IMU accelerations
+        final aImuAvg =
+            _recentAccels.reduce((a, b) => a + b) / _recentAccels.length;
+
+        // Bias estimate: aIMU - b ≈ aGPS → b ≈ aIMU - aGPS
+        final biasEstimate = aImuAvg - aGps;
+
+        // Weak update to bias (low gain because GPS accel is noisy)
+        // 0.05 gain means ~5% blend per update
+        const biasGain = 0.05;
+
+        // Only apply update if estimate is reasonable (within ±2 m/s²)
+        if (biasEstimate.abs() < 2.0) {
+          final biasDelta = biasGain * (biasEstimate - _b);
+          _b = _b + biasDelta;
+
+          // Clamp bias to reasonable bounds
+          _b = _b.clamp(-1.0, 1.0);
+
+          if (_predictionCount % 50 == 0) {
+            onLog?.call(
+              'BIAS_OBS: aGps=${aGps.toStringAsFixed(3)} aImu=${aImuAvg.toStringAsFixed(3)} biasEst=${biasEstimate.toStringAsFixed(3)} b=${_b.toStringAsFixed(4)}',
+            );
+          }
+        }
+      }
+    }
+
+    _lastGpsV = fix.speedMps;
+    _lastGpsTick = fix.timestamp;
+
+    _enforceSymmetry();
     _applyStateBounds();
     _applyCovarianceFloors();
     _updatePublicProgress();
   }
 
+  /// ZUPT (Zero-velocity Update) handler.
+  ///
+  /// Scientific basis:
+  /// - When vehicle is stationary, v = 0 is a strong measurement
+  /// - This is the ONLY time accelerometer bias is observable
+  /// - ZUPT enables aggressive bias correction during station dwell
+  ///
+  /// References:
+  /// - Skog et al. (2010). "Zero-Velocity Detection—An Algorithm Evaluation"
+  /// - Ramanandan et al. (2011). "Inertial Navigation Aiding by Stationary Updates"
   void onZuptConfirmed() {
     if (!_initialized) return;
 
@@ -317,6 +454,16 @@ class EkfPipeline {
     _p[2][1] = _p[2][1] - k2 * p11;
     _p[2][2] = _p[2][2] - k2 * p12;
 
+    // Post-ZUPT covariance tightening:
+    // After confirmed stop, we have high confidence in position and velocity.
+    // Shrink covariance to prevent over-confident DR when train departs.
+    //
+    // Max σs = 10m (station platform uncertainty)
+    // Max σv = 0.5 m/s (near-zero velocity confidence)
+    _p[0][0] = math.min(_p[0][0], 10.0 * 10.0); // σs ≤ 10m
+    _p[1][1] = math.min(_p[1][1], 0.5 * 0.5); // σv ≤ 0.5 m/s
+
+    _enforceSymmetry();
     _applyStateBounds();
     _applyCovarianceFloors();
     _updatePublicProgress();
@@ -353,6 +500,7 @@ class EkfPipeline {
 
     // Bias covariance update intentionally suppressed (k2 = 0).
 
+    _enforceSymmetry();
     _applyStateBounds();
     _applyCovarianceFloors();
     _updatePublicProgress();
@@ -378,7 +526,7 @@ class EkfPipeline {
     if (_s.isNaN || _s.isInfinite) _s = 0.0;
     if (_v.isNaN || _v.isInfinite) _v = 0.0;
     if (_b.isNaN || _b.isInfinite) _b = 0.0;
-    
+
     if (_b.abs() > _config.biasLimit) {
       _b = _b.clamp(-_config.biasLimit, _config.biasLimit);
     }
@@ -389,7 +537,7 @@ class EkfPipeline {
     if (_p[0][0].isNaN || _p[0][0].isInfinite) _p[0][0] = 200.0 * 200.0;
     if (_p[1][1].isNaN || _p[1][1].isInfinite) _p[1][1] = 100.0 * 100.0;
     if (_p[2][2].isNaN || _p[2][2].isInfinite) _p[2][2] = 1.0;
-    
+
     _p[0][0] = math.max(_p[0][0], _config.sigmaSFloor * _config.sigmaSFloor);
     _p[1][1] = math.max(_p[1][1], _config.sigmaVFloor * _config.sigmaVFloor);
     _p[2][2] = math.max(_p[2][2], _config.sigmaBiasFloor);
@@ -400,16 +548,25 @@ class EkfPipeline {
     _p[1][1] *= factor;
     _p[2][2] *= factor;
     // Clamp to prevent infinity/NaN
-    // 
+    //
     // TUNING: maxSigmaS = 200m keeps station association viable:
     //   Window = 3*200 + 100 = 700m, enough to disambiguate most stations
     // Previous 10km cap made ALL stations candidates → MULTIPLE_CANDIDATES
-    const maxSigmaS = 200.0;  // 200m max position uncertainty (was 10km!)
-    const maxSigmaV = 100.0;  // 100 m/s max velocity uncertainty  
-    const maxSigmaB = 1.0;    // 1 m/s² max bias uncertainty
-    _p[0][0] = (_p[0][0].isNaN || _p[0][0].isInfinite) ? maxSigmaS * maxSigmaS : _p[0][0].clamp(0, maxSigmaS * maxSigmaS);
-    _p[1][1] = (_p[1][1].isNaN || _p[1][1].isInfinite) ? maxSigmaV * maxSigmaV : _p[1][1].clamp(0, maxSigmaV * maxSigmaV);
-    _p[2][2] = (_p[2][2].isNaN || _p[2][2].isInfinite) ? maxSigmaB * maxSigmaB : _p[2][2].clamp(0, maxSigmaB * maxSigmaB);
+    const maxSigmaS = 200.0; // 200m max position uncertainty (was 10km!)
+    const maxSigmaV = 100.0; // 100 m/s max velocity uncertainty
+    const maxSigmaB = 1.0; // 1 m/s² max bias uncertainty
+    _p[0][0] =
+        (_p[0][0].isNaN || _p[0][0].isInfinite)
+            ? maxSigmaS * maxSigmaS
+            : _p[0][0].clamp(0, maxSigmaS * maxSigmaS);
+    _p[1][1] =
+        (_p[1][1].isNaN || _p[1][1].isInfinite)
+            ? maxSigmaV * maxSigmaV
+            : _p[1][1].clamp(0, maxSigmaV * maxSigmaV);
+    _p[2][2] =
+        (_p[2][2].isNaN || _p[2][2].isInfinite)
+            ? maxSigmaB * maxSigmaB
+            : _p[2][2].clamp(0, maxSigmaB * maxSigmaB);
   }
 
   double _sigmaS() => math.sqrt(_p[0][0].abs());
@@ -455,13 +612,25 @@ class EkfPipeline {
     }
     return r;
   }
-  
+
   /// Sanitize entire covariance matrix to prevent NaN/Infinity propagation.
   void _sanitizeCovariance() {
     const maxP = [
-      [100000000.0, 100000.0, 1000.0],  // sigmaS^2 max, sigmaS*sigmaV max, sigmaS*sigmaB max
-      [100000.0, 10000.0, 100.0],       // sigmaV*sigmaS max, sigmaV^2 max, sigmaV*sigmaB max
-      [1000.0, 100.0, 1.0],             // sigmaB*sigmaS max, sigmaB*sigmaV max, sigmaB^2 max
+      [
+        100000000.0,
+        100000.0,
+        1000.0,
+      ], // sigmaS^2 max, sigmaS*sigmaV max, sigmaS*sigmaB max
+      [
+        100000.0,
+        10000.0,
+        100.0,
+      ], // sigmaV*sigmaS max, sigmaV^2 max, sigmaV*sigmaB max
+      [
+        1000.0,
+        100.0,
+        1.0,
+      ], // sigmaB*sigmaS max, sigmaB*sigmaV max, sigmaB^2 max
     ];
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
@@ -472,5 +641,36 @@ class EkfPipeline {
         }
       }
     }
+  }
+
+  /// Enforce covariance matrix symmetry.
+  /// After Kalman updates, floating-point errors accumulate causing P ≠ P'.
+  /// This enforces P = (P + P') / 2 per Brown & Hwang (1997).
+  ///
+  /// Scientific basis:
+  /// - Kalman (1960) proved optimal estimator requires symmetric positive-definite P
+  /// - Numerical drift causes asymmetry over many iterations
+  /// - Asymmetry leads to inconsistent error ellipsoids and filter divergence
+  void _enforceSymmetry() {
+    for (var i = 0; i < 3; i++) {
+      for (var j = i + 1; j < 3; j++) {
+        final avg = (_p[i][j] + _p[j][i]) / 2.0;
+        _p[i][j] = avg;
+        _p[j][i] = avg;
+      }
+    }
+  }
+
+  /// Huber robust weight function for innovation gating.
+  /// Reduces sensitivity to GPS multipath outliers.
+  ///
+  /// - |x| ≤ c: weight = 1.0 (normal Kalman update)
+  /// - |x| > c: weight = c / |x| (down-weighted update)
+  ///
+  /// Reference: Huber, P.J. (1964). "Robust Estimation of a Location Parameter."
+  double _huberWeight(double normalizedInnovation, {double c = 2.5}) {
+    final absX = normalizedInnovation.abs();
+    if (absX <= c) return 1.0;
+    return c / absX;
   }
 }

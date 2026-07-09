@@ -70,6 +70,7 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   CuratedRoute _selectedRoute = CuratedRoute.logReplay;
   bool _isInitialized = false;
   bool _isPlaying = false;
+  bool _isPaused = false;
   bool _gpsEnabled = true; // Toggle for GPS on/off
 
   // Visualization state
@@ -110,6 +111,9 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     setState(() {
       _lastViz = viz;
       _isPlaying = _controller.isPlaying;
+      if (_isPlaying) {
+        _isPaused = false;
+      }
     });
 
     // Inject GPS if available
@@ -146,10 +150,9 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       final testRouteId = _mapCuratedToTestRoute(_selectedRoute);
 
       if (_selectedRoute == CuratedRoute.logReplay) {
-        // Hardcoded path for the specific log requirement
-        await _controller.loadLog(
-          'assets/logs/Nallur_to_Vijaynagar',
-          testRouteId,
+        // Load the new Unified Log (JSON) which fuses GPS + IMU + Ground Truth
+        await _controller.loadUnifiedLog(
+          'docs/Sandalsoap-whitefield/unified_route_log.json',
         );
       } else {
         await _controller.loadRoute(testRouteId);
@@ -157,6 +160,19 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
 
       final route = _controller.route;
       if (route != null) {
+        // DEBUG: Check what we are sending to the map
+        final poly = route.fullPolyline;
+        double minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+        for (var p in poly) {
+          if (p.latitude < minLat) minLat = p.latitude;
+          if (p.latitude > maxLat) maxLat = p.latitude;
+          if (p.longitude < minLng) minLng = p.longitude;
+          if (p.longitude > maxLng) maxLng = p.longitude;
+        }
+        print(
+          'DEBUG: EKF_PANEL sending ${poly.length} points to map. Bounds: [$minLat, $minLng] - [$maxLat, $maxLng]',
+        );
+
         widget.onRouteChanged?.call(
           route.fullPolyline,
           route.allStations.map((s) => s.position).toList(),
@@ -186,13 +202,35 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       _loadRoute().then((_) {
         if (_isInitialized) {
           _controller.play();
-          setState(() => _isPlaying = true);
+          setState(() {
+            _isPlaying = true;
+            _isPaused = false;
+          });
         }
       });
     } else {
       _controller.play();
-      setState(() => _isPlaying = true);
+      setState(() {
+        _isPlaying = true;
+        _isPaused = false;
+      });
     }
+  }
+
+  void _pauseTest() {
+    _controller.pause();
+    setState(() {
+      _isPlaying = false;
+      _isPaused = true;
+    });
+  }
+
+  void _resumeTest() {
+    _controller.play();
+    setState(() {
+      _isPlaying = true;
+      _isPaused = false;
+    });
   }
 
   void _stopTest() {
@@ -207,6 +245,7 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     _displayLogs.clear();
     setState(() {
       _isPlaying = false;
+      _isPaused = false;
       _lastViz = null;
     });
   }
@@ -233,26 +272,26 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
         'scenario': _controller.scenario.name,
         'warpFactor': _controller.warpFactor,
         'logCount': logs.length,
-        'logs': logs
-            .map(
-              (l) => {
-                'timestamp': l.timestamp.toIso8601String(),
-                'elapsedSeconds': l.elapsedSeconds,
-                'category': l.category.name,
-                'level': l.level,
-                'message': l.message,
-                'data': l.data,
-              },
-            )
-            .toList(),
+        'logs':
+            logs
+                .map(
+                  (l) => {
+                    'timestamp': l.timestamp.toIso8601String(),
+                    'elapsedSeconds': l.elapsedSeconds,
+                    'category': l.category.name,
+                    'level': l.level,
+                    'message': l.message,
+                    'data': l.data,
+                  },
+                )
+                .toList(),
       };
       final jsonText = const JsonEncoder.withIndent('  ').convert(payload);
       _downloadTextFile(filename, jsonText, 'application/json');
       return;
     }
 
-    final header =
-        'timestamp,elapsedSeconds,category,level,message,data';
+    final header = 'timestamp,elapsedSeconds,category,level,message,data';
     final rows = logs.map((l) {
       final values = [
         l.timestamp.toIso8601String(),
@@ -302,7 +341,13 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                   children: [
                     _buildRouteSelector(),
                     const SizedBox(height: 16),
-                    _buildStartStopButton(),
+                    Row(
+                      children: [
+                        Expanded(child: _buildStartStopButton()),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildPauseResumeButton()),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     _buildGpsToggle(),
                     const SizedBox(height: 16),
@@ -476,8 +521,8 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       ),
       CuratedRoute.logReplay => (
         '📼',
-        'Log Replay (Real Data)',
-        'Nallur Halli → Vijayanagar (Ground Truth vs Log)',
+        'Sandal Soap -> Whitefield',
+        'Unified Replay: Fused GPS/IMU + Dead Zone Fix',
         Colors.blue,
       ),
     };
@@ -502,7 +547,33 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     );
   }
 
+  Widget _buildPauseResumeButton() {
+    final isEnabled = _isPlaying || _isPaused;
+    final isPaused = _isPaused;
+    return SizedBox(
+      height: 48,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPaused ? Colors.green : Colors.orange,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed:
+            isEnabled ? (isPaused ? _resumeTest : _pauseTest) : null,
+        icon: Icon(isPaused ? Icons.play_arrow : Icons.pause, size: 28),
+        label: Text(
+          isPaused ? 'RESUME' : 'PAUSE',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
   Widget _buildGpsToggle() {
+    // Completely hide toggle in Log Replay mode as requested
+    if (_selectedRoute == CuratedRoute.logReplay) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -537,7 +608,9 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                   ),
                 ),
                 Text(
-                  _gpsEnabled
+                  _selectedRoute == CuratedRoute.logReplay
+                      ? 'GPS controlled by Replay Log (Tunnel Sim)'
+                      : _gpsEnabled
                       ? 'Toggle off to test EKF without GPS'
                       : 'EKF is estimating position from IMU only',
                   style: TextStyle(fontSize: 10, color: Colors.grey[600]),
@@ -547,9 +620,9 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
           ),
           Switch(
             value: _gpsEnabled,
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
             onChanged:
-                _isPlaying
+                (_isPlaying && _selectedRoute != CuratedRoute.logReplay)
                     ? (value) {
                       setState(() {
                         _gpsEnabled = value;
@@ -602,16 +675,30 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
         ),
         if (viz?.gpsAvailable == false)
           Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                Icon(Icons.gps_off, size: 14, color: Colors.orange[700]),
-                const SizedBox(width: 4),
-                Text(
-                  'GPS Dropout Active',
-                  style: TextStyle(fontSize: 10, color: Colors.orange[700]),
-                ),
-              ],
+            padding: const EdgeInsets.only(top: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.orange),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.gps_off, size: 16, color: Colors.deepOrange),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'GPS SIGNAL DROPPED (Dead Reckoning Mode)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepOrange[800],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
       ],

@@ -1,4 +1,13 @@
 // Tilt filter (Stage A) - complementary filter for pitch/roll.
+// 
+// Scientific basis:
+// - Madgwick (2010): "An efficient orientation filter for inertial/magnetic sensor arrays"
+// - Mahony et al. (2008): "Nonlinear Complementary Filters on SO(3)"
+//
+// This implementation supports fusion with Android's Gravity sensor (TYPE_GRAVITY):
+// - Gravity sensor uses device sensor fusion (gyro + magnetometer)
+// - More reliable than raw accelerometer during vehicle motion
+// - Dynamically weighted based on linear acceleration magnitude
 
 import 'dart:math' as math;
 import 'ekf_types.dart';
@@ -41,7 +50,12 @@ class TiltFilter {
   double _accelMagSum = 0.0;
   double _accelMagSumSq = 0.0;
 
-  TiltFilterOutput? update(ImuSample sample) {
+  /// Update tilt filter with IMU sample and optional gravity sensor.
+  /// 
+  /// When [gravitySample] is provided, it's blended with the gyro-integrated
+  /// estimate based on linear acceleration magnitude. This provides better
+  /// drift correction during vehicle motion than raw accelerometer alone.
+  TiltFilterOutput? update(ImuSample sample, {GravitySample? gravitySample}) {
     if (_lastTs != null && sample.timestamp <= _lastTs!) {
       return _lastOutput(sample.timestamp);
     }
@@ -66,8 +80,15 @@ class TiltFilter {
     final accelMag = math.sqrt(ax * ax + ay * ay + az * az);
     _pushAccelMag(accelMag, dt ?? 0.01);
 
-    final gMeas =
-        _accelLpf != null ? _normalize(_accelLpf!) : _normalize([ax, ay, az]);
+    // Gravity reference: prefer device gravity sensor if available
+    List<double> gMeas;
+    if (gravitySample != null) {
+      // Use pre-filtered gravity from Android sensor fusion
+      gMeas = _normalize([gravitySample.x, gravitySample.y, gravitySample.z]);
+    } else {
+      // Fall back to low-pass filtered accelerometer
+      gMeas = _accelLpf != null ? _normalize(_accelLpf!) : _normalize([ax, ay, az]);
+    }
 
     if (_gHat == null) {
       _gHat = gMeas;
@@ -83,6 +104,17 @@ class TiltFilter {
       // clamp for acos safety
       final clampedDot = dot.clamp(-1.0, 1.0);
       final divergence = math.acos(clampedDot);
+
+      // Linear acceleration magnitude estimate:
+      // |a_lin| = |a_total| - g ≈ deviation from expected gravity
+      const gravityMag = 9.81;
+      final linAccelMag = (accelMag - gravityMag).abs();
+      
+      // Dynamic weight for gravity sensor fusion:
+      // - w = 1.0 when linAccel = 0 (stationary, trust accel/gravity fully)
+      // - w = 0.0 when linAccel > 3.0 m/s² (strong acceleration, trust gyro only)
+      // This provides smooth transition between accel and gyro trust regions.
+      final gravityTrustWeight = math.max(0.0, 1.0 - linAccelMag / 3.0);
 
       // Motion-Gated Gravity Reference:
       // - Stationary (Variance Low AND Low Divergence): Trust accelerometer (alpha = 0.05)
@@ -103,20 +135,22 @@ class TiltFilter {
       // Check if accel magnitude is close to gravity (9.81 ± 0.3 m/s²)
       // This indicates no significant lateral/longitudinal acceleration,
       // so we can safely blend in a small amount of accel reference.
-      final accelMag = _accelLpf != null ? _norm(_accelLpf!) : _norm([ax, ay, az]);
-      const gravityMag = 9.81;
       const gravityTol = 0.3; // Allow ±0.3 m/s² deviation
-      final accelNearGravity = (accelMag - gravityMag).abs() <= gravityTol;
+      final accelNearGravity = linAccelMag <= gravityTol;
       
       // Minimum alpha when accel magnitude ≈ gravity (even during vehicle motion)
       // This prevents pure gyro integration drift while being safe from lateral accel
-      const minAlpha = 0.002;
+      // 
+      // When gravity sensor is available, increase minimum alpha since it's
+      // more reliable than raw accelerometer during motion.
+      final minAlpha = gravitySample != null ? 0.005 : 0.002;
       
       double currentAlpha;
       if (effectiveStationary) {
         currentAlpha = 0.05; // Strong correction when stationary
       } else if (accelNearGravity && !isDivergent) {
-        currentAlpha = minAlpha; // Tiny correction during smooth vehicle motion
+        // Smooth vehicle motion - use gravity trust weight to modulate alpha
+        currentAlpha = minAlpha + gravityTrustWeight * 0.02;
       } else {
         currentAlpha = 0.0; // Pure gyro during acceleration/braking
       }

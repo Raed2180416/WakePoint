@@ -21,6 +21,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -341,6 +342,50 @@ class LogImu {
   });
 }
 
+/// Gravity sensor log entry (Android TYPE_GRAVITY).
+/// Format: time,seconds_elapsed,z,y,x
+class LogGravity {
+  final int timeNs;
+  final double secondsElapsed;
+  final double x;
+  final double y;
+  final double z;
+
+  const LogGravity({
+    required this.timeNs,
+    required this.secondsElapsed,
+    required this.x,
+    required this.y,
+    required this.z,
+  });
+}
+
+/// Orientation sensor log entry (Android TYPE_ORIENTATION).
+/// Format: time,seconds_elapsed,qz,qy,qx,qw,roll,pitch,yaw
+class LogOrientation {
+  final int timeNs;
+  final double secondsElapsed;
+  final double qx;
+  final double qy;
+  final double qz;
+  final double qw;
+  final double roll;
+  final double pitch;
+  final double yaw;
+
+  const LogOrientation({
+    required this.timeNs,
+    required this.secondsElapsed,
+    required this.qx,
+    required this.qy,
+    required this.qz,
+    required this.qw,
+    required this.roll,
+    required this.pitch,
+    required this.yaw,
+  });
+}
+
 class LogParser {
   static Future<List<LogLocation>> parseLocationLog(String path) async {
     // Use rootBundle to load assets, as File() generally doesn't work for bundled assets
@@ -411,6 +456,69 @@ class LogParser {
     }
     return result;
   }
+
+  /// Parse Gravity.csv log file.
+  /// Format: time,seconds_elapsed,z,y,x
+  static Future<List<LogGravity>> parseGravityLog(String path) async {
+    final content = await rootBundle.loadString(path);
+    final lines = const LineSplitter().convert(content);
+    final result = <LogGravity>[];
+
+    // Skip header
+    for (var i = 1; i < lines.length; i++) {
+      final parts = lines[i].split(',');
+      if (parts.length < 5) continue;
+
+      try {
+        result.add(
+          LogGravity(
+            timeNs: int.parse(parts[0]),
+            secondsElapsed: double.parse(parts[1]),
+            // File format: z,y,x (same as IMU)
+            x: double.parse(parts[4]),
+            y: double.parse(parts[3]),
+            z: double.parse(parts[2]),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error parsing gravity line $i: $e');
+      }
+    }
+    return result;
+  }
+
+  /// Parse Orientation.csv log file.
+  /// Format: time,seconds_elapsed,qz,qy,qx,qw,roll,pitch,yaw
+  static Future<List<LogOrientation>> parseOrientationLog(String path) async {
+    final content = await rootBundle.loadString(path);
+    final lines = const LineSplitter().convert(content);
+    final result = <LogOrientation>[];
+
+    // Skip header
+    for (var i = 1; i < lines.length; i++) {
+      final parts = lines[i].split(',');
+      if (parts.length < 9) continue;
+
+      try {
+        result.add(
+          LogOrientation(
+            timeNs: int.parse(parts[0]),
+            secondsElapsed: double.parse(parts[1]),
+            qz: double.parse(parts[2]),
+            qy: double.parse(parts[3]),
+            qx: double.parse(parts[4]),
+            qw: double.parse(parts[5]),
+            roll: double.parse(parts[6]),
+            pitch: double.parse(parts[7]),
+            yaw: double.parse(parts[8]),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Error parsing orientation line $i: $e');
+      }
+    }
+    return result;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -455,11 +563,23 @@ class ImuReplayEngineV2 {
   List<LogLocation> _logLocations = [];
   List<LogImu> _logAccels = [];
   List<LogImu> _logGyros = [];
+  List<LogGravity> _logGravity = [];
+  List<LogOrientation> _logOrientation = [];
   int _logLocIndex = 0;
   int _logAccelIndex = 0;
   int _logGyroIndex = 0;
+  int _logGravityIndex = 0;
+  int _logOrientationIndex = 0;
   double _logStartTimeSeconds = 0.0;
   LogImu? _lastLogAccel;
+
+  // Unified Log State
+  bool _isUnifiedLogReplayMode = false;
+  List<UnifiedRouteLogTick> _unifiedLogTicks = [];
+  int _unifiedLogIndex = 0;
+  LatLng? _lastUnifiedGpsPos;
+  double? _lastUnifiedGpsTime;
+  double _lastUnifiedGpsSpeed = 0.0;
 
   // ─────────────────────────────────────────────────────────────────────────
   // State
@@ -481,7 +601,7 @@ class ImuReplayEngineV2 {
   bool _inTunnel = false;
   double _nextIntermittentDropout = 0;
   double _intermittentDropoutEnd = 0;
-  
+
   // Track if completeDropout has emitted its initial GPS (resets when mode changes)
   bool _completeDropoutInitialEmitted = false;
   GpsDropoutMode _lastDropoutMode = GpsDropoutMode.normal;
@@ -504,6 +624,8 @@ class ImuReplayEngineV2 {
   final _tickController = StreamController<ReplayTickResultV2>.broadcast();
   final _logController = StreamController<ReplayLogEntry>.broadcast();
   final _imuSampleController = StreamController<ImuSample>.broadcast();
+  final _gravityController = StreamController<GravitySample>.broadcast();
+  final _orientationController = StreamController<OrientationSample>.broadcast();
 
   // ─────────────────────────────────────────────────────────────────────────
   // Public Streams
@@ -515,6 +637,9 @@ class ImuReplayEngineV2 {
   Stream<ReplayTickResultV2> get tickStream => _tickController.stream;
   Stream<ReplayLogEntry> get logStream => _logController.stream;
   Stream<ImuSample> get imuSampleStream => _imuSampleController.stream;
+  Stream<GravitySample> get gravityStream => _gravityController.stream;
+  Stream<OrientationSample> get orientationStream =>
+      _orientationController.stream;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Public Properties
@@ -666,31 +791,54 @@ class ImuReplayEngineV2 {
   }
 
   List<LatLng> _decodePolyline(String encoded) {
-    List<LatLng> points = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
+    if (encoded.isEmpty) return [];
+    final List<LatLng> points = [];
+    int index = 0;
+    int len = encoded.length;
+    int lat = 0;
+    int lng = 0;
 
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
+    // Clean input just in case
+    encoded = encoded.trim();
+    len = encoded.length;
 
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
+    try {
+      while (index < len) {
+        int b, shift = 0, result = 0;
+        do {
+          b = encoded.codeUnitAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (b >= 0x20);
+        int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+        lat += dlat;
 
-      points.add(LatLng(lat / 1E5, lng / 1E5));
+        shift = 0;
+        result = 0;
+        do {
+          b = encoded.codeUnitAt(index++) - 63;
+          result |= (b & 0x1f) << shift;
+          shift += 5;
+        } while (b >= 0x20);
+        int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+        lng += dlng;
+
+        final latDouble = lat.toDouble() / 1E5;
+        final lngDouble = lng.toDouble() / 1E5;
+
+        // STRICT FILTER: Bangalore Bounds only
+        // Lat: 12.0 to 14.0
+        // Lng: 77.0 to 78.0
+        // This removes any outliers/garbage from decoding errors
+        if (latDouble > 12.0 &&
+            latDouble < 14.0 &&
+            lngDouble > 77.0 &&
+            lngDouble < 78.0) {
+          points.add(LatLng(latDouble, lngDouble));
+        }
+      }
+    } catch (e) {
+      _log('ERROR', 'POLYLINE', 'Decoding error at index $index: $e');
     }
     return points;
   }
@@ -700,13 +848,140 @@ class ImuReplayEngineV2 {
     _logAccels = await LogParser.parseImuLog('$directory/Accelerometer.csv');
     _logGyros = await LogParser.parseImuLog('$directory/Gyroscope.csv');
 
-    if (_logLocations.isEmpty)
+    // Load optional gravity and orientation logs
+    try {
+      _logGravity = await LogParser.parseGravityLog('$directory/Gravity.csv');
+      debugPrint('Loaded ${_logGravity.length} gravity samples');
+    } catch (e) {
+      debugPrint('Gravity.csv not available: $e');
+      _logGravity = [];
+    }
+
+    try {
+      _logOrientation = await LogParser.parseOrientationLog(
+        '$directory/Orientation.csv',
+      );
+      debugPrint('Loaded ${_logOrientation.length} orientation samples');
+    } catch (e) {
+      debugPrint('Orientation.csv not available: $e');
+      _logOrientation = [];
+    }
+
+    if (_logLocations.isEmpty) {
       throw Exception('No location data found in logs');
-    if (_logAccels.isEmpty)
+    }
+    if (_logAccels.isEmpty) {
       throw Exception('No accelerometer data found in logs');
+    }
     if (_logGyros.isEmpty) throw Exception('No gyroscope data found in logs');
 
     _logStartTimeSeconds = _logLocations.first.secondsElapsed;
+  }
+
+  Future<void> loadUnifiedRouteLog(String path) async {
+    _reset();
+    _isUnifiedLogReplayMode = true;
+    _log('LOAD', 'INFO', 'Loading unified log: $path');
+
+    final content = await rootBundle.loadString(path);
+    final json = jsonDecode(content);
+
+    final metadata = json['metadata'];
+    final ticks =
+        (json['ticks'] as List)
+            .map((t) => UnifiedRouteLogTick.fromJson(t))
+            .toList();
+    _unifiedLogTicks = ticks;
+    _unifiedLogIndex = 0;
+
+    final polyString = metadata['green_polyline'] as String? ?? '';
+    final polyPoints = _decodePolyline(polyString);
+    final googleRoutePoints = await _loadGoogleRouteFromLog();
+
+    // DEBUG: Analyse Polyline
+    if (polyPoints.isNotEmpty) {
+      double minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+      for (var p in polyPoints) {
+        if (p.latitude < minLat) minLat = p.latitude;
+        if (p.latitude > maxLat) maxLat = p.latitude;
+        if (p.longitude < minLng) minLng = p.longitude;
+        if (p.longitude > maxLng) maxLng = p.longitude;
+      }
+      _log(
+        'DEBUG',
+        'POLYLINE',
+        'Decoded ${polyPoints.length} points. Bounds: [${minLat.toStringAsFixed(4)}, ${minLng.toStringAsFixed(4)}] to [${maxLat.toStringAsFixed(4)}, ${maxLng.toStringAsFixed(4)}]',
+      );
+      if (minLat < 12.0 || maxLat > 14.0 || minLng < 77.0 || maxLng > 78.0) {
+        _log(
+          'ERROR',
+          'POLYLINE',
+          'Polyline contains outliers! Dumping first 5: ${polyPoints.take(5).toList()}',
+        );
+      }
+    } else {
+      _log(
+        'ERROR',
+        'POLYLINE',
+        'Decoded points is EMPTY. String length: ${polyString.length}',
+      );
+    }
+
+    // Calculate cumulative meters
+    final cumMeters = _computeCumulativeMeters(polyPoints);
+    double duration = (metadata['duration'] as num).toDouble();
+
+    // Parse stations from metadata
+    final detectedStops = (metadata['detected_stops'] as List?) ?? [];
+    final stations = <TestRouteStation>[];
+
+    for (var s in detectedStops) {
+      final ref = s['ref'] ?? {};
+      if (ref['lat'] != null) {
+        stations.add(
+          TestRouteStation(
+            id: s['name'],
+            name: s['name'],
+            position: LatLng(ref['lat'], ref['lng']),
+            cumulativeMeters: 0, // Todo: calculate projection
+            dwellTimeSeconds: 20,
+            arrivalTimeSeconds: s['time'],
+            isUnderground: true,
+          ),
+        );
+      }
+    }
+
+    _route = TestRoute(
+      id: TestRouteId.capturedRealRoute,
+      name: 'Unified Log Replay',
+      description: 'Log Replay',
+      legs: [
+        TestRouteLeg(
+          id: 'unified_leg',
+          type: LegType.metro,
+          name: 'Unified Metro Leg',
+          polyline: polyPoints,
+          cumulativeMeters: cumMeters,
+          stations: stations,
+          startTimeSeconds: 0,
+          endTimeSeconds: duration,
+          averageSpeedMps: cumMeters.isNotEmpty ? cumMeters.last / duration : 0,
+          hasGpsInTunnel: false,
+        ),
+      ],
+      fullPolyline: googleRoutePoints.isNotEmpty ? googleRoutePoints : polyPoints,
+      groundTruthPolyline: polyPoints,
+      fullCumulativeMeters: cumMeters,
+      totalMeters: cumMeters.isNotEmpty ? cumMeters.last : 0,
+      totalDurationSeconds: duration,
+    );
+
+    _log(
+      'LOAD',
+      'EVENT',
+      'Loaded ${_unifiedLogTicks.length} ticks from unified log',
+    );
   }
 
   Future<void> loadFromLog(String logDirectory, TestRouteId routeId) async {
@@ -1332,10 +1607,19 @@ class ImuReplayEngineV2 {
     _nextIntermittentDropout = 10 + _random.nextDouble() * 20;
     _intermittentDropoutEnd = 0;
 
+    _intermittentDropoutEnd = 0;
+
+    _isLogReplayMode = false;
+    _isUnifiedLogReplayMode = false;
+    _unifiedLogIndex = 0;
+    _unifiedLogTicks = [];
+
     if (_isLogReplayMode) {
       _logLocIndex = 0;
       _logAccelIndex = 0;
       _logGyroIndex = 0;
+      _logGravityIndex = 0;
+      _logOrientationIndex = 0;
       _lastLogAccel = null;
       // Initialize elapsed time to start of log relative to 0
       // Actually we want playback _elapsedSeconds to run from 0 to Duration
@@ -1351,6 +1635,8 @@ class ImuReplayEngineV2 {
     _tickController.close();
     _logController.close();
     _imuSampleController.close();
+    _gravityController.close();
+    _orientationController.close();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1384,6 +1670,11 @@ class ImuReplayEngineV2 {
 
     if (_isLogReplayMode) {
       _tickLogReplay(warpedDelta);
+      return;
+    }
+
+    if (_isUnifiedLogReplayMode) {
+      _tickUnifiedLogReplay(); // Ticks are driven by elapsedSeconds
       return;
     }
 
@@ -1879,6 +2170,22 @@ class ImuReplayEngineV2 {
     return result;
   }
 
+  Future<List<LatLng>> _loadGoogleRouteFromLog() async {
+    try {
+      final content = await rootBundle.loadString('route_log_extracted.json');
+      final json = jsonDecode(content) as Map<String, dynamic>;
+      final directions = json['directions'] as Map<String, dynamic>?;
+      final routes = directions?['routes'] as List?;
+      if (routes == null || routes.isEmpty) return [];
+      final overview = routes.first['overview_polyline'] as Map<String, dynamic>?;
+      final points = overview?['points'] as String?;
+      if (points == null || points.isEmpty) return [];
+      return _decodePolyline(points);
+    } catch (_) {
+      return [];
+    }
+  }
+
   double _haversineDistance(LatLng p1, LatLng p2) {
     const R = 6371000.0;
     final dLat = _degToRad(p2.latitude - p1.latitude);
@@ -1966,6 +2273,40 @@ class ImuReplayEngineV2 {
         );
       }
       _logGyroIndex++;
+    }
+
+    // Gravity
+    while (_logGravityIndex < _logGravity.length &&
+        _logGravity[_logGravityIndex].secondsElapsed <= logTime) {
+      final sample = _logGravity[_logGravityIndex];
+      _gravityController.add(
+        GravitySample(
+          x: sample.x,
+          y: sample.y,
+          z: sample.z,
+          timestamp: Duration(
+            microseconds: (sample.secondsElapsed * 1e6).round(),
+          ),
+        ),
+      );
+      _logGravityIndex++;
+    }
+
+    // Orientation
+    while (_logOrientationIndex < _logOrientation.length &&
+        _logOrientation[_logOrientationIndex].secondsElapsed <= logTime) {
+      final sample = _logOrientation[_logOrientationIndex];
+      _orientationController.add(
+        OrientationSample(
+          azimuth: sample.yaw,
+          pitch: sample.pitch,
+          roll: sample.roll,
+          timestamp: Duration(
+            microseconds: (sample.secondsElapsed * 1e6).round(),
+          ),
+        ),
+      );
+      _logOrientationIndex++;
     }
 
     // 2. Process Location (Interpolate if needed, but for now just taking latest valid)
@@ -2066,7 +2407,8 @@ class ImuReplayEngineV2 {
         // GPS Output Logic
         // In Log Replay, 'gpsPosition' is the RAW LOG position (noisy)
         // 'position' above is the SNAPPED/GROUND TRUTH position
-        gpsPosition: gpsDropoutMode == GpsDropoutMode.completeDropout ? null : rawPos,
+        gpsPosition:
+            gpsDropoutMode == GpsDropoutMode.completeDropout ? null : rawPos,
         gpsAccuracy:
             currentLoc
                 .speedAccuracy, // Using speed accuracy as proxy or default? Log has bearing/speed acc.
@@ -2168,4 +2510,182 @@ class ImuReplayEngineV2 {
   }
 
   void clearLogs() => _logs.clear();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNIFIED LOG TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+class UnifiedRouteLogTick {
+  final double t;
+  final double? lat;
+  final double? lng;
+  final bool isGpsInterpolated;
+  final double accelX;
+  final double accelY;
+  final double accelZ;
+  final double gyroX;
+  final double gyroY;
+  final double gyroZ;
+  final bool isAtStation;
+  final String? stationId;
+
+  UnifiedRouteLogTick({
+    required this.t,
+    this.lat,
+    this.lng,
+    this.isGpsInterpolated = false,
+    this.accelX = 0,
+    this.accelY = 0,
+    this.accelZ = 0,
+    this.gyroX = 0,
+    this.gyroY = 0,
+    this.gyroZ = 0,
+    this.isAtStation = false,
+    this.stationId,
+  });
+
+  factory UnifiedRouteLogTick.fromJson(Map<String, dynamic> json) {
+    return UnifiedRouteLogTick(
+      t: (json['t'] as num).toDouble(),
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
+      isGpsInterpolated: json['gps_interp'] == true,
+      accelX: (json['ax'] as num).toDouble(),
+      accelY: (json['ay'] as num).toDouble(),
+      accelZ: (json['az'] as num).toDouble(),
+      gyroX: (json['gx'] as num).toDouble(),
+      gyroY: (json['gy'] as num).toDouble(),
+      gyroZ: (json['gz'] as num).toDouble(),
+      isAtStation: json['station'] != null,
+      stationId: json['station'] as String?,
+    );
+  }
+}
+
+extension ImuReplayEngineExt on ImuReplayEngineV2 {
+  void _tickUnifiedLogReplay() {
+    if (_unifiedLogTicks.isEmpty) return;
+
+    // Advance index
+    while (_unifiedLogIndex < _unifiedLogTicks.length - 1 &&
+        _unifiedLogTicks[_unifiedLogIndex + 1].t <= _elapsedSeconds) {
+      _unifiedLogIndex++;
+    }
+
+    final tick = _unifiedLogTicks[_unifiedLogIndex];
+
+    final sampleTime = DateTime.fromMicrosecondsSinceEpoch(
+      (_elapsedSeconds * 1e6).round(),
+    );
+
+    // Emit IMU
+    _accelController.add(
+      AccelerometerEvent(tick.accelX, tick.accelY, tick.accelZ, sampleTime),
+    );
+    _gyroController.add(
+      GyroscopeEvent(tick.gyroX, tick.gyroY, tick.gyroZ, sampleTime),
+    );
+    _imuSampleController.add(
+      ImuSample(
+        ax: tick.accelX,
+        ay: tick.accelY,
+        az: tick.accelZ,
+        gx: tick.gyroX,
+        gy: tick.gyroY,
+        gz: tick.gyroZ,
+        timestamp: Duration(microseconds: sampleTime.microsecondsSinceEpoch),
+      ),
+    );
+
+    // GPS
+    if (!tick.isGpsInterpolated && tick.lat != null) {
+      if (_lastUnifiedGpsPos != null && _lastUnifiedGpsTime != null) {
+        final dt = _elapsedSeconds - _lastUnifiedGpsTime!;
+        if (dt > 0) {
+          final dist = _haversineDistance(
+            _lastUnifiedGpsPos!,
+            LatLng(tick.lat!, tick.lng!),
+          );
+          _lastUnifiedGpsSpeed = dist / dt;
+        }
+      }
+      _lastUnifiedGpsPos = LatLng(tick.lat!, tick.lng!);
+      _lastUnifiedGpsTime = _elapsedSeconds;
+
+      _gpsController.add(
+        Position(
+          latitude: tick.lat!,
+          longitude: tick.lng!,
+          timestamp: sampleTime,
+          accuracy: 10.0,
+          altitude: 0,
+          heading: 0,
+          speed: _lastUnifiedGpsSpeed,
+          speedAccuracy: 0,
+          altitudeAccuracy: 0,
+          headingAccuracy: 0,
+          isMocked: true,
+        ),
+      );
+    }
+
+    // Tick Result
+    if (_route != null && _route!.fullPolyline.isNotEmpty) {
+      final rawPos =
+          tick.lat != null && tick.lng != null
+              ? LatLng(tick.lat!, tick.lng!)
+              : _route!.fullPolyline.first;
+
+      final (snappedPos, _, pm) = _findClosestPointOnPolyline(
+        rawPos,
+        _route!.fullPolyline,
+      );
+
+      final progressMeters = pm;
+      final progress =
+          _route!.totalMeters > 0 ? progressMeters / _route!.totalMeters : 0.0;
+
+      final isZupt = tick.isAtStation;
+
+      _tickController.add(
+        ReplayTickResultV2(
+          elapsedSeconds: _elapsedSeconds,
+          progress: progress,
+          progressMeters: progressMeters,
+          position: snappedPos,
+          bearing: 0,
+          speedMps: _lastUnifiedGpsSpeed,
+          motionState:
+              isZupt
+                  ? SimulatedMotionState.stopped
+                  : SimulatedMotionState.cruising,
+          gpsPosition: (!tick.isGpsInterpolated && tick.lat != null)
+              ? rawPos
+              : null,
+          gpsAccuracy: 10.0,
+          gpsAvailable: !tick.isGpsInterpolated && tick.lat != null,
+          dropoutMode:
+              (tick.isGpsInterpolated || tick.lat == null)
+                  ? GpsDropoutMode.tunnelSimulation
+                  : GpsDropoutMode.normal,
+          accelX: tick.accelX,
+          accelY: tick.accelY,
+          accelZ: tick.accelZ,
+          gyroX: tick.gyroX,
+          gyroY: tick.gyroY,
+          gyroZ: tick.gyroZ,
+          isZuptCandidate: isZupt,
+          zuptDurationSeconds: isZupt ? 1.0 : null,
+          isAtStation: tick.isAtStation,
+          currentLeg: _route?.legs.firstOrNull,
+        ),
+      );
+    }
+
+    // End
+    if (_elapsedSeconds >= (_route?.totalDurationSeconds ?? 0)) {
+      pause();
+    }
+  }
 }

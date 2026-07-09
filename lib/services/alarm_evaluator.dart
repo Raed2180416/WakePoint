@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:geowake2/core/logging/app_logger.dart';
 import 'package:geowake2/services/transfer_utils.dart';
+import 'package:path_provider/path_provider.dart';
 
 enum AlarmMode { stops, time, distance }
 
@@ -607,20 +609,35 @@ class AlarmEvaluator {
 
       // Defensive: enforce "intermediate-only" semantics by stripping endpoints.
       // Some older fixtures may still include leg start/end meters.
+      // IMPORTANT: Use the actual stopMeters list directly - it's already calculated
+      // as intermediate stops only (excluding departure and arrival stations).
+      // The tolerance needs to be much smaller to avoid accidentally removing
+      // legitimate intermediate stops near leg boundaries.
       final rawStopMeters = leg.stopMeters.toSet().toList()..sort();
       final dedupedStopMeters =
           rawStopMeters
               .where(
                 (sm) =>
-                    sm > leg.legStartMeters + 1.0 &&
-                    sm < leg.legEndMeters - 1.0,
+                    sm > leg.legStartMeters + 0.1 &&
+                    sm < leg.legEndMeters - 0.1,
               )
               .toList();
 
       // DEBUG: Log raw and deduped stop meters for diagnosis
+      // Check if next leg exists and log its info for transfer debugging
+      String nextLegInfo = 'N/A (no next leg)';
+      if (evalLegIndex + 1 < transitLegs.length) {
+        final nextLeg = transitLegs[evalLegIndex + 1];
+        nextLegInfo = '''
+    Next Leg: ${nextLeg.lineName ?? "Unnamed"}
+    Next Leg Start: ${nextLeg.legStartMeters.toStringAsFixed(1)}m
+    Gap between legs: ${(nextLeg.legStartMeters - leg.legEndMeters).toStringAsFixed(1)}m
+    Next Leg isMetro: ${nextLeg.isMetro}''';
+      }
+
       alarmLog.debug('''
 ╔════════════════════════════════════════════════════════════════
-    ║ ALARM_EVAL DEBUG - Metro Leg $evalLegIndex ($leg.lineName)
+    ║ ALARM_EVAL DEBUG - Metro Leg $evalLegIndex (${leg.lineName})
 ╠════════════════════════════════════════════════════════════════
 ║ progressMeters      : ${progressMeters.toStringAsFixed(1)}m
 ║ legStartMeters      : ${leg.legStartMeters.toStringAsFixed(1)}m
@@ -631,6 +648,7 @@ class AlarmEvaluator {
 ║ rawStopMeters       : $rawStopMeters
 ║ dedupedStopMeters   : $dedupedStopMeters
 ║ stopNames           : ${leg.stopNames.take(5)}${leg.stopNames.length > 5 ? '...' : ''}
+║ $nextLegInfo
 ╚════════════════════════════════════════════════════════════════''');
 
       // EDGE CASE: Metro leg with NO intermediate stops
@@ -763,17 +781,60 @@ class AlarmEvaluator {
         }
       }
 
-      // Remaining stations until destination includes the destination station itself.
+      // Remaining INTERMEDIATE stations until the alighting/transfer point OF THIS LEG.
       final remainingIntermediate =
           dedupedStopMeters.length - passedIntermediate;
+
+      // CRITICAL: Target is the END of THIS leg (e.g., DN Nagar), not any future leg.
+      // remainingStopsToTarget = intermediate stops still ahead + the alighting station itself.
+      // For "2 stops prior" alarm: fire when exactly 2 stops remain until THIS leg ends.
       final remainingStopsToTarget = remainingIntermediate + 1;
 
-      // Edge case: legs with no intermediate stations (board -> target next).
-      // In this case, remainingStopsToTarget will be 1, and N=1 should fire immediately.
+      // CRITICAL FIX: "N stops prior" means N total stops remaining (intermediate + alight).
+      // User expectation: "2 stops prior" = fire when 2 stops remain to THIS LEG's target station.
+      // This includes the alight station itself as 1 stop.
       final bool shouldFire =
           thresholdN <= 0 ? false : (remainingStopsToTarget <= thresholdN);
 
-      // ============ DEBUG LOGGING ============
+      // ============ LIVE DEBUG LOGGING (flutter logs + file) ============
+      // Build stop names list for debugging
+      final stopNamesDebug = <String>[];
+      for (int i = 0; i < dedupedStopMeters.length; i++) {
+        final m = dedupedStopMeters[i];
+        final name =
+            (i < leg.stopNames.length) ? leg.stopNames[i] : 'Stop${i + 1}';
+        final passed = progressMeters >= m ? '✓' : ' ';
+        stopNamesDebug.add('[$passed] ${m.toStringAsFixed(0)}m: $name');
+      }
+
+      final debugOutput = '''
+╔═══════════════════════════════════════════════════════════════════╗
+║ 🚇 MUMBAI ALARM DEBUG - Leg $currentLegIndex: ${leg.lineName ?? 'Unknown'}
+╠═══════════════════════════════════════════════════════════════════╣
+║ Progress: ${progressMeters.toStringAsFixed(0)}m
+║ Leg Range: ${leg.legStartMeters.toStringAsFixed(0)}m → ${leg.legEndMeters.toStringAsFixed(0)}m
+║ User Threshold: $thresholdN stops prior
+╠═══════════════════════════════════════════════════════════════════╣
+║ INTERMEDIATE STOPS (${dedupedStopMeters.length} total):
+${stopNamesDebug.map((s) => '║   $s').join('\n')}
+╠═══════════════════════════════════════════════════════════════════╣
+║ Passed: $passedIntermediate | Remaining: $remainingIntermediate (intermediate) + 1 (alight) = $remainingStopsToTarget
+║ Should Fire: $shouldFire (threshold $thresholdN, remainingIntermediate $remainingIntermediate)
+╚═══════════════════════════════════════════════════════════════════╝
+''';
+      print(debugOutput);
+
+      // Write to file for reliable capture
+      try {
+        getApplicationDocumentsDirectory().then((dir) {
+          final file = File('${dir.path}/mumbai_alarm_debug.txt');
+          file.writeAsStringSync(
+            '${DateTime.now()}\n$debugOutput\n',
+            mode: FileMode.append,
+          );
+        });
+      } catch (_) {}
+
       alarmLog.debug('''
 ╔══════════════════════════════════════════════════════════════
 ║ ALARM_EVAL DEBUG - Metro Leg $currentLegIndex ($leg.lineName)
@@ -802,7 +863,7 @@ class AlarmEvaluator {
             legId: leg.legId,
             reason: "Metro Final Destination ($thresholdN stops prior)",
             message:
-                "Arriving at Destination (${remainingStopsToTarget} stop${remainingStopsToTarget == 1 ? '' : 's'})",
+                "Arriving at Destination ($remainingStopsToTarget stop${remainingStopsToTarget == 1 ? '' : 's'})",
             remainingStops: remainingStopsToTarget.toDouble(),
           );
         } else {
@@ -893,24 +954,74 @@ class AlarmEvaluator {
           }
 
           final rawLabel = boundaryEvent?.label;
-          final label =
+          String? label =
               (rawLabel != null && rawLabel.trim().isNotEmpty)
                   ? rawLabel.trim()
                   : null;
 
-          final String prefix =
-              type == AlarmEventType.transfer
-                  ? 'Transfer Ahead'
-                  : 'Upcoming change';
-          final String baseMessage = label != null ? '$prefix: $label' : prefix;
+          // Walking Transfer Logic (Mumbai Case):
+          // If the next leg is "Walk to X" and the leg AFTER is Metro,
+          // we need to clearly show:
+          // 1. WHERE to alight (current leg end) - with stop count
+          // 2. WHAT to do after (walk instruction)
+          String? walkDestination; // e.g., "Andheri West"
+          if (type == AlarmEventType.transfer ||
+              type == AlarmEventType.modeChange) {
+            if (evalLegIndex + 1 < transitLegs.length &&
+                !transitLegs[evalLegIndex + 1].isMetro) {
+              // Next leg is non-metro (Walk/Drive)
+              // Check if it connects to another Metro leg
+              if (evalLegIndex + 2 < transitLegs.length &&
+                  transitLegs[evalLegIndex + 2].isMetro) {
+                // Yes, this is an interchange walk.
+                final walkLeg = transitLegs[evalLegIndex + 1];
+                final walkName = walkLeg.lineName;
+                if (walkName != null &&
+                    walkName.trim().toLowerCase().startsWith('walk to')) {
+                  // Extract destination from "Walk to X"
+                  final dest =
+                      walkName
+                          .trim()
+                          .substring(8)
+                          .trim(); // "Walk to " = 8 chars
+                  if (dest.isNotEmpty) {
+                    walkDestination = dest;
+                  }
+                }
+              }
+            }
+          }
+
+          // Build message: prioritize showing alighting station (label) with stop count
+          // and append walking instruction if applicable.
+          String baseMessage;
+          final stopsText =
+              '$remainingStopsToTarget stop${remainingStopsToTarget == 1 ? '' : 's'}';
+
+          if (label != null) {
+            // We have an alighting station name
+            baseMessage = 'Alight at $label ($stopsText)';
+            if (walkDestination != null) {
+              baseMessage = '$baseMessage → Walk to $walkDestination';
+            }
+          } else if (walkDestination != null) {
+            // No label but we know the walk destination
+            baseMessage = 'Transfer ($stopsText) → Walk to $walkDestination';
+          } else {
+            // Fallback
+            final String prefix =
+                type == AlarmEventType.transfer
+                    ? 'Transfer Ahead'
+                    : 'Upcoming change';
+            baseMessage = '$prefix ($stopsText)';
+          }
 
           return AlarmTrigger(
             eventType: type,
             legIndex: evalLegIndex,
             legId: leg.legId,
             reason: "Metro Transfer ($thresholdN stops prior)",
-            message:
-                "$baseMessage (${remainingStopsToTarget} stop${remainingStopsToTarget == 1 ? '' : 's'})",
+            message: baseMessage,
             remainingStops: remainingStopsToTarget.toDouble(),
           );
         }

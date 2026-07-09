@@ -5,7 +5,7 @@ import 'dart:developer' as dev;
 
 class PreloadMapScreen extends StatefulWidget {
   final Map<String, dynamic> arguments;
-  const PreloadMapScreen({Key? key, required this.arguments}) : super(key: key);
+  const PreloadMapScreen({super.key, required this.arguments});
 
   @override
   State<PreloadMapScreen> createState() => _PreloadMapScreenState();

@@ -1,4 +1,4 @@
-/// Unified End-to-End Testing Dashboard for GeoWake.
+﻿/// Unified End-to-End Testing Dashboard for GeoWake.
 ///
 /// Combines simulation (send) and monitoring (receive) capabilities:
 /// - Active simulation with OSM-based deviation pathfinding
@@ -22,6 +22,7 @@ import 'dart:html' as html;
 import '../all_india_stops.dart';
 import '../config/playground_bridge.dart';
 import '../core/clock/app_clock.dart';
+import '../services/trackingservice.dart';
 import '../services/direction_service.dart';
 import '../services/testing/osm_loader.dart';
 import 'constraint_drawer.dart';
@@ -67,9 +68,9 @@ class UnifiedDashboard extends StatefulWidget {
 }
 
 class _UnifiedDashboardState extends State<UnifiedDashboard> {
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Core Controllers
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   GoogleMapController? _mapController;
   DeviationSimulationController? _simController;
@@ -78,25 +79,20 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
   final OsmOverlayManager _osmOverlay = OsmOverlayManager();
   final DirectionService _directionService = DirectionService();
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Map Elements
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
   final Set<Marker> _stopMarkers = {};
-  final Set<Marker> _osmStopMarkers = {};
-
-  // Route polyline caches (keyed by route_key for color preservation)
-  final Map<String, List<Polyline>> _routePolylinesByKey = {};
-  final Map<String, List<Polyline>> _routeGreyPolylinesByKey = {};
 
   // Available inactive routes (for "revert to previous route" feature)
   List<Map<String, dynamic>> _availableInactiveRoutes = [];
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // WebSocket State
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   html.WebSocket? _socket;
   bool _connected = false;
@@ -104,9 +100,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
   int _reconnectAttempts = 0;
   DateTime? _lastPingReceived;
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Route State (from app via WebSocket)
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   List<LatLng> _activeRoute = [];
   List<Map<String, dynamic>> _activeRouteRawSegments = [];
@@ -117,9 +113,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
   List<Map<String, dynamic>>? _lastTransitLegsJson;
   Map<String, dynamic>? _lastRouteDebug;
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // App State Metrics (received from device)
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   String _metricDistance = '---';
   String _metricTime = '---';
@@ -132,35 +128,48 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
   LatLng? _devicePosition;
   DateTime? _lastDeviceLogAt;
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Simulation UI State
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   bool _drawerOpen = false;
   double _warpFactor = 1.0;
   double _speedKmh = 40.0;
   bool _wasPlayingBeforeScrub = false;
-  bool _osmVisible = true;
 
-  // Stop visualization options
-  bool _showAllTransitLegStops = true;
-  bool _showOsmStops = true;
-  bool _osmStopsShowAll = false;
-  bool _osmStopsStrictRouteMatch = false;
-  double _osmStopsRadiusMeters = 2000.0;
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Map State & Settings
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // ─────────────────────────────────────────────────────────────────────
+  bool _showAllStopsOverlay = false;
+
+  // Cached Icons
+  BitmapDescriptor? _cachedCyanIcon;
+  BitmapDescriptor? _cachedYellowIcon;
+
+  // Latest polyline-domain progress (meters) received from app debug_info.
+  double? _lastProgressMetersFromApp;
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // EKF Test Mode
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  bool _ekfTestModeEnabled = false;
+  EkfTestVisualization? _lastEkfViz;
+  double _lastSimHeading = 0.0;
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Constraint Events
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   List<ConstraintEvent> _events = [];
   StreamSubscription<ConstraintEvent>? _eventSub;
   StreamSubscription<SimulationTickResult>? _positionSub;
   StreamSubscription<SimulationState>? _stateSub;
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Demo Route (Bengaluru)
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   final List<LatLng> _demoRoute = [
     const LatLng(12.9716, 77.5946), // MG Road
@@ -170,44 +179,27 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     const LatLng(12.9950, 77.6250), // Airport Road
   ];
 
-  // ─────────────────────────────────────────────────────────────────────
-  // Cached Icons
-  // ─────────────────────────────────────────────────────────────────────
-
-  BitmapDescriptor? _cachedCyanIcon;
-
-  // Latest polyline-domain progress (meters) received from app debug_info.
-  double? _lastProgressMetersFromApp;
-
-  // Track what transit-stop marker set is currently rendered.
-  // Values: 'none', 'all', or 'leg:<index>'.
-  String? _transitStopRenderKey;
-  String? _osmStopRenderKey;
-
-  // ─────────────────────────────────────────────────────────────────────
-  // EKF Test Mode
-  // ─────────────────────────────────────────────────────────────────────
-
-  bool _ekfTestModeEnabled = false;
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<LatLng> _ekfTestRoutePolyline = [];
-  
+
   // Ghost marker state tracking
   LatLng? _ghostMarkerPosition; // Position where GPS was toggled off
   bool? _lastGpsAvailable; // Track GPS state changes (null = not initialized)
-  
+
   // Cached filtered stations from allIndiaStops for current route
   List<(LatLng position, String name)> _filteredStationsCache = [];
-  
-  // Cached cyan dot icon for station markers
-  BitmapDescriptor? _cyanDotIcon;
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Lifecycle
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   void initState() {
     super.initState();
+    // Enable simulation mode to prevent premature tracking termination
+    TrackingService.isTestMode = true;
+    TrackingService().setSimulationMode(true);
+
     _initializeSimulation();
     _connectToRelay();
     _subscribeToConstraints();
@@ -240,9 +232,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Simulation Initialization
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _initializeSimulation() async {
     // Performance: Do not load the full OSM graph at startup.
@@ -265,7 +257,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
       _simController = controller;
       _simController!.loadRoute(_demoRoute, routeId: 'demo_bengaluru');
       _activeRoute = _demoRoute;
-      _updateRoutePolylines();
+      _renderMapState();
     });
 
     _logInfo('OSM graph loads on-demand (3km window) when starting deviation.');
@@ -343,7 +335,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
       controller.setGraph(graph);
       _lastGraphWindow = window;
       _logInfo(
-        '⚠️ Using local test graph fallback: ${graph.nodeCount} nodes ($e)',
+        'âš ï¸ Using local test graph fallback: ${graph.nodeCount} nodes ($e)',
       );
     } finally {
       if (mounted) setState(() => _graphLoading = false);
@@ -371,43 +363,23 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Simulation Tick Handler
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _onSimulationTick(SimulationTickResult tick) {
-    print(
+    _logInfo(
       'ETA_DEBUG simTick: pos=(${tick.position.latitude.toStringAsFixed(5)},${tick.position.longitude.toStringAsFixed(5)}), spd=${tick.speedMps.toStringAsFixed(2)}m/s (${(tick.speedMps * 3.6).toStringAsFixed(1)}km/h), distFromRoute=${tick.distanceFromRoute.toStringAsFixed(1)}m, warp=$_warpFactor',
     );
-    setState(() {
-      _updateSimulationMarker(tick);
-    });
+
     _broadcastSimulationPosition(tick);
+    _lastSimHeading = tick.heading;
+    _renderMapState();
   }
 
-  void _updateSimulationMarker(SimulationTickResult tick) {
-    _markers.removeWhere((m) => m.markerId.value == 'sim_position');
-    _markers.add(
-      Marker(
-        markerId: const MarkerId('sim_position'),
-        position: tick.position,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-        infoWindow: InfoWindow(
-          title: 'Simulated Position',
-          snippet:
-              '${(tick.speedMps * 3.6).toStringAsFixed(0)} km/h | ${tick.distanceFromRoute.toStringAsFixed(0)}m from route',
-        ),
-        zIndexInt: 100,
-        rotation: tick.heading,
-        anchor: const Offset(0.5, 0.5),
-      ),
-    );
-    _updateDeviationPolyline();
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // WebSocket Connection
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   String _resolveRelayUrl() {
     final override = Uri.base.queryParameters['relay'];
@@ -467,9 +439,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Message Handling (Bidirectional)
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _handleMessage(String data) {
     try {
@@ -550,31 +522,17 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
         // Also load into simulation controller for testing
         _simController?.loadRoute(points, routeId: routeKey ?? 'app_route');
 
-        _updateMapRoute(
-          points,
-          segments: segments,
-          inactiveRoutes: inactiveRoutes,
-          transitMode: transitMode,
-          routeKey: routeKey,
-        );
-
         if (points.isNotEmpty) {
           _mapController?.animateCamera(
             CameraUpdate.newLatLngZoom(points.first, 14),
           );
         }
       } else {
-        // Same route rebroadcast: just refresh inactive routes
-        _updateMapRoute(
-          points,
-          segments: segments,
-          inactiveRoutes: inactiveRoutes,
-          transitMode: transitMode,
-          routeKey: routeKey,
-          forceRepaint: true,
-        );
         if (routeKey != null) _lastRouteKey = routeKey;
       }
+
+      // Full re-render on any route update
+      _renderMapState();
     });
 
     _logInfo(
@@ -594,21 +552,18 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
         );
       }
     }
-
-    // Ensure cyan stop dots reflect current leg promptly.
-    _refreshTransitStopMarkers();
   }
 
   void _handleAppState(Map<String, dynamic> json) {
     // Debug: log raw state received
-    print(
+    _logInfo(
       'ETA_DEBUG dashboard RX: eta=${json['eta']}, dist=${json['distance_travelled']}, mode=${json['alarm_mode']}, val=${json['alarm_value']}, debug=${json['debug_info']}',
     );
     setState(() {
       if (json['eta'] != null) {
         final etaSec = (json['eta'] as num).toInt();
         _metricTime = '${(etaSec / 60).toStringAsFixed(1)} min';
-        print('ETA_DEBUG dashboard: etaSec=$etaSec -> ${_metricTime}');
+        _logInfo('ETA_DEBUG dashboard: etaSec=$etaSec -> $_metricTime');
       }
 
       if (json['distance_travelled'] != null) {
@@ -661,19 +616,20 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
 
       if (json['active'] == false && _trackingActive) {
         _trackingActive = false;
-        _logInfo('Tracking ended. Clearing route.');
+        _logInfo('Tracking ended (active=false in app_state). Clearing route.');
         _clearRouteForIdle();
       } else if (json['active'] == true) {
         _trackingActive = true;
       }
     });
 
-    // Progress updates can change the current leg; refresh cyan markers.
-    _refreshTransitStopMarkers();
+    // Progress updates can change the current leg; refresh markers.
+    _renderMapState();
   }
 
   void _handleDevicePosition(Map<String, dynamic> json) {
-    if ((_simController?.state ?? SimulationState.idle) != SimulationState.idle ||
+    if ((_simController?.state ?? SimulationState.idle) !=
+            SimulationState.idle ||
         _ekfTestModeEnabled) {
       return;
     }
@@ -747,9 +703,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Broadcasting (Outbound)
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _broadcastSimulationPosition(SimulationTickResult tick) {
     if (_socket == null || _socket!.readyState != html.WebSocket.OPEN) return;
@@ -770,7 +726,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
       'state': _simController?.state.name,
       'warpFactor': _warpFactor,
     };
-    print(
+    _logInfo(
       'ETA_DEBUG broadcast sim: speedMps=${tick.speedMps.toStringAsFixed(2)}, warp=$_warpFactor, routeLen=${_activeRoute.length}',
     );
     _socket!.send(jsonEncode(payload));
@@ -815,9 +771,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     _logInfo('Sent switch_route command for key: $routeKey');
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // EKF Test Mode Helpers
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /// Broadcasts an EKF test position to the connected app
   void _broadcastEkfTestPosition(LatLng pos, double accuracy, double speed) {
@@ -834,313 +790,67 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     );
   }
 
-  /// Updates the map to show the EKF test route
-  Future<void> _updateEkfTestRouteOnMap() async {
-    final polyline = _ekfTestRoutePolyline;
-    debugPrint('\\n\ud83d\uddfa\ufe0f _updateEkfTestRouteOnMap called, polyline points: ${polyline.length}');
-    if (polyline.isEmpty) {
-      debugPrint('   \u26a0\ufe0f Polyline is empty, returning early');
-      return;
-    }
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // EKF Helper Methods
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    // Filter stations from allIndiaStops to only those within 200m of the route polyline
-    debugPrint('   Filtering stations from allIndiaStops (${allIndiaStops.length} total)...');
+  Future<void> _handleEkfRouteChanged(
+    List<LatLng> polyline,
+    dynamic stations,
+  ) async {
+    if (polyline.isEmpty) return;
+
+    // Filter stations logic (Stations within 200m of route)
     final stationsOnRoute = <(LatLng position, String name)>[];
     for (final station in allIndiaStops) {
-      final stationPos = LatLng(
-        (station['lat'] as num).toDouble(),
-        (station['lng'] as num).toDouble(),
-      );
+      final sLat = (station['lat'] as num).toDouble();
+      final sLng = (station['lng'] as num).toDouble();
+      final pos = LatLng(sLat, sLng);
+
       double minDist = double.infinity;
       for (final pt in polyline) {
-        final dist = _haversineDistanceMeters(stationPos, pt);
-        if (dist < minDist) minDist = dist;
+        final d = _haversineDistance(pos, pt);
+        if (d < minDist) minDist = d;
       }
       if (minDist < 200) {
-        stationsOnRoute.add((stationPos, station['name'] as String? ?? 'Station'));
+        stationsOnRoute.add((pos, station['name'] as String? ?? 'Station'));
       }
     }
-    
-    // Cache the filtered stations for use in real-time visualization
-    _filteredStationsCache = stationsOnRoute;
-    debugPrint('   \u2705 Found ${stationsOnRoute.length} stations within 200m of route');
-    for (int i = 0; i < stationsOnRoute.length; i++) {
-      final (pos, name) = stationsOnRoute[i];
-      debugPrint('      Station $i: $name at ${pos.latitude.toStringAsFixed(5)}, ${pos.longitude.toStringAsFixed(5)}');
-    }
-
-    // Create and cache cyan dot icon (same as non-test mode)
-    final cyanIcon = await _createCustomMarkerBitmap(Colors.cyanAccent, size: 30);
-    _cyanDotIcon = cyanIcon;
-    debugPrint('   \u2705 Cyan dot icon created and cached');
 
     setState(() {
-      // Clear existing polylines and add test route
-      _polylines.clear();
-      _polylines.add(
-        Polyline(
-          polylineId: const PolylineId('ekf_test_route'),
-          points: polyline,
-          color: Colors.green.shade600,
-          width: 5,
-        ),
-      );
-
-      // Add station markers (only those on the route, with cyan dots)
-      // Use 'station_' prefix consistently with _updateEkfTestVisualization
-      _markers.clear();
-      for (int i = 0; i < stationsOnRoute.length; i++) {
-        final (position, name) = stationsOnRoute[i];
-        _markers.add(
-          Marker(
-            markerId: MarkerId('station_$i'),
-            position: position,
-            icon: cyanIcon,
-            infoWindow: InfoWindow(title: name),
-            zIndex: 12,
-          ),
-        );
-      }
+      _ekfTestRoutePolyline = polyline;
+      _filteredStationsCache = stationsOnRoute;
     });
-    debugPrint('   \ud83d\udccd Initial markers set: ${_markers.length}');
-
-    // Move camera to fit the route
-    if (_mapController != null && polyline.isNotEmpty) {
-      // Calculate bounds
-      double minLat = polyline[0].latitude;
-      double maxLat = polyline[0].latitude;
-      double minLng = polyline[0].longitude;
-      double maxLng = polyline[0].longitude;
-
-      for (final point in polyline) {
-        if (point.latitude < minLat) minLat = point.latitude;
-        if (point.latitude > maxLat) maxLat = point.latitude;
-        if (point.longitude < minLng) minLng = point.longitude;
-        if (point.longitude > maxLng) maxLng = point.longitude;
-      }
-
-      final bounds = LatLngBounds(
-        southwest: LatLng(minLat, minLng),
-        northeast: LatLng(maxLat, maxLng),
-      );
-
-      _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-    }
+    _renderMapState();
   }
 
-  /// Haversine distance in meters between two LatLng points
-  double _haversineDistanceMeters(LatLng a, LatLng b) {
-    const R = 6371000.0; // Earth radius in meters
-    final dLat = (b.latitude - a.latitude) * 3.141592653589793 / 180;
-    final dLon = (b.longitude - a.longitude) * 3.141592653589793 / 180;
-    final lat1 = a.latitude * 3.141592653589793 / 180;
-    final lat2 = b.latitude * 3.141592653589793 / 180;
-    final h = _haversinePart(dLat) + _haversinePart(dLon) * cos(lat1) * cos(lat2);
-    return 2 * R * asin(sqrt(h));
-  }
-
-  double _haversinePart(double x) => (1 - cos(x)) / 2;
-
-  /// Tick counter for rate-limited logging
-  int _vizUpdateCount = 0;
-  
-  /// Updates visualization from EKF test controller
-  void _updateEkfTestVisualization(EkfTestVisualization viz) {
-    final routePolyline = viz.routePolyline;
-    _vizUpdateCount++;
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // RATE-LIMITED EKF TEST LOGGING (every 50 ticks = ~5 seconds)
-    // ═══════════════════════════════════════════════════════════════════════
-    final shouldLogViz = _vizUpdateCount % 50 == 0;
-    if (shouldLogViz) {
-      debugPrint('\n╔══════════════════════════════════════════════════════════════');
-      debugPrint('║ EKF TEST VISUALIZATION UPDATE (tick $_vizUpdateCount)');
-      debugPrint('╠══════════════════════════════════════════════════════════════');
-      debugPrint('║ GPS State:');
-      debugPrint('║   - gpsAvailable: ${viz.gpsAvailable}');
-      debugPrint('║   - lastGpsAvailable: $_lastGpsAvailable');
-      debugPrint('║   - ghostMarkerPosition: $_ghostMarkerPosition');
-      debugPrint('║ Position:');
-      debugPrint('║   - truePosition: ${viz.truePosition}');
-      debugPrint('║   - ekfPosition: ${viz.ekfPosition}');
-      debugPrint('║   - rawGpsPosition: ${viz.rawGpsPosition}');
-      debugPrint('║ EKF Metrics:');
-      debugPrint('║   - ekfProgressMeters: ${viz.ekfProgressMeters?.toStringAsFixed(0) ?? "null"}');
-      debugPrint('║   - trueProgressMeters: ${viz.trueProgressMeters.toStringAsFixed(0)}');
-      debugPrint('║   - ekfSigmaS: ${viz.ekfSigmaS?.toStringAsFixed(1) ?? "null"}');
-      debugPrint('║   - ekfSigmaV: ${viz.ekfSigmaV?.toStringAsFixed(2) ?? "null"}');
-      debugPrint('║   - ekfDegraded: ${viz.ekfDegraded}');
-      debugPrint('║ Route:');
-      debugPrint('║   - routePolyline points: ${routePolyline.length}');
-      debugPrint('║   - filteredStationsCache: ${_filteredStationsCache.length}');
-      debugPrint('║ Markers before clear: ${_markers.length}');
-      debugPrint('║ Motion: ${viz.motionState.name}, Speed: ${(viz.speedMps * 3.6).toStringAsFixed(1)} km/h');
-      debugPrint('╚══════════════════════════════════════════════════════════════\n');
-    }
-
-    // Ghost Marker Logic - MUST be outside setState to track state properly
-    // Track GPS state transitions
+  void _updateEkfState(EkfTestVisualization viz) {
     final lastGps = _lastGpsAvailable;
+    // Ghost Marker Logic
+    LatLng? newGhostPos = _ghostMarkerPosition;
+
     if (lastGps != null) {
       if (!viz.gpsAvailable && lastGps) {
-        // GPS just went unavailable - spawn ghost at current true position
-        _ghostMarkerPosition = viz.truePosition;
-        debugPrint('🔴 GHOST SPAWN: GPS went OFF at ${viz.truePosition}');
+        // GPS went OFF
+        newGhostPos = viz.truePosition;
       } else if (viz.gpsAvailable && !lastGps) {
-        // GPS just came back - remove ghost marker
-        debugPrint('🟢 GHOST CLEAR: GPS came back ON (was at $_ghostMarkerPosition)');
-        _ghostMarkerPosition = null;
+        // GPS came ON
+        newGhostPos = null;
       }
     } else {
-      debugPrint('⚪ GHOST INIT: First update, lastGps was null, gpsAvailable=${viz.gpsAvailable}');
+      // First update
+      if (!viz.gpsAvailable) {
+        newGhostPos = viz.truePosition;
+      }
     }
-    _lastGpsAvailable = viz.gpsAvailable;
 
     setState(() {
-      // Clear visualization markers (ghost, stations, ekf markers, etc.)
-      _markers.removeWhere(
-        (m) =>
-            m.markerId.value.startsWith('ekf_') ||
-            m.markerId.value.startsWith('zupt_') ||
-            m.markerId.value.startsWith('snap_') ||
-            m.markerId.value.startsWith('ghost_') ||
-            m.markerId.value.startsWith('station_'),
-      );
-
-      // 1. Full Route Polyline (Green solid - entire route)
-      _polylines.clear();
-      if (routePolyline.isNotEmpty) {
-        _polylines.add(
-          Polyline(
-            polylineId: const PolylineId('ekf_full_route'),
-            points: routePolyline,
-            color: Colors.green.shade600,
-            width: 5,
-            zIndex: 1,
-          ),
-        );
-      }
-
-      // 2. Ghost Marker - show only when GPS is unavailable
-      if (_ghostMarkerPosition != null && !viz.gpsAvailable) {
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('ghost_gps'),
-            position: _ghostMarkerPosition!,
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueOrange,
-            ),
-            alpha: 0.6, // Semi-transparent ghost
-            infoWindow: const InfoWindow(title: 'GPS Dropout Point'),
-            zIndex: 5,
-          ),
-        );
-      }
-
-      // 3. Current Position Marker (true position - bright blue/azure)
-      _markers.add(
-        Marker(
-          markerId: const MarkerId('ekf_test_current'),
-          position: viz.truePosition,
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            viz.gpsAvailable
-                ? BitmapDescriptor.hueBlue
-                : BitmapDescriptor.hueAzure,
-          ),
-          infoWindow: InfoWindow(
-            title: 'Current Position',
-            snippet:
-                'Speed: ${(viz.speedMps * 3.6).toStringAsFixed(1)} km/h\n'
-                'Motion: ${viz.motionState.name}',
-          ),
-          zIndex: 10,
-        ),
-      );
-
-      // 5. EKF Estimated Position Marker (cyan - if available)
-      if (viz.ekfPosition != null) {
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('ekf_estimated'),
-            position: viz.ekfPosition!,
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueCyan,
-            ),
-            infoWindow: const InfoWindow(title: 'EKF Estimate'),
-            alpha: 0.8,
-            zIndex: 8,
-          ),
-        );
-      }
-
-      // 6. ZUPT Event Markers (Green dots - small markers where ZUPT occurred)
-      for (int i = 0; i < viz.zuptPositions.length; i++) {
-        _markers.add(
-          Marker(
-            markerId: MarkerId('zupt_$i'),
-            position: viz.zuptPositions[i],
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueGreen,
-            ),
-            alpha: 0.7,
-            infoWindow: InfoWindow(title: 'ZUPT #${i + 1}'),
-            zIndex: 3,
-          ),
-        );
-      }
-
-      // 7. EKF-Detected Station Snap Markers (Purple dots - distinct from cyan actual)
-      for (int i = 0; i < viz.ekfSnappedStations.length; i++) {
-        _markers.add(
-          Marker(
-            markerId: MarkerId('snap_$i'),
-            position: viz.ekfSnappedStations[i],
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueViolet,
-            ),
-            infoWindow: InfoWindow(title: 'EKF Snap #${i + 1}'),
-            zIndex: 6,
-          ),
-        );
-      }
-
-      // 8. Station Markers - Use filtered stations from allIndiaStops (cyan dots)
-      // Use cached cyan dot icon (created in _updateEkfTestRouteOnMap)
-      final stationIcon = _cyanDotIcon ?? BitmapDescriptor.defaultMarker;
-      for (int i = 0; i < _filteredStationsCache.length; i++) {
-        final (position, name) = _filteredStationsCache[i];
-        _markers.add(
-          Marker(
-            markerId: MarkerId('station_$i'),
-            position: position,
-            icon: stationIcon,
-            infoWindow: InfoWindow(title: name),
-            zIndex: 4,
-          ),
-        );
-      }
+      _lastGpsAvailable = viz.gpsAvailable;
+      _ghostMarkerPosition = newGhostPos;
+      _lastEkfViz = viz;
     });
-
-    // Post-setState logging (rate limited)
-    if (shouldLogViz) {
-      debugPrint('📍 MARKERS: ${_markers.length} total, ${_filteredStationsCache.length} stations, ghost=${_ghostMarkerPosition != null && !viz.gpsAvailable}');
-    }
-
-    // Broadcast position to app
-    _broadcastEkfTestPosition(
-      viz.truePosition,
-      viz.gpsAvailable ? 5.0 : 50.0, // Degraded accuracy during dropout
-      viz.speedMps,
-    );
-
-    // Move camera to follow
-    _mapController?.animateCamera(CameraUpdate.newLatLng(viz.truePosition));
+    _renderMapState();
   }
-
-  // ─────────────────────────────────────────────────────────────────────
-  // Map Route Updates
-  // ─────────────────────────────────────────────────────────────────────
 
   String _computeRouteSignature(List<LatLng> pts, String? dest) {
     if (pts.isEmpty) return dest ?? '';
@@ -1155,195 +865,314 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     return '${dest ?? ''}|${pts.length}|${first.latitude.toStringAsFixed(6)},${first.longitude.toStringAsFixed(6)}|${last.latitude.toStringAsFixed(6)},${last.longitude.toStringAsFixed(6)}|$sum';
   }
 
-  Future<void> _updateMapRoute(
-    List<LatLng> points, {
-    List<Map<String, dynamic>>? segments,
-    List<Map<String, dynamic>>? inactiveRoutes,
-    bool transitMode = false,
-    String? routeKey,
-    bool forceRepaint = false,
-  }) async {
-    final cyanMarkerIcon = await _createCustomMarkerBitmap(
-      Colors.cyanAccent,
-      size: 30,
-    );
-
-    setState(() {
-      _polylines.clear();
-      _markers.removeWhere(
-        (m) =>
-            m.markerId.value.startsWith('route_') ||
-            m.markerId.value.startsWith('transit_stop_') ||
-            m.markerId.value.startsWith('stop_') ||
-            m.markerId.value.startsWith('osm_stop_'),
+  Future<void> _renderMapState() async {
+    // 1. Prepare icons if needed
+    _cachedCyanIcon ??= await _createCustomMarkerBitmap(
+        Colors.cyanAccent.shade200,
+        size: 30,
+      );
+    _cachedYellowIcon ??= await _createCustomMarkerBitmap(
+        Colors.yellowAccent,
+        size: 36,
       );
 
-      // 1. Draw Inactive Routes (Grey) with color preservation
-      if (inactiveRoutes != null) {
-        for (final route in inactiveRoutes) {
-          _drawInactiveRoute(route);
+    final newMarkers = <Marker>{};
+    final newPolylines = <Polyline>{};
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // A. EKF TEST MODE RENDERING
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if (_ekfTestModeEnabled) {
+      // A.1. EKF Route (Blue/Cyan)
+      if (_ekfTestRoutePolyline.isNotEmpty) {
+        newPolylines.add(
+          Polyline(
+            polylineId: const PolylineId('ekf_route'),
+            points: _ekfTestRoutePolyline,
+            color: Colors.blueAccent,
+            width: 5,
+            zIndex: 1,
+          ),
+        );
+      }
+
+      // A.2. Visualization State
+      if (_lastEkfViz != null) {
+        final viz = _lastEkfViz!;
+
+        // Raw GPS Trail
+        if (viz.rawGpsTrail.isNotEmpty) {
+          newPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('ekf_raw_gps_trail'),
+              points: viz.rawGpsTrail,
+              color: Colors.green,
+              width: 3,
+              zIndex: 2,
+            ),
+          );
+        }
+
+        // Markers
+        // Ghost Marker
+        if (_ghostMarkerPosition != null && !viz.gpsAvailable) {
+          newMarkers.add(
+            Marker(
+              markerId: const MarkerId('ghost_gps'),
+              position: _ghostMarkerPosition!,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueOrange,
+              ),
+              alpha: 0.6,
+              infoWindow: const InfoWindow(title: 'GPS Dropout Point'),
+              zIndexInt: 5,
+            ),
+          );
+        }
+
+        // Current Position (Ekf Test)
+        newMarkers.add(
+          Marker(
+            markerId: const MarkerId('ekf_test_current'),
+            position: viz.truePosition,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              viz.gpsAvailable
+                  ? BitmapDescriptor.hueBlue
+                  : BitmapDescriptor.hueAzure,
+            ),
+            infoWindow: InfoWindow(
+              title: 'Current Position',
+              snippet:
+                  'Speed: ${(viz.speedMps * 3.6).toStringAsFixed(1)} km/h\nMotion: ${viz.motionState.name}',
+            ),
+            zIndexInt: 10,
+          ),
+        );
+
+        // EKF Estimated
+        final ekfPos =
+            viz.gpsAvailable
+                ? (viz.gpsPosition ?? viz.truePosition)
+                : (viz.ekfPosition ?? viz.truePosition);
+
+        newMarkers.add(
+          Marker(
+            markerId: const MarkerId('ekf_estimated'),
+            position: ekfPos,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueCyan,
+            ),
+            infoWindow: InfoWindow(
+              title: viz.gpsAvailable ? 'EKF (GPS)' : 'EKF (DR)',
+            ),
+            alpha: 0.8,
+            zIndexInt: 8,
+          ),
+        );
+
+        // ZUPT Markers
+        for (int i = 0; i < viz.zuptPositions.length; i++) {
+          newMarkers.add(
+            Marker(
+              markerId: MarkerId('zupt_$i'),
+              position: viz.zuptPositions[i],
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueGreen,
+              ),
+              alpha: 0.7,
+              infoWindow: InfoWindow(title: 'ZUPT #${i + 1}'),
+              zIndexInt: 3,
+            ),
+          );
+        }
+
+        // EKF Snaps
+        for (int i = 0; i < viz.ekfSnappedStations.length; i++) {
+          newMarkers.add(
+            Marker(
+              markerId: MarkerId('snap_$i'),
+              position: viz.ekfSnappedStations[i],
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueViolet,
+              ),
+              infoWindow: InfoWindow(title: 'EKF Snap #${i + 1}'),
+              zIndexInt: 6,
+            ),
+          );
+        }
+
+        // Stations
+        final stationIcon = _cachedCyanIcon ?? BitmapDescriptor.defaultMarker;
+        for (int i = 0; i < _filteredStationsCache.length; i++) {
+          final (pos, name) = _filteredStationsCache[i];
+          newMarkers.add(
+            Marker(
+              markerId: MarkerId('station_$i'),
+              position: pos,
+              icon: stationIcon,
+              infoWindow: InfoWindow(title: name),
+              zIndexInt: 4,
+            ),
+          );
         }
       }
+    } else {
+      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // B. NORMAL / SIMULATION MODE
+      // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-      // 2. Draw Active Route
-      if (segments != null && segments.isNotEmpty) {
-        _drawActiveRouteWithSegments(segments, routeKey);
-      } else {
-        _polylines.add(
-          Polyline(
-            polylineId: const PolylineId('route_active'),
-            points: points,
-            color: Colors.blue,
-            width: 5,
-            zIndex: 5,
-          ),
-        );
-      }
-
-      // 3. Transit stop markers
-      if (transitMode) {
-        _drawTransitStopMarkers(
-          cyanMarkerIcon,
-          points,
-          restrictToCurrentLeg: !_showAllTransitLegStops,
-        );
-      } else {
-        _stopMarkers.clear();
-      }
-
-      if (_showOsmStops) {
-        _drawOsmStopMarkers(cyanMarkerIcon, points);
-      } else {
-        _osmStopMarkers.clear();
-      }
-
-      // 4. Start/End markers
-      if (points.isNotEmpty) {
-        _markers.add(
+      // B.1. Device Marker
+      if (_devicePosition != null) {
+        newMarkers.add(
           Marker(
-            markerId: const MarkerId('route_start'),
-            position: points.first,
+            markerId: const MarkerId('device_marker'),
+            position: _devicePosition!,
             icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueGreen,
+              BitmapDescriptor.hueOrange,
             ),
-            infoWindow: const InfoWindow(title: 'Start'),
-            zIndexInt: 40,
+            infoWindow: const InfoWindow(title: 'Your Device'),
+            zIndexInt: 100,
           ),
         );
-        _markers.add(
+      }
+
+      // B.2. Simulation Marker
+      if (_simController != null && _simController!.currentPosition != null) {
+        final tickPos = _simController!.currentPosition!;
+        // Check if heading is available in state or controller (handled by _lastSimHeading if needed)
+        final heading = _lastSimHeading;
+        final speed = _simController!.speedMps;
+        final dist = _calculateDistanceFromRoute(tickPos);
+
+        newMarkers.add(
           Marker(
-            markerId: const MarkerId('route_end'),
-            position: points.last,
+            markerId: const MarkerId('sim_position'),
+            position: tickPos,
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueOrange,
+            ),
+            infoWindow: InfoWindow(
+              title: 'Simulated Position',
+              snippet:
+                  '${(speed * 3.6).toStringAsFixed(0)} km/h | ${dist.toStringAsFixed(0)}m from route',
+            ),
+            zIndexInt: 100,
+            rotation: heading,
+            anchor: const Offset(0.5, 0.5),
+          ),
+        );
+      }
+
+      // B.3. Route Polylines
+      if (_activeRoute.isNotEmpty) {
+        final isDeviating =
+            _simController?.state == SimulationState.deviating ||
+            _simController?.state == SimulationState.returning;
+
+        if (_activeRouteRawSegments.isNotEmpty) {
+          // Draw segmented polyline
+          // If deviating -> Grey, else -> Colored
+          if (isDeviating) {
+            final greyPolys = _directionService
+                .buildSegmentedPolylinesFromRawSegments(
+                  _activeRouteRawSegments,
+                );
+            for (int i = 0; i < greyPolys.length; i++) {
+              final p = greyPolys[i];
+              newPolylines.add(
+                Polyline(
+                  polylineId: PolylineId('grey_route_seg_$i'),
+                  points: p.points,
+                  color: Colors.grey.withValues(alpha: 0.5),
+                  width: p.width,
+                  patterns: p.patterns,
+                  zIndex: 0,
+                ),
+              );
+            }
+          } else {
+            final coloredPolys = _directionService
+                .buildSegmentedPolylinesFromRawSegments(
+                  _activeRouteRawSegments,
+                );
+            for (int i = 0; i < coloredPolys.length; i++) {
+              final p = coloredPolys[i];
+              newPolylines.add(
+                Polyline(
+                  polylineId: PolylineId('route_seg_$i'),
+                  points: p.points,
+                  color: p.color,
+                  width: p.width,
+                  patterns: p.patterns,
+                  zIndex: 10,
+                ),
+              );
+            }
+          }
+        } else {
+          // Simple fallback
+          newPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('route_simple'),
+              points: _activeRoute,
+              color: isDeviating ? Colors.grey : Colors.blue,
+              width: 5,
+              zIndex: 10,
+            ),
+          );
+        }
+
+        // Destination
+        newMarkers.add(
+          Marker(
+            markerId: const MarkerId('destination'),
+            position: _activeRoute.last,
             icon: BitmapDescriptor.defaultMarkerWithHue(
               BitmapDescriptor.hueRed,
             ),
             infoWindow: const InfoWindow(title: 'Destination'),
-            zIndexInt: 40,
+            zIndexInt: 90,
           ),
         );
       }
-    });
-  }
 
-  void _drawInactiveRoute(Map<String, dynamic> route) {
-    final inactiveKeyRaw = route['route_key'] ?? route['key'];
-    final inactiveKey =
-        inactiveKeyRaw is String && inactiveKeyRaw.trim().isNotEmpty
-            ? inactiveKeyRaw.trim()
-            : null;
-
-    // Prefer cached grey polylines
-    if (inactiveKey != null) {
-      final cachedGrey = _routeGreyPolylinesByKey[inactiveKey];
-      if (cachedGrey != null && cachedGrey.isNotEmpty) {
-        _polylines.addAll(cachedGrey);
-        return;
+      // B.4. Deviation Polylines
+      if (_simController != null) {
+        final state = _simController!.state;
+        if (_simController!.deviationPath.isNotEmpty &&
+            (state == SimulationState.deviating ||
+                state == SimulationState.returning)) {
+          newPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('deviation_path'),
+              points: _simController!.deviationPath,
+              color: Colors.orange,
+              width: 4,
+              patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+              zIndex: 2,
+            ),
+          );
+        }
+        if (_simController!.currentPath.isNotEmpty &&
+            state == SimulationState.returning) {
+          newPolylines.add(
+            Polyline(
+              polylineId: const PolylineId('current_path'),
+              points: _simController!.currentPath,
+              color: Colors.teal,
+              width: 4,
+              patterns: [PatternItem.dash(15), PatternItem.gap(8)],
+              zIndex: 3,
+            ),
+          );
+        }
       }
-    }
 
-    // Build from segments if provided
-    final inactiveSegments =
-        (route['segments'] as List?)?.cast<Map<String, dynamic>>();
-    if (inactiveSegments != null && inactiveSegments.isNotEmpty) {
-      final base = _directionService.buildSegmentedPolylinesFromRawSegments(
-        inactiveSegments,
-      );
-      final derivedKey = inactiveKey ?? 'inactive_${route.hashCode}';
-      final grey = _prefixPolylines(
-        base,
-        'inactive:$derivedKey:',
-        colorOverride: Colors.grey,
-        zIndexOverride: 0,
-      );
-      if (inactiveKey != null) {
-        _routeGreyPolylinesByKey[inactiveKey] = grey;
-      }
-      _polylines.addAll(grey);
-      return;
-    }
-
-    // Fallback: simple grey polyline
-    final ptsJson = (route['points'] as List?) ?? const [];
-    final pts = ptsJson.map((p) => LatLng(p['lat'], p['lng'])).toList();
-    final derivedKey = inactiveKey ?? 'inactive_${pts.hashCode}';
-    _polylines.add(
-      Polyline(
-        polylineId: PolylineId('inactive:$derivedKey'),
-        points: pts,
-        color: Colors.grey,
-        width: 4,
-        zIndex: 0,
-      ),
-    );
-  }
-
-  void _drawActiveRouteWithSegments(
-    List<Map<String, dynamic>> segments,
-    String? routeKey,
-  ) {
-    final hasKey = routeKey != null && routeKey.trim().isNotEmpty;
-    if (hasKey) {
-      final key = routeKey.trim();
-      var cached = _routePolylinesByKey[key];
-      if (cached == null || cached.isEmpty) {
-        final base = _directionService.buildSegmentedPolylinesFromRawSegments(
-          segments,
-        );
-        cached = _prefixPolylines(base, 'active:$key:');
-        _routePolylinesByKey[key] = cached;
-        // Also cache grey version for when it becomes inactive
-        _routeGreyPolylinesByKey.putIfAbsent(
-          key,
-          () => _prefixPolylines(
-            base,
-            'inactive:$key:',
-            colorOverride: Colors.grey,
-            zIndexOverride: 0,
-          ),
-        );
-      }
-      _polylines.addAll(cached);
-    } else {
-      final base = _directionService.buildSegmentedPolylinesFromRawSegments(
-        segments,
-      );
-      _polylines.addAll(_prefixPolylines(base, 'active:legacy:'));
-    }
-  }
-
-  void _drawTransitStopMarkers(
-    BitmapDescriptor icon,
-    List<LatLng> pathPoints, {
-    required bool restrictToCurrentLeg,
-  }) {
-    // Prefer runtime-provided transit legs
-    if (_lastTransitLegsJson != null) {
-      final legs = _lastTransitLegsJson!;
-
-      // If we can determine the current leg from progress meters, only render
-      // metro stops for the current metro leg. If the current leg is not metro,
-      // render no cyan dots.
-      if (restrictToCurrentLeg) {
+      // B.5. Snapped Stops (Yellow)
+      if (_transitMode &&
+          _lastTransitLegsJson != null &&
+          _activeRoute.isNotEmpty) {
+        final legs = _lastTransitLegsJson!;
         final pm = _lastProgressMetersFromApp;
         int? currentLegIndex;
         if (pm != null) {
@@ -1360,417 +1189,63 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
         }
 
         if (currentLegIndex != null) {
-          final currentLeg = legs[currentLegIndex];
-          final isMetro = currentLeg['isMetro'] == true;
-          if (!isMetro) return;
+          final leg = legs[currentLegIndex];
+          if (leg['isMetro'] == true) {
+            final positions = (leg['stopPositions'] as List?) ?? const [];
+            final names = (leg['stopNames'] as List?) ?? const [];
 
-          final positions = (currentLeg['stopPositions'] as List?) ?? const [];
-          final names = (currentLeg['stopNames'] as List?) ?? const [];
-          int added = 0;
+            for (int i = 0; i < positions.length; i++) {
+              final p = positions[i] as Map<String, dynamic>;
+              final name = i < names.length ? names[i].toString() : 'Stop';
+              final lat = (p['lat'] as num).toDouble();
+              final lng = (p['lng'] as num).toDouble();
 
-          for (int si = 0; si < positions.length; si++) {
-            final p = positions[si] as Map<String, dynamic>;
-            final name = si < names.length ? names[si].toString() : 'Stop';
-            final lat = (p['lat'] as num).toDouble();
-            final lng = (p['lng'] as num).toDouble();
-
-            _markers.add(
-              Marker(
-                markerId: MarkerId('transit_stop_${currentLegIndex}_$si'),
-                position: LatLng(lat, lng),
-                icon: icon,
-                infoWindow: InfoWindow(
-                  title: name,
-                  snippet: currentLeg['lineName']?.toString(),
+              newMarkers.add(
+                Marker(
+                  markerId: MarkerId('snapped_stop_${currentLegIndex}_$i'),
+                  position: LatLng(lat, lng),
+                  icon: _cachedYellowIcon!,
+                  infoWindow: InfoWindow(title: name, snippet: 'Snapped Stop'),
+                  zIndexInt: 50,
                 ),
-                zIndexInt: 12,
-              ),
-            );
-            added++;
+              );
+            }
           }
-          _logInfo(
-            'Transit stops (current leg $currentLegIndex): $added markers',
-          );
-          return;
         }
       }
+    } // End ELSE (Normal Mode)
 
-      for (int li = 0; li < legs.length; li++) {
-        final leg = legs[li];
-        final isMetro = leg['isMetro'] == true;
-        if (!isMetro) continue;
-
-        final positions = (leg['stopPositions'] as List?) ?? const [];
-        final names = (leg['stopNames'] as List?) ?? const [];
-        int added = 0;
-
-        for (int si = 0; si < positions.length; si++) {
-          final p = positions[si] as Map<String, dynamic>;
-          final name = si < names.length ? names[si].toString() : 'Stop';
-          final lat = (p['lat'] as num).toDouble();
-          final lng = (p['lng'] as num).toDouble();
-
-          _markers.add(
-            Marker(
-              markerId: MarkerId('transit_stop_${li}_$si'),
-              position: LatLng(lat, lng),
-              icon: icon,
-              infoWindow: InfoWindow(
-                title: name,
-                snippet: leg['lineName']?.toString(),
-              ),
-              zIndexInt: 12,
-            ),
-          );
-          added++;
-        }
-        if (added > 0) {
-          _logInfo('Transit stops (leg $li): $added markers');
-        }
-      }
-    } else {
-      // Fallback: show nearby OSM stops
-      _stopMarkers.clear();
-      int added = 0;
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // C. COMMON OVERLAY (All Stops - Cyan)
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if (_showAllStopsOverlay) {
       for (final stop in allIndiaStops) {
-        final stopPos = LatLng(stop['lat'], stop['lng']);
-        if (_isStationNearPath(stopPos, pathPoints, _osmStopsRadiusMeters)) {
-          _stopMarkers.add(
-            Marker(
-              markerId: MarkerId('stop_${stop['id']}'),
-              position: stopPos,
-              icon: icon,
-              infoWindow: InfoWindow(title: stop['name']),
-              zIndexInt: 10,
-            ),
-          );
-          added++;
-        }
-      }
-      _markers.addAll(_stopMarkers);
-      _logInfo('Transit stops (OSM fallback): $added markers');
-    }
-  }
-
-  void _drawOsmStopMarkers(BitmapDescriptor icon, List<LatLng> pathPoints) {
-    if (pathPoints.isEmpty) return;
-
-    final routeKey =
-        _lastRouteKey ?? _lastRouteSignature ?? '${pathPoints.length}';
-    final renderKey =
-        'route:$routeKey|all:${_osmStopsShowAll}|radius:${_osmStopsRadiusMeters.toStringAsFixed(0)}|strict:${_osmStopsStrictRouteMatch}';
-
-    if (_osmStopRenderKey == renderKey && _osmStopMarkers.isNotEmpty) {
-      _markers.addAll(_osmStopMarkers);
-      return;
-    }
-
-    double minLat = double.infinity;
-    double maxLat = -double.infinity;
-    double minLon = double.infinity;
-    double maxLon = -double.infinity;
-
-    for (final p in pathPoints) {
-      if (p.latitude < minLat) minLat = p.latitude;
-      if (p.latitude > maxLat) maxLat = p.latitude;
-      if (p.longitude < minLon) minLon = p.longitude;
-      if (p.longitude > maxLon) maxLon = p.longitude;
-    }
-
-    final midLat = (minLat + maxLat) / 2.0;
-    final latPad = _osmStopsRadiusMeters / 111000.0;
-    final lonPad =
-        _osmStopsRadiusMeters /
-        (111000.0 * cos(_degToRad(midLat)).abs().clamp(0.2, 1.0));
-
-    _osmStopMarkers.clear();
-
-    for (final stop in allIndiaStops) {
-      final lat = (stop['lat'] as num).toDouble();
-      final lng = (stop['lng'] as num).toDouble();
-
-      if (!_osmStopsShowAll) {
-        if (lat < minLat - latPad ||
-            lat > maxLat + latPad ||
-            lng < minLon - lonPad ||
-            lng > maxLon + lonPad) {
-          continue;
-        }
-      }
-
-      final stopPos = LatLng(lat, lng);
-      if (_osmStopsStrictRouteMatch &&
-          !_isStationNearPath(stopPos, pathPoints, _osmStopsRadiusMeters)) {
-        continue;
-      }
-
-      _osmStopMarkers.add(
-        Marker(
-          markerId: MarkerId('osm_stop_${stop['id']}'),
-          position: stopPos,
-          icon: icon,
-          infoWindow: InfoWindow(title: stop['name']),
-          zIndexInt: 11,
-        ),
-      );
-    }
-
-    _osmStopRenderKey = renderKey;
-    _markers.addAll(_osmStopMarkers);
-    _logInfo(
-      'OSM stops overlay: ${_osmStopMarkers.length} markers (showAll=$_osmStopsShowAll, strict=$_osmStopsStrictRouteMatch)',
-    );
-  }
-
-  Future<void> _refreshTransitStopMarkers() async {
-    if (_activeRoute.isEmpty) return;
-
-    // If not in transit mode, ensure no cyan stop markers remain.
-    if (!_transitMode) {
-      const nextKey = 'none';
-      if (_transitStopRenderKey != nextKey) {
-        setState(() {
-          _markers.removeWhere(
-            (m) =>
-                m.markerId.value.startsWith('transit_stop_') ||
-                m.markerId.value.startsWith('stop_'),
-          );
-          _stopMarkers.clear();
-          _transitStopRenderKey = nextKey;
-        });
-      }
-      if (_showOsmStops) {
-        final cyanMarkerIcon = await _createCustomMarkerBitmap(
-          Colors.cyanAccent,
-          size: 30,
+        final lat = (stop['lat'] as num).toDouble();
+        final lng = (stop['lng'] as num).toDouble();
+        newMarkers.add(
+          Marker(
+            markerId: MarkerId('overlay_stop_${stop['id']}'),
+            position: LatLng(lat, lng),
+            icon: _cachedCyanIcon!,
+            infoWindow: InfoWindow(title: stop['name'], snippet: 'Overlay'),
+            zIndexInt: 20,
+          ),
         );
-        setState(() {
-          _markers.removeWhere((m) => m.markerId.value.startsWith('osm_stop_'));
-          _osmStopMarkers.clear();
-          _drawOsmStopMarkers(cyanMarkerIcon, _activeRoute);
-        });
-      } else {
-        setState(() {
-          _markers.removeWhere((m) => m.markerId.value.startsWith('osm_stop_'));
-          _osmStopMarkers.clear();
-          _osmStopRenderKey = null;
-        });
-      }
-      return;
-    }
-
-    String nextKey = 'all';
-    if (!_showAllTransitLegStops) {
-      final legs = _lastTransitLegsJson;
-      final pm = _lastProgressMetersFromApp;
-      if (legs != null && pm != null) {
-        int? idx;
-        for (int li = 0; li < legs.length; li++) {
-          final leg = legs[li];
-          final start = (leg['legStartMeters'] as num?)?.toDouble();
-          final end = (leg['legEndMeters'] as num?)?.toDouble();
-          if (start == null || end == null) continue;
-          if (pm >= start && pm <= end) {
-            idx = li;
-            break;
-          }
-        }
-
-        if (idx != null) {
-          final isMetro = legs[idx]['isMetro'] == true;
-          nextKey = isMetro ? 'leg:$idx' : 'none';
-        }
       }
     }
 
-    final shouldRefreshOsm = _showOsmStops;
-    if (_transitStopRenderKey == nextKey && !shouldRefreshOsm) return;
-
-    final cyanMarkerIcon = await _createCustomMarkerBitmap(
-      Colors.cyanAccent,
-      size: 30,
-    );
-
+    // Apply to map
     setState(() {
-      _markers.removeWhere(
-        (m) =>
-            m.markerId.value.startsWith('transit_stop_') ||
-            m.markerId.value.startsWith('stop_'),
-      );
-      _stopMarkers.clear();
-
-      if (nextKey != 'none') {
-        _drawTransitStopMarkers(
-          cyanMarkerIcon,
-          _activeRoute,
-          restrictToCurrentLeg: !_showAllTransitLegStops,
-        );
-      }
-      _transitStopRenderKey = nextKey;
-
-      if (_showOsmStops) {
-        _drawOsmStopMarkers(cyanMarkerIcon, _activeRoute);
-      } else {
-        _markers.removeWhere((m) => m.markerId.value.startsWith('osm_stop_'));
-        _osmStopMarkers.clear();
-        _osmStopRenderKey = null;
-      }
+      _markers.clear();
+      _markers.addAll(newMarkers);
+      _polylines.clear();
+      _polylines.addAll(newPolylines);
     });
   }
 
-  List<Polyline> _prefixPolylines(
-    List<Polyline> src,
-    String prefix, {
-    Color? colorOverride,
-    int? zIndexOverride,
-  }) {
-    return src
-        .map(
-          (p) => Polyline(
-            polylineId: PolylineId('$prefix${p.polylineId.value}'),
-            points: p.points,
-            color: colorOverride ?? p.color,
-            width: p.width,
-            visible: p.visible,
-            zIndex: zIndexOverride ?? p.zIndex,
-            jointType: p.jointType,
-            patterns: p.patterns,
-            startCap: p.startCap,
-            endCap: p.endCap,
-            geodesic: p.geodesic,
-            consumeTapEvents: p.consumeTapEvents,
-          ),
-        )
-        .toList();
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
-  // Simulation Route Polylines
-  // ─────────────────────────────────────────────────────────────────────
-
-  void _updateRoutePolylines() {
-    _polylines.removeWhere(
-      (p) =>
-          p.polylineId.value.startsWith('route_seg_') ||
-          p.polylineId.value == 'original_route' ||
-          p.polylineId.value.startsWith('grey_route_seg_'),
-    );
-
-    final controller = _simController;
-    final isDeviating =
-        controller?.state == SimulationState.deviating ||
-        controller?.state == SimulationState.returning;
-
-    if (_activeRoute.isEmpty) return;
-
-    if (_activeRouteRawSegments.isNotEmpty) {
-      if (isDeviating) {
-        _addGreyRoutePolylines();
-      } else {
-        _addColoredRoutePolylines();
-      }
-    } else {
-      final color = isDeviating ? Colors.grey : Colors.blue;
-      _polylines.add(
-        Polyline(
-          polylineId: const PolylineId('original_route'),
-          points: _activeRoute,
-          color: color,
-          width: 5,
-          zIndex: 1,
-        ),
-      );
-    }
-  }
-
-  void _addColoredRoutePolylines() {
-    final polylines = _directionService.buildSegmentedPolylinesFromRawSegments(
-      _activeRouteRawSegments,
-    );
-
-    for (int i = 0; i < polylines.length; i++) {
-      final p = polylines[i];
-      _polylines.add(
-        Polyline(
-          polylineId: PolylineId('route_seg_$i'),
-          points: p.points,
-          color: p.color,
-          width: p.width,
-          patterns: p.patterns,
-          zIndex: p.zIndex,
-        ),
-      );
-    }
-  }
-
-  void _addGreyRoutePolylines() {
-    final polylines = _directionService.buildSegmentedPolylinesFromRawSegments(
-      _activeRouteRawSegments,
-    );
-
-    for (int i = 0; i < polylines.length; i++) {
-      final p = polylines[i];
-      _polylines.add(
-        Polyline(
-          polylineId: PolylineId('grey_route_seg_$i'),
-          points: p.points,
-          color: Colors.grey.withValues(alpha: 0.5),
-          width: p.width,
-          patterns: p.patterns,
-          zIndex: 0,
-        ),
-      );
-    }
-  }
-
-  void _updateDeviationPolyline() {
-    _polylines.removeWhere(
-      (p) =>
-          p.polylineId.value == 'deviation_path' ||
-          p.polylineId.value == 'current_path',
-    );
-
-    final controller = _simController;
-    if (controller == null) return;
-
-    final state = controller.state;
-    _updateRoutePolylines();
-
-    // Deviation path (orange, dashed)
-    if (controller.deviationPath.isNotEmpty &&
-        (state == SimulationState.deviating ||
-            state == SimulationState.returning)) {
-      _polylines.add(
-        Polyline(
-          polylineId: const PolylineId('deviation_path'),
-          points: controller.deviationPath,
-          color: Colors.orange,
-          width: 4,
-          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
-          zIndex: 2,
-        ),
-      );
-    }
-
-    // Current path (teal for returning)
-    if (controller.currentPath.isNotEmpty &&
-        state == SimulationState.returning) {
-      _polylines.add(
-        Polyline(
-          polylineId: const PolylineId('current_path'),
-          points: controller.currentPath,
-          color: Colors.teal,
-          width: 4,
-          patterns: [PatternItem.dash(15), PatternItem.gap(8)],
-          zIndex: 3,
-        ),
-      );
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Idle State
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _clearRouteForIdle() {
     setState(() {
@@ -1811,23 +1286,25 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     }
 
     final now = DateTime.now().toIso8601String().replaceAll(':', '-');
-    final filename = 'constraint_logs_$now.${format == LogExportFormat.json ? 'json' : 'csv'}';
+    final filename =
+        'constraint_logs_$now.${format == LogExportFormat.json ? 'json' : 'csv'}';
 
     if (format == LogExportFormat.json) {
       final payload = {
         'generatedAt': DateTime.now().toIso8601String(),
         'eventCount': events.length,
-        'events': events
-            .map(
-              (e) => {
-                'timestamp': e.timestamp.toIso8601String(),
-                'type': e.type.name,
-                'title': e.title,
-                'description': e.description,
-                'details': e.details,
-              },
-            )
-            .toList(),
+        'events':
+            events
+                .map(
+                  (e) => {
+                    'timestamp': e.timestamp.toIso8601String(),
+                    'type': e.type.name,
+                    'title': e.title,
+                    'description': e.description,
+                    'details': e.details,
+                  },
+                )
+                .toList(),
       };
       final jsonText = const JsonEncoder.withIndent('  ').convert(payload);
       _downloadTextFile(filename, jsonText, 'application/json');
@@ -1866,9 +1343,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     html.Url.revokeObjectUrl(url);
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Actions
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _setWarpFactor(double factor) {
     setState(() {
@@ -1903,16 +1380,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     }
   }
 
-  void _toggleOsmOverlay() {
-    setState(() {
-      _osmVisible = !_osmVisible;
-      _osmOverlay.setVisible(_osmVisible);
-    });
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Logging
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _logInfo(String message) {
     ConstraintLogger.instance.log(
@@ -1935,18 +1405,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Helpers
-  // ─────────────────────────────────────────────────────────────────────
-
-  bool _isStationNearPath(LatLng stop, List<LatLng> path, double radiusMeters) {
-    for (int i = 0; i < path.length; i++) {
-      if (_haversineDistance(stop, path[i]) <= radiusMeters) {
-        return true;
-      }
-    }
-    return false;
-  }
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   double _haversineDistance(LatLng p1, LatLng p2) {
     const R = 6371000.0;
@@ -1988,6 +1449,9 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     if (color == Colors.cyanAccent && _cachedCyanIcon != null) {
       return _cachedCyanIcon!;
     }
+    if (color == Colors.yellowAccent && _cachedYellowIcon != null) {
+      return _cachedYellowIcon!;
+    }
 
     final pictureRecorder = ui.PictureRecorder();
     final canvas = Canvas(pictureRecorder);
@@ -2011,12 +1475,13 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
     final icon = BitmapDescriptor.bytes(byteData!.buffer.asUint8List());
 
     if (color == Colors.cyanAccent) _cachedCyanIcon = icon;
+    if (color == Colors.yellowAccent) _cachedYellowIcon = icon;
     return icon;
   }
 
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Build UI
-  // ─────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -2058,7 +1523,7 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           decoration: BoxDecoration(
             color:
                 _ekfTestModeEnabled
-                    ? Colors.orange.withOpacity(0.2)
+                    ? Colors.orange.withValues(alpha: 0.2)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
@@ -2106,14 +1571,6 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
           ),
         ),
         // OSM overlay toggle
-        IconButton(
-          icon: Icon(
-            _osmVisible ? Icons.layers : Icons.layers_outlined,
-            color: _osmVisible ? Colors.orange : Colors.grey,
-          ),
-          tooltip: 'Toggle OSM overlay',
-          onPressed: _toggleOsmOverlay,
-        ),
         const SizedBox(width: 8),
       ],
     );
@@ -2160,13 +1617,10 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
                   _broadcastEkfTestPosition(pos, accuracy, speed);
                 },
                 onRouteChanged: (polyline, stations) {
-                  _ekfTestRoutePolyline = polyline;
-                  // Note: stations from route JSON ignored - we use allIndiaStops instead
-                  _updateEkfTestRouteOnMap(); // async, will call setState internally
+                  _handleEkfRouteChanged(polyline, stations);
                 },
                 onVisualizationUpdate: (viz) {
-                  // Update map markers for EKF test mode
-                  _updateEkfTestVisualization(viz);
+                  _updateEkfState(viz);
                 },
               ),
               const SizedBox(height: 16),
@@ -2216,62 +1670,17 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
+
               SwitchListTile(
-                value: _showAllTransitLegStops,
+                value: _showAllStopsOverlay,
                 onChanged: (v) {
-                  setState(() => _showAllTransitLegStops = v);
-                  _refreshTransitStopMarkers();
+                  setState(() => _showAllStopsOverlay = v);
+                  _renderMapState();
                 },
-                title: const Text('Show all metro legs'),
-                subtitle: const Text('Off = only current leg stops'),
+                title: const Text('Show all metro stops (India)'),
+                subtitle: const Text('Cyan = active, Yellow = upcoming'),
                 dense: true,
               ),
-              SwitchListTile(
-                value: _showOsmStops,
-                onChanged: (v) {
-                  setState(() => _showOsmStops = v);
-                  _refreshTransitStopMarkers();
-                },
-                title: const Text('Show OSM stop overlay'),
-                dense: true,
-              ),
-              if (_showOsmStops) ...[
-                SwitchListTile(
-                  value: _osmStopsShowAll,
-                  onChanged: (v) {
-                    setState(() => _osmStopsShowAll = v);
-                    _refreshTransitStopMarkers();
-                  },
-                  title: const Text('Show all OSM stops'),
-                  subtitle: const Text('Heavy; use with caution'),
-                  dense: true,
-                ),
-                SwitchListTile(
-                  value: _osmStopsStrictRouteMatch,
-                  onChanged: (v) {
-                    setState(() => _osmStopsStrictRouteMatch = v);
-                    _refreshTransitStopMarkers();
-                  },
-                  title: const Text('Strict route match'),
-                  subtitle: const Text('Require stops within radius of route'),
-                  dense: true,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'OSM radius: ${_osmStopsRadiusMeters.toStringAsFixed(0)} m',
-                ),
-                Slider(
-                  value: _osmStopsRadiusMeters,
-                  min: 200,
-                  max: 5000,
-                  divisions: 24,
-                  label: '${_osmStopsRadiusMeters.toStringAsFixed(0)} m',
-                  onChanged: (v) {
-                    setState(() => _osmStopsRadiusMeters = v);
-                    _refreshTransitStopMarkers();
-                  },
-                ),
-              ],
 
               // Progress slider
               const Text('Progress'),
@@ -2487,12 +1896,12 @@ class _UnifiedDashboardState extends State<UnifiedDashboard> {
             _LegendItem(
               color: Colors.cyanAccent,
               isMarker: true,
-              label: 'Transit Stop',
+              label: 'Active Metro Stop',
             ),
             _LegendItem(
-              color: Colors.cyanAccent,
+              color: Colors.yellowAccent,
               isMarker: true,
-              label: 'OSM Stop Overlay',
+              label: 'Upcoming Metro Stop',
             ),
           ],
         ),
