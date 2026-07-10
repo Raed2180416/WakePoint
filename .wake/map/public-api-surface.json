@@ -1,0 +1,1404 @@
+{
+  "lib/all_india_stops.dart": [
+    {
+      "kind": "const",
+      "name": "allIndiaStops"
+    }
+  ],
+  "lib/config/app_config.dart": [
+    {
+      "kind": "class",
+      "name": "AppConfig"
+    }
+  ],
+  "lib/config/deviation_config.dart": [
+    {
+      "kind": "class",
+      "name": "DeviationConfig"
+    }
+  ],
+  "lib/config/platform_test_flag_io.dart": [
+    {
+      "kind": "function",
+      "name": "detectFlutterTest"
+    }
+  ],
+  "lib/config/platform_test_flag_stub.dart": [
+    {
+      "kind": "function",
+      "name": "detectFlutterTest"
+    }
+  ],
+  "lib/config/playground_bridge.dart": [
+    {
+      "kind": "class",
+      "name": "PlaygroundBridgeConfig"
+    }
+  ],
+  "lib/config/power_policy.dart": [
+    {
+      "kind": "class",
+      "name": "PowerPolicy"
+    },
+    {
+      "kind": "class",
+      "name": "PowerPolicyManager"
+    }
+  ],
+  "lib/config/test_mode_flag.dart": [
+    {
+      "kind": "class",
+      "name": "TestModeFlag"
+    }
+  ],
+  "lib/core/clock/app_clock.dart": [
+    {
+      "kind": "class",
+      "name": "AppClock"
+    },
+    {
+      "kind": "extension",
+      "name": "DateTimeClockExtension"
+    }
+  ],
+  "lib/core/ekf/degraded_mode.dart": [
+    {
+      "kind": "class",
+      "name": "DegradedMode"
+    }
+  ],
+  "lib/core/ekf/ekf_logger.dart": [
+    {
+      "kind": "class",
+      "name": "EkfLogEntry"
+    },
+    {
+      "kind": "class",
+      "name": "EkfLogger"
+    },
+    {
+      "kind": "const",
+      "name": "ekfLogger"
+    }
+  ],
+  "lib/core/ekf/ekf_orchestrator.dart": [
+    {
+      "kind": "class",
+      "name": "EkfOrchestrator"
+    },
+    {
+      "kind": "typedef",
+      "name": "EkfOrchestratorLogCallback"
+    }
+  ],
+  "lib/core/ekf/ekf_pipeline.dart": [
+    {
+      "kind": "class",
+      "name": "EkfPipeline"
+    },
+    {
+      "kind": "typedef",
+      "name": "EkfPipelineLogCallback"
+    }
+  ],
+  "lib/core/ekf/ekf_test_controller.dart": [
+    {
+      "kind": "class",
+      "name": "EkfStateSnapshot"
+    },
+    {
+      "kind": "class",
+      "name": "EkfTestVisualization"
+    },
+    {
+      "kind": "class",
+      "name": "EkfTestLogEntry"
+    },
+    {
+      "kind": "class",
+      "name": "EkfTestController"
+    },
+    {
+      "kind": "enum",
+      "name": "TestScenario"
+    },
+    {
+      "kind": "enum",
+      "name": "EkfTestLogCategory"
+    }
+  ],
+  "lib/core/ekf/ekf_types.dart": [
+    {
+      "kind": "class",
+      "name": "EkfPublicState"
+    },
+    {
+      "kind": "class",
+      "name": "ImuSample"
+    },
+    {
+      "kind": "class",
+      "name": "GravitySample"
+    },
+    {
+      "kind": "class",
+      "name": "OrientationSample"
+    },
+    {
+      "kind": "class",
+      "name": "GpsFix"
+    },
+    {
+      "kind": "class",
+      "name": "StationCandidate"
+    },
+    {
+      "kind": "class",
+      "name": "StationSnapConfirmed"
+    },
+    {
+      "kind": "class",
+      "name": "EkfConfig"
+    },
+    {
+      "kind": "enum",
+      "name": "EkfMode"
+    },
+    {
+      "kind": "enum",
+      "name": "MotionState"
+    }
+  ],
+  "lib/core/ekf/gps_degradation_detector.dart": [
+    {
+      "kind": "class",
+      "name": "GpsDegradationDetector"
+    }
+  ],
+  "lib/core/ekf/imu_replay_engine.dart": [
+    {
+      "kind": "class",
+      "name": "TimestampedSample"
+    },
+    {
+      "kind": "class",
+      "name": "RecordedGpsSample"
+    },
+    {
+      "kind": "class",
+      "name": "RecordedStationAnnotation"
+    },
+    {
+      "kind": "class",
+      "name": "ReplayTickResult"
+    },
+    {
+      "kind": "class",
+      "name": "RecordedRoute"
+    },
+    {
+      "kind": "class",
+      "name": "ImuReplayEngine"
+    },
+    {
+      "kind": "enum",
+      "name": "ReplayState"
+    }
+  ],
+  "lib/core/ekf/imu_replay_engine_v2.dart": [
+    {
+      "kind": "class",
+      "name": "TestRouteStation"
+    },
+    {
+      "kind": "class",
+      "name": "TestRouteLeg"
+    },
+    {
+      "kind": "class",
+      "name": "TestRoute"
+    },
+    {
+      "kind": "class",
+      "name": "ReplayTickResultV2"
+    },
+    {
+      "kind": "class",
+      "name": "ReplayLogEntry"
+    },
+    {
+      "kind": "class",
+      "name": "LogLocation"
+    },
+    {
+      "kind": "class",
+      "name": "LogImu"
+    },
+    {
+      "kind": "class",
+      "name": "LogGravity"
+    },
+    {
+      "kind": "class",
+      "name": "LogOrientation"
+    },
+    {
+      "kind": "class",
+      "name": "LogParser"
+    },
+    {
+      "kind": "class",
+      "name": "ImuReplayEngineV2"
+    },
+    {
+      "kind": "class",
+      "name": "UnifiedRouteLogTick"
+    },
+    {
+      "kind": "enum",
+      "name": "TestRouteId"
+    },
+    {
+      "kind": "enum",
+      "name": "GpsDropoutMode"
+    },
+    {
+      "kind": "enum",
+      "name": "SimulatedMotionState"
+    },
+    {
+      "kind": "enum",
+      "name": "LegType"
+    },
+    {
+      "kind": "extension",
+      "name": "ImuReplayEngineExt"
+    }
+  ],
+  "lib/core/ekf/motion_classifier.dart": [
+    {
+      "kind": "class",
+      "name": "MotionFeatures"
+    },
+    {
+      "kind": "class",
+      "name": "MotionFeatureExtractor"
+    },
+    {
+      "kind": "class",
+      "name": "MotionClassifier"
+    }
+  ],
+  "lib/core/ekf/route_geometry.dart": [
+    {
+      "kind": "class",
+      "name": "RouteGeometry"
+    }
+  ],
+  "lib/core/ekf/station_association.dart": [
+    {
+      "kind": "class",
+      "name": "StationAssociationDiagnostics"
+    },
+    {
+      "kind": "class",
+      "name": "StationAssociationConfig"
+    },
+    {
+      "kind": "class",
+      "name": "StationAssociationResult"
+    },
+    {
+      "kind": "class",
+      "name": "StationAssociation"
+    }
+  ],
+  "lib/core/ekf/test_routes.dart": [
+    {
+      "kind": "const",
+      "name": "MAJESTIC_TO_NALLUR_HALLI_POLYLINE"
+    },
+    {
+      "kind": "const",
+      "name": "MAJESTIC_TO_NALLUR_HALLI_STATION_METERS"
+    },
+    {
+      "kind": "const",
+      "name": "MAJESTIC_TO_NALLUR_HALLI_STATION_NAMES"
+    },
+    {
+      "kind": "const",
+      "name": "RAJAJINAGAR_TO_NALLUR_HALLI_POLYLINE"
+    },
+    {
+      "kind": "const",
+      "name": "RAJAJINAGAR_TO_NALLUR_HALLI_STATION_METERS"
+    },
+    {
+      "kind": "const",
+      "name": "RAJAJINAGAR_TO_NALLUR_HALLI_STATION_NAMES"
+    },
+    {
+      "kind": "const",
+      "name": "NALLUR_HALLI_TO_VIJAYANAGAR_POLYLINE"
+    },
+    {
+      "kind": "const",
+      "name": "NALLUR_HALLI_TO_VIJAYANAGAR_STATION_METERS"
+    },
+    {
+      "kind": "const",
+      "name": "NALLUR_HALLI_TO_VIJAYANAGAR_STATION_NAMES"
+    }
+  ],
+  "lib/core/ekf/tilt_filter.dart": [
+    {
+      "kind": "class",
+      "name": "TiltFilterOutput"
+    },
+    {
+      "kind": "class",
+      "name": "TiltFilter"
+    }
+  ],
+  "lib/core/ekf/zupt_detector.dart": [
+    {
+      "kind": "class",
+      "name": "ZuptDetector"
+    }
+  ],
+  "lib/core/logging/app_logger.dart": [
+    {
+      "kind": "class",
+      "name": "AppLogger"
+    },
+    {
+      "kind": "enum",
+      "name": "LogLevel"
+    },
+    {
+      "kind": "const",
+      "name": "gpsLog"
+    },
+    {
+      "kind": "const",
+      "name": "trackingLog"
+    },
+    {
+      "kind": "const",
+      "name": "alarmLog"
+    },
+    {
+      "kind": "const",
+      "name": "etaLog"
+    },
+    {
+      "kind": "const",
+      "name": "stopLog"
+    },
+    {
+      "kind": "const",
+      "name": "routeLog"
+    },
+    {
+      "kind": "const",
+      "name": "networkLog"
+    },
+    {
+      "kind": "const",
+      "name": "navigationLog"
+    },
+    {
+      "kind": "const",
+      "name": "notificationLog"
+    },
+    {
+      "kind": "const",
+      "name": "ipcLog"
+    },
+    {
+      "kind": "const",
+      "name": "sensorLog"
+    },
+    {
+      "kind": "const",
+      "name": "stateLog"
+    }
+  ],
+  "lib/dashboard/alarm_debouncer.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmDebouncer"
+    }
+  ],
+  "lib/dashboard/constraint_drawer.dart": [
+    {
+      "kind": "class",
+      "name": "ConstraintDrawer"
+    },
+    {
+      "kind": "enum",
+      "name": "LogExportFormat"
+    }
+  ],
+  "lib/dashboard/constraint_logger.dart": [
+    {
+      "kind": "class",
+      "name": "ConstraintEvent"
+    },
+    {
+      "kind": "class",
+      "name": "ConstraintLogger"
+    },
+    {
+      "kind": "enum",
+      "name": "ConstraintEventType"
+    }
+  ],
+  "lib/dashboard/deviation_dashboard.dart": [
+    {
+      "kind": "class",
+      "name": "DeviationDashboardApp"
+    },
+    {
+      "kind": "class",
+      "name": "DeviationDashboard"
+    }
+  ],
+  "lib/dashboard/deviation_simulation_controller.dart": [
+    {
+      "kind": "class",
+      "name": "DeviationSimulationConfig"
+    },
+    {
+      "kind": "class",
+      "name": "SimulationTickResult"
+    },
+    {
+      "kind": "class",
+      "name": "DeviationSimulationController"
+    }
+  ],
+  "lib/dashboard/ekf_replay_panel.dart": [
+    {
+      "kind": "class",
+      "name": "EkfReplayVisualization"
+    },
+    {
+      "kind": "class",
+      "name": "EkfReplayPanel"
+    },
+    {
+      "kind": "enum",
+      "name": "EkfReplayMode"
+    }
+  ],
+  "lib/dashboard/ekf_test_panel.dart": [
+    {
+      "kind": "class",
+      "name": "EkfTestPanel"
+    },
+    {
+      "kind": "enum",
+      "name": "CuratedRoute"
+    }
+  ],
+  "lib/dashboard/osm_overlay_manager.dart": [
+    {
+      "kind": "class",
+      "name": "OsmOverlayManager"
+    },
+    {
+      "kind": "enum",
+      "name": "OsmRoadType"
+    }
+  ],
+  "lib/dashboard/simulation_controls.dart": [
+    {
+      "kind": "class",
+      "name": "SimulationControls"
+    }
+  ],
+  "lib/dashboard/simulation_state.dart": [
+    {
+      "kind": "class",
+      "name": "SimulationStateMachine"
+    },
+    {
+      "kind": "enum",
+      "name": "SimulationState"
+    }
+  ],
+  "lib/dashboard/speed_slider.dart": [
+    {
+      "kind": "class",
+      "name": "SpeedSlider"
+    }
+  ],
+  "lib/dashboard/time_warp_slider.dart": [
+    {
+      "kind": "class",
+      "name": "TimeWarpSlider"
+    }
+  ],
+  "lib/dashboard/unified_dashboard.dart": [
+    {
+      "kind": "class",
+      "name": "UnifiedDashboardApp"
+    },
+    {
+      "kind": "class",
+      "name": "UnifiedDashboard"
+    },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "lib/debug/demo_tools.dart": [
+    {
+      "kind": "class",
+      "name": "DemoRouteSimulator"
+    }
+  ],
+  "lib/debug/dev_server.dart": [
+    {
+      "kind": "class",
+      "name": "DevServer"
+    }
+  ],
+  "lib/main.dart": [
+    {
+      "kind": "class",
+      "name": "MyApp"
+    },
+    {
+      "kind": "class",
+      "name": "MyAppState"
+    },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "lib/main_unified_dashboard.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "lib/metro_color_map.dart": [
+    {
+      "kind": "const",
+      "name": "metroLineColors"
+    }
+  ],
+  "lib/models/route_models.dart": [
+    {
+      "kind": "class",
+      "name": "TransitSwitch"
+    },
+    {
+      "kind": "class",
+      "name": "RouteModel"
+    }
+  ],
+  "lib/screens/homescreen.dart": [
+    {
+      "kind": "class",
+      "name": "HomeScreen"
+    },
+    {
+      "kind": "class",
+      "name": "HomeScreenState"
+    }
+  ],
+  "lib/screens/maptracking.dart": [
+    {
+      "kind": "class",
+      "name": "MapTrackingScreen"
+    }
+  ],
+  "lib/screens/otherimpservices/preload_map_screen.dart": [
+    {
+      "kind": "class",
+      "name": "PreloadMapScreen"
+    }
+  ],
+  "lib/screens/otherimpservices/recent_locations_service.dart": [
+    {
+      "kind": "class",
+      "name": "RecentLocationsService"
+    }
+  ],
+  "lib/screens/ringtones_screen.dart": [
+    {
+      "kind": "class",
+      "name": "Ringtone"
+    },
+    {
+      "kind": "class",
+      "name": "RingtonesScreen"
+    },
+    {
+      "kind": "const",
+      "name": "availableRingtones"
+    }
+  ],
+  "lib/screens/settingsdrawer.dart": [
+    {
+      "kind": "class",
+      "name": "SettingsDrawer"
+    }
+  ],
+  "lib/screens/splash_screen.dart": [
+    {
+      "kind": "class",
+      "name": "SplashScreen"
+    }
+  ],
+  "lib/services/active_route_manager.dart": [
+    {
+      "kind": "class",
+      "name": "RouteSwitchEvent"
+    },
+    {
+      "kind": "class",
+      "name": "ActiveRouteState"
+    },
+    {
+      "kind": "class",
+      "name": "ActiveRouteManager"
+    }
+  ],
+  "lib/services/alarm_evaluator.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmEventType"
+    },
+    {
+      "kind": "class",
+      "name": "AlarmTrigger"
+    },
+    {
+      "kind": "class",
+      "name": "AlarmEvaluator"
+    },
+    {
+      "kind": "enum",
+      "name": "AlarmMode"
+    }
+  ],
+  "lib/services/alarm_haptics.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmHaptics"
+    }
+  ],
+  "lib/services/alarm_player.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmPlayer"
+    }
+  ],
+  "lib/services/api_client.dart": [
+    {
+      "kind": "class",
+      "name": "ApiClient"
+    }
+  ],
+  "lib/services/deviation_detection.dart": [
+    {
+      "kind": "class",
+      "name": "PointInfo"
+    },
+    {
+      "kind": "function",
+      "name": "calculateDistance"
+    },
+    {
+      "kind": "function",
+      "name": "findClosestPointOnRoute"
+    },
+    {
+      "kind": "function",
+      "name": "determineThreshold"
+    },
+    {
+      "kind": "function",
+      "name": "isDeviationExceeded"
+    }
+  ],
+  "lib/services/deviation_monitor.dart": [
+    {
+      "kind": "class",
+      "name": "DeviationState"
+    },
+    {
+      "kind": "class",
+      "name": "SpeedThresholdModel"
+    },
+    {
+      "kind": "class",
+      "name": "DeviationMonitor"
+    }
+  ],
+  "lib/services/direction_service.dart": [
+    {
+      "kind": "class",
+      "name": "DirectionService"
+    },
+    {
+      "kind": "class",
+      "name": "ModeInfo"
+    }
+  ],
+  "lib/services/eta_engine.dart": [
+    {
+      "kind": "class",
+      "name": "EtaEngine"
+    }
+  ],
+  "lib/services/eta_utils.dart": [
+    {
+      "kind": "class",
+      "name": "EtaUtils"
+    }
+  ],
+  "lib/services/gps_health_monitor.dart": [
+    {
+      "kind": "class",
+      "name": "GpsHealthMonitor"
+    },
+    {
+      "kind": "enum",
+      "name": "GpsHealthState"
+    }
+  ],
+  "lib/services/location_manager.dart": [
+    {
+      "kind": "class",
+      "name": "LocationManager"
+    }
+  ],
+  "lib/services/metro_stop_service.dart": [
+    {
+      "kind": "class",
+      "name": "MetroStopService"
+    },
+    {
+      "kind": "class",
+      "name": "TransitStop"
+    },
+    {
+      "kind": "class",
+      "name": "DestinationValidationResult"
+    }
+  ],
+  "lib/services/navigation_service.dart": [
+    {
+      "kind": "class",
+      "name": "NavigationService"
+    }
+  ],
+  "lib/services/notification_service.dart": [
+    {
+      "kind": "class",
+      "name": "NotificationService"
+    },
+    {
+      "kind": "enum",
+      "name": "NotificationActionOutcome"
+    },
+    {
+      "kind": "function",
+      "name": "notificationTapBackground"
+    }
+  ],
+  "lib/services/offline_coordinator.dart": [
+    {
+      "kind": "class",
+      "name": "OfflineRouteResult"
+    },
+    {
+      "kind": "class",
+      "name": "DirectionsProvider"
+    },
+    {
+      "kind": "class",
+      "name": "DefaultDirectionsProvider"
+    },
+    {
+      "kind": "class",
+      "name": "RouteCachePort"
+    },
+    {
+      "kind": "class",
+      "name": "DefaultRouteCachePort"
+    },
+    {
+      "kind": "class",
+      "name": "OfflineCoordinator"
+    },
+    {
+      "kind": "enum",
+      "name": "RouteSource"
+    }
+  ],
+  "lib/services/pending_ack_manager.dart": [
+    {
+      "kind": "class",
+      "name": "AckTimeoutException"
+    },
+    {
+      "kind": "class",
+      "name": "PendingAckManager"
+    }
+  ],
+  "lib/services/permission_service.dart": [
+    {
+      "kind": "class",
+      "name": "PermissionService"
+    }
+  ],
+  "lib/services/places_service.dart": [
+    {
+      "kind": "class",
+      "name": "PlacesService"
+    }
+  ],
+  "lib/services/polyline_decoder.dart": [
+    {
+      "kind": "function",
+      "name": "decodePolyline"
+    },
+    {
+      "kind": "function",
+      "name": "haversineDistance"
+    },
+    {
+      "kind": "function",
+      "name": "polylineLength"
+    },
+    {
+      "kind": "function",
+      "name": "pointAlongPolyline"
+    },
+    {
+      "kind": "function",
+      "name": "estimateStopPositions"
+    },
+    {
+      "kind": "function",
+      "name": "stopDistancesAlongPolyline"
+    }
+  ],
+  "lib/services/polyline_simplifier.dart": [
+    {
+      "kind": "class",
+      "name": "PolylineSimplifier"
+    }
+  ],
+  "lib/services/position/gps_position_provider.dart": [
+    {
+      "kind": "class",
+      "name": "GpsPositionProvider"
+    }
+  ],
+  "lib/services/position/position_provider.dart": [
+    {
+      "kind": "class",
+      "name": "PositionProvider"
+    },
+    {
+      "kind": "enum",
+      "name": "PositionProviderType"
+    }
+  ],
+  "lib/services/reroute_constraints.dart": [
+    {
+      "kind": "class",
+      "name": "RerouteValidationResult"
+    },
+    {
+      "kind": "class",
+      "name": "RerouteConstraints"
+    }
+  ],
+  "lib/services/reroute_policy.dart": [
+    {
+      "kind": "class",
+      "name": "RerouteDecision"
+    },
+    {
+      "kind": "class",
+      "name": "ReroutePolicy"
+    }
+  ],
+  "lib/services/route_cache.dart": [
+    {
+      "kind": "class",
+      "name": "RouteCacheEntry"
+    },
+    {
+      "kind": "class",
+      "name": "RouteCache"
+    }
+  ],
+  "lib/services/route_logger.dart": [
+    {
+      "kind": "class",
+      "name": "RouteLogger"
+    }
+  ],
+  "lib/services/route_metadata.dart": [
+    {
+      "kind": "class",
+      "name": "RouteMetadata"
+    },
+    {
+      "kind": "class",
+      "name": "RouteMetadataManager"
+    }
+  ],
+  "lib/services/route_queue.dart": [
+    {
+      "kind": "class",
+      "name": "RouteQueue"
+    }
+  ],
+  "lib/services/route_registry.dart": [
+    {
+      "kind": "class",
+      "name": "RouteEntry"
+    },
+    {
+      "kind": "class",
+      "name": "RouteRegistry"
+    }
+  ],
+  "lib/services/route_session_manager.dart": [
+    {
+      "kind": "class",
+      "name": "RouteSessionManager"
+    }
+  ],
+  "lib/services/sensor_fusion.dart": [
+    {
+      "kind": "class",
+      "name": "SensorFusionManager"
+    }
+  ],
+  "lib/services/simulation_client.dart": [
+    {
+      "kind": "class",
+      "name": "SimulationClient"
+    }
+  ],
+  "lib/services/snap_to_route.dart": [
+    {
+      "kind": "class",
+      "name": "SnapResult"
+    },
+    {
+      "kind": "class",
+      "name": "SnapToRouteEngine"
+    }
+  ],
+  "lib/services/soft_lock_manager.dart": [
+    {
+      "kind": "class",
+      "name": "SoftLockManager"
+    }
+  ],
+  "lib/services/stop_logic_engine.dart": [
+    {
+      "kind": "class",
+      "name": "StopLogicResult"
+    },
+    {
+      "kind": "class",
+      "name": "PreBoardResults"
+    },
+    {
+      "kind": "class",
+      "name": "StopLogicEngine"
+    }
+  ],
+  "lib/services/stop_matcher.dart": [
+    {
+      "kind": "class",
+      "name": "Stop"
+    },
+    {
+      "kind": "class",
+      "name": "MatchedStop"
+    },
+    {
+      "kind": "class",
+      "name": "StopMatcher"
+    }
+  ],
+  "lib/services/test_service_instance.dart": [
+    {
+      "kind": "class",
+      "name": "TestServiceInstance"
+    }
+  ],
+  "lib/services/testing/osm_graph.dart": [
+    {
+      "kind": "class",
+      "name": "OsmNode"
+    },
+    {
+      "kind": "class",
+      "name": "OsmEdge"
+    },
+    {
+      "kind": "class",
+      "name": "OsmGraph"
+    },
+    {
+      "kind": "enum",
+      "name": "RoadType"
+    },
+    {
+      "kind": "extension",
+      "name": "LatLngDistance"
+    }
+  ],
+  "lib/services/testing/osm_loader.dart": [
+    {
+      "kind": "class",
+      "name": "OsmLoader"
+    },
+    {
+      "kind": "class",
+      "name": "OsmLoadException"
+    }
+  ],
+  "lib/services/testing/pathfinder.dart": [
+    {
+      "kind": "class",
+      "name": "PathResult"
+    },
+    {
+      "kind": "class",
+      "name": "Pathfinder"
+    },
+    {
+      "kind": "class",
+      "name": "DeviationPathfinder"
+    }
+  ],
+  "lib/services/tracking/alarm_context_builder.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmContextBuilder"
+    }
+  ],
+  "lib/services/tracking/alarm_controller.dart": [
+    {
+      "kind": "class",
+      "name": "AlarmContext"
+    },
+    {
+      "kind": "class",
+      "name": "AlarmController"
+    }
+  ],
+  "lib/services/tracking/background_handlers.dart": [
+    {
+      "kind": "class",
+      "name": "BackgroundHandlerCallbacks"
+    },
+    {
+      "kind": "class",
+      "name": "BackgroundHandlers"
+    }
+  ],
+  "lib/services/tracking/foreground_bridge.dart": [
+    {
+      "kind": "class",
+      "name": "ForegroundBridge"
+    }
+  ],
+  "lib/services/tracking/heartbeat_monitor.dart": [
+    {
+      "kind": "class",
+      "name": "HeartbeatMonitor"
+    }
+  ],
+  "lib/services/tracking/location_stream_handler.dart": [
+    {
+      "kind": "class",
+      "name": "LocationStreamContext"
+    },
+    {
+      "kind": "class",
+      "name": "LocationStreamHandler"
+    }
+  ],
+  "lib/services/tracking/notification_updater.dart": [
+    {
+      "kind": "class",
+      "name": "BroadcastContext"
+    },
+    {
+      "kind": "class",
+      "name": "RouteContext"
+    },
+    {
+      "kind": "class",
+      "name": "NotificationUpdater"
+    }
+  ],
+  "lib/services/tracking/snapshot_route_restorer.dart": [
+    {
+      "kind": "class",
+      "name": "SnapshotRouteRestorer"
+    },
+    {
+      "kind": "typedef",
+      "name": "RegisterRouteFromDirections"
+    }
+  ],
+  "lib/services/tracking_state_store.dart": [
+    {
+      "kind": "class",
+      "name": "TrackingSnapshot"
+    },
+    {
+      "kind": "class",
+      "name": "TrackingProgressPayload"
+    },
+    {
+      "kind": "class",
+      "name": "TrackingStateStore"
+    }
+  ],
+  "lib/services/tracking_termination_policy.dart": [
+    {
+      "kind": "class",
+      "name": "DeviationTrackingState"
+    },
+    {
+      "kind": "class",
+      "name": "TerminationDecision"
+    },
+    {
+      "kind": "class",
+      "name": "TrackingTerminationPolicy"
+    }
+  ],
+  "lib/services/trackingservice.dart": [
+    {
+      "kind": "class",
+      "name": "TestServiceInstance"
+    },
+    {
+      "kind": "class",
+      "name": "TrackingService"
+    },
+    {
+      "kind": "extension",
+      "name": "TrackingServiceRouteOps"
+    },
+    {
+      "kind": "function",
+      "name": "onIosBackground"
+    },
+    {
+      "kind": "function",
+      "name": "triggerOnStartForRecoveryTest"
+    },
+    {
+      "kind": "function",
+      "name": "startLocationStream"
+    }
+  ],
+  "lib/services/transfer_utils.dart": [
+    {
+      "kind": "class",
+      "name": "TransitLegStops"
+    },
+    {
+      "kind": "class",
+      "name": "RouteEventBoundary"
+    },
+    {
+      "kind": "class",
+      "name": "TransferUtils"
+    }
+  ],
+  "lib/simulation_engine.dart": [
+    {
+      "kind": "class",
+      "name": "SimulationEngine"
+    }
+  ],
+  "lib/themes/appthemes.dart": [
+    {
+      "kind": "class",
+      "name": "AppThemes"
+    }
+  ],
+  "lib/widgets/pulsing_dots.dart": [
+    {
+      "kind": "class",
+      "name": "PulsingDots"
+    }
+  ],
+  "test/alarm_repro.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/compare_routes.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/complex_failure_repro.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/debug_alarm_diagnostic.dart": [
+    {
+      "kind": "function",
+      "name": "encodePolyline"
+    },
+    {
+      "kind": "function",
+      "name": "problemRoute"
+    },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/debug_alarm_mismatch.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/debug_route2.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/flutter_test_config.dart": [
+    {
+      "kind": "function",
+      "name": "testExecutable"
+    }
+  ],
+  "test/helpers/ekf_test_helpers.dart": [
+    {
+      "kind": "class",
+      "name": "ImuSample"
+    },
+    {
+      "kind": "class",
+      "name": "ImuSequence"
+    },
+    {
+      "kind": "class",
+      "name": "RouteFixture"
+    },
+    {
+      "kind": "function",
+      "name": "linspace"
+    },
+    {
+      "kind": "function",
+      "name": "seededRandom"
+    }
+  ],
+  "test/log_helper.dart": [
+    {
+      "kind": "function",
+      "name": "logSection"
+    },
+    {
+      "kind": "function",
+      "name": "logStep"
+    },
+    {
+      "kind": "function",
+      "name": "logInfo"
+    },
+    {
+      "kind": "function",
+      "name": "logPass"
+    },
+    {
+      "kind": "function",
+      "name": "logWarn"
+    }
+  ],
+  "test/mock_location_provider.dart": [
+    {
+      "kind": "class",
+      "name": "MockLocationProvider"
+    }
+  ],
+  "test/persistence_repro.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/reproduce_distance_alarm_failure.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/reproduce_missing_bounds.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/reproduce_stop_alarm.dart": [
+    {
+      "kind": "class",
+      "name": "MockServiceInstance"
+    },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/reproduce_stop_logic.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "test/test_routes.dart": [
+    {
+      "kind": "class",
+      "name": "TestRoutes"
+    }
+  ],
+  "test/tool_fetch_route.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "tools/relay_server.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ]
+}

@@ -68,3 +68,5 @@ node_modules/
 .venv/
 .venv-1/
 .nix-android-setup-done
+# WakePoint map: transient semantic-staleness flag (runtime only)
+.wake/STALE

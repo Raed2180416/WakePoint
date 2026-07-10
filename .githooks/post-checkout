@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# WakePoint auto-map: after the tree changes, flag whether the SEMANTIC layers
+# (scip-dart / RAG / intent labels) are stale vs the current Dart source.
+# Non-blocking, no heavy rebuild — sets/clears .wake/STALE only.
+set -u
+ROOT="$(git rev-parse --show-toplevel)"
+command -v node >/dev/null 2>&1 || exit 0
+node "$ROOT/tools/wakepoint-update.mjs" --stale-check "$ROOT" >/dev/null 2>&1 || true
+exit 0

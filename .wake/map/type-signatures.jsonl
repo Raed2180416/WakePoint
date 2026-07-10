@@ -1,0 +1,275 @@
+{"file":"geowake-server/src/controllers/authController.js","name":"generateToken","signature":"(req, res) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"googleApiProxy","signature":"(req, res, { url, params, type }) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"getDirections","signature":"(req, res) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"getAutocomplete","signature":"(req, res) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"getPlaceDetails","signature":"(req, res) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"getGeocoding","signature":"(req, res) =>"}
+{"file":"geowake-server/src/controllers/mapsController.js","name":"getNearbySearch","signature":"(req, res) =>"}
+{"file":"geowake-server/src/middleware/auth.js","name":"authenticateDevice","signature":"(req, res, next) =>"}
+{"file":"geowake-server/src/middleware/auth.js","name":"generateDeviceToken","signature":"(deviceId, appVersion = '1.0.0') =>"}
+{"file":"geowake-server/src/middleware/security.js","name":"createRateLimit","signature":"(options) =>"}
+{"file":"geowake-server/src/middleware/security.js","name":"createSlowDown","signature":"(options) =>"}
+{"file":"geowake-server/src/middleware/security.js","name":"handleRateLimitError","signature":"(err, req, res, next) =>"}
+{"file":"integration_test/device_alarm_integration_test.dart","name":"main","signature":"()"}
+{"file":"lib/config/platform_test_flag_io.dart","name":"detectFlutterTest","signature":"()"}
+{"file":"lib/config/platform_test_flag_stub.dart","name":"detectFlutterTest","signature":"()"}
+{"file":"lib/dashboard/unified_dashboard.dart","name":"main","signature":"()"}
+{"file":"lib/main.dart","name":"main","signature":"()"}
+{"file":"lib/main_unified_dashboard.dart","name":"main","signature":"()"}
+{"file":"lib/services/deviation_detection.dart","name":"calculateDistance","signature":"(LatLng a, LatLng b)"}
+{"file":"lib/services/deviation_detection.dart","name":"findClosestPointOnRoute","signature":"(LatLng currentLocation, RouteModel route)"}
+{"file":"lib/services/deviation_detection.dart","name":"determineThreshold","signature":"(bool isOffline, LatLng currentLocation, RouteModel route)"}
+{"file":"lib/services/deviation_detection.dart","name":"isDeviationExceeded","signature":"(LatLng currentLocation, RouteModel activeRoute, bool isOffline)"}
+{"file":"lib/services/notification_service.dart","name":"notificationTapBackground","signature":"(NotificationResponse response)"}
+{"file":"lib/services/polyline_decoder.dart","name":"decodePolyline","signature":"(String encoded)"}
+{"file":"lib/services/polyline_decoder.dart","name":"haversineDistance","signature":"(LatLng a, LatLng b)"}
+{"file":"lib/services/polyline_decoder.dart","name":"_toRadians","signature":"(double deg)"}
+{"file":"lib/services/polyline_decoder.dart","name":"polylineLength","signature":"(List<LatLng> points)"}
+{"file":"lib/services/polyline_decoder.dart","name":"pointAlongPolyline","signature":"(List<LatLng> points, double targetDistance)"}
+{"file":"lib/services/polyline_decoder.dart","name":"estimateStopPositions","signature":"(List<LatLng> polyline, int numStops)"}
+{"file":"lib/services/polyline_decoder.dart","name":"stopDistancesAlongPolyline","signature":"(List<LatLng> polyline,\n  List<LatLng> stopPositions,)"}
+{"file":"lib/services/tracking_state_store.dart","name":"_encodeSnapshotInBackground","signature":"(Map<String, dynamic> json)"}
+{"file":"lib/services/tracking_state_store.dart","name":"_minimizeDirectionsForSnapshot","signature":"(Map<String, dynamic>? directions,)"}
+{"file":"lib/services/trackingservice.dart","name":"onIosBackground","signature":"(ServiceInstance service)"}
+{"file":"lib/services/trackingservice.dart","name":"_activeManager","signature":"(ActiveRouteManager? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_devMonitor","signature":"(DeviationMonitor? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_reroutePolicy","signature":"(ReroutePolicy? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_transitMode","signature":"(bool v)"}
+{"file":"lib/services/trackingservice.dart","name":"_lastActiveState","signature":"(ActiveRouteState? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_firstTransitBoarding","signature":"(LatLng? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_cachedRoutePayload","signature":"(Map<String, dynamic>? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_lastRouteBroadcastAt","signature":"(DateTime? v)"}
+{"file":"lib/services/trackingservice.dart","name":"_onStop","signature":"()"}
+{"file":"lib/services/trackingservice.dart","name":"_resetAlarmState","signature":"()"}
+{"file":"lib/services/trackingservice.dart","name":"_handleDashboardRouteSwitch","signature":"(String routeKey)"}
+{"file":"lib/services/trackingservice.dart","name":"_resolveAlarmRouteState","signature":"(Position currentPosition)"}
+{"file":"lib/services/trackingservice.dart","name":"_checkAndTriggerAlarm","signature":"(Position currentPosition,\n  ServiceInstance service,)"}
+{"file":"lib/services/trackingservice.dart","name":"_handleRerouteDecision","signature":"(RerouteDecision decision)"}
+{"file":"lib/services/trackingservice.dart","name":"_terminateTrackingWithMessage","signature":"(String message)"}
+{"file":"lib/services/trackingservice.dart","name":"triggerOnStartForRecoveryTest","signature":"(ServiceInstance service)"}
+{"file":"lib/services/trackingservice.dart","name":"_handleBackgroundStopAlarm","signature":"()"}
+{"file":"lib/services/trackingservice.dart","name":"_handleBackgroundForegroundResumed","signature":"(ServiceInstance service)"}
+{"file":"lib/services/trackingservice.dart","name":"startLocationStream","signature":"(ServiceInstance service)"}
+{"file":"test/active_route_manager_complex_test.dart","name":"main","signature":"()"}
+{"file":"test/active_route_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/alarm_leg_id_stability_test.dart","name":"main","signature":"()"}
+{"file":"test/alarm_logic_rewrite_test.dart","name":"main","signature":"()"}
+{"file":"test/alarm_logic_test.dart","name":"main","signature":"()"}
+{"file":"test/alarm_reliability_test.dart","name":"generateSegment","signature":"(LatLng start, LatLng end, int steps)"}
+{"file":"test/alarm_reliability_test.dart","name":"main","signature":"()"}
+{"file":"test/alarm_repro.dart","name":"main","signature":"()"}
+{"file":"test/app_config_url_alignment_test.dart","name":"main","signature":"()"}
+{"file":"test/bug_repro_test.dart","name":"main","signature":"()"}
+{"file":"test/compare_routes.dart","name":"main","signature":"()"}
+{"file":"test/complex_failure_repro.dart","name":"main","signature":"()"}
+{"file":"test/complex_route_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/comprehensive_real_world_scenarios_test.dart","name":"generateLinearRoute","signature":"(LatLng start, LatLng end, int numPoints)"}
+{"file":"test/comprehensive_real_world_scenarios_test.dart","name":"approxDistanceMeters","signature":"(LatLng a, LatLng b)"}
+{"file":"test/comprehensive_real_world_scenarios_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/comprehensive_real_world_scenarios_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/comprehensive_real_world_scenarios_test.dart","name":"main","signature":"()"}
+{"file":"test/core/clock/app_clock_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/core/clock/app_clock_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/degraded_mode_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/ekf_logger_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/ekf_orchestrator_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/ekf_pipeline_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/ekf_test_controller_wiring_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/gps_degradation_detector_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/motion_classifier_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/route_geometry_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/station_association_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/tilt_filter_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/zupt_detector_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/constraint_event_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/constraint_logger_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/deviation_dashboard_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/deviation_simulation_controller_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/osm_overlay_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard/simulation_state_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/dashboard_regression_test.dart","name":"main","signature":"()"}
+{"file":"test/debug_alarm_diagnostic.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/debug_alarm_diagnostic.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/debug_alarm_diagnostic.dart","name":"problemRoute","signature":"()"}
+{"file":"test/debug_alarm_diagnostic.dart","name":"main","signature":"()"}
+{"file":"test/debug_alarm_mismatch.dart","name":"main","signature":"()"}
+{"file":"test/debug_route2.dart","name":"main","signature":"()"}
+{"file":"test/destination_only_metro_time_test.dart","name":"main","signature":"()"}
+{"file":"test/deviation_config_test.dart","name":"main","signature":"()"}
+{"file":"test/deviation_config_test.dart","name":"_computeHighThreshold","signature":"(double base, double k, double speedMps)"}
+{"file":"test/deviation_config_test.dart","name":"_computeLowThreshold","signature":"(double tHigh, double ratio)"}
+{"file":"test/deviation_decision_tree_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
+{"file":"test/deviation_decision_tree_test.dart","name":"main","signature":"()"}
+{"file":"test/deviation_detection_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/deviation_reroute_stress_test.dart","name":"main","signature":"()"}
+{"file":"test/direction_service_behavior_test.dart","name":"main","signature":"()"}
+{"file":"test/direction_service_caching_test.dart","name":"main","signature":"()"}
+{"file":"test/driving_coalesce_test.dart","name":"main","signature":"()"}
+{"file":"test/eta_engine_test.dart","name":"main","signature":"()"}
+{"file":"test/eta_utils_test.dart","name":"main","signature":"()"}
+{"file":"test/event_alarm_overlap_test.dart","name":"main","signature":"()"}
+{"file":"test/event_alarm_progress_source_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
+{"file":"test/event_alarm_progress_source_test.dart","name":"main","signature":"()"}
+{"file":"test/flutter_test_config.dart","name":"testExecutable","signature":"(FutureOr<void> Function() testMain)"}
+{"file":"test/gps_health_monitor_test.dart","name":"main","signature":"()"}
+{"file":"test/helpers/ekf_test_helpers.dart","name":"linspace","signature":"(double start, double end, int n)"}
+{"file":"test/helpers/ekf_test_helpers.dart","name":"seededRandom","signature":"(int seed)"}
+{"file":"test/hybrid_eta_test.dart","name":"main","signature":"()"}
+{"file":"test/hybrid_eta_time_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/ekf_logged_data_test.dart","name":"main","signature":"()"}
+{"file":"test/location_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/log_helper.dart","name":"logSection","signature":"(String title)"}
+{"file":"test/log_helper.dart","name":"logStep","signature":"(String message)"}
+{"file":"test/log_helper.dart","name":"logInfo","signature":"(String message)"}
+{"file":"test/log_helper.dart","name":"logPass","signature":"(String message)"}
+{"file":"test/log_helper.dart","name":"logWarn","signature":"(String message)"}
+{"file":"test/maptracking_eta_distance_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_alarm_reliability_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_final_station_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_stops_prior_test.dart","name":"syntheticMetroDirections","signature":"()"}
+{"file":"test/metro_stops_prior_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/metro_stops_prior_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/metro_stops_prior_test.dart","name":"main","signature":"()"}
+{"file":"test/minimal_test.dart","name":"main","signature":"()"}
+{"file":"test/mixed_mode_alarm_test.dart","name":"mixedModeDirections","signature":"()"}
+{"file":"test/mixed_mode_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/mixed_mode_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/mixed_mode_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/mixed_mode_regression_test.dart","name":"main","signature":"()"}
+{"file":"test/multiple_switch_point_alarm_test.dart","name":"syntheticMultiTransferDirections","signature":"()"}
+{"file":"test/multiple_switch_point_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/multiple_switch_point_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/multiple_switch_point_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/notification_action_classification_test.dart","name":"main","signature":"()"}
+{"file":"test/notification_behavior_spec_test.dart","name":"main","signature":"()"}
+{"file":"test/notification_service_test.dart","name":"main","signature":"()"}
+{"file":"test/notification_tap_navigation_widget_test.dart","name":"main","signature":"()"}
+{"file":"test/offline_coordinator_test.dart","name":"main","signature":"()"}
+{"file":"test/offline_routing_guard_test.dart","name":"_entry","signature":"(LatLng o, LatLng d)"}
+{"file":"test/offline_routing_guard_test.dart","name":"main","signature":"()"}
+{"file":"test/pending_ack_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/performance/ekf_performance_test.dart","name":"main","signature":"()"}
+{"file":"test/persistence_repro.dart","name":"main","signature":"()"}
+{"file":"test/places_session_token_test.dart","name":"main","signature":"()"}
+{"file":"test/playground_bridge_flag_test.dart","name":"main","signature":"()"}
+{"file":"test/polyline_projection_clamp_test.dart","name":"main","signature":"()"}
+{"file":"test/polyline_projection_clamp_test.dart","name":"_haversine","signature":"(LatLng p1, LatLng p2)"}
+{"file":"test/polyline_projection_clamp_test.dart","name":"_toRad","signature":"(double d)"}
+{"file":"test/polyline_simplifier_test.dart","name":"main","signature":"()"}
+{"file":"test/power_policy_tracking_test.dart","name":"main","signature":"()"}
+{"file":"test/preboarding_semantics_test.dart","name":"main","signature":"()"}
+{"file":"test/preboarding_toggle_test.dart","name":"main","signature":"()"}
+{"file":"test/process_death_recovery_test.dart","name":"main","signature":"()"}
+{"file":"test/rapid_deviations_vm_test.dart","name":"main","signature":"()"}
+{"file":"test/regression_prod_data_test.dart","name":"main","signature":"()"}
+{"file":"test/repro_mumbai_transfer_test.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_distance_alarm_failure.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_missing_bounds.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_polyline_color_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/reproduce_polyline_color_test.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_stop_alarm.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_stop_alarm_overshoot_test.dart","name":"syntheticOvershootDirections","signature":"()"}
+{"file":"test/reproduce_stop_alarm_overshoot_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/reproduce_stop_alarm_overshoot_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/reproduce_stop_alarm_overshoot_test.dart","name":"main","signature":"()"}
+{"file":"test/reproduce_stop_logic.dart","name":"main","signature":"()"}
+{"file":"test/reroute_chain_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/reroute_chain_integration_test.dart","name":"_buildDrivingDirections","signature":"()"}
+{"file":"test/reroute_chain_integration_test.dart","name":"_buildDirectionsWithDuration","signature":"(int durationSeconds)"}
+{"file":"test/reroute_chain_integration_test.dart","name":"_buildDirectionsWithDistance","signature":"(int distanceMeters)"}
+{"file":"test/reroute_constraints_test.dart","name":"main","signature":"()"}
+{"file":"test/reroute_constraints_test.dart","name":"_buildDrivingDirections","signature":"()"}
+{"file":"test/reroute_constraints_test.dart","name":"_buildDirectionsWithDuration","signature":"(int durationSeconds)"}
+{"file":"test/reroute_constraints_test.dart","name":"_buildDirectionsWithDistance","signature":"(int distanceMeters)"}
+{"file":"test/reroute_constraints_test.dart","name":"_buildDirectionsWithMultipleTransitLegs","signature":"(int transitLegs)"}
+{"file":"test/reroute_policy_continuity_test.dart","name":"main","signature":"()"}
+{"file":"test/route_cache_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/route_cache_policy_test.dart","name":"main","signature":"()"}
+{"file":"test/route_cache_transit_variant_test.dart","name":"main","signature":"()"}
+{"file":"test/route_events_test.dart","name":"main","signature":"()"}
+{"file":"test/route_metadata_test.dart","name":"main","signature":"()"}
+{"file":"test/route_registry_lru_eviction_test.dart","name":"main","signature":"()"}
+{"file":"test/route_registry_test.dart","name":"main","signature":"()"}
+{"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}
+{"file":"test/segment_builder_test.dart","name":"main","signature":"()"}
+{"file":"test/sensor_fusion_test.dart","name":"main","signature":"()"}
+{"file":"test/services/ekf_integration/ambiguous_station_stop_test.dart","name":"main","signature":"()"}
+{"file":"test/services/ekf_integration/gps_recovery_large_innovation_test.dart","name":"main","signature":"()"}
+{"file":"test/services/ekf_integration/gps_recovery_large_innovation_test.dart","name":"_pointAtFraction","signature":"(RouteGeometry geom, double frac)"}
+{"file":"test/services/ekf_integration/long_tunnel_no_stops_test.dart","name":"main","signature":"()"}
+{"file":"test/services/ekf_integration/smooth_acceleration_test.dart","name":"main","signature":"()"}
+{"file":"test/services/testing/osm_graph_test.dart","name":"main","signature":"()"}
+{"file":"test/services/testing/osm_graph_test.dart","name":"_createMinimalWkpFile","signature":"()"}
+{"file":"test/services/testing/pathfinder_test.dart","name":"main","signature":"()"}
+{"file":"test/services/testing/pathfinder_test.dart","name":"_minDistanceToRoute","signature":"(LatLng point, List<LatLng> route)"}
+{"file":"test/shared_prefs_reload_test.dart","name":"main","signature":"()"}
+{"file":"test/simplified_polyline_present_test.dart","name":"main","signature":"()"}
+{"file":"test/simulated_route_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/snap_to_route_test.dart","name":"main","signature":"()"}
+{"file":"test/soft_lock_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/stop_end_tracking_vm_test.dart","name":"main","signature":"()"}
+{"file":"test/stop_logic_engine_test.dart","name":"main","signature":"()"}
+{"file":"test/stop_matcher_test.dart","name":"main","signature":"()"}
+{"file":"test/stops_mode_validation_test.dart","name":"main","signature":"()"}
+{"file":"test/stops_prior_semantics_test.dart","name":"main","signature":"()"}
+{"file":"test/switch_point_logic_test.dart","name":"main","signature":"()"}
+{"file":"test/time_alarm_vm_test.dart","name":"main","signature":"()"}
+{"file":"test/time_mode_switch_targeting_universal_test.dart","name":"main","signature":"()"}
+{"file":"test/tool_fetch_route.dart","name":"main","signature":"()"}
+{"file":"test/tracking_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_service_connectivity_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_service_reroute_integration_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
+{"file":"test/tracking_service_reroute_integration_test.dart","name":"directionsFromPoints","signature":"(List<LatLng> pts)"}
+{"file":"test/tracking_service_reroute_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_service_route_activation_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
+{"file":"test/tracking_service_route_activation_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_service_stop_flow_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_state_store_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking_termination_policy_test.dart","name":"main","signature":"()"}
+{"file":"test/transfer_utils_test.dart","name":"main","signature":"()"}
+{"file":"test/transit_leg_stops_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/transit_leg_stops_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/transit_leg_stops_test.dart","name":"main","signature":"()"}
+{"file":"test_driver/integration_test.dart","name":"main","signature":"()"}
+{"file":"tools/relay_server.dart","name":"main","signature":"()"}
+{"file":"tools/wake-manifest.mjs","name":"git","signature":"(args, fb = '')"}
+{"file":"tools/wake-manifest.mjs","name":"sha256","signature":"(buf)"}
+{"file":"tools/wake-manifest.mjs","name":"canonical","signature":"(v)"}
+{"file":"tools/wake-manifest.mjs","name":"sourceDigest","signature":"()"}
+{"file":"tools/wake-manifest.mjs","name":"walk","signature":"(dir, acc = [])"}
+{"file":"tools/wake-manifest.mjs","name":"layerOf","signature":"(rel)"}
+{"file":"tools/wake-manifest.mjs","name":"artifactDigest","signature":"(a)"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"git","signature":"(args, fb = '')"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"featureFor","signature":"(file)"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"readJson","signature":"(p) =>"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"push","signature":"(n) =>"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"link","signature":"(from, to, type, deterministic, source, extra = {}) =>"}
+{"file":"tools/wakepoint-build-intent-graph.mjs","name":"esc","signature":"(s) =>"}
+{"file":"tools/wakepoint-coverage-ledger.mjs","name":"git","signature":"(a, fb = '') =>"}
+{"file":"tools/wakepoint-coverage-ledger.mjs","name":"readJson","signature":"(p) =>"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"git","signature":"(args, fb = '')"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"readVarint","signature":"(buf, st)"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"skip","signature":"(buf, st, wt)"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"readLD","signature":"(buf, st)"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"normRel","signature":"(v = '')"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"decodeOccurrence","signature":"(buf)"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"decodeDocument","signature":"(buf)"}
+{"file":"tools/wakepoint-decode-scip.mjs","name":"decodeIndex","signature":"(buf)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"git","signature":"(args, fallback = '')"}
+{"file":"tools/wakepoint-indexer.mjs","name":"sha256","signature":"(value)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"safeRead","signature":"(rel)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"extractDartInterface","signature":"(file, text)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"extractJsInterface","signature":"(file, text)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"classifyRole","signature":"(file)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"resolveDartImport","signature":"(fromFile, source, trackedSet)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"resolveJsImport","signature":"(fromFile, source, trackedSet)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"buildKnowledgeGraph","signature":"()"}
+{"file":"tools/wakepoint-indexer.mjs","name":"writeLLMNavigationGuide","signature":"(graph)"}
+{"file":"tools/wakepoint-indexer.mjs","name":"trackedFiles","signature":"() =>"}
+{"file":"tools/wakepoint-update.mjs","name":"run","signature":"(cmd, cmdArgs, opts = {})"}
+{"file":"tools/wakepoint-update.mjs","name":"fast","signature":"()"}
+{"file":"tools/wakepoint-update.mjs","name":"dartFingerprint","signature":"()"}
+{"file":"tools/wakepoint-update.mjs","name":"semantic","signature":"()"}
+{"file":"tools/wakepoint-update.mjs","name":"staleCheck","signature":"()"}
+{"file":"tools/wakepoint-update.mjs","name":"T","signature":"(p) =>"}

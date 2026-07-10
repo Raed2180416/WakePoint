@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "bf0903058c1da7a7c0712fea6b0cda9b4c925488",
+    "indexed_at": "2026-07-10T00:32:08Z",
+    "project": "home-raed-Projects-WakePoint",
+    "nodes": 5041,
+    "edges": 13959,
+    "original_size": 8585216,
+    "compressed_size": 1863405,
+    "compression_level": 9
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# WakePoint auto-map: regenerate the DETERMINISTIC map layers and stage them so the
+# committed .wake/ map is always in sync with the code. Fast (sub-second) + non-blocking:
+# a tooling failure warns but never blocks your commit.
+set -u
+ROOT="$(git rev-parse --show-toplevel)"
+command -v node >/dev/null 2>&1 || { echo "[wake] node not found; skipping map refresh" >&2; exit 0; }
+if node "$ROOT/tools/wakepoint-update.mjs" --fast "$ROOT" >/dev/null 2>&1; then
+  git add "$ROOT/.wake/map" "$ROOT/.wake/surface" "$ROOT/.wake/intent" "$ROOT/.wake/MANIFEST.json" 2>/dev/null || true
+else
+  echo "[wake] deterministic map refresh failed; commit proceeding (run: node tools/wakepoint-update.mjs --fast)" >&2
+fi
+exit 0

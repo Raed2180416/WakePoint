@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "wakepoint-manifest-v1",
+  "repo": "WakePoint",
+  "gitCommit": "4b0f5915e61a5818100124112fae647d7d3d915d",
+  "gitTree": "dc11b7347a5ee89fb563926475376e4511618291",
+  "generatedAt": "2026-07-10T06:06:24+05:30",
+  "sourceDigest": "ffe165773fe665e07e5460acdf1b998d625c7a3ec4e260415093f8dcec4e33fc",
+  "artifactCount": 19,
+  "rootDigest": "4a1f87da6c242d1c672341d00f2f894f91de7162e7727bbc6e344bcac311a312",
+  "artifacts": [
+    {
+      "path": ".wake/AGENT_CONTEXT.md",
+      "bytes": 13790,
+      "layer": "semantic",
+      "sha256": "ea458720a4cc1d460a548330de44b69c622730b0804ea481f93e922109db2561"
+    },
+    {
+      "path": ".wake/graph/.semantic-source",
+      "bytes": 65,
+      "layer": "semantic",
+      "sha256": "348e3cb434f2a89f18f3508b63a6403e69ed5c4c7138796874c26399596c7a9d"
+    },
+    {
+      "path": ".wake/graph/backend-call-graph.json",
+      "bytes": 2097136,
+      "layer": "semantic",
+      "sha256": "6e8450451f9ac5dd72908e325eaf64819e683d85715b440c70fdf8a7afdeeabf"
+    },
+    {
+      "path": ".wake/graph/dart-symbol-graph.json",
+      "bytes": 2831993,
+      "layer": "semantic",
+      "sha256": "be7b81850f68c3fba45070b2b06dc10d384d1c107e17651256bac906959a758f"
+    },
+    {
+      "path": ".wake/graph/scip-dart.scip",
+      "bytes": 7804831,
+      "layer": "semantic",
+      "sha256": "fcf2d68ec6c8a99611d96a3cbef41356d0376143085bfea34f3fa793650e3238"
+    },
+    {
+      "path": ".wake/intent/features.json",
+      "bytes": 32948,
+      "layer": "semantic",
+      "sha256": "1258584c4a3818f95ec74d02f52a64a8ee6df3dcdf2cc47f203f7cd704e47128"
+    },
+    {
+      "path": ".wake/intent/intent-graph.dot",
+      "bytes": 3850,
+      "layer": "semantic",
+      "sha256": "7deb1c6619ac4b0a5c585f38c36da359b496aeccba7cd023c97cce415d7c9d5d"
+    },
+    {
+      "path": ".wake/intent/intent-graph.json",
+      "bytes": 582710,
+      "layer": "semantic",
+      "sha256": "bf695ebdde04460101d662ef148776b9daf0f209e5797419218279c48024e0c0"
+    },
+    {
+      "path": ".wake/intent/intent-graph.svg",
+      "bytes": 25309,
+      "layer": "semantic",
+      "sha256": "e431ca7bdcd4cf1db7e135c71106f514d3b1b41dfda9f839a810968762a60634"
+    },
+    {
+      "path": ".wake/intent/subsystems.json",
+      "bytes": 127879,
+      "layer": "semantic",
+      "sha256": "31f02a2ef8667cd27cd42de62a8b1144561b175df2b985f6ab9847173970ae11"
+    },
+    {
+      "path": ".wake/map/change-impact.json",
+      "bytes": 25988,
+      "layer": "deterministic",
+      "sha256": "bf087a6a7aeb6a01c28b01a1107c4d5abdaecda3c659ddee8124c7783f8454de"
+    },
+    {
+      "path": ".wake/map/entry-points.json",
+      "bytes": 55,
+      "layer": "deterministic",
+      "sha256": "2f7d7b29bb6ceacf09d2f583d8105f1e9a4686bfcbb07e7e3c311885a88cbda8"
+    },
+    {
+      "path": ".wake/map/knowledge-graph.json",
+      "bytes": 490814,
+      "layer": "deterministic",
+      "sha256": "001142701773b3a3cd00224529e4f100e72ff7a2ba4c2688ecab1edaa9c382e2"
+    },
+    {
+      "path": ".wake/map/LLM_NAVIGATION_GUIDE.md",
+      "bytes": 1509,
+      "layer": "deterministic",
+      "sha256": "a905d37e6c4b6926bcdd321ed43934010038f23824042c8ae8a23316adc4c067"
+    },
+    {
+      "path": ".wake/map/module-interfaces.jsonl",
+      "bytes": 189188,
+      "layer": "deterministic",
+      "sha256": "182e21a05109b9dbfb9d9fdfcbfdab179c09d278aebe47f3c162926648a6eaae"
+    },
+    {
+      "path": ".wake/map/public-api-surface.json",
+      "bytes": 25434,
+      "layer": "deterministic",
+      "sha256": "c99de6916057a7b6c936fcb5e35d8a8ddf3a430ae627fab729cb79e6c98236ca"
+    },
+    {
+      "path": ".wake/map/type-signatures.jsonl",
+      "bytes": 25386,
+      "layer": "deterministic",
+      "sha256": "e19d0ead3d613aefdfd94aea0490dea56890a374af29de8c7dfb93539f20aafc"
+    },
+    {
+      "path": ".wake/rag/codebase-index.json",
+      "bytes": 10309303,
+      "layer": "semantic",
+      "sha256": "7eb66150bf03b3ad43f442da1d1c87bbac1ede09be660e4b316dfd210be63d0a"
+    },
+    {
+      "path": ".wake/surface/coverage-ledger.json",
+      "bytes": 3346,
+      "layer": "deterministic",
+      "sha256": "a30ddc729c92d5e91f992edda542ff114b66980bdde4413e08881b46f325cb3a"
+    }
+  ]
+}

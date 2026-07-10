@@ -196,6 +196,82 @@ tools/
 
 ---
 
+## 🗺️ Codebase Map (`.wake/`)
+
+The `.wake/` directory is WakePoint's **committed, deterministic map of itself** — a machine-and-human-readable snapshot of the repo's structure, symbols, call graphs, and feature intent. It exists so that AI coding agents (and new humans) can get accurate, grounded repo intelligence *without* re-deriving it live and hallucinating: every artifact is generated from the source tree, content-hashed, and pinned to a specific git commit. Think of it as a build output for "understanding the codebase," regenerated the same way you'd rebuild compiled assets.
+
+### Artifact layout
+
+| Path | What it holds |
+| --- | --- |
+| `.wake/map/` | Deterministic atomic map: `knowledge-graph.json`, `entry-points.json`, `change-impact.json`, `public-api-surface.json`, `module-interfaces.jsonl`, `type-signatures.jsonl`, and `LLM_NAVIGATION_GUIDE.md`. |
+| `.wake/graph/` | Semantic reference/call graphs: `dart-symbol-graph.json`, `backend-call-graph.json`, and the raw `scip-dart.scip` index. |
+| `.wake/rag/` | `codebase-index.json` — chunked, retrieval-ready index for RAG-style lookups. |
+| `.wake/intent/` | Feature/intent graph (`intent-graph.json` + `.dot`/`.svg`) mapping code units to product features. |
+| `.wake/MANIFEST.json` | The integrity root: every artifact's byte size, SHA-256, and `layer`, plus `gitCommit`/`gitTree`/`sourceDigest`/`rootDigest` provenance. |
+| `.wake/AGENT_CONTEXT.md` | Human-readable entry point — the "read me first" orientation doc for agents working in the repo. |
+
+### Deterministic vs. semantic layers
+
+Each artifact is tagged with a `layer` in `MANIFEST.json`:
+
+- **`deterministic`** — derived purely from the file tree via structural analysis (`map/`, `rag/`). Given the same git tree, these regenerate **byte-for-byte identical**; provenance anchors are a function of `HEAD` + tree, never wall-clock time.
+- **`semantic`** — derived from deeper type/symbol resolution (`graph/`, `intent/`), sourced from the SCIP index. Richer, but dependent on a resolved SDK/toolchain.
+
+This split lets tooling trust the deterministic layer as a stable contract while treating the semantic layer as best-effort enrichment.
+
+### Regenerating the map
+
+```bash
+# 1. Deterministic atomic map + RAG index (fast, no toolchain needed)
+node tools/wakepoint-indexer.mjs .
+
+# 2. Semantic graphs (Dart symbol graph, backend call graph) from the SCIP index
+node tools/wakepoint-decode-scip.mjs .
+
+# 3. Feature/intent graph
+node tools/wakepoint-build-intent-graph.mjs .
+
+# 4. Re-seal the manifest (recomputes hashes + provenance)
+node tools/wake-manifest.mjs
+```
+
+**Freshness check** (verifies artifacts match the current tree without rewriting them — use in CI or before trusting the map):
+
+```bash
+node tools/wake-manifest.mjs --check
+```
+
+A mismatch means the map is stale relative to `HEAD` and should be regenerated.
+
+### Auto-update
+
+The map is **regenerated automatically via a git hook**, so a normal commit keeps `.wake/` in sync with the code it describes — you rarely need to run the commands above by hand. Run them manually only when bootstrapping the hook, or when you want to inspect the map before committing.
+
+### Provenance
+
+The semantic layer is built from a **[SCIP](https://github.com/sourcegraph/scip) index produced by `scip-dart`** run against the project's pinned **Flutter SDK**. Because symbol resolution depends on the SDK, semantic artifacts carry the same commit/tree provenance in `MANIFEST.json` as the deterministic ones — so you can always tell which exact source state (and toolchain) a given map was generated from.
+
+### One-command update
+
+All layers regenerate through a single orchestrator:
+
+```bash
+node tools/wakepoint-update.mjs --fast      # deterministic map + intent graph + manifest (git-hook default)
+node tools/wakepoint-update.mjs --semantic  # scip-dart + RAG + intent (slow; needs Flutter SDK)
+node tools/wakepoint-update.mjs --all        # everything
+node tools/wakepoint-update.mjs --check      # byte-reproducibility gate
+```
+
+A `pre-commit` hook runs `--fast` and stages `.wake/`; `post-commit`/`post-merge`/`post-checkout` flag `.wake/STALE` when the Dart source drifts from the last semantic build.
+
+### MCP query layer (token-efficient)
+
+`.mcp.json` registers **`codebase-memory`** ([DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp), MIT) — an additive graph the next agent queries directly (`search_code`, `query_graph`, `trace_path`, `get_architecture`, …) at a fraction of the tokens of reading files. It bootstraps from `.codebase-memory/graph.db.zst`. `scip-dart` (`.wake/graph/`) remains the Dart semantic **source of truth**; codebase-memory is heuristic/fast, not compiler-authoritative.
+
+
+---
+
 ## License
 
 Proprietary - All rights reserved.

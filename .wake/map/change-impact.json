@@ -1,0 +1,748 @@
+[
+  {
+    "file": "lib/services/transfer_utils.dart",
+    "importers": 49,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/reroute_constraints.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/sensor_fusion.dart",
+      "lib/services/stop_logic_engine.dart",
+      "lib/services/tracking/alarm_context_builder.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/tracking_state_store.dart",
+      "lib/services/trackingservice.dart",
+      "test/alarm_leg_id_stability_test.dart",
+      "test/alarm_logic_rewrite_test.dart",
+      "test/alarm_logic_test.dart",
+      "test/alarm_reliability_test.dart",
+      "test/alarm_repro.dart",
+      "test/bug_repro_test.dart",
+      "test/compare_routes.dart",
+      "test/complex_failure_repro.dart",
+      "test/complex_route_alarm_test.dart",
+      "test/comprehensive_real_world_scenarios_test.dart",
+      "test/dashboard_regression_test.dart",
+      "test/debug_alarm_diagnostic.dart",
+      "test/debug_alarm_mismatch.dart",
+      "test/debug_route2.dart",
+      "test/driving_coalesce_test.dart",
+      "test/event_alarm_overlap_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/maptracking_eta_distance_test.dart",
+      "test/metro_final_station_alarm_test.dart",
+      "test/mixed_mode_regression_test.dart",
+      "test/persistence_repro.dart",
+      "test/preboarding_semantics_test.dart",
+      "test/preboarding_toggle_test.dart",
+      "test/repro_mumbai_transfer_test.dart",
+      "test/reproduce_missing_bounds.dart",
+      "test/reproduce_polyline_color_test.dart",
+      "test/reproduce_stop_alarm.dart",
+      "test/reproduce_stop_logic.dart",
+      "test/route_events_test.dart",
+      "test/stop_logic_engine_test.dart",
+      "test/stops_mode_validation_test.dart",
+      "test/stops_prior_semantics_test.dart",
+      "test/switch_point_logic_test.dart",
+      "test/time_mode_switch_targeting_universal_test.dart",
+      "test/transfer_utils_test.dart",
+      "test/transit_leg_stops_test.dart"
+    ],
+    "exportedSymbols": [
+      "TransitLegStops",
+      "RouteEventBoundary",
+      "TransferUtils"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/trackingservice.dart",
+    "importers": 43,
+    "directDependents": [
+      "integration_test/device_alarm_integration_test.dart",
+      "lib/dashboard/ekf_test_panel.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/debug/demo_tools.dart",
+      "lib/main.dart",
+      "lib/screens/homescreen.dart",
+      "lib/screens/maptracking.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/tracking/heartbeat_monitor.dart",
+      "test/alarm_reliability_test.dart",
+      "test/complex_route_alarm_test.dart",
+      "test/comprehensive_real_world_scenarios_test.dart",
+      "test/deviation_decision_tree_test.dart",
+      "test/event_alarm_overlap_test.dart",
+      "test/event_alarm_progress_source_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/metro_alarm_reliability_test.dart",
+      "test/metro_final_station_alarm_test.dart",
+      "test/metro_stops_prior_test.dart",
+      "test/minimal_test.dart",
+      "test/mixed_mode_alarm_test.dart",
+      "test/mixed_mode_regression_test.dart",
+      "test/multiple_switch_point_alarm_test.dart",
+      "test/notification_behavior_spec_test.dart",
+      "test/notification_tap_navigation_widget_test.dart",
+      "test/power_policy_tracking_test.dart",
+      "test/process_death_recovery_test.dart",
+      "test/rapid_deviations_vm_test.dart",
+      "test/regression_prod_data_test.dart",
+      "test/reproduce_distance_alarm_failure.dart",
+      "test/reproduce_missing_bounds.dart",
+      "test/reproduce_stop_alarm.dart",
+      "test/reproduce_stop_alarm_overshoot_test.dart",
+      "test/reroute_policy_continuity_test.dart",
+      "test/simulated_route_integration_test.dart",
+      "test/stop_end_tracking_vm_test.dart",
+      "test/time_alarm_vm_test.dart",
+      "test/tracking_alarm_test.dart",
+      "test/tracking_service_connectivity_test.dart",
+      "test/tracking_service_reroute_integration_test.dart",
+      "test/tracking_service_route_activation_test.dart",
+      "test/tracking_service_stop_flow_integration_test.dart"
+    ],
+    "exportedSymbols": [
+      "TestServiceInstance",
+      "TrackingService",
+      "TrackingServiceRouteOps",
+      "onIosBackground",
+      "triggerOnStartForRecoveryTest",
+      "startLocationStream"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/notification_service.dart",
+    "importers": 34,
+    "directDependents": [
+      "integration_test/device_alarm_integration_test.dart",
+      "lib/debug/demo_tools.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking/heartbeat_monitor.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart",
+      "test/alarm_reliability_test.dart",
+      "test/complex_route_alarm_test.dart",
+      "test/comprehensive_real_world_scenarios_test.dart",
+      "test/event_alarm_progress_source_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/metro_alarm_reliability_test.dart",
+      "test/metro_final_station_alarm_test.dart",
+      "test/metro_stops_prior_test.dart",
+      "test/mixed_mode_alarm_test.dart",
+      "test/mixed_mode_regression_test.dart",
+      "test/multiple_switch_point_alarm_test.dart",
+      "test/notification_action_classification_test.dart",
+      "test/notification_behavior_spec_test.dart",
+      "test/notification_service_test.dart",
+      "test/notification_tap_navigation_widget_test.dart",
+      "test/power_policy_tracking_test.dart",
+      "test/rapid_deviations_vm_test.dart",
+      "test/regression_prod_data_test.dart",
+      "test/reproduce_stop_alarm_overshoot_test.dart",
+      "test/simulated_route_integration_test.dart",
+      "test/stop_end_tracking_vm_test.dart",
+      "test/time_alarm_vm_test.dart",
+      "test/tracking_alarm_test.dart",
+      "test/tracking_service_stop_flow_integration_test.dart"
+    ],
+    "exportedSymbols": [
+      "NotificationService",
+      "NotificationActionOutcome",
+      "notificationTapBackground"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/core/ekf/ekf_types.dart",
+    "importers": 25,
+    "directDependents": [
+      "lib/core/ekf/ekf_logger.dart",
+      "lib/core/ekf/ekf_orchestrator.dart",
+      "lib/core/ekf/ekf_pipeline.dart",
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/core/ekf/imu_replay_engine_v2.dart",
+      "lib/core/ekf/motion_classifier.dart",
+      "lib/core/ekf/tilt_filter.dart",
+      "lib/core/ekf/zupt_detector.dart",
+      "lib/services/active_route_manager.dart",
+      "lib/services/sensor_fusion.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/trackingservice.dart",
+      "test/core/ekf/ekf_logger_test.dart",
+      "test/core/ekf/ekf_orchestrator_test.dart",
+      "test/core/ekf/ekf_pipeline_test.dart",
+      "test/core/ekf/ekf_test_controller_wiring_test.dart",
+      "test/core/ekf/motion_classifier_test.dart",
+      "test/core/ekf/tilt_filter_test.dart",
+      "test/core/ekf/zupt_detector_test.dart",
+      "test/integration/ekf_logged_data_test.dart",
+      "test/performance/ekf_performance_test.dart",
+      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+      "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
+      "test/services/ekf_integration/smooth_acceleration_test.dart"
+    ],
+    "exportedSymbols": [
+      "EkfPublicState",
+      "ImuSample",
+      "GravitySample",
+      "OrientationSample",
+      "GpsFix",
+      "StationCandidate",
+      "StationSnapConfirmed",
+      "EkfConfig",
+      "EkfMode",
+      "MotionState"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/tracking_state_store.dart",
+    "importers": 21,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/screens/maptracking.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/test_service_instance.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/heartbeat_monitor.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/snapshot_route_restorer.dart",
+      "lib/services/trackingservice.dart",
+      "test/complex_route_alarm_test.dart",
+      "test/destination_only_metro_time_test.dart",
+      "test/notification_behavior_spec_test.dart",
+      "test/preboarding_toggle_test.dart",
+      "test/process_death_recovery_test.dart",
+      "test/reproduce_missing_bounds.dart",
+      "test/shared_prefs_reload_test.dart",
+      "test/tracking_service_stop_flow_integration_test.dart",
+      "test/tracking_state_store_test.dart"
+    ],
+    "exportedSymbols": [
+      "TrackingSnapshot",
+      "TrackingProgressPayload",
+      "TrackingStateStore"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/core/ekf/route_geometry.dart",
+    "importers": 15,
+    "directDependents": [
+      "lib/core/ekf/ekf_orchestrator.dart",
+      "lib/core/ekf/ekf_pipeline.dart",
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/services/sensor_fusion.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "test/core/ekf/ekf_orchestrator_test.dart",
+      "test/core/ekf/ekf_pipeline_test.dart",
+      "test/core/ekf/ekf_test_controller_wiring_test.dart",
+      "test/core/ekf/route_geometry_test.dart",
+      "test/integration/ekf_logged_data_test.dart",
+      "test/performance/ekf_performance_test.dart",
+      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+      "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
+      "test/services/ekf_integration/smooth_acceleration_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteGeometry"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/api_client.dart",
+    "importers": 14,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/metro_stop_service.dart",
+      "lib/services/places_service.dart",
+      "test/app_config_url_alignment_test.dart",
+      "test/deviation_reroute_stress_test.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/places_session_token_test.dart",
+      "test/route_cache_integration_test.dart",
+      "test/simplified_polyline_present_test.dart",
+      "test/tracking_service_reroute_integration_test.dart",
+      "test/tracking_service_route_activation_test.dart"
+    ],
+    "exportedSymbols": [
+      "ApiClient"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/alarm_evaluator.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/services/tracking/alarm_controller.dart",
+      "test/alarm_leg_id_stability_test.dart",
+      "test/alarm_logic_rewrite_test.dart",
+      "test/alarm_repro.dart",
+      "test/bug_repro_test.dart",
+      "test/complex_failure_repro.dart",
+      "test/debug_alarm_diagnostic.dart",
+      "test/debug_alarm_mismatch.dart",
+      "test/destination_only_metro_time_test.dart",
+      "test/preboarding_semantics_test.dart",
+      "test/preboarding_toggle_test.dart",
+      "test/repro_mumbai_transfer_test.dart",
+      "test/time_mode_switch_targeting_universal_test.dart"
+    ],
+    "exportedSymbols": [
+      "AlarmEventType",
+      "AlarmTrigger",
+      "AlarmEvaluator",
+      "AlarmMode"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/route_registry.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/services/active_route_manager.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/tracking/alarm_context_builder.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart",
+      "test/active_route_manager_complex_test.dart",
+      "test/active_route_manager_test.dart",
+      "test/reproduce_distance_alarm_failure.dart",
+      "test/route_registry_lru_eviction_test.dart",
+      "test/route_registry_test.dart",
+      "test/route_registry_upsert_replace_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteEntry",
+      "RouteRegistry"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/core/clock/app_clock.dart",
+    "importers": 12,
+    "directDependents": [
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/deviation_simulation_controller.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/services/deviation_monitor.dart",
+      "lib/services/eta_engine.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking_termination_policy.dart",
+      "test/core/clock/app_clock_integration_test.dart",
+      "test/core/clock/app_clock_test.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart"
+    ],
+    "exportedSymbols": [
+      "AppClock",
+      "DateTimeClockExtension"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/direction_service.dart",
+    "importers": 11,
+    "directDependents": [
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/route_session_manager.dart",
+      "test/deviation_reroute_stress_test.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/route_cache_integration_test.dart",
+      "test/segment_builder_test.dart",
+      "test/simplified_polyline_present_test.dart",
+      "test/tool_fetch_route.dart"
+    ],
+    "exportedSymbols": [
+      "DirectionService",
+      "ModeInfo"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/core/ekf/ekf_orchestrator.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/services/sensor_fusion.dart",
+      "test/core/ekf/ekf_orchestrator_test.dart",
+      "test/core/ekf/ekf_test_controller_wiring_test.dart",
+      "test/integration/ekf_logged_data_test.dart",
+      "test/performance/ekf_performance_test.dart",
+      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+      "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
+      "test/services/ekf_integration/smooth_acceleration_test.dart"
+    ],
+    "exportedSymbols": [
+      "EkfOrchestrator",
+      "EkfOrchestratorLogCallback"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/dashboard/constraint_logger.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/dashboard/constraint_drawer.dart",
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/deviation_simulation_controller.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/services/deviation_monitor.dart",
+      "lib/services/reroute_policy.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/dashboard/constraint_logger_test.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart"
+    ],
+    "exportedSymbols": [
+      "ConstraintEvent",
+      "ConstraintLogger",
+      "ConstraintEventType"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/core/logging/app_logger.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/position/gps_position_provider.dart",
+      "lib/services/soft_lock_manager.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/background_handlers.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking/heartbeat_monitor.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart"
+    ],
+    "exportedSymbols": [
+      "AppLogger",
+      "LogLevel",
+      "gpsLog",
+      "trackingLog",
+      "alarmLog",
+      "etaLog",
+      "stopLog",
+      "routeLog",
+      "networkLog",
+      "navigationLog",
+      "notificationLog",
+      "ipcLog",
+      "sensorLog",
+      "stateLog"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/active_route_manager.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/trackingservice.dart",
+      "test/active_route_manager_complex_test.dart",
+      "test/active_route_manager_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteSwitchEvent",
+      "ActiveRouteState",
+      "ActiveRouteManager"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/alarm_player.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/debug/demo_tools.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/background_handlers.dart",
+      "lib/services/trackingservice.dart",
+      "test/simulated_route_integration_test.dart",
+      "test/stop_end_tracking_vm_test.dart"
+    ],
+    "exportedSymbols": [
+      "AlarmPlayer"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/location_manager.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/tracking/background_handlers.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart",
+      "test/complex_route_alarm_test.dart",
+      "test/location_manager_test.dart"
+    ],
+    "exportedSymbols": [
+      "LocationManager"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/snap_to_route.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/active_route_manager.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/tracking/alarm_context_builder.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/trackingservice.dart",
+      "test/maptracking_eta_distance_test.dart",
+      "test/snap_to_route_test.dart"
+    ],
+    "exportedSymbols": [
+      "SnapResult",
+      "SnapToRouteEngine"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/dashboard/simulation_state.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/deviation_simulation_controller.dart",
+      "lib/dashboard/simulation_controls.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart",
+      "test/dashboard/simulation_state_test.dart"
+    ],
+    "exportedSymbols": [
+      "SimulationStateMachine",
+      "SimulationState"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/polyline_simplifier.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/route_session_manager.dart",
+      "test/event_alarm_progress_source_test.dart",
+      "test/maptracking_eta_distance_test.dart",
+      "test/polyline_projection_clamp_test.dart",
+      "test/polyline_simplifier_test.dart"
+    ],
+    "exportedSymbols": [
+      "PolylineSimplifier"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/testing/osm_graph.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/deviation_simulation_controller.dart",
+      "lib/services/testing/osm_loader.dart",
+      "lib/services/testing/pathfinder.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/services/testing/osm_graph_test.dart",
+      "test/services/testing/pathfinder_test.dart"
+    ],
+    "exportedSymbols": [
+      "OsmNode",
+      "OsmEdge",
+      "OsmGraph",
+      "RoadType",
+      "LatLngDistance"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "geowake-server/src/config/config.js",
+    "importers": 6,
+    "directDependents": [
+      "geowake-server/src/controllers/authController.js",
+      "geowake-server/src/controllers/mapsController.js",
+      "geowake-server/src/middleware/auth.js",
+      "geowake-server/src/middleware/security.js",
+      "geowake-server/src/server.js",
+      "geowake-server/src/utils/cache.js"
+    ],
+    "exportedSymbols": [],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/polyline_decoder.dart",
+    "importers": 6,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/stop_matcher.dart",
+      "lib/services/transfer_utils.dart",
+      "test/transit_leg_stops_test.dart"
+    ],
+    "exportedSymbols": [
+      "decodePolyline",
+      "haversineDistance",
+      "polylineLength",
+      "pointAlongPolyline",
+      "estimateStopPositions",
+      "stopDistancesAlongPolyline"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/reroute_policy.dart",
+    "importers": 6,
+    "directDependents": [
+      "lib/services/route_session_manager.dart",
+      "lib/services/trackingservice.dart",
+      "test/core/clock/app_clock_integration_test.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/deviation_reroute_stress_test.dart",
+      "test/reroute_policy_continuity_test.dart"
+    ],
+    "exportedSymbols": [
+      "RerouteDecision",
+      "ReroutePolicy"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/route_cache.dart",
+    "importers": 6,
+    "directDependents": [
+      "lib/services/direction_service.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/route_session_manager.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/offline_routing_guard_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteCacheEntry",
+      "RouteCache"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/testing/osm_loader.dart",
+    "importers": 6,
+    "directDependents": [
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart",
+      "test/services/testing/osm_graph_test.dart",
+      "test/services/testing/pathfinder_test.dart"
+    ],
+    "exportedSymbols": [
+      "OsmLoader",
+      "OsmLoadException"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "test/log_helper.dart",
+    "importers": 6,
+    "directDependents": [
+      "test/active_route_manager_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/route_registry_test.dart",
+      "test/simplified_polyline_present_test.dart",
+      "test/tracking_service_connectivity_test.dart",
+      "test/tracking_service_reroute_integration_test.dart"
+    ],
+    "exportedSymbols": [
+      "logSection",
+      "logStep",
+      "logInfo",
+      "logPass",
+      "logWarn"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/core/ekf/ekf_pipeline.dart",
+    "importers": 5,
+    "directDependents": [
+      "lib/core/ekf/ekf_orchestrator.dart",
+      "test/core/ekf/ekf_pipeline_test.dart",
+      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+      "test/services/ekf_integration/long_tunnel_no_stops_test.dart"
+    ],
+    "exportedSymbols": [
+      "EkfPipeline",
+      "EkfPipelineLogCallback"
+    ],
+    "riskLevel": "medium"
+  },
+  {
+    "file": "lib/services/deviation_monitor.dart",
+    "importers": 5,
+    "directDependents": [
+      "lib/services/route_session_manager.dart",
+      "lib/services/trackingservice.dart",
+      "test/core/clock/app_clock_integration_test.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/deviation_reroute_stress_test.dart"
+    ],
+    "exportedSymbols": [
+      "DeviationState",
+      "SpeedThresholdModel",
+      "DeviationMonitor"
+    ],
+    "riskLevel": "medium"
+  },
+  {
+    "file": "lib/services/eta_engine.dart",
+    "importers": 5,
+    "directDependents": [
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/trackingservice.dart",
+      "test/comprehensive_real_world_scenarios_test.dart",
+      "test/eta_engine_test.dart",
+      "test/hybrid_eta_test.dart"
+    ],
+    "exportedSymbols": [
+      "EtaEngine"
+    ],
+    "riskLevel": "medium"
+  }
+]

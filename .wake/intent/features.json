@@ -1,0 +1,643 @@
+{
+  "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change \u2014 even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
+  "northStar": "Wake the rider at the right station \u2014 reliably, even underground with no GPS.",
+  "features": [
+    {
+      "id": "ekf-sensor-fusion",
+      "title": "Sensor Fusion & Dead-Reckoning (EKF)",
+      "purpose": "A route-constrained Extended Kalman Filter that provides dead-reckoning position along a known transit polyline when GPS is degraded or absent (tunnels, deep-metro), so the wake-up alarm still fires at the right station without a satellite fix. It is a 1-D filter on route arc-length s (not 2-D lat/lng), fusing IMU forward-acceleration with route-projected GPS, ZUPT, and station-snap corrections.",
+      "relatedPaths": [
+        "lib/core/ekf/ekf_orchestrator.dart",
+        "lib/core/ekf/ekf_pipeline.dart",
+        "lib/core/ekf/ekf_types.dart",
+        "lib/core/ekf/route_geometry.dart",
+        "lib/core/ekf/station_association.dart",
+        "lib/core/ekf/tilt_filter.dart",
+        "lib/core/ekf/degraded_mode.dart",
+        "lib/core/ekf/imu_replay_engine_v2.dart"
+      ],
+      "keySymbols": [
+        "EkfOrchestrator",
+        "EkfPipeline",
+        "EkfPublicState",
+        "RouteGeometry",
+        "StationAssociation",
+        "StationSnapConfirmed",
+        "EkfMode",
+        "MotionState",
+        "ImuReplayEngineV2"
+      ],
+      "acceptanceThemes": [
+        "Dead-reckoning keeps the alarm firing at the correct station with no GPS fix",
+        "publicState.s is monotonic non-decreasing in surface/metro modes; only degraded mode exposes raw internal s",
+        "Station snaps emit only through the \u00a724.2 confidence gate (sigma <= 30m / 60m degraded, strictly increasing station index)",
+        "Filter is disabled unless a route is set; all GPS enters via RouteGeometry.projectLatLng and exits via positionAt",
+        "Offline replay reproduces recorded/simulated rides deterministically"
+      ],
+      "subfeatures": [
+        {
+          "id": "ekf-core-filter",
+          "title": "EKF math pipeline and orchestration",
+          "purpose": "The 3-state [s,v,b] filter with 3x3 covariance and predict/GPS-update/ZUPT/station-snap steps, plus the orchestrator that wires all sensor stages around it and owns the snap gate.",
+          "relatedPaths": [
+            "lib/core/ekf/ekf_pipeline.dart",
+            "lib/core/ekf/ekf_orchestrator.dart",
+            "lib/core/ekf/ekf_types.dart"
+          ]
+        },
+        {
+          "id": "route-geometry-projection",
+          "title": "Route geometry and arc-length projection",
+          "purpose": "Projects 2-D GPS to 1-D route arc-length meters and back (projectLatLng/tangentAt/positionAt), the bridge between the map and the filter.",
+          "relatedPaths": [
+            "lib/core/ekf/route_geometry.dart"
+          ]
+        },
+        {
+          "id": "motion-and-degradation",
+          "title": "Motion classification, tilt, and degraded/tunnel mode",
+          "purpose": "Estimates gravity/device rotation for forward-acceleration, classifies motion state, and detects GPS degradation to enter/exit bounded dead-reckoning mode.",
+          "relatedPaths": [
+            "lib/core/ekf/tilt_filter.dart",
+            "lib/core/ekf/degraded_mode.dart"
+          ]
+        },
+        {
+          "id": "station-association-and-replay",
+          "title": "Station association and offline replay harness",
+          "purpose": "Selects a single station within the 3-sigma window on ZUPT for gated station snaps, and provides the deterministic log/replay engine used by dashboards and integration tests.",
+          "relatedPaths": [
+            "lib/core/ekf/station_association.dart",
+            "lib/core/ekf/imu_replay_engine_v2.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "live-tracking-runtime",
+      "title": "Live Tracking Runtime (Background Service)",
+      "purpose": "The live-tracking hub that turns a GPS position stream into route progress, ETA, and ultimately the wake-up alarm while surviving app-swipe and process death on a separate background isolate. TrackingService is a singleton facade spanning foreground and background isolates, owning the position loop, alarm evaluation, notification/dashboard sync, and cross-isolate state persistence.",
+      "relatedPaths": [
+        "lib/services/trackingservice.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking_state_store.dart",
+        "lib/services/location_manager.dart",
+        "lib/services/tracking/foreground_bridge.dart",
+        "lib/services/tracking/background_handlers.dart",
+        "lib/services/tracking/notification_updater.dart"
+      ],
+      "keySymbols": [
+        "TrackingService",
+        "LocationStreamHandler",
+        "AlarmController",
+        "TrackingStateStore",
+        "TrackingSnapshot",
+        "LocationManager",
+        "ForegroundBridge",
+        "BackgroundHandlers",
+        "NotificationUpdater"
+      ],
+      "acceptanceThemes": [
+        "Tracking survives app-swipe and process death and rehydrates session state across isolates",
+        "GPS loop computes ETA, tracks distance, runs sensor fusion, and fires the alarm under a sequential guard",
+        "Route switches migrate alarm state before emitting so fired alarms do not re-fire on the new key",
+        "Time-mode alarms are gated (distance >= 100m, >= 3 ETA samples, >= 30s since start)",
+        "Foreground/background control messages use ack-retry with fallback"
+      ],
+      "subfeatures": [
+        {
+          "id": "gps-position-loop",
+          "title": "Background GPS position loop and source",
+          "purpose": "Owns the position loop that computes ETA, tracks movement, ingests position into the route session, runs EKF for dropout, and drives the alarm check; sources raw positions from Geolocator or the simulation client.",
+          "relatedPaths": [
+            "lib/services/tracking/location_stream_handler.dart",
+            "lib/services/location_manager.dart"
+          ]
+        },
+        {
+          "id": "alarm-orchestration",
+          "title": "Runtime alarm decision and dedup",
+          "purpose": "The sole runtime orchestrator that builds leg context, calls the evaluator, owns per-leg fired-state dedup, cooldown suppression, and migrateAlarmState across route switches.",
+          "relatedPaths": [
+            "lib/services/tracking/alarm_controller.dart"
+          ]
+        },
+        {
+          "id": "cross-isolate-bridge",
+          "title": "Foreground/background isolate bridge",
+          "purpose": "Bridges UI and background isolates via ack-retried invokes, stream piping, and heartbeat, and registers the background service message listeners.",
+          "relatedPaths": [
+            "lib/services/tracking/foreground_bridge.dart",
+            "lib/services/tracking/background_handlers.dart"
+          ]
+        },
+        {
+          "id": "state-persistence-and-notification",
+          "title": "Cross-isolate state persistence and notification sync",
+          "purpose": "Persists and rehydrates session flags and snapshots across isolates and process death, and keeps the foreground notification and debug dashboard in sync.",
+          "relatedPaths": [
+            "lib/services/tracking_state_store.dart",
+            "lib/services/tracking/notification_updater.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wakeup-alarm-engine",
+      "title": "Wake-Up Alarm Engine",
+      "purpose": "The decision-and-delivery core of the wake-up alarm. A stateless geometric state machine decides WHEN to fire per route leg (stops/time/distance thresholds), classifies the trigger (destination/transfer/mode_change/final_station/preBoarding) and builds the user-facing message; NotificationService presents and persists the Android/iOS alarm and brokers user actions across isolates.",
+      "relatedPaths": [
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/notification_service.dart",
+        "lib/services/stop_logic_engine.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/alarm_player.dart",
+        "lib/services/alarm_haptics.dart"
+      ],
+      "keySymbols": [
+        "AlarmEvaluator",
+        "AlarmTrigger",
+        "AlarmMode",
+        "AlarmEventType",
+        "NotificationService",
+        "notificationTapBackground",
+        "NotificationActionOutcome",
+        "StopLogicEngine"
+      ],
+      "acceptanceThemes": [
+        "One-alarm-per-leg: evaluator reads firedLegIds but never mutates it; caller records the fired legId",
+        "Triggering is purely geometric (progress vs leg bounds); events only enrich message text and event type",
+        "Time-mode fires when estimated ETA to target <= userValue; hybrid speed/step-duration estimate",
+        "Cross-isolate Stop/End/Mute actions persist via file flag + SharedPreferences and are consumed atomically",
+        "Pre-trip stop-threshold validation blocks unachievable thresholds before tracking starts"
+      ],
+      "subfeatures": [
+        {
+          "id": "alarm-decision",
+          "title": "Geometric alarm decision state machine",
+          "purpose": "evaluateCoinciding decides per-leg firing and classifies the event; estimateEtaSecondsToMeters powers time-mode; defines the AlarmTrigger/AlarmMode/AlarmEventType contract.",
+          "relatedPaths": [
+            "lib/services/alarm_evaluator.dart"
+          ]
+        },
+        {
+          "id": "notification-delivery",
+          "title": "Notification, sound, and haptics delivery",
+          "purpose": "Presents/cancels the full-screen alarm, progress, and paused notifications, drives sound and vibration, and routes notification-button actions across the plugin background isolate.",
+          "relatedPaths": [
+            "lib/services/notification_service.dart",
+            "lib/services/alarm_player.dart",
+            "lib/services/alarm_haptics.dart"
+          ]
+        },
+        {
+          "id": "pretrip-validation",
+          "title": "Pre-trip stops-threshold validation",
+          "purpose": "Validates whether a chosen stops threshold is achievable for the route and per-metro-leg stop counts before tracking begins (not in the runtime firing path).",
+          "relatedPaths": [
+            "lib/services/stop_logic_engine.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "routing-route-sessions",
+      "title": "Routing & Route Sessions",
+      "purpose": "Turns a Google Directions response into the canonical route model the whole app tracks against: cached directions, per-leg transit stop geometry, transfer/mode-change event boundaries, step distance+duration boundaries for ETA, and a live active-route state with automatic route switching. TransferUtils is the pure-function toolbox (top fan-in hub) every alarm/tracking consumer imports.",
+      "relatedPaths": [
+        "lib/services/transfer_utils.dart",
+        "lib/services/route_session_manager.dart",
+        "lib/services/direction_service.dart",
+        "lib/services/active_route_manager.dart",
+        "lib/services/polyline_simplifier.dart",
+        "lib/services/eta_utils.dart",
+        "lib/services/route_logger.dart",
+        "lib/services/route_registry.dart",
+        "lib/services/snap_to_route.dart",
+        "lib/services/route_cache.dart"
+      ],
+      "keySymbols": [
+        "TransferUtils",
+        "TransitLegStops",
+        "RouteEventBoundary",
+        "RouteSessionManager",
+        "DirectionService",
+        "ActiveRouteManager",
+        "EtaUtils",
+        "PolylineSimplifier",
+        "RouteCache"
+      ],
+      "acceptanceThemes": [
+        "Route identity is RouteCache.makeKey everywhere; all per-route maps keyed by it",
+        "TransitLegStops.legId stays stable across reroutes to preserve one-alarm-per-leg dedup",
+        "Active route auto-switches only with candidate margin + heading agreement + sustain + no blackout, using monotonic timers",
+        "Candidate-route metrics never fold into emitted ActiveRouteState until an actual switch occurs",
+        "ETA interpolates from strictly cumulative step boundaries + durations of equal length"
+      ],
+      "subfeatures": [
+        {
+          "id": "directions-fetch-cache",
+          "title": "Directions fetch, caching, and logging",
+          "purpose": "Fetches driving/transit directions with tiered in-memory + Hive caching and metro-preference fallback, builds segmented polylines, and logs raw responses for offline reconstruction.",
+          "relatedPaths": [
+            "lib/services/direction_service.dart",
+            "lib/services/route_cache.dart",
+            "lib/services/route_logger.dart"
+          ]
+        },
+        {
+          "id": "transit-geometry-parsing",
+          "title": "Transit geometry, boundaries, and ETA math",
+          "purpose": "Parses raw Directions JSON into leg stops, events, and cumulative meter boundaries, simplifies/compresses polylines, and interpolates ETA-remaining/to-target.",
+          "relatedPaths": [
+            "lib/services/transfer_utils.dart",
+            "lib/services/eta_utils.dart",
+            "lib/services/polyline_simplifier.dart"
+          ]
+        },
+        {
+          "id": "route-session-orchestration",
+          "title": "Multi-route session orchestration",
+          "purpose": "Owns the registry and all per-route *ByKey state, orchestrates deviation/reroute/soft-lock, and provides the two route-registration intake paths.",
+          "relatedPaths": [
+            "lib/services/route_session_manager.dart",
+            "lib/services/route_registry.dart"
+          ]
+        },
+        {
+          "id": "active-route-snapping",
+          "title": "Active-route snapping and switching",
+          "purpose": "Continuously snaps the user to the active route and applies hysteretic multi-route switching, emitting ActiveRouteState/RouteSwitchEvent and the EKF station-snap monotonic gate.",
+          "relatedPaths": [
+            "lib/services/active_route_manager.dart",
+            "lib/services/snap_to_route.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform-connectivity-services",
+      "title": "Platform, Connectivity & Sensor Bridge",
+      "purpose": "The edge layer of lib/services that talks to the network, OS, sensors, and simulation harness: the backend HTTP gateway, Places/metro-stop clients, the EKF sensor-fusion bridge, the WebSocket simulation feed, permission prompts, GPS-health observation, and an offline OSM road-graph + A* pathfinder used only by the deviation dashboards.",
+      "relatedPaths": [
+        "lib/services/api_client.dart",
+        "lib/services/places_service.dart",
+        "lib/services/metro_stop_service.dart",
+        "lib/services/sensor_fusion.dart",
+        "lib/services/simulation_client.dart",
+        "lib/services/permission_service.dart",
+        "lib/services/gps_health_monitor.dart",
+        "lib/services/testing/pathfinder.dart",
+        "lib/services/testing/osm_graph.dart",
+        "lib/services/testing/osm_loader.dart"
+      ],
+      "keySymbols": [
+        "ApiClient",
+        "PlacesService",
+        "MetroStopService",
+        "SensorFusionManager",
+        "SimulationClient",
+        "PermissionService",
+        "GpsHealthMonitor",
+        "OsmGraph",
+        "Pathfinder",
+        "DeviationPathfinder"
+      ],
+      "acceptanceThemes": [
+        "All backend and Google Maps traffic funnels through the single authenticated ApiClient (Bearer auth, 401 re-auth retry)",
+        "Sensor fusion runs the EKF path only when a route geometry is set and EKF is enabled",
+        "Simulation ingress is inert in production builds (gated by PlaygroundBridgeConfig)",
+        "Essential permissions requested before tracking starts",
+        "Offline OSM pathfinding powers only dashboard deviation simulation, not production routing"
+      ],
+      "subfeatures": [
+        {
+          "id": "backend-gateway-client",
+          "title": "Backend HTTP gateway client",
+          "purpose": "The singleton HTTP gateway to the geowake backend with Bearer-token auth, auto-refresh on 401, and test-mode canned responses; every Google Maps call routes through it.",
+          "relatedPaths": [
+            "lib/services/api_client.dart"
+          ]
+        },
+        {
+          "id": "places-and-metro-lookup",
+          "title": "Places, metro-stop lookup, and permissions",
+          "purpose": "Autocomplete/place-details, nearby transit-station lookup and metro-destination validation, and OS permission prompts feeding the home screen.",
+          "relatedPaths": [
+            "lib/services/places_service.dart",
+            "lib/services/metro_stop_service.dart",
+            "lib/services/permission_service.dart"
+          ]
+        },
+        {
+          "id": "sensor-fusion-bridge",
+          "title": "EKF sensor-fusion bridge and GPS health",
+          "purpose": "Wraps the core/ekf orchestrator, ingesting IMU + GPS and emitting EKF state and station-snap events; includes GPS-health observation scaffolding.",
+          "relatedPaths": [
+            "lib/services/sensor_fusion.dart",
+            "lib/services/gps_health_monitor.dart"
+          ]
+        },
+        {
+          "id": "simulation-and-offline-osm",
+          "title": "Simulation feed and offline OSM routing",
+          "purpose": "Streams simulated positions over a WebSocket relay and provides the offline OSM road-graph and A* pathfinder used by deviation dashboards.",
+          "relatedPaths": [
+            "lib/services/simulation_client.dart",
+            "lib/services/testing/pathfinder.dart",
+            "lib/services/testing/osm_graph.dart",
+            "lib/services/testing/osm_loader.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "user-facing-screens",
+      "title": "User-Facing App Screens",
+      "purpose": "The end-user Flutter screen layer that owns the full foreground UX flow: a launch splash that restores or resets a tracking session, a home screen to search a destination and configure the alarm (distance/time/stops + metro mode), a transient map-warmup buffer, and a live map-tracking screen rendering route/ETA/transfer notices and the STOP ALARM / END TRACKING controls. Pure presentation that wires user intent into services and consumes their streams.",
+      "relatedPaths": [
+        "lib/screens/homescreen.dart",
+        "lib/screens/maptracking.dart",
+        "lib/screens/splash_screen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/screens/otherimpservices/preload_map_screen.dart",
+        "lib/screens/ringtones_screen.dart",
+        "lib/screens/otherimpservices/recent_locations_service.dart"
+      ],
+      "keySymbols": [
+        "HomeScreen",
+        "MapTrackingScreen",
+        "SplashScreen",
+        "SettingsDrawer",
+        "PreloadMapScreen",
+        "RingtonesScreen",
+        "RecentLocationsService"
+      ],
+      "acceptanceThemes": [
+        "Splash initializes services and either restores an active session or routes to home",
+        "Home validates route/stops/same-state and persists a snapshot before starting tracking",
+        "MapTracking requires the exact navigation-arg contract (lat/lng/destination/directions) or aborts",
+        "Live map renders ETA/distance and drives STOP ALARM/END TRACKING from AlarmPlayer state",
+        "Stream subscriptions and listeners are cancelled in dispose; setState is mounted-guarded"
+      ],
+      "subfeatures": [
+        {
+          "id": "session-bootstrap-splash",
+          "title": "Splash and map-warmup navigation",
+          "purpose": "Initializes ApiClient/NotificationService/TrackingService, decides restore-vs-home, and warms a GoogleMap instance before handing off to tracking.",
+          "relatedPaths": [
+            "lib/screens/splash_screen.dart",
+            "lib/screens/otherimpservices/preload_map_screen.dart"
+          ]
+        },
+        {
+          "id": "destination-and-alarm-config",
+          "title": "Destination search and alarm configuration",
+          "purpose": "Destination autocomplete/map-tap selection, alarm-mode UI, permission gating, route fetch and validation, snapshot persistence, and startTracking; backed by Hive recent destinations.",
+          "relatedPaths": [
+            "lib/screens/homescreen.dart",
+            "lib/screens/otherimpservices/recent_locations_service.dart"
+          ]
+        },
+        {
+          "id": "live-map-tracking-ui",
+          "title": "Live map tracking UI",
+          "purpose": "Renders map markers/polylines, snaps live GPS, computes/formats ETA and remaining distance, shows transfer banners, and exposes the STOP ALARM / END TRACKING controls.",
+          "relatedPaths": [
+            "lib/screens/maptracking.dart"
+          ]
+        },
+        {
+          "id": "settings-and-ringtones",
+          "title": "Settings drawer and ringtones",
+          "purpose": "Shared side drawer for theme toggle and preboarding/destination-only alarm flags, and the alarm-tone picker with preview persisted to preferences.",
+          "relatedPaths": [
+            "lib/screens/settingsdrawer.dart",
+            "lib/screens/ringtones_screen.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "app-foundation-config",
+      "title": "App Foundation & Configuration",
+      "purpose": "The bootstrap layer plus the shared leaf primitives and centralized tuning constants the rest of the app builds on: the process entry point that boots Hive and mounts MaterialApp with the route table and theme toggle, the AppClock time abstraction for accelerated simulation, shared value types, the generated all-India station dataset and metro colors, and the feature-flag/threshold/power-profile config layer.",
+      "relatedPaths": [
+        "lib/main.dart",
+        "lib/core/clock/app_clock.dart",
+        "lib/models/route_models.dart",
+        "lib/all_india_stops.dart",
+        "lib/metro_color_map.dart",
+        "lib/themes/appthemes.dart",
+        "lib/widgets/pulsing_dots.dart",
+        "lib/config/deviation_config.dart",
+        "lib/config/power_policy.dart",
+        "lib/config/playground_bridge.dart",
+        "lib/config/app_config.dart"
+      ],
+      "keySymbols": [
+        "main",
+        "MyApp",
+        "AppClock",
+        "RouteModel",
+        "TransitSwitch",
+        "allIndiaStops",
+        "metroLineColors",
+        "AppThemes",
+        "DeviationConfig",
+        "PowerPolicy",
+        "PlaygroundBridgeConfig",
+        "AppConfig"
+      ],
+      "acceptanceThemes": [
+        "App boots Hive and mounts MaterialApp with the onGenerateRoute table and persisted dark-mode toggle",
+        "AppClock is a process-wide singleton returning real or warp-accelerated virtual time for all timing consumers",
+        "Config types are stateless/immutable; power tiers degrade monotonically as battery drops",
+        "Playground bridge is OFF in release and under test by fixed precedence",
+        "On lifecycle pause the recent-locations Hive box is flushed before the OS may kill the app"
+      ],
+      "subfeatures": [
+        {
+          "id": "bootstrap-and-theming",
+          "title": "Process bootstrap and theming",
+          "purpose": "The main() entry point, MaterialApp/route table/theme toggle and lifecycle flush, Material3 light/dark themes, and the shared loading widget.",
+          "relatedPaths": [
+            "lib/main.dart",
+            "lib/themes/appthemes.dart",
+            "lib/widgets/pulsing_dots.dart"
+          ]
+        },
+        {
+          "id": "time-and-shared-models",
+          "title": "Time abstraction and shared models",
+          "purpose": "AppClock real-vs-warped virtual time driving ETA/alarm/deviation timing, plus the shared RouteModel/TransitSwitch value types.",
+          "relatedPaths": [
+            "lib/core/clock/app_clock.dart",
+            "lib/models/route_models.dart"
+          ]
+        },
+        {
+          "id": "reference-data",
+          "title": "Station dataset and metro colors",
+          "purpose": "The generated all-India metro station records and the metro line color map consumed across routing, transfer parsing, and dashboards.",
+          "relatedPaths": [
+            "lib/all_india_stops.dart",
+            "lib/metro_color_map.dart"
+          ]
+        },
+        {
+          "id": "tuning-and-feature-flags",
+          "title": "Tuning constants and feature flags",
+          "purpose": "Centralized deviation/reroute/termination thresholds, battery-tier GPS/power profiles, the simulation-bridge gate, and canonical server/bundle-id constants.",
+          "relatedPaths": [
+            "lib/config/deviation_config.dart",
+            "lib/config/power_policy.dart",
+            "lib/config/playground_bridge.dart",
+            "lib/config/app_config.dart"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend-api-gateway",
+      "title": "Backend API Gateway",
+      "purpose": "The geowake-server Node/Express backend is a thin, stateless API gateway between the Flutter app and the Google Maps Platform whose whole reason to exist is to keep the Maps API key off the device. The phone authenticates with a device JWT and the server proxies Directions/Autocomplete/Place-Details/Geocoding/Nearby-Search calls, injecting the secret key server-side, caching responses, and enforcing rate limiting.",
+      "relatedPaths": [
+        "geowake-server/src/server.js",
+        "geowake-server/src/config/config.js",
+        "geowake-server/src/controllers/mapsController.js",
+        "geowake-server/src/controllers/authController.js",
+        "geowake-server/src/middleware/auth.js",
+        "geowake-server/src/middleware/security.js",
+        "geowake-server/src/utils/cache.js",
+        "geowake-server/src/routes/auth.js"
+      ],
+      "keySymbols": [
+        "app",
+        "config",
+        "generateToken",
+        "authenticateDevice",
+        "googleApiProxy",
+        "rateLimitRules",
+        "CacheManager"
+      ],
+      "acceptanceThemes": [
+        "The Google Maps API key never ships to the device; it is injected server-side on every proxy call",
+        "Device JWTs are minted and verified by app bundle id, the sole identity credential",
+        "5 Maps endpoints are proxied with structured type+params cache keys and per-type TTLs",
+        "Route order is load-bearing: open /api/auth before auth-gated /api/maps, handlers last",
+        "Process hard-exits at boot if GOOGLE_MAPS_API_KEY or a >=32-char JWT_SECRET is missing"
+      ],
+      "subfeatures": [
+        {
+          "id": "auth-token-minting",
+          "title": "Device token minting and verification",
+          "purpose": "Mints short-lived device JWTs for clients presenting the correct bundle id and verifies Bearer tokens on protected routes.",
+          "relatedPaths": [
+            "geowake-server/src/controllers/authController.js",
+            "geowake-server/src/middleware/auth.js",
+            "geowake-server/src/routes/auth.js"
+          ]
+        },
+        {
+          "id": "maps-proxy-and-cache",
+          "title": "Google Maps proxy and caching",
+          "purpose": "The googleApiProxy that checks cache, calls Google with the injected key, caches by structured type+params key with per-type TTLs, and returns Google's raw envelope.",
+          "relatedPaths": [
+            "geowake-server/src/controllers/mapsController.js",
+            "geowake-server/src/utils/cache.js"
+          ]
+        },
+        {
+          "id": "server-composition-and-security",
+          "title": "App composition, config, and rate limiting",
+          "purpose": "Composes the Express app (security headers, CORS, compression, error handlers, graceful shutdown), holds central env-validated config, and enforces per-route rate limiting and slow-down.",
+          "relatedPaths": [
+            "geowake-server/src/server.js",
+            "geowake-server/src/config/config.js",
+            "geowake-server/src/middleware/security.js"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quality-simulation-testing",
+      "title": "Quality, Simulation & Test Infrastructure",
+      "purpose": "The non-shipping developer/QA and verification layer: Flutter-web dashboards that simulate GPS movement, route deviations, EKF replay, and time-warp without walking a real route, plus a mocking-free test suite that drives real production objects through static test seams over synthetic GPS/IMU inputs. The ConstraintLogger event bus is shared with production deviation/reroute code, so the unit is not fully isolated from shipping code.",
+      "relatedPaths": [
+        "lib/dashboard/unified_dashboard.dart",
+        "lib/dashboard/constraint_logger.dart",
+        "lib/dashboard/deviation_simulation_controller.dart",
+        "lib/dashboard/simulation_state.dart",
+        "lib/dashboard/ekf_test_panel.dart",
+        "lib/dashboard/time_warp_slider.dart",
+        "test/flutter_test_config.dart",
+        "test/mock_location_provider.dart",
+        "test/time_alarm_vm_test.dart",
+        "test/integration/ekf_logged_data_test.dart",
+        "integration_test/device_alarm_integration_test.dart",
+        "test_driver/integration_test.dart"
+      ],
+      "keySymbols": [
+        "ConstraintLogger",
+        "DeviationSimulationController",
+        "SimulationStateMachine",
+        "EkfTestPanel",
+        "TimeWarpSlider",
+        "MockLocationProvider",
+        "testExecutable",
+        "testRecordedAlarms"
+      ],
+      "acceptanceThemes": [
+        "Dashboards drive simulated GPS/deviation and EKF replay with global time-warp via AppClock",
+        "ConstraintLogger is one shared singleton event bus across dashboards and production reroute/deviation code",
+        "Tests use no mocking framework; they drive real production objects through static test seams",
+        "Alarm firings are asserted via NotificationService.testRecordedAlarms with bounded counts (cooldown bypassed)",
+        "Hive temp init/teardown wraps the whole run; process-global statics must be reset in tearDown"
+      ],
+      "subfeatures": [
+        {
+          "id": "simulation-dashboards",
+          "title": "GPS deviation simulation dashboards",
+          "purpose": "The primary dev/QA dashboard and simulation engine that computes deviation/return paths over OSM pathfinding, enforce a validated lifecycle state machine, and expose global time-warp control.",
+          "relatedPaths": [
+            "lib/dashboard/unified_dashboard.dart",
+            "lib/dashboard/deviation_simulation_controller.dart",
+            "lib/dashboard/simulation_state.dart",
+            "lib/dashboard/time_warp_slider.dart"
+          ]
+        },
+        {
+          "id": "constraint-event-bus",
+          "title": "Constraint event bus",
+          "purpose": "The singleton typed event bus consumed by dashboards and written by production deviation/reroute services; its API is shipping-code-load-bearing.",
+          "relatedPaths": [
+            "lib/dashboard/constraint_logger.dart"
+          ]
+        },
+        {
+          "id": "ekf-replay-panels",
+          "title": "EKF replay QA panel",
+          "purpose": "The EKF route-replay panel driving recorded IMU/route data with GPS-dropout toggles through the real tracking service.",
+          "relatedPaths": [
+            "lib/dashboard/ekf_test_panel.dart"
+          ]
+        },
+        {
+          "id": "deterministic-test-harness",
+          "title": "Deterministic test harness",
+          "purpose": "Shared test infrastructure (global Hive setup, fake GPS streaming) plus representative alarm/EKF/device integration suites driving production objects over synthetic inputs.",
+          "relatedPaths": [
+            "test/flutter_test_config.dart",
+            "test/mock_location_provider.dart",
+            "test/time_alarm_vm_test.dart",
+            "test/integration/ekf_logged_data_test.dart",
+            "integration_test/device_alarm_integration_test.dart",
+            "test_driver/integration_test.dart"
+          ]
+        }
+      ]
+    }
+  ]
+}

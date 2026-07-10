@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "codebase-memory": {
+      "command": "/home/raed/.local/bin/codebase-memory-mcp",
+      "args": [],
+      "description": "WakePoint code-intelligence graph (DeusData codebase-memory-mcp). Additive query layer over the deterministic .wake/ map — 14 tools: search_code, query_graph, trace_path, get_code_snippet, get_architecture, detect_changes, etc. Bootstraps from .codebase-memory/graph.db.zst. scip-dart (.wake/graph) remains the Dart semantic source of truth."
+    }
+  }
+}

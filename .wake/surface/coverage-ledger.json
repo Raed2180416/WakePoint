@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "wakepoint-coverage-ledger-v1",
+  "gitCommit": "4b0f5915e61a5818100124112fae647d7d3d915d",
+  "generatedAt": "2026-07-10T06:06:24+05:30",
+  "surfaceSha256": "dc11b7347a5ee89fb563926475376e4511618291",
+  "verdict": "complete-visible-surface + complete-dart-symbol-references + partial-call-graph; gaps: Dart L5 call-hierarchy, L6/L7",
+  "toolchain": {
+    "dart": "scip-dart 1.6.2 (Dart 3.12.2, Flutter 3.44.6 resolved)",
+    "javascript": ".agentic-os symbol-call-graph.mjs (TS compiler API)",
+    "fileSurface": "wakepoint-indexer.mjs (regex, zero-dep)",
+    "rag": ".agentic-os CodebaseRAG (offline BM25/lexical)"
+  },
+  "languages": [
+    {
+      "language": "dart",
+      "files": 247,
+      "currentLevel": "L4-references",
+      "maxObservableLevel": "L5-call-hierarchy",
+      "levels": {
+        "L1": {
+          "status": "complete",
+          "by": "git ls-files + wakepoint-indexer"
+        },
+        "L2": {
+          "status": "partial",
+          "by": "regex structural extraction (indexer)",
+          "note": "not full AST; class members not enumerated"
+        },
+        "L3": {
+          "status": "complete",
+          "by": "scip-dart 1.6.2",
+          "definitions": 12283
+        },
+        "L4": {
+          "status": "complete",
+          "by": "scip-dart references",
+          "referenceEdges": 4980,
+          "flutterExternalRefs": 4087
+        },
+        "L5": {
+          "status": "partial",
+          "by": "none (dart LSP call-hierarchy not exported)",
+          "gapReason": "scip-dart emits definitions+references, not caller->callee call edges; dart LSP call-hierarchy would close this"
+        },
+        "L6": {
+          "status": "none",
+          "gapReason": "no dataflow/type-hierarchy tool wired for Dart"
+        },
+        "L7": {
+          "status": "none",
+          "gapReason": "no runtime trace capture"
+        }
+      }
+    },
+    {
+      "language": "javascript",
+      "files": 18,
+      "currentLevel": "L5-call-graph",
+      "maxObservableLevel": "L5-call-graph",
+      "levels": {
+        "L1": {
+          "status": "complete",
+          "by": "wakepoint-indexer"
+        },
+        "L2": {
+          "status": "partial",
+          "by": "regex structural extraction"
+        },
+        "L3": {
+          "status": "complete",
+          "by": "symbol-call-graph.mjs",
+          "symbols": null
+        },
+        "L4": {
+          "status": "complete",
+          "by": "import resolution (indexer + symbol-call-graph)"
+        },
+        "L5": {
+          "status": "partial",
+          "by": "symbol-call-graph call edges",
+          "note": "geowake-server scope only; few dynamic call sites"
+        },
+        "L6": {
+          "status": "none"
+        },
+        "L7": {
+          "status": "none"
+        }
+      }
+    }
+  ],
+  "boundaries": [
+    "Dart symbol extraction in the file map is regex-based (deterministic but not AST-exact); scip-dart provides the authoritative Dart symbol/reference layer.",
+    "Dart call edges (who-calls-whom) are not captured; only definitions and references. LSP call-hierarchy would add them.",
+    "Native platform code (Kotlin/Swift/C++ under android|ios|macos|linux) is inventoried at L1 only.",
+    "Backend call graph is scoped to geowake-server (whole-repo symbol-call-graph run does not terminate in time)."
+  ]
+}

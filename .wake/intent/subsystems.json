@@ -1,0 +1,1192 @@
+[
+  {
+    "unit": "ekf-sensor-fusion",
+    "feature": "ekf-sensor-fusion",
+    "purpose": "A route-constrained Extended Kalman Filter that provides dead-reckoning position along a known transit polyline when GPS is degraded or absent (tunnels, deep-metro segments). It fuses IMU (accelerometer/gyro) forward-acceleration with GPS fixes projected onto the route, plus ZUPT (zero-velocity) and station-snap corrections, to keep the app's wake-up alarm firing at the right station even with no satellite fix. It is the accuracy backbone behind SensorFusionManager and feeds an EkfPublicState (progress meters, velocity, sigma, mode) into the tracking/alarm pipeline. The whole subsystem is a 1-D filter on route arc-length s, not a 2-D lat/lng filter \u2014 geometry is handled by RouteGeometry projecting to/from meters.",
+    "responsibilities": [
+      "Estimate 1-D route progress s (meters), velocity v (m/s), and accel bias b via a 3-state EKF (EkfPipeline) with predict/GPS-update/ZUPT/station-snap steps",
+      "Convert raw IMU samples into route-tangent forward acceleration using TiltFilter gravity/rotation and RouteGeometry.tangentAt, then drive prediction",
+      "Classify motion state (stationary/vehicle/human) from accel/gyro variance + FFT features and gate mode transitions (MotionClassifier, duration gate)",
+      "Detect GPS degradation and enter/exit degraded (dead-reckoning) mode with bounded covariance growth (GpsDegradationDetector + DegradedMode)",
+      "Detect zero-velocity intervals (ZuptDetector) and, on confirmation, apply ZUPT bias correction and attempt station association",
+      "Associate the current estimate to a discrete station and emit gated StationSnapConfirmed events (\u00a724.2 confidence gate) consumed by ActiveRouteManager",
+      "Provide offline replay/test harnesses (ImuReplayEngineV2, EkfTestController, test_routes) that reproduce recorded/simulated rides byte-deterministically for the dashboard and integration tests"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/core/ekf/ekf_orchestrator.dart",
+        "role": "Central hub (fanIn=10, high risk): wires TiltFilter, MotionClassifier, ZuptDetector, GpsDegradationDetector, DegradedMode, StationAssociation around EkfPipeline; owns onImuSample/onGpsFixAuto/setStationContext and the \u00a724.2 snap gate"
+      },
+      {
+        "path": "lib/core/ekf/ekf_pipeline.dart",
+        "role": "The actual EKF math: 3-state [s,v,b] with 3x3 covariance P; predict (onForwardAccel), Huber-gated GPS update (onGpsFix), ZUPT (onZuptConfirmed), station snap (onStationCandidates); owns EkfPublicState"
+      },
+      {
+        "path": "lib/core/ekf/ekf_types.dart",
+        "role": "Critical shared model (fanIn=25): EkfPublicState, ImuSample, GpsFix, StationSnapConfirmed, EkfConfig, enums EkfMode/MotionState \u2014 the data contract crossing into services/"
+      },
+      {
+        "path": "lib/core/ekf/route_geometry.dart",
+        "role": "Critical geometry (fanIn=15): RouteGeometry.fromPoints/projectLatLng/tangentAt/positionAt \u2014 projects GPS to arc-length meters and back; the bridge between 2-D map and 1-D filter"
+      },
+      {
+        "path": "lib/core/ekf/station_association.dart",
+        "role": "StationAssociation.selectCandidate: picks a single station within the 3\u03c3+100m window on ZUPT; returns StationAssociationResult + diagnostics (rejectReason, MULTIPLE_CANDIDATES)"
+      },
+      {
+        "path": "lib/core/ekf/tilt_filter.dart",
+        "role": "TiltFilter.update: estimates gravity direction + device\u2192world rotation so accelerometer can be projected onto the route tangent (forward accel)"
+      },
+      {
+        "path": "lib/core/ekf/degraded_mode.dart",
+        "role": "DegradedMode + GpsDegradationDetector: decide degraded/tunnel mode from GPS timeout/accuracy/innovation and sigmaS growth; gate metro threshold (2000m)"
+      },
+      {
+        "path": "lib/core/ekf/imu_replay_engine_v2.dart",
+        "role": "Large (2691 LOC) offline replay/log-parser harness used by EkfTestController, dashboard test panel, and integration tests; imports lib/all_india_stops.dart"
+      }
+    ],
+    "publicSymbols": [
+      "EkfOrchestrator (constructor {required RouteGeometry route}, onImuSample(ImuSample), onGpsFixAuto(GpsFix), onGpsFix(fix, innovationSigma:), publicState getter, setStationContext(stationMeters:, isMetroLeg:), setFftEnabled(bool), onStationSnapConfirmed callback, reset())",
+      "EkfPublicState {s, v, sigmaS, sigmaV, biasA, mode, motion}",
+      "EkfMode {surface, metro, degraded}",
+      "MotionState {human, vehicle, stationary}",
+      "ImuSample, GpsFix, StationCandidate, StationSnapConfirmed, EkfConfig (ekf_types.dart)",
+      "RouteGeometry.fromPoints / projectLatLng / tangentAt / positionAt / totalLengthMeters",
+      "EkfPipeline (onForwardAccel, onGpsFix, onZuptConfirmed, onStationCandidates, innovationSigmaForS, setMode, setAllowReverse) \u2014 used directly by orchestrator and integration tests",
+      "StationAssociation.selectCandidate -> StationAssociationResult",
+      "ImuReplayEngineV2, EkfTestController, TestRouteId (test/replay surface)"
+    ],
+    "dataFlow": "Live path (real edges): location_stream_handler.dart builds RouteGeometry.fromPoints(entry.points) and creates SensorFusionManager(routeGeometry:, enableEkf: geometry!=null); SensorFusionManager (sensor_fusion.dart) instantiates EkfOrchestrator(route:). Per tick \u2014 GPS: SensorFusionManager.onGpsFixAuto(GpsFix) -> RouteGeometry.projectLatLng(lat,lng)->sGps (NaN if >maxLateralError \u2192 dropped) -> EkfPipeline.innovationSigmaForS(sGps) -> EkfOrchestrator.onGpsFix -> EkfPipeline.onGpsFix (Huber-gated Kalman update on s,v). IMU: onImuSample(ImuSample) -> TiltFilter.update -> _forwardAccel projects world accel onto RouteGeometry.tangentAt(s) -> variance/feature windows -> MotionClassifier.classify (2-consecutive duration gate @1.28s) -> _updateMode (GpsDegradationDetector+DegradedMode) -> ZuptDetector.update -> EkfPipeline.onForwardAccel (predict s+=v\u00b7dt+\u00bda\u00b7dt\u00b2, covariance P=FPF\u1d40+Q). On ZUPT confirmed: EkfPipeline.onZuptConfirmed (v\u21920, bias observable) + StationAssociation.selectCandidate(stationMeters,sEst,sigmaS) -> EkfPipeline.onStationCandidates([single]) -> \u00a724.2 gate (\u03c3\u226430m/60m degraded, monotonic index) -> onStationSnapConfirmed(StationSnapConfirmed). Output: EkfPipeline.publicState -> SensorFusionManager.ekfStateStream -> location_stream_handler._lastEkfState -> trackingservice._lastEkfState (alarm evaluation/diagnostics); StationSnapConfirmed -> active_route_manager.onStationSnapConfirmed.",
+    "dependsOn": [
+      "lib/all_india_stops.dart (imported by imu_replay_engine_v2.dart)",
+      "package:geolocator (RouteGeometry distance math)",
+      "package:google_maps_flutter LatLng (RouteGeometry point type)",
+      "internal only otherwise: ekf_orchestrator -> ekf_pipeline, ekf_types, route_geometry, tilt_filter, motion_classifier, zupt_detector, gps_degradation_detector, station_association, degraded_mode; ekf_pipeline -> ekf_types, route_geometry"
+    ],
+    "usedBy": [
+      "lib/services/sensor_fusion.dart (EkfOrchestrator, EkfPublicState, GpsFix, ImuSample, StationSnapConfirmed, RouteGeometry.projectLatLng) \u2014 primary live integration",
+      "lib/services/tracking/location_stream_handler.dart (RouteGeometry.fromPoints, EkfPublicState stream subscription)",
+      "lib/services/trackingservice.dart (EkfPublicState _lastEkfState for alarm snapshot + diagnostics)",
+      "lib/services/active_route_manager.dart (StationSnapConfirmed via onStationSnapConfirmed)",
+      "lib/dashboard/ekf_test_panel.dart + ekf_replay_panel.dart + unified_dashboard.dart (EkfTestController, ImuReplayEngine v1/v2)",
+      "test/core/ekf/*, test/services/ekf_integration/*, test/integration/ekf_logged_data_test.dart, test/performance/ekf_performance_test.dart"
+    ],
+    "invariants": [
+      "Filter operates in 1-D route arc-length meters (s), NOT lat/lng; all GPS enters via RouteGeometry.projectLatLng and exits via positionAt \u2014 a route MUST be set or the whole EKF is disabled (enableEkf = geometry != null)",
+      "publicState.s is monotonic non-decreasing in surface/metro modes (_sPub = max(_sPub,_s)); ONLY in degraded mode is raw internal _s exposed so DR isn't frozen by the monotonic clamp",
+      "EkfPipeline is uninitialized until the first GPS fix (_initializeFromGps); onForwardAccel/onZupt/onStation are no-ops before that \u2014 prediction is also gated by orchestrator._predictionEnabled",
+      "onStationCandidates applies an update ONLY when exactly one candidate is passed (candidates.length != 1 \u2192 return); StationAssociation enforces single-candidate selection",
+      "Accel bias b is observable only during ZUPT (k2 used) and via a weak GPS-derived-accel update (gain 0.05); GPS position and station-snap updates deliberately suppress the bias gain (k2 = 0)",
+      "IMU timestamps are Duration (monotonic since stream start); dt must fall in (0, maxDt=0.2]; larger/zero/negative dt skip integration to protect the covariance",
+      "sigmaS is clamped to a 200m ceiling (was 10km) so the station-association window (3\u03c3+100m \u2248 700m) stays small enough to disambiguate adjacent stations",
+      "StationSnapConfirmed is emitted only through the \u00a724.2 gate: \u03c3_after_snap \u2264 30m (\u226460m degraded) AND station index strictly greater than last snapped (monotonic)"
+    ],
+    "gotchas": [
+      "The header comment in ekf_orchestrator.dart says 'not yet integrated into app' \u2014 this is STALE. It is live-wired: location_stream_handler.dart passes enableEkf: geometry != null, so the EKF runs whenever an active route has \u22652 points.",
+      "EkfConfig has softGateSigma(3.0)/hardGateSigma(5.0)/stationSnapSigmaGate(30.0) fields that are NOT read by the code that matters: EkfPipeline hardcodes Huber thresholds 2.5\u03c3/15\u03c3, and the orchestrator hardcodes the snap gate 30m/60m. Editing EkfConfig will not change gating behavior.",
+      "RouteGeometry.projectLatLng returns NaN when lateral error exceeds maxLateralErrorMeters (75m surface / 50m transit) and onGpsFixAuto silently returns on NaN \u2014 off-route GPS fixes are dropped with no update, which can look like a stuck filter.",
+      "Two parallel replay engines exist: imu_replay_engine.dart (v1, 659 LOC, used only by dashboard/ekf_replay_panel.dart) and imu_replay_engine_v2.dart (v2, 2691 LOC, used by EkfTestController + integration tests). They are NOT interchangeable; new work should target v2.",
+      "Motion-state changes are deliberately slow: the duration gate (_motionStepSeconds=1.28s) requires 2 consecutive agreeing classifications, so a real stop/start takes ~2.5s to register \u2014 do not expect instantaneous stationary detection.",
+      "Degraded-mode covariance inflation is a per-tick factor of 1.0002 (~1%/s at 50Hz), tuned to keep \u03c3s under ~100m for ~3 minutes; changing it or the 200m clamp directly breaks station snaps (comments warn the old 1.02 / 10km values did).",
+      "The orchestrator maintains its own accel/gyro variance windows AND a static pre-GPS bias-init window (100\u2013500 samples); this bias is subtracted from aFwd ONLY in degraded mode, so surface-mode DR does not get the same correction.",
+      "In non-metro (isMetroLeg=false) legs reverse motion is allowed; setStationContext(isMetroLeg:true) calls pipeline.setAllowReverse(false) which clamps v\u22650 and s\u2265sOld \u2014 a mislabeled leg type silently changes filter dynamics.",
+      "MotionState enum here is {human, vehicle, stationary} and defaults to vehicle; do not confuse it with any app-level motion/transit-mode enums \u2014 this one lives in ekf_types.dart and is EKF-internal.",
+      "ekf_logger.dart exposes a global singleton `ekfLogger`; verbose logging (logVerbosity \u22651/2) is threaded through onLog callbacks and can be very chatty on the IMU tick path \u2014 keep verbosity at 0 for performance-sensitive runs."
+    ],
+    "entryPoints": [
+      "EkfOrchestrator.onImuSample(ImuSample) \u2014 per-IMU-tick prediction entry",
+      "EkfOrchestrator.onGpsFixAuto(GpsFix) \u2014 per-GPS-fix update entry (auto-computes innovationSigma)",
+      "EkfOrchestrator.publicState / SensorFusionManager.ekfStateStream \u2014 state output consumed downstream",
+      "EkfOrchestrator.onStationSnapConfirmed callback -> ActiveRouteManager.onStationSnapConfirmed",
+      "EkfTestController + ImuReplayEngineV2 \u2014 offline replay/test entry"
+    ]
+  },
+  {
+    "unit": "app-core",
+    "feature": "app-bootstrap-and-shared-foundation",
+    "purpose": "The app-core unit is WakePoint's (Dart package geowake2) bootstrap layer plus the shared, mostly-leaf primitives the rest of the Flutter app builds on. lib/main.dart is the process entry point that initializes Hive, mounts MaterialApp, and owns the route table and the light/dark theme toggle. The rest of the unit provides cross-cutting foundations consumed everywhere: a time abstraction (AppClock) that lets ETA/alarm/deviation logic run under accelerated simulation, the shared RouteModel/TransitSwitch value types, the generated all-India metro station dataset, metro line color and theme maps, and a small shared widget.",
+    "responsibilities": [
+      "Boot the app: WidgetsFlutterBinding.ensureInitialized() + Hive.initFlutter() in main(), then runApp(MyApp)",
+      "Own the top-level MaterialApp: navigatorKey, theme selection, and the onGenerateRoute table (/splash, /preloadMap, /mapTracking, /)",
+      "Manage app lifecycle: on AppLifecycleState.paused flush the RecentLocationsService Hive box and forward the transition to TrackingService",
+      "Persist and restore the dark-mode preference via SharedPreferences key 'gw_dark_mode'",
+      "Provide AppClock: a process-wide time source returning real or warp-accelerated virtual time for simulation/testing",
+      "Define shared value types RouteModel and TransitSwitch used by routing/deviation code",
+      "Supply static reference data: generated allIndiaStops station list, metroLineColors, and AppThemes light/dark themes",
+      "Provide the small shared PulsingDots UI widget"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/main.dart",
+        "role": "App entry point (main()); MyApp/MyAppState build MaterialApp, route table, theme toggle, Hive lifecycle flush"
+      },
+      {
+        "path": "lib/core/clock/app_clock.dart",
+        "role": "AppClock singleton + DateTimeClockExtension; real vs warped-virtual time; critical hub (12 importers) for ETA/alarm/deviation timing"
+      },
+      {
+        "path": "lib/models/route_models.dart",
+        "role": "Shared RouteModel and TransitSwitch value types (polyline, ETA, distance, travelMode, transitSwitches); imports google_maps_flutter LatLng"
+      },
+      {
+        "path": "lib/all_india_stops.dart",
+        "role": "GENERATED const allIndiaStops: 875 metro station records (id/city/name/lat/lng/network/line/lineColor)"
+      },
+      {
+        "path": "lib/metro_color_map.dart",
+        "role": "metroLineColors: string-keyed Map<String,Color> of metro line names to brand colors (Delhi/Chennai/Hyderabad/Mumbai)"
+      },
+      {
+        "path": "lib/themes/appthemes.dart",
+        "role": "AppThemes.lightTheme/darkTheme (Material3 + Montserrat via google_fonts)"
+      },
+      {
+        "path": "lib/widgets/pulsing_dots.dart",
+        "role": "PulsingDots animated loading-indicator widget"
+      },
+      {
+        "path": "lib/simulation_engine.dart",
+        "role": "SimulationEngine route-playback class \u2014 ORPHANED dead code, zero importers/imports in the repo"
+      }
+    ],
+    "publicSymbols": [
+      "main() \u2014 process entry point (entry-points.json)",
+      "MyApp / MyAppState (with public toggleTheme())",
+      "AppClock (singleton: now(), since(), hasElapsed(), setWarpFactor(), enableSimulation()/disableSimulation(), static install()/reset()/instance) \u2014 critical, 12 importers",
+      "DateTimeClockExtension (DateTime.elapsed, hasElapsed())",
+      "RouteModel, TransitSwitch",
+      "allIndiaStops (const List<Map<String,dynamic>>)",
+      "metroLineColors (Map<String,Color>)",
+      "AppThemes (lightTheme, darkTheme)",
+      "PulsingDots"
+    ],
+    "dataFlow": "Startup: main() -> WidgetsFlutterBinding.ensureInitialized() -> Hive.initFlutter() -> runApp(MyApp). MyAppState.build() -> MaterialApp with NavigationService.navigatorKey and theme = isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme; onGenerateRoute dispatches '/splash'->SplashScreen (where real service init is deferred), '/preloadMap'->PreloadMapScreen(args), '/mapTracking'->MapTrackingScreen, '/'->HomeScreen. Theme: toggleTheme() flips isDarkMode + persists to SharedPreferences('gw_dark_mode'); _restoreThemePreference() reloads it. Lifecycle: didChangeAppLifecycleState(paused) -> Hive.box(RecentLocationsService.boxName).flush() and TrackingService().handleAppLifecycleChange(state). Time: consumers call AppClock().now() \u2014 fast path returns DateTime.now(); once enableSimulation() is active it returns simulationStartVirtual + (realElapsed * warpFactor); eta_engine, tracking/alarm_controller, tracking_termination_policy, deviation_monitor and the dashboards read this. Data: allIndiaStops is filtered by transfer_utils (OSM-ONLY active-stop mode) and unified_dashboard for route stations; RouteModel/TransitSwitch flow into deviation_detection and route_queue.",
+    "dependsOn": [
+      "lib/services/trackingservice.dart (main.dart imports; TrackingService lifecycle forwarding)",
+      "lib/services/navigation_service.dart (NavigationService.navigatorKey)",
+      "lib/screens/homescreen.dart, lib/screens/maptracking.dart, lib/screens/splash_screen.dart, lib/screens/otherimpservices/preload_map_screen.dart (routed screens)",
+      "lib/screens/otherimpservices/recent_locations_service.dart (Hive box name for lifecycle flush)",
+      "lib/themes/appthemes.dart (in-unit; used by main.dart)",
+      "package:google_maps_flutter (LatLng in route_models.dart and simulation_engine.dart)",
+      "package:hive_flutter, permission_handler, shared_preferences, google_fonts (external)"
+    ],
+    "invariants": [
+      "AppClock is a process-wide singleton accessed via AppClock() factory; all callers share one clock instance and its simulation state",
+      "setWarpFactor requires 1.0 <= factor <= 500.0 or it throws ArgumentError; changing it mid-simulation preserves the current virtual time",
+      "Once enableSimulation() is called, now() is computed from simulation start (even at warp 1.0) \u2014 NOT a plain DateTime.now() passthrough until disableSimulation()",
+      "Tests MUST call AppClock.reset() in teardown; install()/reset() swap the static instance and state leaks across tests otherwise",
+      "main() defers heavy service initialization to SplashScreen (per code comment) \u2014 services are NOT started in main()",
+      "On AppLifecycleState.paused the RecentLocationsService Hive box must be flushed before the OS may kill the app",
+      "RouteModel units: initialETA/currentETA in seconds, distance in meters, travelMode is a string ('DRIVING'/'TRANSIT'); initialETA, currentETA, isActive are mutable and mutated in place",
+      "Dark-mode state is persisted under SharedPreferences key 'gw_dark_mode'"
+    ],
+    "gotchas": [
+      "lib/simulation_engine.dart (SimulationEngine) is DEAD CODE: grep confirms zero importers and it imports nothing but dart:math/google_maps_flutter \u2014 it is NOT the live time-warp simulation. Real simulation runs through AppClock + lib/dashboard controllers. Don't wire new work to it.",
+      "The task names lib/main_deviation_dashboard.dart but that file does NOT exist (not tracked in git; null in public-api-surface). The real dashboard files live under lib/dashboard/*.",
+      "app_clock.dart is flagged riskLevel=critical with 12 importers \u2014 altering now()/warp semantics ripples into ETA, alarm firing, and tracking termination timing.",
+      "allIndiaStops is GENERATED by merge_metro_data.dart (875 entries) \u2014 do not hand-edit. Its lineColor is a STRING hex like \"0xFF5D4DA8\" (not an int/Color), and some name/line fields contain HTML entities (e.g. \"&#x25D9;\").",
+      "metroLineColors is matched by fragile human-readable string keys with city-suffixed duplicates ('Blue Line' vs 'Blue Line (Mumbai)') and only covers Delhi/Chennai/Hyderabad/Mumbai \u2014 not every network present in allIndiaStops.",
+      "route_models.dart pulls in package:google_maps_flutter (LatLng), so importing the shared model drags the Maps SDK type into that file.",
+      "main.dart uses onGenerateRoute (not a static routes map) with initialRoute '/splash'; '/preloadMap' casts settings.arguments as Map<String,dynamic> and will throw if launched without args."
+    ],
+    "entryPoints": [
+      "lib/main.dart -> main() (declared entry point in .wake/map/entry-points.json)"
+    ],
+    "usedBy": [
+      "AppClock: lib/services/eta_engine.dart, lib/services/tracking/alarm_controller.dart, lib/services/tracking_termination_policy.dart, lib/services/deviation_monitor.dart, lib/dashboard/deviation_dashboard.dart, lib/dashboard/deviation_simulation_controller.dart, lib/dashboard/unified_dashboard.dart (+5 tests)",
+      "RouteModel/TransitSwitch: lib/services/deviation_detection.dart, lib/services/route_queue.dart",
+      "allIndiaStops: lib/services/transfer_utils.dart, lib/dashboard/unified_dashboard.dart, lib/core/ekf/imu_replay_engine_v2.dart",
+      "metroLineColors: lib/services/direction_service.dart",
+      "AppThemes: lib/main.dart",
+      "PulsingDots: lib/screens/maptracking.dart",
+      "main.dart (MyApp): lib/screens/settingsdrawer.dart, integration_test/device_alarm_integration_test.dart"
+    ]
+  },
+  {
+    "unit": "services-tracking",
+    "feature": "background-service (live tracking runtime)",
+    "purpose": "The live-tracking runtime hub of WakePoint: it turns a stream of GPS positions into route progress, ETA, and \u2014 ultimately \u2014 the wake-up alarm, while surviving app-swipe/background execution on a separate isolate. TrackingService is a singleton facade that spans two isolates (foreground/UI and a FlutterBackgroundService background isolate), owning the position loop, alarm evaluation, notification/dashboard sync, and cross-isolate state persistence. Nearly every screen and the alarm/notification stack depends on it (fanIn 43), making it the single most load-bearing file in the app per change-impact.json. The `tracking/` subfolder holds \"Phase 1 refactoring\" components extracted from the monolith (bridge, handlers, alarm controller, notification updater, heartbeat, stream handler) re-exported through the `tracking.dart` barrel.",
+    "responsibilities": [
+      "Own the GPS position loop in the background isolate (LocationStreamHandler): compute ETA via EtaEngine, track distance travelled, run sensor fusion/EKF for GPS dropout, and drive the alarm check",
+      "Evaluate and fire alarms with de-dup guarantees (AlarmController): leg-fired tracking, cooldown suppression, destination-alarm state, and migrateAlarmState across route switches",
+      "Bridge foreground UI <-> background isolate: ack-retried invokes, stream piping (location/route/eta/switch), heartbeat to detect app-swipe (ForegroundBridge, HeartbeatMonitor, BackgroundHandlers)",
+      "Persist and rehydrate session state across isolates and process death via SharedPreferences (TrackingStateStore, TrackingSnapshot, SnapshotRouteRestorer)",
+      "Source raw positions from real Geolocator or the simulation client and broadcast them to the dashboard (LocationManager)",
+      "Keep the foreground notification and debug dashboard in sync (NotificationUpdater), and handle reroute/termination/deviation decisions from RouteSessionManager"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/services/trackingservice.dart",
+        "role": "Top hub (fanIn 43, ~2582 lines): TrackingService singleton facade + module-level background isolate entry points _onStart/startLocationStream/_onStop and reroute/switch handlers; wires all tracking/ components together"
+      },
+      {
+        "path": "lib/services/tracking/location_stream_handler.dart",
+        "role": "Background GPS loop: _handlePositionUpdate does ETA (EtaEngine), movement, ActiveRouteManager.ingestPosition, sensor fusion, 30s snapshot persistence, and fires the onCheckAlarm callback under a sequential guard"
+      },
+      {
+        "path": "lib/services/tracking/alarm_controller.dart",
+        "role": "Alarm decision engine (~1405 lines): checkAndTriggerAlarm(AlarmContext), leg/destination fired-state, cooldown suppression, migrateAlarmState on route switch, alarm-stop poll timer"
+      },
+      {
+        "path": "lib/services/tracking_state_store.dart",
+        "role": "Cross-isolate persistence (fanIn 21): static SharedPreferences API for active/paused/muted flags, TrackingSnapshot, TrackingProgressPayload, and per-route transit leg stops (versioned keys, compute()-offloaded encode)"
+      },
+      {
+        "path": "lib/services/location_manager.dart",
+        "role": "Singleton GPS source (fanIn 8): positionStream fed by real Geolocator or simulation_client; broadcastPosition/broadcastRoute/broadcastState + injectPosition for tests/demo"
+      },
+      {
+        "path": "lib/services/tracking/foreground_bridge.dart",
+        "role": "UI<->background comm: ensureListenersRegistered, invokeWithAckRetry, heartbeat, and pipes background isolate streams (routeSwitch/activeRouteState/location/eta) plus onAlarmTrigger callback"
+      },
+      {
+        "path": "lib/services/tracking/background_handlers.dart",
+        "role": "Registers background isolate service.on() listeners (startTracking, stopTracking, stopAlarm, registerRoute, registerRouteDirections, injectPosition) via BackgroundHandlerCallbacks"
+      },
+      {
+        "path": "lib/services/tracking/notification_updater.dart",
+        "role": "Foreground notification + dashboard broadcasts: updateNotification, broadcastSimulationState(BroadcastContext), maybeBroadcastCachedRoute (throttled)"
+      }
+    ],
+    "publicSymbols": [
+      "TrackingService (singleton: startTracking, stopTracking, resumeFromNotification, initializeService, muteJourneyNotifications, setSimulationMode)",
+      "TrackingService streams: activeRouteStateStream, routeSwitchStream, rerouteDecisionStream, locationStream, etaSecondsStream",
+      "TrackingServiceRouteOps (extension), onIosBackground(), startLocationStream(), triggerOnStartForRecoveryTest(), TestServiceInstance",
+      "TrackingStateStore (static: setActive/isActive, saveSnapshot/loadSnapshot/clearSnapshot, setPaused/isPaused, notificationsMuted, preboardingEnabled(Sync), destinationOnlyMetroTimeEnabled(Sync), setAlarmFired/isAlarmFired, save/loadTransitLegStops, resetCacheForTests)",
+      "TrackingSnapshot, TrackingProgressPayload",
+      "LocationManager (positionStream, start/stop, injectPosition, broadcastPosition/Route/State, currentSpeedMps)",
+      "AlarmController + AlarmContext, AlarmContextBuilder.build",
+      "LocationStreamHandler + LocationStreamContext",
+      "ForegroundBridge, BackgroundHandlers + BackgroundHandlerCallbacks, HeartbeatMonitor, NotificationUpdater (BroadcastContext/RouteContext), SnapshotRouteRestorer + RegisterRouteFromDirections"
+    ],
+    "dataFlow": "LocationManager.positionStream (real Geolocator.getPositionStream OR simulation_client, or injectPosition) -> LocationStreamHandler._handlePositionUpdate: _computeEta (EtaEngine.computeEta with stepBoundsMeters/stepDurationsSeconds) sets _smoothedETA/_smoothedSpeed; _trackMovement updates _distanceTravelledMeters; ctx.activeManager.ingestPosition feeds ActiveRouteManager/RouteSessionManager; SensorFusionManager/EKF (EkfPublicState) covers GPS dropout. Then onCheckAlarm -> TrackingService._checkAndTriggerAlarm -> AlarmController.checkAndTriggerAlarm(context: AlarmContext built by AlarmContextBuilder from transfer_utils/snap_to_route/route_registry) -> fires via AlarmPlayer + NotificationService.showWakeUpAlarm. State persists through TrackingStateStore.saveSnapshot (throttled 30s). UI sync: background invokes service.invoke(\"updateLocation\"/route/eta) -> ForegroundBridge stream handlers -> TrackingService _locationCtrl/_routeStateCtrl/_etaCtrl/_routeSwitchCtrl -> exposed streams consumed by maptracking/dashboard. syncGlobalsFromHandler() mirrors handler state into module-level globals around each alarm check.",
+    "dependsOn": [
+      "lib/services/transfer_utils.dart (TransferUtils/TransitLegStops \u2014 shared with alarm_controller, tracking_state_store, location_stream_handler, notification_updater)",
+      "lib/services/route_registry.dart",
+      "lib/services/snap_to_route.dart",
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/eta_engine.dart",
+      "lib/services/sensor_fusion.dart",
+      "lib/services/active_route_manager.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/reroute_policy.dart",
+      "lib/services/reroute_constraints.dart",
+      "lib/services/deviation_monitor.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/soft_lock_manager.dart",
+      "lib/services/navigation_service.dart",
+      "lib/services/tracking_termination_policy.dart",
+      "lib/services/simulation_client.dart (via location_manager)",
+      "lib/config/power_policy.dart",
+      "lib/core/ekf/ekf_types.dart, lib/core/ekf/route_geometry.dart",
+      "lib/core/logging/app_logger.dart, lib/core/clock/app_clock.dart"
+    ],
+    "usedBy": [
+      "lib/main.dart",
+      "lib/screens/maptracking.dart",
+      "lib/screens/homescreen.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/screens/settingsdrawer.dart (tracking_state_store)",
+      "lib/services/notification_service.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/dashboard/ekf_test_panel.dart",
+      "lib/debug/demo_tools.dart",
+      "test/* (tracking_service_*, alarm_*, metro_*, process_death_recovery, tracking_state_store_test, location_manager_test \u2014 dozens)"
+    ],
+    "invariants": [
+      "TrackingService is a singleton (factory returns _instance) shared across foreground and background isolates; _isBackgroundIsolate is set true inside _onStart and gates isolate-only behavior (e.g. HeartbeatMonitor.isEnabled = _isBackgroundIsolate && !isTestMode)",
+      "isTestMode short-circuits the isolate hop: startTracking calls _onStart(TestServiceInstance()) directly instead of _service.startService(); three independent flags must agree \u2014 TrackingService.isTestMode, NotificationService.isTestMode, LocationManager.isTestMode",
+      "Sequential alarm guard: LocationStreamHandler._isCheckingAlarm ensures only one onCheckAlarm runs at a time, reset via whenComplete \u2014 alarm evaluation must stay re-entrancy-safe",
+      "On any route switch, _alarmController.migrateAlarmState(fromKey,toKey) MUST run before emitting the switch, in BOTH the RouteSessionManager.routeSwitchStream listener (_onStart) and ForegroundBridge.routeSwitchStream listener \u2014 otherwise fired alarms re-fire on the new key",
+      "Handler state is the source of truth; module-level globals (_lastProcessedPosition,_smoothedETA,_distanceTravelledMeters,_etaSamples,_timeAlarmEligible,_fusionActive) are a mirror kept coherent only by explicit syncGlobalsFromHandler() around alarm checks",
+      "Cross-isolate SharedPreferences reads that must be fresh call prefs.reload() (notificationsMuted, preboardingEnabled, destinationOnlyMetroTimeEnabled, pendingAlarmAllowContinue); the *Sync variants read cached prefs and may be stale",
+      "saveSnapshot must not overwrite an existing directions payload with null \u2014 background saves userLat/userLng-only snapshots frequently and merges directions from the existing stored snapshot",
+      "Time-alarm gate: time-mode alarms are eligible only after distanceTravelled>=100m AND etaSamples>=3 (speed>=0.5m/s) AND >=30s since start",
+      "Foreground->background control messages go through ack-retry (invokeWithAckRetry) with a best-effort raw invoke fallback"
+    ],
+    "gotchas": [
+      "trackingservice.dart is intentionally monolithic (~2582 lines; header comment claims ~4400) and _onStart/startLocationStream/_onStop/_handleRerouteDecision/_handleBackgroundStartTracking are MODULE-LEVEL functions, not TrackingService methods \u2014 they live outside the class and mutate top-level globals (_alarmController, _sessionManager via _registry/_activeManager getters, _terminationPolicy)",
+      "Dual state copies: LocationStreamHandler keeps its own _lastGpsUpdate/_smoothedETA/etc AND there are top-level globals of the same name; only syncGlobalsFromHandler() (called before+after _checkAndTriggerAlarm and in onUpdateNotification/onBroadcastState) keeps them from drifting \u2014 edit one path and forget the sync and telemetry/notifications go stale",
+      "ActiveRouteManager.ingestPosition is called twice per update: once directly in _handlePositionUpdate (line ~264, no final flag) and once inside _trackMovement (line ~304 with isFinalAlarm flag from isFinalAlarmProvider) \u2014 be careful when changing ingest semantics",
+      "End-tracking cleanup has two paths: if LocationStreamHandler.onEndTrackingRequested is set it is the single source of truth; otherwise the handler inlines cancelAllNotifications + TrackingStateStore clears + service.stopSelf() \u2014 keep them in sync",
+      "TrackingStateStore caches SharedPreferences statically in _cachedPrefs; tests must call resetCacheForTests() or see cross-test contamination; sync getters return cached (possibly stale) values",
+      "Snapshot encoding is offloaded to a compute() isolate except under FLUTTER_TEST (_isFlutterTest) where it runs inline; _transitLegStopsKey is version-bumped (currently v5) on any progress-domain change and old keys are silently ignored",
+      "Throttling: dashboard position broadcast is gated to >=1s and snapshot persistence to >=30s \u2014 rapid-update tests won't see every tick persisted/broadcast",
+      "File header contains mojibake (box-drawing chars show as replacement glyphs) \u2014 cosmetic, do not 'fix' by reflowing the ASCII-art banner",
+      "tracking/tracking.dart is only a barrel (8 exports); import it, not individual component files, to match existing convention"
+    ],
+    "entryPoints": [
+      "TrackingService.startTracking() \u2014 UI/foreground start",
+      "_onStart(ServiceInstance) \u2014 background isolate entry (Android onStart / iOS onForeground)",
+      "onIosBackground(ServiceInstance) \u2014 iOS background entry",
+      "startLocationStream(ServiceInstance) \u2014 begins the GPS position loop",
+      "TrackingService.resumeFromNotification() \u2014 resume after app reopen",
+      "SnapshotRouteRestorer.restoreFromStoreIfActiveAndNotPaused() \u2014 process-death recovery",
+      "BackgroundHandlers.registerAll() \u2014 background service.on() message listeners"
+    ]
+  },
+  {
+    "unit": "services-alarm",
+    "feature": "alarm-engine",
+    "purpose": "The decision-and-delivery core of WakePoint's wake-up alarm. AlarmEvaluator is a stateless geometric state machine that decides WHEN to fire per route leg (stops / time / distance thresholds), classifies the trigger (destination, transfer, mode_change, final_station, preBoarding) and builds the user-facing message. NotificationService is the singleton that actually presents and persists the Android/iOS alarm, journey-progress and paused notifications, and brokers user actions (Stop Alarm / End Tracking / Mute / Resume) across isolates. StopLogicEngine is a mostly-pre-trip helper that validates whether the user's chosen stops threshold is achievable for the route; it is NOT in the runtime firing path.",
+    "responsibilities": [
+      "Decide per-leg whether an alarm should fire now, enforcing strict one-alarm-per-leg (AlarmEvaluator.evaluateCoinciding)",
+      "Classify the alarm event type and craft the message/label from route events (transfer/mode_change/final_station/preBoarding/destination)",
+      "Estimate ETA to a target meter position for time-mode using a speed-vs-step-duration hybrid (estimateEtaSecondsToMeters)",
+      "Pre-trip validation of stops-mode thresholds against route events and per-metro-leg stop counts (StopLogicEngine.validateThreshold / validateThresholdAgainstMetroLegs)",
+      "Present/cancel the full-screen wake alarm, journey-progress and tracking-paused notifications and drive AlarmPlayer + AlarmHaptics (NotificationService)",
+      "Broker notification-button actions across the plugin background isolate and the tracking isolate via file + SharedPreferences request flags"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/services/alarm_evaluator.dart",
+        "role": "Core decision state machine: static evaluateCoinciding() + estimateEtaSecondsToMeters(); defines AlarmTrigger, AlarmMode, AlarmEventType (critical fan-in hub, 13 importers)"
+      },
+      {
+        "path": "lib/services/notification_service.dart",
+        "role": "Singleton notification/alarm presenter + @vm:entry-point notificationTapBackground bg-isolate handler + cross-isolate action flags (critical fan-in hub, 34 importers)"
+      },
+      {
+        "path": "lib/services/stop_logic_engine.dart",
+        "role": "Pre-trip stops-threshold validators (used by homescreen); calculateRemainingStops/checkPreBoarding are test-only, not in runtime firing path"
+      },
+      {
+        "path": "lib/services/tracking/alarm_controller.dart",
+        "role": "Sole runtime orchestrator: builds leg context, calls evaluateCoinciding, owns firedLegIds dedup, calls showWakeUpAlarm, and consumes the cross-isolate action flags"
+      },
+      {
+        "path": "lib/services/transfer_utils.dart",
+        "role": "Provides the input value types RouteEventBoundary and TransitLegStops consumed by both alarm_evaluator and stop_logic_engine (top fan-in hub)"
+      }
+    ],
+    "publicSymbols": [
+      "AlarmEvaluator.evaluateCoinciding (static; returns AlarmTrigger?)",
+      "AlarmEvaluator.estimateEtaSecondsToMeters (static)",
+      "AlarmTrigger (eventType/legId/legIndex/reason/message/remainingStops/remainingMeters)",
+      "AlarmMode {stops,time,distance}",
+      "AlarmEventType {finalDestination,transfer,modeChange,finalStation,preBoarding}",
+      "StopLogicEngine.validateThreshold",
+      "StopLogicEngine.validateThresholdAgainstMetroLegs",
+      "NotificationService.showWakeUpAlarm",
+      "NotificationService.showJourneyProgress / showTrackingPaused",
+      "NotificationService.cancelAlarm / cancelAllNotifications / cancelJourneyProgress / stopVibration / restoreJourneyProgressIfActive",
+      "NotificationService.consumeStopAlarmRequest / consumeEndTrackingRequest / consumeMuteJourneyRequest",
+      "NotificationActionOutcome",
+      "notificationTapBackground (vm:entry-point)"
+    ],
+    "dataFlow": "AlarmController assembles a leg context (progressMeters, List<TransitLegStops> transitLegs, currentLegIndex, isFinalLeg, allEvents:List<RouteEventBoundary>, currentSpeedMps, stepBounds/stepDurations) plus the per-route firedSet, then calls AlarmEvaluator.evaluateCoinciding(mode, userValue, progressMeters, firedLegIds: firedSet, ...). The evaluator does geometric checks against leg.legStartMeters/legEndMeters and leg.stopMeters, returns AlarmTrigger? (eventType, legId, message, remainingStops/remainingMeters) or null. On non-null, AlarmController records trigger.legId into its firedLegIds set (the evaluator never mutates the set) and calls NotificationService.showWakeUpAlarm(title, body, allowContinueTracking: !isFinal), which drives flutter_local_notifications + AlarmPlayer + AlarmHaptics. When the user taps a notification button, notificationTapBackground (bg isolate) writes a file flag (+SharedPreferences backup) via requestStopAlarmForService/requestEndTrackingForService/requestMuteJourneyForService; AlarmController's poll consumes them via consumeStopAlarmRequest/consumeEndTrackingRequest/consumeMuteJourneyRequest and calls cancelAlarm/cancelAllNotifications/cancelJourneyProgress. StopLogicEngine.validateThreshold* runs earlier in homescreen.dart to block invalid thresholds before tracking starts.",
+    "dependsOn": [
+      "lib/services/transfer_utils.dart (RouteEventBoundary, TransitLegStops \u2014 imported by alarm_evaluator and stop_logic_engine)",
+      "lib/core/logging/app_logger.dart (alarmLog \u2014 used by alarm_evaluator)",
+      "lib/services/navigation_service.dart, lib/services/alarm_player.dart, lib/services/alarm_haptics.dart, lib/services/trackingservice.dart, lib/services/tracking_state_store.dart (imported by notification_service)",
+      "package:geolocator + package:google_maps_flutter (stop_logic_engine)",
+      "package:flutter_local_notifications, shared_preferences, flutter_background_service, vibration, path_provider (notification_service)"
+    ],
+    "usedBy": [
+      "lib/services/tracking/alarm_controller.dart (runtime consumer of AlarmEvaluator AND NotificationService)",
+      "lib/screens/homescreen.dart (StopLogicEngine.validateThreshold / validateThresholdAgainstMetroLegs)",
+      "lib/services/tracking/foreground_bridge.dart, heartbeat_monitor.dart, location_stream_handler.dart, notification_updater.dart (NotificationService)",
+      "lib/services/trackingservice.dart and lib/services/alarm_player.dart (NotificationService \u2014 note alarm_player<->notification_service is a cycle)",
+      "lib/screens/splash_screen.dart (NotificationService.initialize), lib/debug/demo_tools.dart"
+    ],
+    "invariants": [
+      "One-alarm-per-leg: evaluateCoinciding returns null when firedLegIds contains leg.legId; the CALLER (AlarmController) must add trigger.legId to firedLegIds after firing \u2014 the evaluator only reads, never mutates, the set",
+      "Triggering is purely geometric (progressMeters vs leg bounds / stopMeters); allEvents are used ONLY to enrich message text and distinguish event type, never to gate firing",
+      "leg.stopMeters is intermediate stops only (endpoints excluded); remainingStopsToTarget = remainingIntermediate + 1 (the alighting station counts as 1)",
+      "Time-mode fires when estimateEtaSecondsToMeters <= userValue*60; ETA hybrid = speed-based (speed>0.5 m/s, x1.20 buffer) capped at x1.50 of step-duration estimate, with step-domain-mismatch fallback",
+      "NotificationService is a singleton (factory returns _instance); fixed IDs: alarm=0, progress=888, paused=889; alarm channel geowake_alarm_channel_v4",
+      "Destination alarms call showWakeUpAlarm(allowContinueTracking:false) which force-overrides an already-showing alarm; progress alarms use true and skip if _alarmCurrentlyShowing",
+      "Cross-isolate actions: notificationTapBackground runs in the plugin bg isolate and must PERSIST requests (file flag primary + SharedPreferences backup); consume is an atomic check-and-delete run by the tracking isolate",
+      "isTestMode short-circuits all platform/plugin calls but still records into testRecordedAlarms/testRecordedNotifications and persists TrackingStateStore payloads"
+    ],
+    "gotchas": [
+      "StopLogicEngine is NOT the runtime alarm decider \u2014 only validateThreshold/validateThresholdAgainstMetroLegs are wired (homescreen pre-trip). calculateRemainingStops and checkPreBoarding are referenced only by tests; the live 'N stops remaining' logic lives entirely in AlarmEvaluator.evaluateCoinciding",
+      "Heavy production debug side-effects in alarm_evaluator: unconditional print() on nearly every evaluation, and on every metro-leg eval it appends to <appDocuments>/mumbai_alarm_debug.txt (line ~828) via getApplicationDocumentsDirectory \u2014 a disk/perf leak in release",
+      "'60% rule' naming is inverted vs code: it fires at 40% progress into a leg (60% REMAINING). Applies to zero-intermediate-stop metro legs and to non-metro pre-boarding thresholds",
+      "preBoarding uses SYNTHETIC legIds (e.g. 'PreBoarding_toMetro_<idx>_<meters>', 'Preboarding_0_<drivenEnd>'), not real leg ids; one-alarm-per-boarding dedup depends on the caller storing these synthetic keys in firedLegIds too",
+      "Distance mode: on the final non-metro (walk/drive) leg the 60% progress alarm is intentionally suppressed (returns null) because AlarmController owns the strict N-km distance threshold \u2014 the evaluator will not fire the destination via that path",
+      "Overshoot handling: if progress lands within 10 m past a transfer boundary, evaluator re-targets the PREVIOUS metro leg (evalLegIndex = currentLegIndex-1) so a missed transfer alarm still fires",
+      "Import cycle: notification_service imports alarm_player.dart and trackingservice.dart, while alarm_player imports notification_service back",
+      "AlarmController keeps TWO dedup layers: _firedLegIds (legacy single-route) and _firedLegIdsByKey (per route key). Passing the wrong set to evaluateCoinciding causes duplicate or missing alarms",
+      "Android 16 dismissal workaround: alarm is resurrected from SharedPreferences 'pending_alarm_*' via ensureAlarmNotificationVisible (rate-limited 2s, fullScreenIntent:false on resurrection); cancelAlarm must also clear those prefs or a stale alarm can re-appear"
+    ],
+    "entryPoints": [
+      "notificationTapBackground (@pragma('vm:entry-point'), runs in the flutter_local_notifications background isolate)",
+      "AlarmEvaluator.evaluateCoinciding (invoked from AlarmController's location/poll loop in lib/services/tracking/alarm_controller.dart:999)",
+      "NotificationService.initialize (called from splash_screen.dart at app start)"
+    ]
+  },
+  {
+    "unit": "services-routing",
+    "feature": "routing",
+    "purpose": "The routing subsystem turns a Google Directions API response into the canonical route model the whole app tracks against: fetched/cached directions, per-leg transit stop geometry, transfer/mode-change event boundaries, step-level distance+duration boundaries for ETA, and a live \"which route am I on\" active-route state with automatic route switching. RouteSessionManager is the orchestrator (owned by TrackingService); TransferUtils is the pure-function toolbox that every alarm/tracking consumer imports (49 importers, the app's #1 fan-in hub) to reason about stops, legs, and events.",
+    "responsibilities": [
+      "Fetch driving/transit directions with tiered in-memory + Hive caching and a metro-preference fallback (DirectionService.getDirections)",
+      "Group raw Directions steps into colored, mode-styled polyline segments for the map (DirectionService.buildRawSegments / buildSegmentedPolylines)",
+      "Extract per-transit-leg stop positions/meters/names and compute stops-passed/remaining (TransferUtils.extractTransitLegStops + TransitLegStops)",
+      "Compute transfer and mode-change event boundaries and step distance/duration boundaries in cumulative meters (TransferUtils.buildRouteEvents / buildStepBoundariesAndStops / buildTransferBoundariesMeters)",
+      "Orchestrate a multi-route session: registry, active-route selection, deviation monitoring, reroute policy, soft-lock, and per-route state maps (RouteSessionManager)",
+      "Continuously snap the user to the active route and auto-switch between candidate routes with sustain/blackout hysteresis (ActiveRouteManager.ingestPosition)",
+      "Simplify (Ramer-Douglas-Peucker) and gzip/base64 compress polylines (PolylineSimplifier)",
+      "Interpolate ETA-remaining and ETA-to-target seconds from step boundaries + durations (EtaUtils)",
+      "Persist raw Directions responses to disk for offline reconstruction/testing (RouteLogger)"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/services/transfer_utils.dart",
+        "role": "Top fan-in hub (49 importers): TransitLegStops + RouteEventBoundary data models and the static TransferUtils toolbox for stops/legs/events/boundaries; pure functions over raw Directions JSON"
+      },
+      {
+        "path": "lib/services/route_session_manager.dart",
+        "role": "Session orchestrator owned by TrackingService; owns RouteRegistry/ActiveRouteManager/DeviationMonitor/ReroutePolicy/SoftLockManager and all per-route *ByKey state; two registration paths (registerRouteFromDirections, registerRoute)"
+      },
+      {
+        "path": "lib/services/direction_service.dart",
+        "role": "Directions fetch + 2-tier cache (in-memory TTL + Hive RouteCache) with metro-preference fallback; builds segmented polylines; DirectionService + ModeInfo"
+      },
+      {
+        "path": "lib/services/active_route_manager.dart",
+        "role": "Live snap-to-active-route + hysteretic multi-route switching using monotonic Stopwatch timers; emits ActiveRouteState/RouteSwitchEvent/StationSnapConfirmed; EKF station-snap monotonic gate"
+      },
+      {
+        "path": "lib/services/polyline_simplifier.dart",
+        "role": "RDP polyline simplification (tolerance in meters) + gzip/base64 compress/decompress"
+      },
+      {
+        "path": "lib/services/eta_utils.dart",
+        "role": "Stateless ETA math: etaRemainingSeconds and etaToTargetSeconds via linear interpolation across cumulative step boundaries + durations"
+      },
+      {
+        "path": "lib/services/route_logger.dart",
+        "role": "Singleton RouteLogger.instance; writes full Directions JSON + summary to app documents route_logs/ on every fetch; enabled by default"
+      }
+    ],
+    "publicSymbols": [
+      "TransferUtils (static: extractTransitLegStops, buildRouteEvents, buildStepBoundariesAndStops, buildTransferBoundariesMeters, buildRouteSegments, countStopsPassed, countStopsRemaining, nStopsPriorTarget, firstTransitBoardingStops, enhanceTransitLegStopsWithOsm)",
+      "TransitLegStops (fields legStartMeters/legEndMeters/numStops/stopPositions/stopMeters/lineName/isMetro/stopNames; getter legId; stopsPassed/stopsRemaining; toJson/fromJson/copyWith)",
+      "RouteEventBoundary (meters, type 'transfer'|'mode_change', label, lat, lng, associatedLegIndex)",
+      "DirectionService.getDirections / buildRawSegments / buildSegmentedPolylines / buildSegmentedPolylinesFromRawSegments; ModeInfo",
+      "RouteSessionManager.registerRouteFromDirections / registerRoute / switchToRoute / ingestPosition / clearSession; streams routeStateStream/routeSwitchStream/rerouteStream/deviationStateStream; per-route maps routeEventsByKey/stepBoundsMetersByKey/stepDurationsSecondsByKey/transitLegStopsByKey",
+      "ActiveRouteManager.ingestPosition / setActive / onStationSnapConfirmed / resetStationSnapIndex; streams stateStream/switchStream/stationSnapStream; ActiveRouteState; RouteSwitchEvent",
+      "PolylineSimplifier.simplifyPolyline / compressPolyline / decompressPolyline",
+      "EtaUtils.etaRemainingSeconds / etaToTargetSeconds",
+      "RouteLogger.instance.logRoute / listLogs / readLog / exportForTestRoutes"
+    ],
+    "dataFlow": "TrackingService calls DirectionService.getDirections(lat/lng, transitMode, threshold) -> ApiClient hits backend; result cached in-memory (keyed by RouteCache.makeKey with the ACTUAL transitVariant/departureTime used) and in Hive RouteCache, logged via RouteLogger, overview polyline simplified (PolylineSimplifier.simplifyPolyline @10m) + compressed onto route['simplified_polyline']. TrackingService then calls RouteSessionManager.registerRouteFromDirections(directions, origin, destination, transitMode). RouteSessionManager derives key = RouteCache.makeKey(...), decodes points, and populates per-route maps: routeEventsByKey (TransferUtils.buildRouteEvents), stepBoundsMetersByKey + stepDurationsSecondsByKey (TransferUtils.buildStepBoundariesAndStops), transitLegStopsByKey (TransferUtils.extractTransitLegStops, optionally OSM-enhanced), then upserts a RouteEntry into RouteRegistry and lazily creates ActiveRouteManager/DeviationMonitor/ReroutePolicy. On each GPS fix RouteSessionManager.ingestPosition(position) -> ActiveRouteManager.ingestPosition(LatLng) -> SnapToRouteEngine.snap over registry entries, candidate offset/sustain/blackout hysteresis, emits ActiveRouteState{activeKey, snapped, progressMeters, remainingMeters, pendingSwitch...}. progressMeters feeds TransitLegStops.stopsPassed/stopsRemaining and EtaUtils.etaRemainingSeconds(progressMeters, stepBoundsMetersByKey[key], stepDurationsSecondsByKey[key]) which alarm/notification consumers read.",
+    "dependsOn": [
+      "lib/services/route_cache.dart",
+      "lib/services/api_client.dart",
+      "lib/services/polyline_decoder.dart",
+      "lib/services/route_registry.dart",
+      "lib/services/snap_to_route.dart",
+      "lib/services/stop_matcher.dart",
+      "lib/all_india_stops.dart",
+      "lib/metro_color_map.dart",
+      "lib/core/ekf/ekf_types.dart",
+      "lib/services/deviation_monitor.dart",
+      "lib/services/reroute_policy.dart",
+      "lib/services/soft_lock_manager.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/location_manager.dart",
+      "lib/services/tracking_state_store.dart"
+    ],
+    "usedBy": [
+      "lib/services/trackingservice.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/stop_logic_engine.dart",
+      "lib/services/sensor_fusion.dart",
+      "lib/services/reroute_constraints.dart",
+      "lib/services/tracking/alarm_context_builder.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking_state_store.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/dashboard/deviation_dashboard.dart"
+    ],
+    "entryPoints": [
+      "RouteSessionManager.registerRouteFromDirections (primary route intake from TrackingService)",
+      "RouteSessionManager.registerRoute (lower-level intake from serialized payload / foreground-isolate restore)",
+      "RouteSessionManager.ingestPosition (per-GPS-fix tick)",
+      "DirectionService.getDirections (network fetch entry)",
+      "ActiveRouteManager.ingestPosition (snap + switch tick)"
+    ],
+    "invariants": [
+      "Route identity is RouteCache.makeKey(origin, destination, mode, transitVariant[, departureTime]) everywhere; RouteSessionManager keys all per-route *ByKey maps and RouteRegistry entries by it, and DirectionService keys its caches by it",
+      "stepBoundariesMeters and stepDurationsSeconds must be equal length and boundaries strictly cumulative/ascending, or EtaUtils returns null",
+      "TransitLegStops: stopPositions.length == stopMeters.length == numStops, and stopMeters must be ascending (stopsPassed breaks on first unpassed stop)",
+      "TransitLegStops.legId must stay stable across reroutes/reparses for a given leg (drives one-alarm-per-leg dedupe like preBoarding); it deliberately avoids keying off dynamic inferred station names",
+      "ActiveRouteManager uses monotonic Stopwatch (not DateTime) for sustainDuration and postSwitchBlackout so wall-clock jumps can't corrupt countdowns",
+      "A route switch requires candidateOffset + switchMarginMeters < bestOffset AND heading agreement > 0.3 AND sustained >= sustainDuration AND not within postSwitchBlackout",
+      "Candidate route snap/progress must never be folded into the emitted ActiveRouteState metrics until an actual switch has occurred (active-route metrics only)",
+      "EKF StationSnapConfirmed is accepted only if stationIndex > _lastEkfSnapIndex (ARM-side monotonic gate, \u00a724.2); resetStationSnapIndex must be called on route change/session start",
+      "RouteSessionManager.clearSession must clear every per-route map (routeEventsByKey, stepBoundsMetersByKey, stepStopsCumulativeByKey, stepDurationsSecondsByKey, firstTransitBoardingByKey, transitModeByKey, transitLegStopsByKey, payloads) plus registry, or stale legs leak into the next session",
+      "Progress and boundaries are always in cumulative meters from route start; ETA is seconds"
+    ],
+    "gotchas": [
+      "DirectionService in-memory cache is keyed by the ACTUAL transitVariant/departureTime used, NOT the requestKey: a time-anchored metro-fallback route (transitVariant='subway', departureTime=next 09:00 local) is intentionally NOT served to a plain non-anchored request. RouteSessionManager, however, always builds its key with transitVariant='rail' for transit mode \u2014 so the session key can differ from the direction fetch's cache key.",
+      "getDirections retries exactly once on any exception by recursing with forceRefresh:true; a second failure throws. preferMetroEvenIfClosed makes a whole second API call and promoteRouteToFront reorders routes so index 0 is the chosen metro route.",
+      "buildRawSegments / buildSegmentedPolylines / RouteLogger._extractSummary only ever read routes[0] and its legs[0] \u2014 alternative routes are ignored once promoteRouteToFront has run.",
+      "TransitLegStops.fromJson silently 'heals' numStops: when isActualPositions && stopPositions non-empty it overrides declared numStops with stopPositions.length, so persisted numStops is not authoritative.",
+      "legId getter contains print()/emoji debug logging (\ud83d\udd11/\u26a0\ufe0f) that fires on the hot path in production builds; its priority chain is metro stopNames > 'Walk to ' prefix (meters-based) > geometry lat/lng > meters fallback \u2014 changing any input silently changes the id and can re-fire per-leg alarms.",
+      "isTestMode drastically shortens ActiveRouteManager/DeviationMonitor/ReroutePolicy timings (e.g. sustain 6s->300ms, switchMargin 50m->20m, blackout 5s->300ms); behavior differs between tests and prod.",
+      "ActiveRouteManager, DeviationMonitor, ReroutePolicy are created lazily (??=) on the first registerRoute; the first registered route auto-becomes active only while !activeRouteInitialized. registerRoute also dedupes switchPoints within 200m of each other or within 200m of the destination.",
+      "RouteLogger is a singleton with enabled=true by default and writes the FULL raw Directions response (including origin/destination coords) as pretty JSON to the app documents dir on every successful fetch \u2014 unbounded growth and PII on disk; all failures are swallowed and return null.",
+      "_headingAgreement is a stub: it only checks that progress is non-regressing and returns a nominal 0.5 (no real gyro/compass), so route-switch heading gating is weak.",
+      "RouteEventBoundary.type is a bare string 'transfer' | 'mode_change' (no enum); consumers must string-match. TransitLegStops/RouteEventBoundary and per-route maps are hand-serialized via toJson/fromJson for the foreground-isolate/persistence round-trip, so any new field must be added in three places (fields, toJson, fromJson).",
+      "RouteSessionManager is imported by exactly one non-test file (trackingservice.dart) \u2014 it is the single owner; do not instantiate a second one. TransferUtils by contrast is a pure static toolbox imported by 49 files, so signature changes there ripple widely."
+    ]
+  },
+  {
+    "unit": "services-other",
+    "feature": "connectivity-and-platform-services",
+    "purpose": "The grab-bag of lib/services that are NOT part of the tracking/alarm/routing state machines: the backend HTTP gateway, Google Places/directions/metro-stop clients, the transit-route geometry parser, the EKF sensor-fusion bridge, the WebSocket simulation feed, platform notifications, permission prompts, GPS health observation, an offline OSM road-graph + A* pathfinder used only by the deviation dashboards, plus a position-provider abstraction and test doubles. It is the \"edge\" of the app: everything that talks to the network, the OS, the sensors, or the simulation harness, and the shared transit-geometry utilities that the other three units consume. It fits between the screens/dashboards and the tracking/alarm/routing engines as their supplier of raw data (directions JSON, positions, notifications) and their platform integration layer.",
+    "responsibilities": [
+      "Backend connectivity: ApiClient is the singleton HTTP gateway to the geowake Railway backend (Bearer-token auth, auto-refresh on 401, testMode canned responses) \u2014 all Google Maps traffic funnels through it",
+      "Directions/places/metro lookups: DirectionService.getDirections (tiered caching + polyline segmentation), PlacesService (autocomplete/place-details with session tokens), MetroStopService (nearby transit stations + destination validation)",
+      "Transit-route geometry parsing: TransferUtils turns raw Google directions JSON into TransitLegStops, RouteEventBoundary, transfer-boundary meters and n-stops-prior targets consumed by alarm/routing/tracking",
+      "EKF sensor fusion bridge: SensorFusionManager wraps core/ekf EkfOrchestrator, ingesting IMU (sensors_plus) + GPS and emitting EkfPublicState / StationSnapConfirmed",
+      "Simulation ingress: SimulationClient streams simulated Position objects over a WebSocket relay for the playground dashboards",
+      "Platform integration: NotificationService (alarm/tracking/progress notifications + action-tap routing), PermissionService (location/notification/activity prompts), GpsHealthMonitor (GPS-health observation)",
+      "Offline routing for simulation only: testing/OsmGraph + OsmLoader (.wkp binaries) + Pathfinder/DeviationPathfinder A* used by deviation dashboards",
+      "Abstractions & test doubles: PositionProvider/GpsPositionProvider scaffolding and TestServiceInstance fake ServiceInstance"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/services/api_client.dart",
+        "role": "ApiClient singleton \u2014 sole HTTP gateway to geowake-production.up.railway.app/api; Bearer auth, 401 re-auth retry, testMode canned payloads (14 importers, critical)"
+      },
+      {
+        "path": "lib/services/transfer_utils.dart",
+        "role": "TransferUtils/TransitLegStops/RouteEventBoundary \u2014 1516-line god-util parsing directions JSON into transit-leg stop geometry; top fan-in hub (49 importers, critical)"
+      },
+      {
+        "path": "lib/services/notification_service.dart",
+        "role": "NotificationService singleton \u2014 flutter_local_notifications channels + action-tap routing (mute/cancel/resume/end/stop) via NotificationActionOutcome; notificationTapBackground vm entry-point (34 importers, critical)"
+      },
+      {
+        "path": "lib/services/sensor_fusion.dart",
+        "role": "SensorFusionManager \u2014 bridges IMU+GPS into core/ekf EkfOrchestrator; emits ekfStateStream (EkfPublicState) and onStationSnapConfirmed"
+      },
+      {
+        "path": "lib/services/direction_service.dart",
+        "role": "DirectionService/ModeInfo \u2014 tiered directions fetch via ApiClient, route promotion, and Polyline segmentation for the map (11 importers)"
+      },
+      {
+        "path": "lib/services/simulation_client.dart",
+        "role": "SimulationClient \u2014 WebSocket connection to PlaygroundBridgeConfig.relayUrl emitting simulated Position stream to LocationManager"
+      },
+      {
+        "path": "lib/services/testing/pathfinder.dart",
+        "role": "Pathfinder/DeviationPathfinder A* over OsmGraph (with osm_graph.dart + osm_loader.dart) \u2014 offline deviation routing used only by deviation dashboards"
+      },
+      {
+        "path": "lib/services/metro_stop_service.dart",
+        "role": "MetroStopService/TransitStop/DestinationValidationResult \u2014 nearby transit-station lookup + metro-destination validation via ApiClient"
+      }
+    ],
+    "publicSymbols": [
+      "ApiClient (ApiClient.instance)",
+      "TransferUtils",
+      "TransitLegStops",
+      "RouteEventBoundary",
+      "NotificationService",
+      "NotificationActionOutcome",
+      "notificationTapBackground",
+      "SensorFusionManager",
+      "DirectionService",
+      "ModeInfo",
+      "SimulationClient",
+      "PlacesService",
+      "MetroStopService",
+      "TransitStop",
+      "DestinationValidationResult",
+      "PermissionService",
+      "GpsHealthMonitor",
+      "GpsHealthState",
+      "PositionProvider",
+      "PositionProviderType",
+      "GpsPositionProvider",
+      "OsmGraph",
+      "OsmLoader",
+      "Pathfinder",
+      "DeviationPathfinder",
+      "PathResult"
+    ],
+    "dataFlow": "Inbound network: ApiClient.instance._makeRequest -> {DirectionService.getDirections, PlacesService.fetchAutocompleteResults/fetchPlaceDetails, MetroStopService.getNearbyTransitStations} return raw Google JSON. That directions JSON is then parsed by TransferUtils.extractTransitLegStops / buildRouteEvents / buildTransferBoundariesMeters / nStopsPriorTarget into TransitLegStops + RouteEventBoundary, which flow OUT to homescreen, maptracking, route_session_manager, reroute_constraints, tracking_state_store (persisted via toJson/fromJson). Sensor path: LocationStreamHandler constructs SensorFusionManager(initialPosition, routeGeometry, enableEkf), pushes updateGps(Position) + IMU samples (sensors_plus), and reads back ekfStateStream (EkfPublicState) plus onStationSnapConfirmed -> ActiveRouteManager.onStationSnapConfirmed. Simulation path: SimulationClient WebSocket -> positionStream (Position) -> LocationManager. Notification path: TrackingService/AlarmController call NotificationService.showWakeUpAlarm/showJourneyProgress; OS action taps -> handleNotificationResponse -> NotificationActionOutcome -> AlarmPlayer/AlarmHaptics + maptracking navigation; notificationTapBackground handles background taps.",
+    "dependsOn": [
+      "lib/core/ekf/ekf_orchestrator.dart",
+      "lib/core/ekf/ekf_types.dart",
+      "lib/core/ekf/route_geometry.dart",
+      "lib/core/logging/app_logger.dart",
+      "lib/config/playground_bridge.dart",
+      "lib/services/polyline_decoder.dart",
+      "lib/services/polyline_simplifier.dart",
+      "lib/services/route_cache.dart",
+      "lib/services/route_logger.dart",
+      "lib/services/navigation_service.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/alarm_haptics.dart",
+      "lib/services/stop_matcher.dart",
+      "lib/services/trackingservice.dart",
+      "lib/services/tracking_state_store.dart",
+      "lib/all_india_stops.dart",
+      "lib/metro_color_map.dart",
+      "packages: http, shared_preferences, web_socket_channel, sensors_plus, geolocator, flutter_local_notifications, permission_handler"
+    ],
+    "usedBy": [
+      "lib/screens/homescreen.dart (ApiClient, PlacesService, PermissionService, MetroStopService, TransferUtils)",
+      "lib/screens/maptracking.dart (DirectionService, TransferUtils)",
+      "lib/screens/splash_screen.dart (ApiClient.initialize, NotificationService)",
+      "lib/dashboard/unified_dashboard.dart + deviation_dashboard.dart + deviation_simulation_controller.dart (DirectionService, OsmGraph/OsmLoader/Pathfinder)",
+      "lib/services/route_session_manager.dart + reroute_constraints.dart + offline_coordinator.dart + active_route_manager.dart (DirectionService, TransferUtils, sensor-fusion snap callback)",
+      "lib/services/alarm_evaluator.dart + stop_logic_engine.dart (TransferUtils)",
+      "lib/services/trackingservice.dart + location_manager.dart + tracking/location_stream_handler.dart + tracking/* (SensorFusionManager, SimulationClient, NotificationService, TransferUtils)",
+      "lib/services/tracking_state_store.dart (TransferUtils toJson/fromJson persistence)",
+      "lib/debug/demo_tools.dart (NotificationService)"
+    ],
+    "invariants": [
+      "ApiClient is a process-wide singleton (ApiClient.instance = _instance ??= ApiClient._internal()); every backend/Google-Maps call MUST route through it \u2014 DirectionService, PlacesService, MetroStopService all hold ApiClient.instance. Base URL is hardcoded to https://geowake-production.up.railway.app/api; token auto-refreshes on missing/expired and retries once on HTTP 401.",
+      "NotificationService is a singleton (factory NotificationService() => _instance). Channel IDs are versioned string constants \u2014 'geowake_alarm_channel_v4', 'geowake_tracking_channel_v2', 'geowake_tracking_channel' \u2014 and MUST stay in sync with TrackingService's own channel usage; changing an ID orphans notifications. notificationTapBackground MUST remain @pragma('vm:entry-point').",
+      "The alarm notification channel is deliberately silent (playSound:false, enableVibration:false) because AlarmPlayer and the Vibration plugin own sound + haptics; NotificationService only drives its vibration loop and action buttons.",
+      "TransferUtils meter positions are cumulative-from-route-start; TransitLegStops.stopMeters/stopPositions length == numStops; its toJson/fromJson schema is a persistence contract used by tracking_state_store snapshots and dozens of tests \u2014 shape changes are breaking.",
+      "SensorFusionManager runs the EKF path ONLY when routeGeometry != null && enableEkf (else _ekfOrchestrator stays null and only the legacy dead-reckoning integration runs); maxFusionDuration (10s) periodically zeroes velocity/position to bound integration drift; _legForProgress assumes ordered legStartMeters<=s<=legEndMeters ranges.",
+      "SimulationClient is gated by PlaygroundBridgeConfig.enabled \u2014 connect() early-returns when disabled, so simulation is inert in production builds."
+    ],
+    "gotchas": [
+      "DUPLICATE/ORPHAN: lib/services/test_service_instance.dart defines a TestServiceInstance, but trackingservice.dart defines and uses its OWN inline TestServiceInstance (trackingservice.dart:78, instantiated at :272). Nothing imports the standalone file \u2014 editing it has no effect on the running service.",
+      "GpsHealthMonitor has NO production consumer in lib (only test/gps_health_monitor_test.dart). Its own docstring says 'The consumer (TrackingService) decides' but TrackingService never wires it \u2014 it is pure-observation scaffolding, not yet integrated.",
+      "The position/ provider abstraction (PositionProvider, GpsPositionProvider, position_providers.dart barrel) is unused scaffolding \u2014 only the three position/ files reference each other, EkfPositionProvider is a commented-out Phase-6 TODO, and TrackingService does NOT use this interface. Don't assume position sources flow through it.",
+      "SensorFusionManager.fusedPositionStream (the legacy dead-reckoning LatLng output) is consumed by NO ONE \u2014 location_stream_handler only subscribes to ekfStateStream and onStationSnapConfirmed. The dead-reckoning integration still runs on every accelerometer tick, burning cycles for a dead output.",
+      "ApiClient.testMode plus its static mutable recorders (lastDirectionsBody, directionsBodiesHistory, directionsCallCount, testDirectionsResponses FIFO) are process-global shared state that tests read/reset; kReleaseMode forces testMode=false. Tests that forget to reset these leak state across cases.",
+      "transfer_utils.dart is a 1516-line hub with 49 importers marked riskLevel=critical; it is the single most blast-radius-heavy file in this unit. buildRouteEvents/extractTransitLegStops output feeds alarm evaluation, so subtle geometry changes silently move alarm trigger points.",
+      "DirectionService straddles the routing/connectivity seam: it is instantiated ad hoc as DirectionService() in maptracking, dashboards, offline_coordinator and route_session_manager (not a singleton, so its in-memory _cachedDirections/_polylineSimplifyCache are per-instance and NOT shared). The actual parse of its output lives in TransferUtils, not here \u2014 don't confuse it with routing's route_session_manager.",
+      "The testing/OSM files load preprocessed .wkp binaries produced by tools/osm_preprocessor.py (osm_loader supports both Flutter assets and http); they power ONLY dashboard deviation simulation (DeviationPathfinder), not any production routing path.",
+      "NotificationService imports both trackingservice.dart and tracking_state_store.dart while TrackingService drives NotificationService \u2014 a tight bidirectional coupling; NotificationService also directly restores journey progress and clears pending-alarm prefs, so it is not a passive UI layer."
+    ],
+    "entryPoints": [
+      "ApiClient.instance.initialize() (called from splash_screen on startup)",
+      "NotificationService().initialize() (channel creation + action-tap wiring)",
+      "DirectionService().getDirections(...) (from maptracking/dashboards/route_session_manager/offline_coordinator)",
+      "SensorFusionManager(...) constructed by tracking/location_stream_handler.dart",
+      "SimulationClient.connect() feeding LocationManager (playground only)",
+      "PermissionService().requestEssentialPermissions() and PlacesService/MetroStopService calls from homescreen",
+      "OsmLoader.load(...) -> Pathfinder/DeviationPathfinder from deviation dashboards"
+    ]
+  },
+  {
+    "unit": "ui-dashboard",
+    "feature": "dev-tooling (developer/QA simulation & EKF-replay dashboards, Flutter-web only)",
+    "purpose": "A collection of Flutter-web-only developer/QA dashboards for exercising WakePoint's tracking, deviation/reroute, and EKF dead-reckoning logic without walking a real metro route. It combines active GPS simulation (OSM-pathfinding deviations, time-warp up to 200x), passive monitoring of a real device over a WebSocket relay, EKF route-replay panels, and a typed constraint-event log rendered in a slide-out drawer. It is dev tooling, not end-user UI \u2014 none of it ships in the mobile app (it depends on dart:html) \u2014 but its ConstraintLogger event bus is also imported by production deviation/reroute services, so the unit is not fully isolated from shipping code.",
+    "responsibilities": [
+      "Drive a Google-Maps dashboard that simulates GPS movement, route deviations, and returns via OSM pathfinding (DeviationSimulationController + osm_graph/pathfinder)",
+      "Provide global time-warp control (1x-200x) via TimeWarpSlider -> AppClock, so virtual time replaces wall-clock for all timestamps",
+      "Collect, stream, and display typed simulation/reroute events (ConstraintLogger singleton + ConstraintDrawer log viewer with JSON/CSV export)",
+      "Enforce a validated simulation lifecycle state machine (SimulationStateMachine: idle/onRoute/deviating/returning/paused)",
+      "Host EKF QA panels that replay recorded IMU/route data with GPS-dropout toggles (ekf_test_panel via imu_replay_engine_v2, ekf_replay_panel via imu_replay_engine)",
+      "Connect to the playground WebSocket relay (PlaygroundBridgeConfig.relayUrl) to monitor/broadcast real device state",
+      "Render OSM road overlays on the map with per-road-type styling (OsmOverlayManager)"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/dashboard/unified_dashboard.dart",
+        "role": "Primary dev/QA dashboard app (UnifiedDashboard + top-level main); wires map, sim controller, EKF panel, time-warp, constraint drawer, and the WebSocket relay; flips production TrackingService into test mode"
+      },
+      {
+        "path": "lib/dashboard/constraint_logger.dart",
+        "role": "Highest-fan-in file in the unit (importers=10); singleton event bus ConstraintLogger.instance with a broadcast eventStream of typed ConstraintEvent/ConstraintEventType \u2014 also consumed by production services"
+      },
+      {
+        "path": "lib/dashboard/deviation_simulation_controller.dart",
+        "role": "Core simulation engine; emits SimulationTickResult per tick, computes deviation/return paths over osm_graph+pathfinder, delegates warpFactor to AppClock and logs ConstraintEvents"
+      },
+      {
+        "path": "lib/dashboard/simulation_state.dart",
+        "role": "SimulationStateMachine (importers=7) with a whitelisted transition table over SimulationState; throws StateError on invalid transitions"
+      },
+      {
+        "path": "lib/dashboard/deviation_dashboard.dart",
+        "role": "Alternate standalone dashboard app (DeviationDashboardApp) that subscribes to ConstraintLogger.eventStream and rebroadcasts events to WebSocket clients"
+      },
+      {
+        "path": "lib/dashboard/ekf_test_panel.dart",
+        "role": "EKF route-replay QA panel (EkfTestPanel + CuratedRoute) driving EkfTestController and imu_replay_engine_v2 against the real TrackingService"
+      },
+      {
+        "path": "lib/dashboard/constraint_drawer.dart",
+        "role": "Slide-out log viewer (ConstraintDrawer) reading ConstraintLogger events with JSON/CSV export (LogExportFormat)"
+      },
+      {
+        "path": "lib/dashboard/time_warp_slider.dart",
+        "role": "Stateless 1x-200x warp slider whose onChanged feeds AppClock().setWarpFactor (with preset buttons)"
+      }
+    ],
+    "publicSymbols": [
+      "ConstraintLogger (singleton .instance)",
+      "ConstraintEvent",
+      "ConstraintEventType",
+      "SimulationStateMachine",
+      "SimulationState",
+      "DeviationSimulationController",
+      "DeviationSimulationConfig",
+      "SimulationTickResult",
+      "UnifiedDashboardApp",
+      "DeviationDashboardApp",
+      "AlarmDebouncer",
+      "OsmOverlayManager",
+      "TimeWarpSlider",
+      "ConstraintDrawer / LogExportFormat",
+      "EkfTestPanel / CuratedRoute",
+      "EkfReplayPanel / EkfReplayVisualization / EkfReplayMode"
+    ],
+    "dataFlow": "Entry lib/main_unified_dashboard.dart -> runApp(UnifiedDashboardApp) -> UnifiedDashboard.initState() sets TrackingService.isTestMode=true, calls setSimulationMode(true), and connects to PlaygroundBridgeConfig.relayUrl (html.WebSocket). Inputs: SimulationControls -> SimulationStateMachine transitions; TimeWarpSlider.onChanged -> DeviationSimulationController.setWarpFactor -> AppClock().setWarpFactor(factor). Processing: DeviationSimulationController ticks -> computes deviation/return paths via osm_graph + pathfinder, stamps virtualTime = AppClock().now(), and returns SimulationTickResult{position,heading,speedMps,virtualTime,distanceFromRoute}; every notable step logs a ConstraintEvent to ConstraintLogger.instance.log(). Outputs: ConstraintLogger.eventStream (broadcast) -> ConstraintDrawer renders it and deviation_dashboard forwards it to WebSocket clients; SimulationTickResult -> Google Maps markers/polylines on the dashboard. In parallel, ekf_test_panel/ekf_replay_panel replay IMU data (imu_replay_engine_v2 / imu_replay_engine) through EkfTestController and emit EkfReplayVisualization overlays. Production path: lib/services/deviation_monitor.dart and lib/services/reroute_policy.dart independently push ConstraintEvents into the same ConstraintLogger.instance.",
+    "dependsOn": [
+      "lib/core/clock/app_clock.dart (AppClock \u2014 global virtual-time/warp source)",
+      "lib/config/playground_bridge.dart (PlaygroundBridgeConfig.relayUrl WebSocket relay)",
+      "lib/services/trackingservice.dart (TrackingService \u2014 put into test/simulation mode)",
+      "lib/services/direction_service.dart",
+      "lib/services/testing/osm_loader.dart",
+      "lib/services/testing/osm_graph.dart",
+      "lib/services/testing/pathfinder.dart",
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/core/ekf/imu_replay_engine.dart",
+      "lib/core/ekf/imu_replay_engine_v2.dart",
+      "lib/all_india_stops.dart",
+      "package:google_maps_flutter",
+      "dart:html (web-only)"
+    ],
+    "usedBy": [
+      "lib/main_unified_dashboard.dart (-> unified_dashboard.dart, the committed dev entrypoint)",
+      "lib/services/deviation_monitor.dart (-> constraint_logger.dart, PRODUCTION)",
+      "lib/services/reroute_policy.dart (-> constraint_logger.dart, PRODUCTION)",
+      "test/dashboard/constraint_logger_test.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/dashboard/simulation_state_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/osm_overlay_manager_test.dart",
+      "test/dashboard_alarm_test.dart (-> alarm_debouncer.dart)"
+    ],
+    "invariants": [
+      "ConstraintLogger is a private-constructor process-wide singleton (ConstraintLogger._ / .instance); all dashboard AND production callers share one event list and one broadcast eventStream. Use resetForTesting() to clear between tests.",
+      "AppClock is the single source of (possibly warped) time: ConstraintEvent.timestamp and SimulationTickResult.virtualTime are AppClock().now(), NOT wall-clock. warpFactor lives on the AppClock singleton.",
+      "SimulationStateMachine._transition only allows whitelisted (from,to) pairs and (_ -> idle); any other transition throws StateError \u2014 callers must respect the table and re-entrant same-state calls are no-ops.",
+      "eventController and stateController are broadcast StreamControllers and must be dispose()d; DeviationSimulationController/dashboards own their lifecycle.",
+      "Time-warp changes are global side effects: setWarpFactor mutates the shared AppClock, affecting any code in the isolate that reads AppClock().now()."
+    ],
+    "gotchas": [
+      "constraint_logger.dart is NOT purely dev tooling \u2014 it is the unit's highest-fan-in file (importers=10) and is imported+written by production services lib/services/deviation_monitor.dart and lib/services/reroute_policy.dart. Changing ConstraintEvent/ConstraintEventType/ConstraintLogger APIs breaks shipping reroute/deviation code, not just the dashboard.",
+      "Web-only: unified_dashboard.dart and deviation_dashboard.dart import `dart:html` (html.WebSocket) with `// ignore: avoid_web_libraries_in_flutter`. This whole unit builds/runs only on Flutter web (chrome) and is absent from the Android/iOS app despite living under lib/.",
+      "Running the dashboard mutates global production singletons: UnifiedDashboard.initState sets TrackingService.isTestMode=true and TrackingService().setSimulationMode(true) \u2014 it reconfigures the real tracking service, not a sandboxed copy.",
+      "The time-warp slider warps a process-wide clock (AppClock().setWarpFactor). Because production timestamps also read AppClock().now(), warp leaks into anything sharing the AppClock singleton in the same isolate.",
+      "Two overlapping dashboard apps exist: UnifiedDashboard (has the committed main via lib/main_unified_dashboard.dart) and DeviationDashboard/DeviationDashboardApp (standalone app root with NO committed main wrapper). They duplicate map+warp+constraint+sim wiring; don't assume edits to one affect the other.",
+      "Two different IMU replay engines behind similar panels: ekf_replay_panel.dart uses imu_replay_engine.dart (v1) while ekf_test_panel.dart uses imu_replay_engine_v2.dart. Pick the right engine for the panel you're touching.",
+      "ConstraintLogger._events is append-only (log() only appends; only clear()/resetForTesting reset it) \u2014 long-running dashboard/relay sessions grow it unbounded.",
+      "alarm_debouncer.dart (AlarmDebouncer) is only referenced by test/dashboard_alarm_test.dart in the graph \u2014 it is a standalone hold/debounce utility, not wired into the live dashboards."
+    ],
+    "entryPoints": [
+      "lib/main_unified_dashboard.dart -> runApp(UnifiedDashboardApp) (flutter run -d chrome -t lib/main_unified_dashboard.dart --web-port 3000)",
+      "lib/dashboard/unified_dashboard.dart:39 top-level main() -> runApp(UnifiedDashboardApp)",
+      "lib/dashboard/deviation_dashboard.dart DeviationDashboardApp (standalone app root, no committed main wrapper)"
+    ]
+  },
+  {
+    "unit": "ui-screens",
+    "feature": "ui",
+    "purpose": "The end-user-facing Flutter screen layer of WakePoint (package geowake2), the metro/transit wake-up alarm. It owns the full foreground UX flow: a launch splash that restores or resets a tracking session, a home screen where the user searches a destination and configures the alarm (distance/time/stops + metro mode), a transient map-warmup buffer, and a live map-tracking screen that renders the route, ETA/distance, transfer notices, and the STOP ALARM / END TRACKING controls. These screens are pure presentation + orchestration: they hold no domain logic themselves but wire user intent into the services layer (TrackingService, OfflineCoordinator, AlarmPlayer, etc.) and consume its streams.",
+    "responsibilities": [
+      "Splash: initialize ApiClient/NotificationService/TrackingService and decide whether to restore an active tracking session or route to home (splash_screen.dart)",
+      "Home: destination autocomplete/search, map-tap pin selection, alarm-mode UI (distance/time/stops slider), permission gating, route fetch + stops/same-state validation, snapshot persistence, TrackingService.startTracking, navigation into tracking (homescreen.dart)",
+      "MapTracking: render GoogleMap markers/polylines, snap live GPS to route, compute/format ETA & remaining distance, show transfer-switch banners, and expose STOP ALARM + END TRACKING controls driven by AlarmPlayer.isPlaying (maptracking.dart)",
+      "Preload: warm a GoogleMap instance for ~300ms then hand off to the next route to avoid map-init jank (preload_map_screen.dart)",
+      "SettingsDrawer: shared side drawer for theme toggle, preboarding / destination-only alarm toggle, and ringtone navigation (settingsdrawer.dart)",
+      "Ringtones: alarm-tone picker with preview, persisted to SharedPreferences (ringtones_screen.dart)",
+      "RecentLocationsService: Hive-backed persistence of recent destinations (mis-located under screens/otherimpservices/)"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/screens/homescreen.dart",
+        "role": "HomeScreen/HomeScreenState (1435 lines) - destination search + alarm config; _onWakeMePressed -> _proceedWithDirections orchestrates permissions, route fetch, validation, snapshot, startTracking, nav to /preloadMap"
+      },
+      {
+        "path": "lib/screens/maptracking.dart",
+        "role": "MapTrackingScreen (1309 lines) - live map + alarm UX; subscribes to TrackingService streams, snaps GPS via SnapToRouteEngine, renders ETA/distance/transfer notices and STOP ALARM/END TRACKING"
+      },
+      {
+        "path": "lib/screens/splash_screen.dart",
+        "role": "SplashScreen - initialRoute '/splash'; service init + session restore/reset via TrackingStateStore, routes to '/' or '/mapTracking'"
+      },
+      {
+        "path": "lib/screens/settingsdrawer.dart",
+        "role": "SettingsDrawer (StatelessWidget) - shared drawer used by Home & MapTracking; reads MyAppState for theme, toggles TrackingStateStore preboarding/destination-only flags, pushes RingtonesScreen"
+      },
+      {
+        "path": "lib/screens/otherimpservices/preload_map_screen.dart",
+        "role": "PreloadMapScreen - transient GoogleMap warmup buffer; on map-ready waits 300ms then pushReplacementNamed to _nextRoute (default '/mapTracking') forwarding args"
+      },
+      {
+        "path": "lib/screens/ringtones_screen.dart",
+        "role": "RingtonesScreen + Ringtone + availableRingtones const catalog - ringtone picker/preview persisted under SharedPreferences key 'selected_ringtone'"
+      },
+      {
+        "path": "lib/screens/otherimpservices/recent_locations_service.dart",
+        "role": "RecentLocationsService (static, Hive box 'recent_locations') - a data-layer service misfiled under screens/; used by HomeScreen for recent destinations"
+      }
+    ],
+    "publicSymbols": [
+      "HomeScreen",
+      "HomeScreenState",
+      "MapTrackingScreen",
+      "SplashScreen",
+      "PreloadMapScreen",
+      "SettingsDrawer",
+      "RingtonesScreen",
+      "Ringtone",
+      "availableRingtones",
+      "RecentLocationsService"
+    ],
+    "dataFlow": "SplashScreen.initState -> ApiClient.instance.initialize + NotificationService().initialize + TrackingService().initializeService; _checkStateAndNavigate reads TrackingStateStore.isAlarmFired/isActive/loadSnapshot and either pushReplacementNamed('/mapTracking', {lat,lng,destination,directions,metroMode,userLat,userLng,mode,value}) or falls through to '/'. HomeScreen: search text -> PlacesService.fetchAutocompleteResults/fetchPlaceDetails -> _selectedLocation; map onTap -> _handleMapTap -> ApiClient.instance.geocode; _onWakeMePressed -> PermissionService.requestEssentialPermissions -> _proceedWithDirections: OfflineCoordinator.instance.getRoute -> directions map; validations via MetroStopService.validateMetroRoute, TransferUtils.buildStepBoundariesAndStops/buildRouteEvents/extractTransitLegStops, StopLogicEngine.validateThreshold/validateThresholdAgainstMetroLegs; persist TrackingStateStore.setActive/saveSnapshot(TrackingSnapshot); TrackingService().startTracking + registerRouteFromDirections; Navigator.pushReplacementNamed('/preloadMap', arguments: mapArgs). PreloadMapScreen warms GoogleMap then pushReplacementNamed(_nextRoute, args). MapTrackingScreen.didChangeDependencies parses ModalRoute args -> DirectionService().buildRawSegments + buildSegmentedPolylinesFromRawSegments -> _polylines/_routePoints; subscribes TrackingService().routeSwitchStream/locationStream/etaSecondsStream/activeRouteStateStream; Geolocator.getPositionStream -> _handlePositionUpdate -> SnapToRouteEngine.snap + EtaUtils.etaRemainingSeconds/etaToTargetSeconds -> setState(_etaText/_distanceText/_switchNotice) and LocationManager().broadcastPosition; AlarmPlayer.isPlaying (ValueNotifier) drives STOP ALARM; END TRACKING -> AlarmPlayer.stop + FlutterBackgroundService().invoke('stopAlarm') + TrackingService().completeEndTracking -> Navigator '/'.",
+    "dependsOn": [
+      "lib/services/trackingservice.dart",
+      "lib/services/tracking_state_store.dart",
+      "lib/services/transfer_utils.dart",
+      "lib/services/api_client.dart",
+      "lib/services/places_service.dart",
+      "lib/services/metro_stop_service.dart",
+      "lib/services/stop_logic_engine.dart",
+      "lib/services/permission_service.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/snap_to_route.dart",
+      "lib/services/eta_utils.dart",
+      "lib/services/active_route_manager.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/location_manager.dart",
+      "lib/services/polyline_decoder.dart",
+      "lib/services/polyline_simplifier.dart",
+      "lib/widgets/pulsing_dots.dart",
+      "lib/main.dart (MyAppState via context.findAncestorStateOfType)"
+    ],
+    "usedBy": [
+      "lib/main.dart (onGenerateRoute wires SplashScreen '/splash', HomeScreen '/', PreloadMapScreen '/preloadMap', MapTrackingScreen '/mapTracking')",
+      "lib/screens/homescreen.dart (imports SettingsDrawer and RecentLocationsService)",
+      "lib/screens/maptracking.dart (imports SettingsDrawer)",
+      "lib/screens/settingsdrawer.dart (imports RingtonesScreen)"
+    ],
+    "entryPoints": [
+      "lib/main.dart onGenerateRoute; initialRoute '/splash'",
+      "Route flow: '/splash' (SplashScreen) -> '/' (HomeScreen) -> '/preloadMap' (PreloadMapScreen) -> '/mapTracking' (MapTrackingScreen)",
+      "SettingsDrawer opened from Scaffold.drawer on HomeScreen and MapTrackingScreen; RingtonesScreen pushed from the drawer via MaterialPageRoute"
+    ],
+    "invariants": [
+      "Navigation arg contract: MapTrackingScreen REQUIRES a ModalRoute arguments Map with non-null 'lat','lng','destination','directions'; missing any triggers a 'Destination information missing' dialog + pop. Both HomeScreen._proceedWithDirections (mapArgs) and SplashScreen restore must emit this exact shape.",
+      "Route-name strings ('/splash','/','/preloadMap','/mapTracking') are the contract between these screens' pushReplacementNamed calls and main.dart onGenerateRoute; they must stay in sync.",
+      "SettingsDrawer requires metroModeEnabled and reaches app theme via context.findAncestorStateOfType<MyAppState>() - it must be rendered beneath MyApp.",
+      "Every StreamSubscription (_locationSubscription, _routeSwitchSub, _routeStateSub, _simulatedLocationSub, _etaSub in MapTracking; _connectivitySubscription in Home) is cancelled in dispose(); AlarmPlayer.isPlaying listener added in initState is removed in dispose.",
+      "All setState calls are guarded by mounted (and _isEndingTracking in MapTracking) to avoid updating disposed state.",
+      "Units: internal distances are meters and ETA seconds; formatting to sec/min/hr and m/km happens only at display time.",
+      "RecentLocationsService is fully static with one lazily-opened Hive box guarded by _ensureBoxIsOpen (single-flight via _opening); it caps at _maxItems=15."
+    ],
+    "gotchas": [
+      "recent_locations_service.dart sits under lib/screens/otherimpservices/ but is a data-layer service, not a screen (misfiled); it is imported both by homescreen.dart (relative screens path) and main.dart.",
+      "Two recent-location key conventions collide: HomeScreen writes 'place_id' and caps the list at 10, while RecentLocationsService.saveRecentLocations dedupes on 'placeId' ?? 'place_id' ?? '<lat>,<lng>' and caps at 15 - the differing keys and caps mean the two layers can disagree on dedupe/order.",
+      "PreloadMapScreen is easy to miss: HomeScreen navigates to '/preloadMap' NOT directly '/mapTracking'. It is a ~300ms transient GoogleMap warmup that forwards the SAME args unless 'nextRoute'/'nextArgs' override them.",
+      "MapTracking has TWO competing ETA paths that both write _etaText: the service-authoritative etaSecondsStream/activeRouteStateStream listeners AND the local Geolocator _handlePositionUpdate snap-based estimate. _lastEtaSecondsFromService is preferred when present, but the local stream can still overwrite it.",
+      "Metro-time special mode: _isMetroTimeMode = metroMode && args['mode']=='time'; if the 'mode' arg is absent it is re-derived asynchronously from TrackingStateStore.loadSnapshot(). This flag flips SettingsDrawer between the 'Fire only destination alarm' and 'Preboarding alarms' toggle (backed by different TrackingStateStore keys).",
+      "_finalAlarmActive gate: END-TRACKING-only UI appears only when AlarmPlayer.isPlaying && TrackingStateStore.pendingAlarmAllowContinue()==false; otherwise a STOP ALARM + END TRACKING row is shown. The END TRACKING onPressed logic is duplicated in both branches.",
+      "The map STOP ALARM button calls both AlarmPlayer.stop() AND FlutterBackgroundService().invoke('stopAlarm') - the background isolate must be signalled separately or vibration/sound can persist.",
+      "settingsdrawer.dart imports ../main.dart to reach MyAppState, creating a screens->main cycle (main imports screens for routing; drawer imports main for app state).",
+      "HomeScreen map tap uses a 280ms _tapTimer debounce + ~40m proximity to distinguish single-tap (set destination via reverse geocode) from double-tap (zoom); fast taps near the same spot are treated as zoom, not selection.",
+      "_validateSameState fails OPEN: on any error or if either state can't be resolved it returns true, so cross-state routes are blocked only when both endpoints resolve to different administrative_area_level_1 values.",
+      "Production debug noise: raw print()/debugPrint of MAP_ROUTE_SWITCH_DEBUG, MAP_SWITCH_ETA_DEBUG and [StopsValidation]/[StartupPerf] remain in these screens.",
+      "MapTracking's route legend overlay is hardcoded (Driving / Walking / Metro Line A / Metro Line B) and does not reflect the actual segments drawn.",
+      "SplashScreen zombie-state handling: if TrackingStateStore.isAlarmFired() is true on cold start it calls TrackingService().completeEndTracking(navigateHome:false) then routes home; a null/corrupt snapshot on an active session also forces cleanup + home."
+    ]
+  },
+  {
+    "unit": "config",
+    "feature": "config",
+    "purpose": "The `lib/config/` unit is WakePoint's centralized tuning-constants and feature-flag layer. It holds the magic numbers for the deviation/reroute/termination pipeline (DeviationConfig), the battery-tier GPS/notification power profiles (PowerPolicy/PowerPolicyManager), the simulation/playground bridge gate (PlaygroundBridgeConfig), server endpoint/bundle-id constants (AppConfig), and the \"am I running under flutter test\" detector (detectFlutterTest). It is a pure leaf/source unit: everything here is stateless static const or immutable value objects that downstream tracking, dashboard, and networking code reads to make runtime decisions. It exists so tuning constants live in one place instead of being scattered across the tracking services.",
+    "responsibilities": [
+      "Hold all deviation-detection, route-switch, reroute-cooldown, and tracking-termination thresholds as named static consts (DeviationConfig)",
+      "Map a battery level (0-100%) to an immutable location/power profile: accuracy, distanceFilter, gpsDropoutBuffer, notificationTick, rerouteCooldown (PowerPolicyManager.forBatteryLevel / PowerPolicy.testing)",
+      "Gate whether the simulation WebSocket mirror is allowed to connect and expose the relay URL, defaulting OFF in release and under test (PlaygroundBridgeConfig)",
+      "Provide canonical server base URL and app bundle id constants that must stay aligned with the native build files and geowake-server (AppConfig)",
+      "Detect the flutter-test environment via a platform-conditional import so unit tests stay hermetic (detectFlutterTest, io vs stub)",
+      "Provide a cross-isolate file-based test-mode flag (TestModeFlag) \u2014 currently orphaned/unused"
+    ],
+    "keyFiles": [
+      {
+        "path": "lib/config/deviation_config.dart",
+        "role": "DeviationConfig: all deviation/reroute/termination magic numbers as static const; consumed by production tracking_termination_policy and exhaustively asserted by deviation_config_test.dart"
+      },
+      {
+        "path": "lib/config/power_policy.dart",
+        "role": "PowerPolicy (immutable value object) + PowerPolicyManager.forBatteryLevel(): battery-tier GPS accuracy / distanceFilter / cadence / cooldown profiles"
+      },
+      {
+        "path": "lib/config/playground_bridge.dart",
+        "role": "PlaygroundBridgeConfig: static `enabled` gate + `relayUrl` for the sim mirror, driven by dart-defines and kDebugMode/kProfileMode; the only file with an intra-unit dependency"
+      },
+      {
+        "path": "lib/config/app_config.dart",
+        "role": "AppConfig: serverBaseUrl + appBundleId constants and a deliberately-throwing googleMapsApiKey getter; effectively documentation, values are duplicated in api_client and native build files"
+      },
+      {
+        "path": "lib/config/platform_test_flag_io.dart",
+        "role": "detectFlutterTest() native variant: checks bool.fromEnvironment AND Platform.environment['FLUTTER_TEST']; selected via `if (dart.library.io)`"
+      },
+      {
+        "path": "lib/config/platform_test_flag_stub.dart",
+        "role": "detectFlutterTest() default/web variant: compile-time bool.fromEnvironment('FLUTTER_TEST') only; the import target the graph records"
+      },
+      {
+        "path": "lib/config/test_mode_flag.dart",
+        "role": "TestModeFlag: file-based cross-isolate test flag (setTestMode/isTestMode) \u2014 ORPHANED, zero importers"
+      }
+    ],
+    "publicSymbols": [
+      "DeviationConfig (static consts: baseThresholdMeters, speedCoefficientK, hysteresisRatio, per-mode transit/walking/driving*, extremeDeviationKm, moderateDeviationKm, moderateDeviationDuration, stoppedSpeedThresholdMps, minFailedReroutesForTermination, movingAwayDeviationKm, defaultRerouteCooldown, test* overrides)",
+      "PowerPolicy (fields accuracy/distanceFilterMeters/gpsDropoutBuffer/notificationTick/rerouteCooldown; static testing())",
+      "PowerPolicyManager.forBatteryLevel(int levelPercent)",
+      "PlaygroundBridgeConfig.enabled (getter), PlaygroundBridgeConfig.relayUrl",
+      "AppConfig.serverBaseUrl, AppConfig.appBundleId, AppConfig.googleMapsApiKey (throws)",
+      "detectFlutterTest()",
+      "TestModeFlag.setTestMode/isTestMode/clearCache (orphaned)"
+    ],
+    "entryPoints": [
+      "PowerPolicyManager.forBatteryLevel(int) \u2014 sole runtime entry into the power tier",
+      "PlaygroundBridgeConfig.enabled / .relayUrl \u2014 sim bridge gate",
+      "DeviationConfig.* static consts \u2014 read directly at call sites",
+      "detectFlutterTest() \u2014 test-environment gate"
+    ],
+    "dataFlow": "Build-time dart-defines/env (PLAYGROUND_BRIDGE_ENABLED, PLAYGROUND_BRIDGE_DISABLED, PLAYGROUND_RELAY_URL, FLUTTER_TEST) -> PlaygroundBridgeConfig.enabled (precedence: isFlutterTest > disabledFlag > enabledFlag > kDebugMode||kProfileMode) + .relayUrl -> simulation_client.dart, unified_dashboard.dart, deviation_dashboard.dart decide whether to open the WS mirror and where. Runtime battery level (int %) -> PowerPolicyManager.forBatteryLevel() -> const PowerPolicy(accuracy, distanceFilterMeters, gpsDropoutBuffer, notificationTick, rerouteCooldown) -> trackingservice.dart + tracking/location_stream_handler.dart configure the Geolocator stream, notification tick cadence, and reroute cooldown (PowerPolicy.testing() used in tests). Static DeviationConfig termination consts (extremeDeviationKm, moderateDeviationKm/Duration, stoppedSpeedThresholdMps, minFailedReroutesForTermination, movingAwayDeviationKm) -> tracking_termination_policy.dart to decide whether to stop tracking. detectFlutterTest() -> alarm_haptics.dart (suppress haptics in tests) and PlaygroundBridgeConfig (force bridge off in tests).",
+    "dependsOn": [
+      "lib/config/platform_test_flag_stub.dart (default) / lib/config/platform_test_flag_io.dart (via `if (dart.library.io)` conditional import in playground_bridge.dart) \u2014 the only intra-repo edge from this unit",
+      "package:geolocator/geolocator.dart (LocationAccuracy, in power_policy.dart)",
+      "package:flutter/foundation.dart (kDebugMode/kProfileMode, in playground_bridge.dart)",
+      "package:path_provider/path_provider.dart + dart:io (in test_mode_flag.dart)"
+    ],
+    "usedBy": [
+      "lib/services/tracking_termination_policy.dart (DeviationConfig termination thresholds)",
+      "lib/services/trackingservice.dart (PowerPolicy, PowerPolicyManager.forBatteryLevel)",
+      "lib/services/tracking/location_stream_handler.dart (PowerPolicy, PowerPolicyManager.forBatteryLevel)",
+      "lib/services/simulation_client.dart (PlaygroundBridgeConfig.enabled/relayUrl)",
+      "lib/services/alarm_haptics.dart (detectFlutterTest via conditional import)",
+      "lib/dashboard/unified_dashboard.dart (PlaygroundBridgeConfig)",
+      "lib/dashboard/deviation_dashboard.dart (PlaygroundBridgeConfig)",
+      "test/deviation_config_test.dart, test/app_config_url_alignment_test.dart, test/playground_bridge_flag_test.dart"
+    ],
+    "invariants": [
+      "All config types are stateless/immutable: DeviationConfig and AppConfig are pure static const holders (DeviationConfig has a private DeviationConfig._() ctor and is never instantiated); PowerPolicy is a const value object. No runtime mutation of config anywhere.",
+      "PlaygroundBridgeConfig.enabled MUST return false under flutter test (guaranteed by `_isFlutterTest = detectFlutterTest()` checked first) so unit tests never attempt a localhost WebSocket.",
+      "PlaygroundBridgeConfig.enabled precedence is fixed: FLUTTER_TEST > PLAYGROUND_BRIDGE_DISABLED > PLAYGROUND_BRIDGE_ENABLED > (kDebugMode||kProfileMode); release builds are OFF unless the enable dart-define is set.",
+      "PowerPolicyManager battery tiers are monotonic and boundary-fixed at >50 / >20 / else: as battery drops, accuracy degrades (high->medium->low), distanceFilterMeters grows (5->15->50), and gpsDropoutBuffer/notificationTick/rerouteCooldown lengthen.",
+      "AppConfig.serverBaseUrl and AppConfig.appBundleId ('com.geowake.app') must stay byte-aligned with api_client._baseUrl, android build.gradle(.kts), and geowake-server config.js \u2014 they are duplicated, not imported (app_config_url_alignment_test.dart enforces this).",
+      "detectFlutterTest() must be reached through the conditional import (default stub, io on native) \u2014 the stub only reads the compile-time bool.fromEnvironment, the io variant also reads Platform.environment['FLUTTER_TEST']."
+    ],
+    "gotchas": [
+      "test_mode_flag.dart / TestModeFlag is DEAD CODE: grep across lib/, test/, integration_test/ shows zero importers. Do not assume it is the live test-mode switch \u2014 the actual test gate is detectFlutterTest()/FLUTTER_TEST plus PowerPolicy.testing() and DeviationConfig.test* consts.",
+      "AppConfig is effectively documentation-only. Production networking (lib/services/api_client.dart) hardcodes the same base URL (lines 9-10) and bundle id (line 114, with a `// Must match AppConfig.appBundleId` comment) instead of importing AppConfig. Only app_config_url_alignment_test.dart imports it, purely to assert the duplicated values match. Editing AppConfig alone changes NOTHING at runtime.",
+      "AppConfig.googleMapsApiKey is a getter that THROWS by design (keys moved server-side). Never call it; route Maps calls through ApiClient.",
+      "The platform_test_flag pair are two files exposing the identical function detectFlutterTest(), swapped by `if (dart.library.io)`. Import the STUB path as the default (`platform_test_flag_stub.dart`) and let the conditional import substitute the io version; importing io directly breaks web/non-io builds. The knowledge-graph and symbol-graph only record the stub edge, hiding that native builds actually execute platform_test_flag_io.dart.",
+      "DeviationConfig mixes several parallel threshold families: a global base/speedK/hysteresis set, per-mode transit/walking/driving sets, a legacy* set explicitly marked 'unused in production', and a test* override set. tracking_termination_policy.dart consumes only the termination subset; other constants (SpeedThresholdModel, ActiveRouteManager sustain/blackout) are consumed by deviation_monitor.dart / active_route_manager.dart per the header comments. Production and test values do NOT auto-swap \u2014 each call site must choose the right constant.",
+      "Reroute cooldown has two sources of truth: DeviationConfig.defaultRerouteCooldown/lowBatteryRerouteCooldown AND PowerPolicy.rerouteCooldown (per battery tier). They can drift; confirm which one a given path actually reads before tuning.",
+      "PlaygroundBridgeConfig.relayUrl defaults to ws://127.0.0.1:8081 and the bridge auto-enables in debug/profile \u2014 a debug build on a device with no relay running can attempt a localhost WS connection; the release-off default and the DISABLED flag exist specifically to prevent startup stalls."
+    ]
+  },
+  {
+    "unit": "backend",
+    "feature": "backend",
+    "purpose": "The geowake-server Node/Express backend is a thin, stateless API gateway that sits between the geowake2 Flutter app and the Google Maps Platform. Its whole reason to exist is to keep the Google Maps API key off the device: the phone never calls Google directly \u2014 it authenticates to this server with a device JWT, and the server proxies Directions/Autocomplete/Place-Details/Geocoding/Nearby-Search calls, injecting the secret key server-side and caching responses. It also mints the device tokens and enforces rate limiting. It holds no database and no user model; identity is just \"is this request coming from our app bundle.\"",
+    "responsibilities": [
+      "Mint short-lived (24h) device JWTs for clients that present the correct app bundle ID (POST /api/auth/token)",
+      "Verify Bearer JWTs on protected routes and reject expired/invalid/wrong-bundle tokens (authenticateDevice middleware)",
+      "Proxy 5 Google Maps endpoints, appending config.googleMapsApiKey server-side so the key never ships in the app",
+      "Cache Google Maps responses by structured type+params key with per-type TTLs (node-cache singleton)",
+      "Enforce per-route rate limiting and progressive slow-down keyed on client IP (x-forwarded-for)",
+      "Compose the Express app: security headers (helmet), CORS for mobile, compression, morgan logging, JSON body parsing, 404 + global error handlers, graceful SIGINT/SIGTERM shutdown",
+      "Validate required env (GOOGLE_MAPS_API_KEY, JWT_SECRET>=32 chars) at boot and hard-exit if absent"
+    ],
+    "keyFiles": [
+      {
+        "path": "geowake-server/src/server.js",
+        "role": "Entry point (entry-points.json); wires helmet/cors/compression/morgan, mounts /api/auth (open) and /api/maps (auth-gated), error handlers, app.listen + graceful shutdown; exports app"
+      },
+      {
+        "path": "geowake-server/src/config/config.js",
+        "role": "Central config hub \u2014 highest fan-in in this subtree (6 importers, riskLevel high); reads env, holds jwtSecret, appBundleId, googleMapsApiKey, googleMapsUrls, cacheTimeouts; process.exit(1) on missing secrets"
+      },
+      {
+        "path": "geowake-server/src/controllers/mapsController.js",
+        "role": "The actual proxy: googleApiProxy() does cache.get -> axios.get(googleMapsUrls, {params, key}) -> cache.set -> res.json; 5 handlers (getDirections/getAutocomplete/getPlaceDetails/getGeocoding/getNearbySearch)"
+      },
+      {
+        "path": "geowake-server/src/controllers/authController.js",
+        "role": "generateToken(): validates req.body.bundleId === config.appBundleId, then jwt.sign({bundleId, iss}) with config.jwtSecret/jwtExpiration"
+      },
+      {
+        "path": "geowake-server/src/middleware/auth.js",
+        "role": "authenticateDevice(): parses Bearer header, jwt.verify, checks decoded.bundleId === config.appBundleId, sets req.device; also exports unused generateDeviceToken()"
+      },
+      {
+        "path": "geowake-server/src/middleware/security.js",
+        "role": "rateLimitRules {general,auth,maps} + slowDownRules {general,maps} via express-rate-limit/express-slow-down, IP keyed on x-forwarded-for; handleRateLimitError"
+      },
+      {
+        "path": "geowake-server/src/utils/cache.js",
+        "role": "CacheManager singleton over node-cache; generateKey(type,params) builds structured keys, set() picks TTL from config.cacheTimeouts[type]; runs a 5-min stats setInterval"
+      },
+      {
+        "path": "geowake-server/src/routes/auth.js",
+        "role": "Router: POST /token with rateLimitRules.auth -> authController.generateToken (paired with routes/maps.js which applies rateLimitRules.maps then dispatches the 5 map handlers)"
+      }
+    ],
+    "publicSymbols": [
+      "module.exports app (server.js) \u2014 required by both test files",
+      "config default-export object (config.js) \u2014 required by 6 files: server, both controllers, both middleware, cache",
+      "authController.generateToken \u2014 mounted by routes/auth.js",
+      "auth.authenticateDevice \u2014 gate on /api/maps in server.js (auth.generateDeviceToken is exported but wired to no route)",
+      "security.rateLimitRules {general,auth,maps}, slowDownRules {general,maps}, handleRateLimitError",
+      "mapsController.getDirections / getAutocomplete / getPlaceDetails / getGeocoding / getNearbySearch \u2014 mounted by routes/maps.js",
+      "cache singleton: get(type,params) / set(type,params,data) / generateKey / clearType / getStats / flush"
+    ],
+    "dataFlow": "Two pipelines. (1) Token mint: Flutter api_client.dart POSTs /api/auth/token {bundleId:'com.geowake.app'} -> slowDownRules.general (server.js) -> rateLimitRules.auth (routes/auth.js) -> authController.generateToken checks bundleId===config.appBundleId -> jwt.sign({bundleId,iss:'GeoWake-Server'}, config.jwtSecret, {expiresIn:'24h'}) -> {success,token,expiresIn}. (2) Maps proxy: client POSTs /api/maps/<endpoint> with 'Authorization: Bearer <jwt>' + body params -> authenticateDevice (jwt.verify + bundleId check, sets req.device) -> rateLimitRules.maps (routes/maps.js router.use) -> handler builds params from req.body -> googleApiProxy: cache.get(type,params); on miss axios.get(config.googleMapsUrls[type], {params:{...params, key:config.googleMapsApiKey}}) -> cache.set(type,params,response.data with TTL config.cacheTimeouts[type]) -> res.json(raw Google payload). Success responses pass Google's native envelope through unwrapped; only errors are wrapped as {success:false,...}.",
+    "dependsOn": [
+      "geowake-server/src/config/config.js (internal root dependency of every other file \u2014 6 static require edges in knowledge-graph.json)",
+      "geowake-server/src/utils/cache.js (required by mapsController)",
+      "geowake-server/src/controllers/authController.js + middleware/security.js (required by routes/auth.js)",
+      "geowake-server/src/controllers/mapsController.js + middleware/security.js (required by routes/maps.js)",
+      "geowake-server/src/middleware/auth.js, middleware/security.js, routes/auth.js, routes/maps.js (required by server.js)",
+      "npm: express, cors, helmet, compression, morgan, jsonwebtoken, axios, node-cache, express-rate-limit, express-slow-down, dotenv",
+      "External HTTP: Google Maps Platform (config.googleMapsUrls: directions/places/placeDetails/geocoding/nearbySearch)"
+    ],
+    "usedBy": [
+      "geowake-server/test/auth.test.js (static require ../src/server)",
+      "geowake-server/test/maps.test.js (static require ../src/server)",
+      "Runtime consumer (no static edge \u2014 separate Dart runtime): geowake2 Flutter app lib/services/api_client.dart calls /api/auth/token then /maps/directions|/maps/autocomplete|/maps/place-details|/maps/geocode|/maps/nearby-search over HTTPS"
+    ],
+    "invariants": [
+      "config.js must load with GOOGLE_MAPS_API_KEY set and JWT_SECRET >= 32 chars, or the process calls process.exit(1) at require time \u2014 this fires for anything importing config, including the two Jest suites that require server.js",
+      "The bundleId in the JWT payload must equal config.appBundleId at BOTH mint time (authController) and verify time (middleware/auth) \u2014 the app bundle ID is the sole identity credential",
+      "The cache 'type' string must be consistent across mapsController handler, cache.generateKey switch, and config.cacheTimeouts keys, otherwise the wrong TTL/key shape is used",
+      "Route order in server.js is load-bearing: health checks and /api/auth are mounted before the authenticateDevice-gated /api/maps; the 404 handler and handleRateLimitError are registered last",
+      "Rate/slow-down limiters key on req.headers['x-forwarded-for'].split(',')[0] || req.ip, so correct client identity depends on running behind a trusted proxy (Railway)"
+    ],
+    "gotchas": [
+      "Bundle ID mismatch trap: config default appBundleId is 'com.geowake.app' and the Flutter client sends 'com.geowake.app', but geowake-server/test/auth.test.js asserts success for 'com.yourcompany.geowake2' \u2014 tests only pass if APP_BUNDLE_ID env is set to that value. Three different bundle IDs exist across the repo.",
+      "authController.generateToken signs ONLY {bundleId, iss} \u2014 no deviceId/appVersion. But middleware/auth.js reads decoded.deviceId and decoded.appVersion into req.device, so req.device.id and req.device.appVersion are ALWAYS undefined for real tokens. The auth.js generateDeviceToken() helper that WOULD populate them is exported but never wired to any route (effectively dead).",
+      "cacheTimeouts only defines keys directions/places/geocoding. Handler types 'place-details' and 'nearby-search' have NO matching key, so cache.set falls back to 300s default silently \u2014 not the intended per-type TTL.",
+      "Successful proxy responses are returned as Google's raw JSON (res.json(response.data)) with no {success:true} wrapper; only errors get {success:false}. Clients must parse Google's native envelope (e.g. status:'OK', results/predictions), not a uniform success flag.",
+      "config.allowedOrigins defaults to include '*', so CORS is effectively open \u2014 do NOT treat CORS as the security boundary; JWT + bundleId is the only real gate.",
+      "cache.js exports a singleton that starts a setInterval stats logger that is never cleared, and rate-limit/slow-down keep timers too \u2014 Jest will report open handles / hang without --forceExit or teardown.",
+      "handleRateLimitError is largely unreachable: createRateLimit already supplies a custom handler that sends the 429 response, so the RateLimitExceeded error never propagates to this error-handling middleware.",
+      "No app.set('trust proxy'): limiters manually read x-forwarded-for to compensate, but express-rate-limit may still warn and req.ip fallback is unreliable unless deployed behind the expected single proxy hop."
+    ]
+  },
+  {
+    "unit": "testing",
+    "feature": "testing",
+    "purpose": "The automated test suite for geowake2 (138 tracked files under test/, integration_test/, test_driver/). It protects the transit wake-up-alarm pipeline end-to-end: the EKF sensor-fusion stack, the tracking/reroute/route-registry services, and the alarm/time decision logic. Its defining characteristic is that it uses NO mocking framework (mocktail/mockito/fake_async are absent) \u2014 instead it drives real production objects through purpose-built static test seams baked into lib/ (TrackingService.isTestMode, testGpsStream, NotificationService.testRecordedAlarms, AppClock simulation), so most \"unit\" tests are really deterministic integration tests over synthetic GPS/IMU inputs.",
+    "responsibilities": [
+      "EKF suite: exercise the sensor-fusion stack file-by-file (test/core/ekf/* = 11 files: ekf_pipeline, ekf_orchestrator, motion_classifier, zupt_detector, tilt_filter, gps_degradation_detector, station_association, route_geometry, degraded_mode, ekf_logger, test-controller wiring) plus 4 scenario integration tests (test/services/ekf_integration/*: ambiguous_station_stop, gps_recovery_large_innovation, long_tunnel_no_stops, smooth_acceleration), a real-data replay test (test/integration/ekf_logged_data_test.dart via ImuReplayEngineV2), and a perf budget test (test/performance/ekf_performance_test.dart)",
+      "Tracking/routing: cover TrackingService lifecycle, reroute/deviation handling, route registry+cache eviction, active_route_manager, snap_to_route, tracking_state_store, tracking_termination_policy, offline coordination",
+      "Alarm/time VM tests: drive TrackingService via injected GPS and assert alarm firings captured in NotificationService.testRecordedAlarms (time_alarm_vm_test, stop_end_tracking_vm_test, rapid_deviations_vm_test) plus alarm_logic*, metro_*_alarm, notification_* families",
+      "Provide shared, deterministic test infrastructure: global Hive setup (flutter_test_config), fake GPS streaming (MockLocationProvider), IMU/route fixture generators (ekf_test_helpers), print helpers (log_helper), route fixtures (test_routes)",
+      "Dashboard + clock + OSM coverage: test/dashboard/* (6: simulation_state, deviation dashboard, constraint logger/events, osm_overlay_manager), test/core/clock/* (2: AppClock + integration), test/services/testing/* (osm_graph, pathfinder)",
+      "Regression/repro harness: ~18 repro/debug/bug/regression/compare files that pin down previously-fixed field bugs (regression_prod_data_test, repro_mumbai_transfer_test, complex_failure_repro, etc.)",
+      "On-device E2E: integration_test/device_alarm_integration_test.dart run through the test_driver harness to validate real notifications/vibration/AlarmActivity"
+    ],
+    "keyFiles": [
+      {
+        "path": "test/flutter_test_config.dart",
+        "role": "Global pre-test hook (testExecutable): creates a temp dir and calls Hive.init before any test runs, closes+deletes it after \u2014 every test that opens a Hive box depends on this"
+      },
+      {
+        "path": "test/mock_location_provider.dart",
+        "role": "MockLocationProvider: streams synthetic geolocator Position objects along a List<LatLng> route; the standard GPS injector assigned to testGpsStream (4 importers)"
+      },
+      {
+        "path": "test/helpers/ekf_test_helpers.dart",
+        "role": "Deterministic IMU/route fixture generators (ImuSample, ImuSequence, generateStaticImu, straightLineRoute, lShapedRoute, seededRandom) \u2014 but marked 'placeholder scaffolding' and has 0 importers in the symbol graph (unused)"
+      },
+      {
+        "path": "test/log_helper.dart",
+        "role": "Print-based logging helpers (logSection/logStep/logInfo/logPass/logWarn) for readable test output (6 importers)"
+      },
+      {
+        "path": "test/integration/ekf_logged_data_test.dart",
+        "role": "EKF replay test: loads bundled route assets via ImuReplayEngineV2.loadTestRoute(TestRouteId) and pumps gps/accel/gyro streams through EkfOrchestrator.onGpsFixAuto; early-returns (skips) if the asset is unavailable in the host env"
+      },
+      {
+        "path": "test/time_alarm_vm_test.dart",
+        "role": "Representative alarm/time VM test: sets TrackingService.isTestMode/NotificationService.isTestMode in setUp, feeds MockLocationProvider route, and asserts on NotificationService.testRecordedAlarms with bounded (<=) counts because test-mode bypasses cooldown"
+      },
+      {
+        "path": "integration_test/device_alarm_integration_test.dart",
+        "role": "On-device end-to-end alarm-flow test; gated by --dart-define=RUN_DEVICE_INTEGRATION and skipped by default on host runners; defines its own inline SimpleLocationInjector"
+      },
+      {
+        "path": "test_driver/integration_test.dart",
+        "role": "Three-line integrationDriver() harness that runs the integration_test/ suite on a device/emulator"
+      }
+    ],
+    "publicSymbols": [
+      "testExecutable (flutter_test_config.dart \u2014 global test bootstrap)",
+      "MockLocationProvider (mock_location_provider.dart: playRoute, positionStream, dispose)",
+      "logSection / logStep / logInfo / logPass / logWarn (log_helper.dart)",
+      "ImuSample / ImuSequence / generateStaticImu / straightLineRoute / lShapedRoute / linspace / seededRandom (ekf_test_helpers.dart, currently unused)",
+      "SimpleLocationInjector (inline in device_alarm_integration_test.dart)"
+    ],
+    "dataFlow": "Fixture inputs (List<LatLng> routes, TestRouteId-loaded asset polylines, or ekf_test_helpers generators) -> injected either as a fake GPS stream through the production seam `testGpsStream` (Stream<Position>?) or as gps/accel/gyro streams from ImuReplayEngineV2 -> fed into REAL production objects (TrackingService().startTracking(...) with `TrackingService.isTestMode=true`, or EkfOrchestrator(route: RouteGeometry.fromPoints(...)).onGpsFixAuto(GpsFix)) -> alarm decisions are diverted (because `NotificationService.isTestMode=true`) from the OS into the global list `NotificationService.testRecordedAlarms` / the `testOnShowWakeUpAlarm` hook -> tests `expect(...)` on that list. Time-dependent flows advance `AppClock().enableSimulation()/setWarpFactor()` instead of wall-clock time. `flutter_test_config.testExecutable` wraps the whole run with Hive temp init/teardown.",
+    "dependsOn": [
+      "lib/services/transfer_utils.dart (37 test files depend on it \u2014 highest fan-in)",
+      "lib/services/trackingservice.dart (33; exposes isTestMode + testGpsStream seams)",
+      "lib/services/notification_service.dart (25; exposes isTestMode, testRecordedAlarms, clearTestRecordedAlarms, testOnShowWakeUpAlarm)",
+      "lib/core/ekf/ekf_types.dart (13)",
+      "lib/services/alarm_evaluator.dart (12)",
+      "lib/core/ekf/route_geometry.dart (10)",
+      "lib/services/tracking_state_store.dart (9)",
+      "lib/services/api_client.dart (9)",
+      "lib/core/ekf/ekf_orchestrator.dart (8) + lib/core/ekf/imu_replay_engine_v2.dart (replay)",
+      "lib/core/clock/app_clock.dart (5; simulation seam)",
+      "lib/services/route_registry.dart, route_cache.dart, reroute_policy.dart, direction_service.dart, active_route_manager.dart",
+      "dev deps: flutter_test, integration_test (sdk), hive, geolocator, google_maps_flutter, shared_preferences"
+    ],
+    "invariants": [
+      "No test double libraries: tests wire real production objects through static test seams (mocktail/mockito/fake_async = 0 files); the seams (isTestMode, testGpsStream, testRecordedAlarms, AppClock) are the ONLY isolation mechanism",
+      "flutter_test_config.testExecutable must run first: Hive is initialized against a temp dir before any box is opened and closed afterward \u2014 tests must not Hive.init themselves",
+      "Every VM/alarm test must set TrackingService.isTestMode=true and NotificationService.isTestMode=true in setUp and reset both to false in tearDown; these are process-global statics that leak across tests otherwise",
+      "testGpsStream must be assigned before startTracking() so GPS comes from the fake stream, not geolocator",
+      "NotificationService.testRecordedAlarms is a shared mutable List \u2014 clearTestRecordedAlarms() must be called in setUp to prevent cross-test bleed",
+      "In test mode alarm cooldown is bypassed, so alarm tests assert bounded counts (lessThanOrEqualTo) rather than exact equality",
+      "SharedPreferences.setMockInitialValues({}) is required before code that reads prefs"
+    ],
+    "gotchas": [
+      "Not all 138 files are runnable test suites: many are bare scripts without the _test.dart suffix (alarm_repro.dart, compare_routes.dart, debug_*.dart, reproduce_*.dart, tool_fetch_route.dart, test_routes.dart, minimal_test.dart, persistence_repro.dart, reproduce_stop_logic.dart). `flutter test` only auto-discovers *_test.dart, so these are manual repro scripts \u2014 file count != suite count",
+      "test/helpers/ekf_test_helpers.dart is dead scaffolding: its own header says 'placeholder scaffolding \u2026 Fill with deterministic generators before writing tests' and the symbol graph shows 0 importers. Do not assume the EKF suite uses it \u2014 the real replay path is ImuReplayEngineV2 + TestRouteId loading bundled assets",
+      "test/fixtures/imu_data/ contains only a README \u2014 no IMU fixtures are committed. Replay tests loadTestRoute from app assets and silently early-return (skip) via try/catch when the asset isn't available in the host test env, so they no-op off-device instead of failing",
+      "integration_test/device_alarm_integration_test.dart is skipped unless run on a real Android/iOS device with --dart-define=RUN_DEVICE_INTEGRATION=true; default host `flutter test` never executes its body",
+      "Two near-duplicate fake GPS injectors exist: MockLocationProvider (test/mock_location_provider.dart, 50ms step, speed 15 m/s) and SimpleLocationInjector (inline in the device integration test, 350ms step, speed 12 m/s) \u2014 pick MockLocationProvider for host tests",
+      "Tests are integration-heavy despite unit-style names: a failure in one production service (e.g. transfer_utils, trackingservice, notification_service \u2014 the top fan-in hubs) cascades across dozens of test files, so a red suite rarely points at a single unit",
+      "Global singletons (AppClock) and process-global statics persist across tests in the same isolate; forgetting the tearDown resets produces order-dependent flakiness rather than clean failures"
+    ],
+    "entryPoints": [
+      "`flutter test` runner discovering test/**/*_test.dart (with test/flutter_test_config.dart auto-applied as the global testExecutable wrapper)",
+      "test_driver/integration_test.dart -> integrationDriver() for on-device runs",
+      "integration_test/device_alarm_integration_test.dart (gated E2E)"
+    ],
+    "usedBy": [
+      "CI / local `flutter test` runner",
+      "test_driver integrationDriver harness for device E2E",
+      "developers running repro scripts manually to reproduce field bugs"
+    ]
+  }
+]
