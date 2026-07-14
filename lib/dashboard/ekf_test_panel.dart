@@ -71,7 +71,13 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   bool _isInitialized = false;
   bool _isPlaying = false;
   bool _isPaused = false;
-  bool _gpsEnabled = true; // Toggle for GPS on/off
+  bool _isFinished = false;
+
+  // GPS-dropout scenario for non-log routes (normal/tunnel/intermittent/complete).
+  GpsDropoutMode _gpsDropoutMode = GpsDropoutMode.normal;
+
+  // In-sim alarm result (real AlarmEvaluator vs EKF progress).
+  EkfAlarmResult? _alarm;
 
   // Visualization state
   EkfTestVisualization? _lastViz;
@@ -89,6 +95,18 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
   void _setupController() {
     _controller.onVisualizationUpdate = _onVisualizationUpdate;
     _controller.onLogEntry = _onLogEntry;
+    _controller.onAlarm = (result) {
+      if (!mounted) return;
+      setState(() => _alarm = result);
+    };
+    _controller.onFinished = () {
+      if (!mounted) return;
+      setState(() {
+        _isFinished = true;
+        _isPlaying = false;
+        _isPaused = false;
+      });
+    };
     _controller.logVerbosity = 2; // Events + Info
   }
 
@@ -150,11 +168,15 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       final testRouteId = _mapCuratedToTestRoute(_selectedRoute);
 
       if (_selectedRoute == CuratedRoute.logReplay) {
-        // Load the new Unified Log (JSON) which fuses GPS + IMU + Ground Truth
+        // Load the new Unified Log (JSON) which fuses GPS + IMU + Ground Truth.
+        // GPS availability is driven by the log itself, not the dropout picker.
         await _controller.loadUnifiedLog(
           'docs/Sandalsoap-whitefield/unified_route_log.json',
         );
       } else {
+        // Apply the selected GPS-dropout scenario before loading so the fresh
+        // engine dead-reckons through the requested dropout pattern.
+        _controller.gpsDropoutMode = _gpsDropoutMode;
         await _controller.loadRoute(testRouteId);
       }
 
@@ -205,6 +227,8 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
           setState(() {
             _isPlaying = true;
             _isPaused = false;
+            _isFinished = false;
+            _alarm = null;
           });
         }
       });
@@ -213,6 +237,8 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
       setState(() {
         _isPlaying = true;
         _isPaused = false;
+        _isFinished = false;
+        _alarm = null;
       });
     }
   }
@@ -246,6 +272,8 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     setState(() {
       _isPlaying = false;
       _isPaused = false;
+      _isFinished = false;
+      _alarm = null;
       _lastViz = null;
     });
   }
@@ -349,9 +377,13 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildGpsToggle(),
+                    _buildGpsDropoutSelector(),
                     const SizedBox(height: 16),
                     _buildProgressIndicator(),
+                    if (_alarm != null) ...[
+                      const SizedBox(height: 12),
+                      _buildAlarmBanner(_alarm!),
+                    ],
                     const SizedBox(height: 16),
                     _buildMetricsPanel(),
                     const SizedBox(height: 12),
@@ -393,6 +425,10 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     final (color, label) =
         _isPlaying
             ? (Colors.green, 'RUNNING')
+            : _isFinished
+            ? (Colors.deepPurple, 'FINISHED')
+            : _isPaused
+            ? (Colors.orange, 'PAUSED')
             : _isInitialized
             ? (Colors.blue, 'READY')
             : (Colors.grey, 'SELECT ROUTE');
@@ -424,8 +460,11 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
         ),
         const SizedBox(height: 8),
-        // Restricted to Log Replay only
+        // Full route/scenario picker (re-enabled).
         _buildRouteOption(CuratedRoute.logReplay),
+        _buildRouteOption(CuratedRoute.purpleLine),
+        _buildRouteOption(CuratedRoute.greenLine),
+        _buildRouteOption(CuratedRoute.nonMetro),
       ],
     );
   }
@@ -569,67 +608,141 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
     );
   }
 
-  Widget _buildGpsToggle() {
-    // Completely hide toggle in Log Replay mode as requested
+  /// Human-readable label for each supported GPS-dropout scenario.
+  String _dropoutLabel(GpsDropoutMode mode) {
+    return switch (mode) {
+      GpsDropoutMode.normal => 'Normal (continuous GPS)',
+      GpsDropoutMode.tunnelSimulation => 'Tunnel (drops underground)',
+      GpsDropoutMode.intermittent => 'Intermittent (random dropouts)',
+      GpsDropoutMode.completeDropout => 'Complete (no GPS — pure IMU)',
+      GpsDropoutMode.accuracyDegraded => 'Degraded accuracy',
+      GpsDropoutMode.urbanCanyon => 'Urban canyon',
+    };
+  }
+
+  Widget _buildGpsDropoutSelector() {
+    // In Log Replay mode GPS availability is baked into the log, so the picker
+    // is not applicable — show an info chip instead.
     if (_selectedRoute == CuratedRoute.logReplay) {
-      return const SizedBox.shrink();
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color:
-            _gpsEnabled
-                ? Colors.green.withValues(alpha: 0.1)
-                : Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _gpsEnabled ? Colors.green : Colors.orange,
-          width: 1,
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.withValues(alpha: 0.4)),
         ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline, size: 18, color: Colors.blue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'GPS availability is driven by the replay log (dead-zone tunnels included).',
+                style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    const modes = [
+      GpsDropoutMode.normal,
+      GpsDropoutMode.tunnelSimulation,
+      GpsDropoutMode.intermittent,
+      GpsDropoutMode.completeDropout,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(
-            _gpsEnabled ? Icons.gps_fixed : Icons.gps_off,
-            color: _gpsEnabled ? Colors.green : Colors.orange,
-            size: 20,
-          ),
+          const Icon(Icons.satellite_alt, size: 18, color: Colors.deepPurple),
           const SizedBox(width: 8),
+          const Text(
+            'GPS Dropout',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButton<GpsDropoutMode>(
+              value: _gpsDropoutMode,
+              isExpanded: true,
+              underline: const SizedBox.shrink(),
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+              items:
+                  modes
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(
+                            _dropoutLabel(m),
+                            style: const TextStyle(fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: (mode) {
+                if (mode == null) return;
+                setState(() => _gpsDropoutMode = mode);
+                // Live control: applies immediately to a running engine and is
+                // picked up by the next load for a fresh engine.
+                _controller.gpsDropoutMode = mode;
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlarmBanner(EkfAlarmResult alarm) {
+    final leadErr = alarm.leadErrorMeters;
+    final earlyLate =
+        leadErr >= 0
+            ? 'EKF ${leadErr.abs().toStringAsFixed(0)}m ahead of truth (fired early)'
+            : 'EKF ${leadErr.abs().toStringAsFixed(0)}m behind truth (fired late)';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red, width: 2),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_active, color: Colors.red, size: 24),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _gpsEnabled ? 'GPS Active' : 'GPS Disabled',
-                  style: TextStyle(
+                  'ALARM: ${alarm.message}',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: _gpsEnabled ? Colors.green[700] : Colors.orange[700],
+                    fontSize: 13,
+                    color: Colors.red,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  _selectedRoute == CuratedRoute.logReplay
-                      ? 'GPS controlled by Replay Log (Tunnel Sim)'
-                      : _gpsEnabled
-                      ? 'Toggle off to test EKF without GPS'
-                      : 'EKF is estimating position from IMU only',
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  'Fired @ ${alarm.fireElapsedSeconds.toStringAsFixed(1)}s · '
+                  '${alarm.leadSeconds.toStringAsFixed(1)}s before arrival',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[800]),
+                ),
+                Text(
+                  'Lead error: $earlyLate',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[800]),
                 ),
               ],
             ),
-          ),
-          Switch(
-            value: _gpsEnabled,
-            activeThumbColor: Colors.green,
-            onChanged:
-                (_isPlaying && _selectedRoute != CuratedRoute.logReplay)
-                    ? (value) {
-                      setState(() {
-                        _gpsEnabled = value;
-                      });
-                      _controller.toggleGpsDropout();
-                    }
-                    : null,
           ),
         ],
       ),
@@ -805,6 +918,57 @@ class _EkfTestPanelState extends State<EkfTestPanel> {
                     viz.ekfDegraded ? 'DEGRADED' : 'Normal',
                     '',
                     viz.ekfDegraded ? Icons.warning : Icons.check_circle,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 4),
+            const Text(
+              'Ground-Truth Accuracy',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    'Error (now)',
+                    _controller.ekfCurrentError.toStringAsFixed(1),
+                    'm',
+                    Icons.my_location,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildMetricTile(
+                    'Max Drift',
+                    _controller.ekfMaxDrift.toStringAsFixed(1),
+                    'm',
+                    Icons.trending_up,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricTile(
+                    'RMSE',
+                    _controller.ekfRmse.toStringAsFixed(1),
+                    'm',
+                    Icons.functions,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildMetricTile(
+                    'Blackout Max',
+                    _controller.ekfMaxBlackoutError.toStringAsFixed(1),
+                    'm',
+                    Icons.signal_cellular_off,
                   ),
                 ),
               ],

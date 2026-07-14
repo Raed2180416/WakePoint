@@ -6,7 +6,20 @@ class Stop {
   final String name;
   final LatLng location;
 
-  const Stop({required this.id, required this.name, required this.location});
+  /// Raw line label this stop belongs to (e.g. OSM's dirty "&#x25D9;  Blue Line").
+  /// Optional: legacy call sites that build stops without line metadata still work.
+  final String? line;
+
+  /// City this stop belongs to (e.g. "mumbai"). Optional for the same reason.
+  final String? city;
+
+  const Stop({
+    required this.id,
+    required this.name,
+    required this.location,
+    this.line,
+    this.city,
+  });
 }
 
 class MatchedStop {

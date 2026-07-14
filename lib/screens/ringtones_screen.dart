@@ -7,8 +7,15 @@
 // It gives us access to widgets like Scaffold, AppBar, ListView, Text, etc.
 import 'package:flutter/material.dart';
 
+// Timers for auto-stopping the alarm test after a few seconds.
+import 'dart:async';
+
 // This is the special package we added to play audio files.
 import 'package:audioplayers/audioplayers.dart';
+
+// The production alarm path (notification + AlarmPlayer + vibration) so the
+// user can verify the real alarm actually wakes them before betting a trip.
+import 'package:geowake2/services/notification_service.dart';
 
 // This package helps us use custom fonts easily, like the ones from Google Fonts.
 import 'package:google_fonts/google_fonts.dart';
@@ -68,6 +75,8 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
   late AudioPlayer _audioPlayer; // This will hold our audio playing tool. `late` is a promise we'll create it before using it.
   String? _currentlyPlayingPath; // Remembers which song is playing so we can show a "pause" icon. The `?` means it's okay if nothing is playing.
   String? _selectedRingtonePath; // Remembers the user's final choice. This determines which radio button is checked.
+  bool _testingAlarm = false; // True while the real-alarm test is firing.
+  Timer? _testAlarmTimer; // Auto-stops the alarm test after a few seconds.
 
   // This is like a "label" for the data we save. When we save the ringtone choice,
   // we put it in a box with this label so we can easily find it again later.
@@ -89,8 +98,57 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
   void dispose() {
     // dispose is the very last thing that runs when the screen is destroyed.
     // It's crucial for cleanup to prevent memory leaks.
+    _testAlarmTimer?.cancel(); // Stop the pending auto-stop.
+    // Make sure a test alarm never keeps ringing after we leave the screen.
+    if (_testingAlarm) {
+      // ignore: discarded_futures
+      NotificationService().cancelAlarm();
+    }
     _audioPlayer.dispose(); // Release the audio player from memory.
     super.dispose();
+  }
+
+  // Fires the REAL production alarm once (notification + AlarmPlayer + vibration)
+  // so the user can confirm it will actually wake them. Auto-stops after a few
+  // seconds; also stoppable immediately from the SnackBar action.
+  Future<void> _testAlarmNow() async {
+    // Stop any preview that might be playing so it doesn't clash with the alarm.
+    await _audioPlayer.stop();
+    if (_currentlyPlayingPath != null && mounted) {
+      setState(() => _currentlyPlayingPath = null);
+    }
+
+    setState(() => _testingAlarm = true);
+    try {
+      await NotificationService().showWakeUpAlarm(
+        title: 'Test alarm',
+        body: 'This is how WakePoint will wake you at your stop.',
+        allowContinueTracking: true,
+        playSound: true,
+      );
+    } catch (_) {}
+
+    _testAlarmTimer?.cancel();
+    _testAlarmTimer = Timer(const Duration(seconds: 5), _stopTestAlarm);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Testing your alarm…'),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(label: 'STOP', onPressed: _stopTestAlarm),
+      ),
+    );
+  }
+
+  // Stops the test alarm (sound, vibration, notification).
+  Future<void> _stopTestAlarm() async {
+    _testAlarmTimer?.cancel();
+    _testAlarmTimer = null;
+    try {
+      await NotificationService().cancelAlarm();
+    } catch (_) {}
+    if (mounted) setState(() => _testingAlarm = false);
   }
 
   // =========================================================================
@@ -151,6 +209,12 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
           'Select Ringtone',
           style: GoogleFonts.montserrat(fontWeight: FontWeight.w600), // Use a nice font
         ),
+      ),
+      // Let the user fire the REAL alarm once to verify it wakes them.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _testingAlarm ? _stopTestAlarm : _testAlarmNow,
+        icon: Icon(_testingAlarm ? Icons.stop : Icons.alarm),
+        label: Text(_testingAlarm ? 'Stop test' : 'Test my alarm now'),
       ),
       // ListView.builder is the best way to create a list. It's efficient because
       // it only builds the items that are currently visible on the screen.

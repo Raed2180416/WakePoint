@@ -15,6 +15,19 @@ class RouteCacheEntry {
   final String mode; // 'driving' | 'transit'
   final String? simplifiedCompressedPolyline; // optional preprocessed polyline
 
+  /// G17: planned departure (unix epoch seconds) when the provider supplies a
+  /// scheduled transit time. Null for scheduleless/driving routes.
+  final int? plannedDepartureEpoch;
+
+  /// G17: planned arrival (unix epoch seconds) when the provider supplies a
+  /// scheduled transit time. Used to evict routes stale across a last-service
+  /// boundary. Null for scheduleless/driving routes.
+  final int? plannedArrivalEpoch;
+
+  /// G17: schema version this entry was written under. Entries written by an
+  /// older schema are treated as stale on read. Defaults to 0 for legacy entries.
+  final int schemaVersion;
+
   RouteCacheEntry({
     required this.key,
     required this.directions,
@@ -23,6 +36,9 @@ class RouteCacheEntry {
     required this.destination,
     required this.mode,
     this.simplifiedCompressedPolyline,
+    this.plannedDepartureEpoch,
+    this.plannedArrivalEpoch,
+    this.schemaVersion = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +50,11 @@ class RouteCacheEntry {
     'mode': mode,
     if (simplifiedCompressedPolyline != null)
       'scp': simplifiedCompressedPolyline,
+    if (plannedDepartureEpoch != null)
+      'plannedDepartureEpoch': plannedDepartureEpoch,
+    if (plannedArrivalEpoch != null)
+      'plannedArrivalEpoch': plannedArrivalEpoch,
+    'schemaVersion': schemaVersion,
   };
 
   static RouteCacheEntry fromJson(Map<String, dynamic> json) {
@@ -53,6 +74,9 @@ class RouteCacheEntry {
       ),
       mode: json['mode'] as String,
       simplifiedCompressedPolyline: json['scp'] as String?,
+      plannedDepartureEpoch: json['plannedDepartureEpoch'] as int?,
+      plannedArrivalEpoch: json['plannedArrivalEpoch'] as int?,
+      schemaVersion: json['schemaVersion'] as int? ?? 0,
     );
   }
 }
@@ -61,6 +85,10 @@ class RouteCache {
   static const String boxName = 'route_cache_v1';
   static const Duration defaultTtl = Duration(minutes: 5);
   static const double defaultOriginDeviationMeters = 300.0;
+
+  /// G17: bump when the cached route/directions schema changes. Entries written
+  /// by an older schema are treated as stale on read.
+  static const int schemaVersion = 1;
 
   static Box<String>? _box; // store JSON strings
 
@@ -131,6 +159,31 @@ class RouteCache {
         dev.log('RouteCache stale by TTL. Key evicted.', name: 'RouteCache');
         await _box!.delete(key);
         return null;
+      }
+
+      // G17: schema-version guard. Entries written by an older schema are stale.
+      if (entry.schemaVersion != schemaVersion) {
+        dev.log(
+          'RouteCache schema mismatch (${entry.schemaVersion} != $schemaVersion). Evicting.',
+          name: 'RouteCache',
+        );
+        await _box!.delete(key);
+        return null;
+      }
+
+      // G17: planned-window guard. A route whose planned arrival is already in
+      // the past is stale (esp. across a last-service boundary). Force a refresh.
+      final arr = entry.plannedArrivalEpoch;
+      if (arr != null) {
+        final arrivalTime = DateTime.fromMillisecondsSinceEpoch(arr * 1000);
+        if (DateTime.now().isAfter(arrivalTime)) {
+          dev.log(
+            'RouteCache planned arrival passed (last-service boundary). Evicting.',
+            name: 'RouteCache',
+          );
+          await _box!.delete(key);
+          return null;
+        }
       }
 
       // Origin deviation check

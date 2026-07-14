@@ -316,6 +316,7 @@ class DirectionService {
           transitVariant: transitVariant,
           departureTime: departureTime,
         );
+        final planned = _extractPlannedWindowEpochs(directions);
         await RouteCache.put(
           RouteCacheEntry(
             key: key,
@@ -325,6 +326,9 @@ class DirectionService {
             destination: dest,
             mode: mode,
             simplifiedCompressedPolyline: simplifiedCompressed,
+            plannedDepartureEpoch: planned.$1,
+            plannedArrivalEpoch: planned.$2,
+            schemaVersion: RouteCache.schemaVersion,
           ),
         );
       } catch (e) {
@@ -652,6 +656,32 @@ class DirectionService {
     final bytes = utf8.encode('$tol|$encoded');
     final digest = crypto.md5.convert(bytes).toString();
     return '${encoded.length}:$digest';
+  }
+
+  /// G17: Extract the planned departure/arrival window (unix epoch seconds) from
+  /// the first route's legs when the provider supplies scheduled transit times.
+  /// Returns (departureEpoch, arrivalEpoch); either may be null for scheduleless
+  /// or driving routes. Departure is the earliest leg's departure_time; arrival
+  /// is the final leg's arrival_time.
+  (int?, int?) _extractPlannedWindowEpochs(Map<String, dynamic> directions) {
+    try {
+      final legs = ((directions['routes'] as List).first
+          as Map<String, dynamic>)['legs'] as List;
+      int? departure;
+      int? arrival;
+      for (final legAny in legs) {
+        final leg = legAny as Map<String, dynamic>;
+        final dep =
+            (leg['departure_time'] as Map<String, dynamic>?)?['value'] as num?;
+        final arr =
+            (leg['arrival_time'] as Map<String, dynamic>?)?['value'] as num?;
+        if (dep != null) departure ??= dep.toInt();
+        if (arr != null) arrival = arr.toInt();
+      }
+      return (departure, arrival);
+    } catch (_) {
+      return (null, null);
+    }
   }
 }
 

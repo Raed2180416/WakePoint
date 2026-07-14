@@ -1,0 +1,86 @@
+=== EXTRACTING LEGS ===
+Leg 0: Metro Line 1
+  isMetro: true
+  Range: 0.0m - 2000.0m
+  numStops: 3
+  stopMeters: [500.0, 1000.0, 1500.0]
+Leg 1: Walk to Andheri West
+  isMetro: false
+  Range: 2000.0m - 2300.0m
+  numStops: 0
+  stopMeters: []
+Leg 2: Metro Line 2A
+  isMetro: true
+  Range: 2300.0m - 7300.0m
+  numStops: 5
+  stopMeters: [3133.333333333333, 3966.6666666666665, 4800.0, 5633.333333333333, 6466.666666666667]
+
+=== BUILDING ROUTE EVENTS ===
+Event 0: transfer @ 2000.0m
+  Label: DN Nagar
+  LegIdx: 0
+
+=== LEG 0 COMPUTED STOP METERS ===
+Leg 0 stops: [500.0, 1000.0, 1500.0]
+
+=== TRACING ALARM TRIGGERS AT VARIOUS PROGRESS POINTS ===
+
+--- Progress: 500.0m ---
+Current Leg: 0 (Metro Line 1)
+  No alarm
+
+--- Progress: 600.0m ---
+Current Leg: 0 (Metro Line 1)
+  No alarm
+
+--- Progress: 1000.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (2 stops) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 2.0
+
+--- Progress: 1100.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (2 stops) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 2.0
+
+--- Progress: 1400.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (2 stops) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 2.0
+
+--- Progress: 1500.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (1 stop) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 1.0
+
+--- Progress: 1600.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (1 stop) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 1.0
+
+--- Progress: 1900.0m ---
+Current Leg: 0 (Metro Line 1)
+🔔 ALARM TRIGGERED!
+  Type: transfer
+  Message: Alight at DN Nagar (1 stop) → Walk to Andheri West
+  LegId: Metro Line 1_0_2000
+  Remaining Stops: 1.0
+
+=== EXPECTED BEHAVIOR ===
+Alarm should fire at ~1500m (where 2 stops remain to DN Nagar @ 2000m)
+NOT at a point relative to Andheri West (Leg 2 @ 2300m)

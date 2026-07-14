@@ -1,0 +1,68 @@
+{
+  "verified_fix_ladder_mid_blackout": [
+    {
+      "config": "production (no fixes)",
+      "alarm_hit_pct": 0,
+      "lead_err_s": 100,
+      "in_tunnel_max_m": 1656,
+      "nees": 3930
+    },
+    {
+      "config": "+ honest covariance",
+      "alarm_hit_pct": 0,
+      "lead_err_s": 37,
+      "in_tunnel_max_m": 888,
+      "nees": 23
+    },
+    {
+      "config": "+ motion-gated ZUPT + dwell-count seq-assoc",
+      "alarm_hit_pct": 0,
+      "lead_err_s": 90,
+      "in_tunnel_max_m": 919,
+      "nees": 51
+    },
+    {
+      "config": "+ learned velocity (Step 3, REAL regressor)",
+      "alarm_hit_pct": 100,
+      "lead_err_s": -2,
+      "in_tunnel_max_m": 147,
+      "nees": 3.0
+    }
+  ],
+  "velocity_regressor": {
+    "model": "HistGradientBoostingRegressor(max_iter=300,max_depth=6,lr=0.08,l2=1.0)",
+    "features": [
+      "a_mean",
+      "a_std",
+      "a_p90",
+      "gyro_mean",
+      "gyro_std",
+      "band_3_8Hz",
+      "band_8_20Hz",
+      "dom_freq"
+    ],
+    "trained_on": "32 domain-randomized synthetic rides (ride-level split, no window leakage)",
+    "held_out_test": "8 unseen rides",
+    "mae_mps": 1.52,
+    "r2": 0.84,
+    "cruise_mae_mps": 1.79,
+    "dwell_mae_mps": 0.58
+  },
+  "corpus": {
+    "n_rides": 40,
+    "n_windows": 93740,
+    "carry_modes": 5,
+    "throttle_regimes": 3,
+    "note": "Step-4 corpus generator; scales to 200+; gold s(t) per ride"
+  },
+  "dwell_detector": {
+    "min_dwell_s": 8.0,
+    "true_stops_matched": "21/21",
+    "false_positives": 1
+  },
+  "caveats": [
+    "all synthetic (n=1 real ride calibration); real-world validation needs ride #2..N",
+    "velocity regressor may partly invert the synthesizer's own speed-driven vibration model \u2014 held-out R2=0.84 is encouraging but circularity not fully excluded until real multi-ride test",
+    "learned-velocity fusion uses vel_var=4.0 (m/s)^2; tune on real data"
+  ]
+}

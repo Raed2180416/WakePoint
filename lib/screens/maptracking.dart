@@ -21,6 +21,7 @@ import 'package:geowake2/services/alarm_player.dart'; // Alarm control.
 import 'package:flutter_background_service/flutter_background_service.dart'; // Notify service when stopping alarm.
 import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
 import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
+import 'package:geowake2/services/notification_service.dart'; // Real alarm path for post-arrival re-alert.
 
 class MapTrackingScreen extends StatefulWidget {
   // Displays map and live tracking details.
@@ -78,11 +79,69 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     List<double> _segmentEndMeters = const []; // Segment end meters.
     double? _lastProgressMeters; // Last progress used to trim polylines.
 
+  // GPS-out / dead-reckoning indicator: when position updates stop arriving
+  // (e.g. a tunnel), show a subtle "estimating from motion" state instead of a
+  // silently frozen marker. Self-contained: driven by position-update freshness.
+  DateTime? _lastPositionAt; // Timestamp of the most recent position update.
+  bool _gpsEstimating = false; // True when GPS has gone stale mid-journey.
+  Timer? _gpsFreshnessTimer; // Periodically checks position freshness.
+  // GPS is considered lost once no position has arrived for this long.
+  static const Duration _gpsStaleAfter = Duration(seconds: 12);
+
+  // Post-arrival re-alert (snooze): if the rider dismisses the destination
+  // alarm but is still on board, re-fire the real alarm once after a short wait.
+  Timer? _snoozeTimer; // Pending one-shot re-alert.
+  bool _snoozeUsed = false; // Ensures we only re-alert once (never loop).
+
   @override
   void initState() {
     super.initState();
     AlarmPlayer.isPlaying.addListener(_onAlarmPlayingChanged);
     _refreshFinalAlarmState();
+    // Watch position freshness so we can flip to an "estimating" indicator when
+    // GPS drops out (tunnels), and back to normal when fixes resume.
+    _gpsFreshnessTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (_) => _evaluateGpsFreshness(),
+    );
+  }
+
+  /// Flip the "estimating from motion" indicator based on how long it has been
+  /// since the last position update. Only engages after at least one fix so we
+  /// never show it on a cold start.
+  void _evaluateGpsFreshness() {
+    if (!mounted) return;
+    final last = _lastPositionAt;
+    final estimating =
+        last != null && DateTime.now().difference(last) > _gpsStaleAfter;
+    if (estimating == _gpsEstimating) return;
+    setState(() {
+      _gpsEstimating = estimating;
+      _applyEstimatingToMarker(estimating);
+    });
+  }
+
+  /// Recolor/relabel the current-location marker to signal that its position is
+  /// being estimated (orange) rather than freshly measured (default).
+  void _applyEstimatingToMarker(bool estimating) {
+    final pos = _currentUserLocation;
+    if (pos == null) return;
+    _markers.removeWhere((m) => m.markerId.value == 'currentLocationMarker');
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('currentLocationMarker'),
+        position: pos,
+        icon:
+            estimating
+                ? BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueOrange,
+                )
+                : BitmapDescriptor.defaultMarker,
+        infoWindow: InfoWindow(
+          title: estimating ? 'Estimating position (no GPS)' : 'Your Location',
+        ),
+      ),
+    );
   }
 
   void _onAlarmPlayingChanged() {
@@ -109,6 +168,59 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       setState(() {
         _finalAlarmActive = next;
       });
+    }
+  }
+
+  /// SNOOZE the destination alarm: silence it now but keep tracking, and arm a
+  /// one-shot re-alert in case the rider is still on board and hasn't gotten
+  /// off. Deliberately one-time so it can never suppress a needed alarm.
+  Future<void> _onSnoozePressed() async {
+    // Silence the currently-playing alarm without ending the session.
+    await AlarmPlayer.stop();
+    try {
+      FlutterBackgroundService().invoke('stopAlarm');
+    } catch (e) {
+      dev.log('Failed to send stopAlarm to service: $e', name: 'MapTracking');
+    }
+
+    _snoozeUsed = true;
+    _snoozeTimer?.cancel();
+    _snoozeTimer = Timer(const Duration(seconds: 60), _maybeReAlert);
+
+    if (!mounted) return;
+    setState(() {}); // Hide the SNOOZE button now that it is used.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Snoozed — we'll re-check in a minute in case you're still on board.",
+        ),
+      ),
+    );
+  }
+
+  /// Fire the REAL alarm once more if the rider still appears to be travelling
+  /// (session active and not manually ended). Over-alerting is safe; never
+  /// suppress a needed alarm.
+  Future<void> _maybeReAlert() async {
+    _snoozeTimer = null;
+    if (!mounted || _isEndingTracking) return;
+
+    // Safety: only re-alert while a session is still active (the rider didn't
+    // end tracking in the meantime).
+    try {
+      final active = await TrackingStateStore.isActive();
+      if (!active) return;
+    } catch (_) {}
+
+    try {
+      await NotificationService().showWakeUpAlarm(
+        title: 'Still heading past ${_destinationName ?? 'your stop'}',
+        body: "You may not have gotten off yet — wake up!",
+        allowContinueTracking: false,
+        playSound: true,
+      );
+    } catch (e) {
+      dev.log('Post-arrival re-alert failed: $e', name: 'MapTracking');
     }
   }
 
@@ -454,6 +566,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   /// Shared handler for both real GPS and simulated position updates.
   void _handlePositionUpdate(Position position) {
     _currentUserLocation = LatLng(position.latitude, position.longitude);
+    // A fresh fix arrived: reset the freshness clock and clear any estimating
+    // state (marker recolor happens with the marker rebuild below).
+    _lastPositionAt = DateTime.now();
+    _gpsEstimating = false;
     dev.log(
       "MapTrackingScreen: Position update: (${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)})",
       name: "MapTrackingScreen",
@@ -898,6 +1014,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _routeStateSub?.cancel(); // Stop state stream.
     _simulatedLocationSub?.cancel(); // Stop simulated position stream.
     _etaSub?.cancel(); // Stop ETA stream.
+    _gpsFreshnessTimer?.cancel(); // Stop GPS-freshness watcher.
+    _snoozeTimer?.cancel(); // Stop pending re-alert.
     super.dispose(); // Parent cleanup.
   }
 
@@ -1033,6 +1151,44 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       const Center(
                         child: CircularProgressIndicator(),
                       ), // Spinner overlay.
+                    // GPS-out reassurance banner (tunnels / dead-reckoning).
+                    if (_gpsEstimating)
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 12,
+                        child: Material(
+                          color: Colors.deepOrange.withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.sensors,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'No GPS (tunnel) — estimating position from motion. '
+                                    'Still counting down to ${_destinationName ?? 'your stop'}.',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1094,35 +1250,101 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 440),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: endTrackingStyle,
-                              onPressed: () async {
-                                // Prevent UI flicker during shutdown
-                                setState(() {
-                                  _isEndingTracking = true;
-                                });
-
-                                // Stop alarm sounds and vibration
-                                await AlarmPlayer.stop();
-
-                                // End tracking completely - clears snapshot, stops service,
-                                // cancels notifications, and resets all tracking state.
-                                // Pass navigateHome: false since we handle navigation here.
-                                await TrackingService().completeEndTracking(
-                                  navigateHome: false,
-                                );
-
-                                // Navigate back to home screen
-                                Navigator.pushReplacementNamed(context, '/');
-                              },
-                              icon: const Icon(
-                                Icons.stop_circle_outlined,
-                                size: 24,
+                          child: Column(
+                            children: [
+                              // Clear "you've arrived" confirmation state.
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    color: cs.primary,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      "You've reached ${_destinationName ?? 'your destination'}",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              label: const Text('END TRACKING'),
-                            ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Time to get off.',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  // SNOOZE: dismiss the alarm sound but keep
+                                  // tracking, and re-fire once shortly in case
+                                  // the rider is still on board. One-shot only.
+                                  if (!_snoozeUsed) ...[
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: cs.secondaryContainer,
+                                          foregroundColor:
+                                              cs.onSecondaryContainer,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                          textStyle: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        onPressed: _onSnoozePressed,
+                                        icon: const Icon(Icons.snooze, size: 24),
+                                        label: const Text('SNOOZE'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: endTrackingStyle,
+                                      onPressed: () async {
+                                        // Prevent UI flicker during shutdown
+                                        setState(() {
+                                          _isEndingTracking = true;
+                                        });
+                                        _snoozeTimer?.cancel();
+
+                                        // Stop alarm sounds and vibration
+                                        await AlarmPlayer.stop();
+
+                                        // End tracking completely - clears snapshot, stops service,
+                                        // cancels notifications, and resets all tracking state.
+                                        // Pass navigateHome: false since we handle navigation here.
+                                        await TrackingService()
+                                            .completeEndTracking(
+                                              navigateHome: false,
+                                            );
+
+                                        // Navigate back to home screen
+                                        Navigator.pushReplacementNamed(
+                                          context,
+                                          '/',
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.stop_circle_outlined,
+                                        size: 24,
+                                      ),
+                                      label: const Text('END TRACKING'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       )

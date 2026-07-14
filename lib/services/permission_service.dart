@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:app_settings/app_settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:geowake2/services/oem_autostart_service.dart';
 import 'dart:io' show Platform;
 
 class PermissionService {
@@ -21,8 +24,49 @@ class PermissionService {
 
     // 3. Handle Activity Recognition (non-critical)
     await _requestActivityRecognitionPermission();
-    
+
+    // 4. Reliability setup (non-critical): battery-optimization exemption +
+    //    OEM autostart allowlist. Doze/OEM task-killers are the #1 cause of a
+    //    missed wake-up, so we surface this once, best-effort.
+    await _runReliabilitySetup();
+
     return true;
+  }
+
+  /// G2: guide the user through battery-optimization exemption and, on
+  /// aggressive OEM ROMs, the autostart allowlist. Non-blocking: tracking still
+  /// works if the user skips, it is just less reliable.
+  Future<void> _runReliabilitySetup() async {
+    if (!Platform.isAndroid) return;
+
+    // Only prompt once so we don't nag on every launch.
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('reliability_setup_done') == true) return;
+
+    final packageName = (await PackageInfo.fromPlatform()).packageName;
+
+    final proceed = await _showRationaleDialog(
+      'Keep Alarms Reliable',
+      'To make sure WakePoint can wake you even with the screen off, please '
+      'allow it to ignore battery optimization, and (on some phones) enable '
+      'Auto-start. We will open the right settings screens next.',
+    );
+    if (!proceed) return;
+
+    await OemAutostartService.requestIgnoreBatteryOptimizations(packageName);
+
+    if (await OemAutostartService.isAggressiveOem()) {
+      final openAutostart = await _showRationaleDialog(
+        'Enable Auto-start',
+        'Your phone\'s manufacturer may stop WakePoint in the background. On the '
+        'next screen, please turn ON Auto-start / background activity for WakePoint.',
+      );
+      if (openAutostart) {
+        await OemAutostartService.openAutoStartSettings();
+      }
+    }
+
+    await prefs.setBool('reliability_setup_done', true);
   }
 
   // --- Private Helper Methods for Each Permission ---

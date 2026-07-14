@@ -26,6 +26,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:wakepoint_native/wakepoint_native.dart';
 import 'dart:developer' as dev;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -210,6 +211,10 @@ class TrackingService {
       androidConfiguration: AndroidConfiguration(
         onStart: _onStart,
         autoStart: false,
+        // G4: after a device reboot, re-run the background entrypoint so the
+        // recovery-from-snapshot path in _onStart (null initialData branch) can
+        // resume an active session. Only re-arms if TrackingStateStore.isActive().
+        autoStartOnBoot: true,
         isForegroundMode: true,
         notificationChannelId: 'geowake_tracking_channel_v2',
         initialNotificationTitle: 'GeoWake Tracking',
@@ -242,6 +247,7 @@ class TrackingService {
       'destinationLat': destination.latitude,
       'destinationLng': destination.longitude,
       'destinationName': destinationName,
+      'alarmMode': alarmMode,
       'alarmValue': alarmValue,
       'transitMode': transitMode,
       'useInjectedPositions': useInjectedPositions,
@@ -794,6 +800,9 @@ StreamSubscription<RouteSwitchEvent>? _mgrSwitchSub;
 StreamSubscription<DeviationState>? _devSub;
 StreamSubscription<RerouteDecision>? _rerouteSub;
 StreamSubscription<DeviationState>? _devStateForTerminationSub;
+// G14/G15: consumes wrong-direction alerts (opposite-direction train) and
+// surfaces them to the rider via a high-importance heads-up notification.
+StreamSubscription<WrongDirectionAlert>? _wrongDirSub;
 
 // Manager Delegates (Mutable)
 ActiveRouteManager? get _activeManager => _sessionManager.activeManager;
@@ -899,6 +908,16 @@ void _onStop() async {
     _sensorFusionManager = null;
   }
   _fusionActive = false;
+
+  // G1: release the session wake lock once tracking has fully stopped.
+  // G5: also cancel any pending OS exact-alarm ETA backstop so it can't fire
+  // after the session is intentionally stopped.
+  if (!TrackingService.isTestMode) {
+    // ignore: discarded_futures
+    WakepointNative.releaseWakeLock();
+    // ignore: discarded_futures
+    NotificationService().cancelEtaBackstop();
+  }
   _mgrStateSub?.cancel();
   _mgrStateSub = null;
   _mgrSwitchSub?.cancel();
@@ -909,6 +928,8 @@ void _onStop() async {
   _rerouteSub = null;
   _devStateForTerminationSub?.cancel();
   _devStateForTerminationSub = null;
+  _wrongDirSub?.cancel();
+  _wrongDirSub = null;
   _activeManager?.dispose();
   _activeManager = null;
   _devMonitor?.dispose();
@@ -1056,7 +1077,10 @@ void _handleDashboardRouteSwitch(String routeKey) {
 /// null Android Context. In that case, we send a request to the foreground.
 // --- NEW FUNCTION: Contains the core alarm logic ---
 
-_ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
+_ResolvedAlarmRouteState _resolveAlarmRouteState(
+  Position currentPosition, {
+  bool deadReckoned = false,
+}) {
   // Use latest progressMeters snapshot for stops/time event calculations.
   double? progressMeters;
   String? activeKey;
@@ -1081,7 +1105,14 @@ _ResolvedAlarmRouteState _resolveAlarmRouteState(Position currentPosition) {
 
     activeKey = _lastActiveState?.activeKey ?? active?.key;
 
-    if (active != null && _lastProcessedPosition != null) {
+    // G10: In a GPS blackout the evaluation is dead-reckoned. Do NOT snap the
+    // stale last-known position — that would freeze registry/max-progress state
+    // and pollute soft-lock with a non-moving fix. Take arc-progress straight
+    // from the EKF and skip the snap/session-mutation entirely.
+    final drEkf = _lastEkfState;
+    if (deadReckoned && drEkf != null && drEkf.s.isFinite) {
+      progressMeters = drEkf.s;
+    } else if (active != null && _lastProcessedPosition != null) {
       print(
         'SNAP_DEBUG: Snapping to route ${active.key}, pos=$_lastProcessedPosition',
       );
@@ -1237,19 +1268,32 @@ Future<void> _checkAndTriggerAlarm(
     return;
   }
 
-  // Keep a fresh snapshot of position/speed for snapping and deviation logic
-  _lastProcessedPosition = LatLng(
-    currentPosition.latitude,
-    currentPosition.longitude,
-  );
-  _lastSpeedMps = currentPosition.speed;
+  // G10: A synthesized dead-reckoned evaluation (GPS blackout) carries a
+  // sentinel accuracy and EKF velocity. It must NOT be treated as a real fix:
+  // do not overwrite the last good position, and do not feed it to snap /
+  // deviation / session ingestion. It is used only to pull EKF arc-progress.
+  final bool isDeadReckoned =
+      !currentPosition.accuracy.isFinite ||
+      currentPosition.accuracy >= 9000.0;
 
-  // Ingest position into RouteSessionManager to drive ActiveRouteManager and DeviationMonitor
-  _sessionManager.ingestPosition(currentPosition);
+  if (!isDeadReckoned) {
+    // Keep a fresh snapshot of position/speed for snapping and deviation logic
+    _lastProcessedPosition = LatLng(
+      currentPosition.latitude,
+      currentPosition.longitude,
+    );
+    _lastSpeedMps = currentPosition.speed;
+
+    // Ingest position into RouteSessionManager to drive ActiveRouteManager and DeviationMonitor
+    _sessionManager.ingestPosition(currentPosition);
+  }
 
   // Resolve active route/progress for route-aware alarms.
   _lastEkfAlarmSnapshot = _lastEkfState;
-  final resolved = _resolveAlarmRouteState(currentPosition);
+  final resolved = _resolveAlarmRouteState(
+    currentPosition,
+    deadReckoned: isDeadReckoned,
+  );
   final double? progressMeters = resolved.progressMeters;
   final String? alarmKey = resolved.activeKey;
 
@@ -1286,6 +1330,14 @@ Future<void> _checkAndTriggerAlarm(
     timeAlarmEligible: _timeAlarmEligible,
     etaSamples: _etaSamples,
     distanceTravelledMeters: _distanceTravelledMeters,
+    // G11/G12/G13: feed the EKF snapshot used for THIS evaluation.
+    ekfSpeedMps: _lastEkfAlarmSnapshot?.v,
+    ekfSigmaS: _lastEkfAlarmSnapshot?.sigmaS,
+    ekfSigmaV: _lastEkfAlarmSnapshot?.sigmaV,
+    preferEkfSpeed: (_lastEkfAlarmSnapshot != null) &&
+        (isDeadReckoned ||
+            _lastEkfAlarmSnapshot!.mode == EkfMode.metro ||
+            _lastEkfAlarmSnapshot!.mode == EkfMode.degraded),
   );
 
   await _alarmController.checkAndTriggerAlarm(
@@ -1592,6 +1644,17 @@ void _handleBackgroundStartTracking({
     }
   });
 
+  // G14/G15: consume wrong-direction alerts and warn the (possibly asleep)
+  // rider they may be heading away from their stop. NotificationService
+  // throttles so a sustained episode does not spam banners.
+  _wrongDirSub?.cancel();
+  _wrongDirSub = _sessionManager.wrongDirectionStream.listen((_) {
+    // ignore: discarded_futures
+    NotificationService().showWrongDirectionAlert(
+      destinationName: _destinationName,
+    );
+  });
+
   // Persist session-active flag for restore flows.
   try {
     TrackingStateStore.setActive(true);
@@ -1824,6 +1887,17 @@ Future<void> _onStart(
       // Returned to route
       _terminationPolicy.onReturnToRoute();
     }
+  });
+
+  // G14/G15: consume wrong-direction alerts and warn the (possibly asleep)
+  // rider they may be heading away from their stop. NotificationService
+  // throttles so a sustained episode does not spam banners.
+  _wrongDirSub?.cancel();
+  _wrongDirSub = _sessionManager.wrongDirectionStream.listen((_) {
+    // ignore: discarded_futures
+    NotificationService().showWrongDirectionAlert(
+      destinationName: _destinationName,
+    );
   });
 
   // Initialize ETA engine
@@ -2103,6 +2177,14 @@ Future<void> _onStart(
 }
 
 Future<void> startLocationStream(ServiceInstance service) async {
+  // G1: hold a PARTIAL_WAKE_LOCK for the whole tracking session so the CPU stays
+  // awake with the screen off and the accel/gyro streams + EKF keep advancing
+  // through tunnels. Acquired here so it is re-taken on the recovery-after-death
+  // path too (this runs in the background isolate on both fresh start and restart).
+  if (!TrackingService.isTestMode) {
+    // ignore: discarded_futures
+    WakepointNative.acquireWakeLock();
+  }
   // Start heartbeat monitoring to detect when foreground is swiped away
   _heartbeatMonitor.start();
 
@@ -2174,12 +2256,17 @@ Future<void> startLocationStream(ServiceInstance service) async {
 
   _locationStreamHandler.onUpdateNotification = (_) {
     syncGlobalsFromHandler();
+    // When the EKF is in degraded mode we have lost GPS mid-journey and are
+    // dead-reckoning from motion. Surface that in the ongoing notification so
+    // the rider is reassured we're still counting down (not frozen).
+    final gpsEstimating = _lastEkfState?.mode == EkfMode.degraded;
     _notificationUpdater.updateNotification(
       registry: _registry,
       allowRouteProgressFromRoutes: _activeManager != null,
       destination: _destination,
       destinationName: _destinationName,
       lastProcessedPosition: _lastProcessedPosition,
+      gpsEstimating: gpsEstimating,
     );
   };
 

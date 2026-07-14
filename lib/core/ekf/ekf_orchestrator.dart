@@ -77,6 +77,9 @@ class EkfOrchestrator {
   bool _ekfInitialized = false; // Track if we ever got first GPS fix
   MotionState _motionState = MotionState.vehicle;
   bool _hasGpsFix = false;
+  // Last accepted on-route fix, for frozen-phantom detection in onGpsFixAuto.
+  double? _lastFixLat;
+  double? _lastFixLng;
   MotionState? _pendingMotion;
   int _pendingMotionCount = 0;
   double? _lastMotionDecisionAt;
@@ -235,10 +238,51 @@ class EkfOrchestrator {
 
   void onGpsFixAuto(GpsFix fix) {
     final sGps = _route.projectLatLng(fix.lat, fix.lng);
-    if (sGps.isNaN) return;
+    if (sGps.isNaN) {
+      // Off-route fix (includes off-route phantoms — 138 of them on the real
+      // Rajajinagar ride). Treat as GPS-unavailable so dead-reckoning engages,
+      // instead of silently discarding the fix while the filter still believes
+      // GPS is live and never enters degraded DR.
+      onGpsUnavailable(fix.timestamp);
+      return;
+    }
+
+    // Frozen-phantom rejection: the OS fused-location provider can emit a
+    // stationary fix with confident accuracy while underground (proven in the
+    // corpus: 120 s pinned at 3.79 m hAcc). If the position has not moved but the
+    // filter says we ARE moving (v > 2 m/s), it is a phantom — degrade (keep DR)
+    // rather than anchoring s to a lie and driving v→0 (a late fire). A genuine
+    // station stop reads v≈0 and is NOT rejected here, so it still fuses.
+    if (_lastFixLat != null && _pipeline.publicState.v.abs() > 2.0) {
+      final movedMeters =
+          _haversineMeters(_lastFixLat!, _lastFixLng!, fix.lat, fix.lng);
+      if (movedMeters < 2.0) {
+        onGpsUnavailable(fix.timestamp);
+        return;
+      }
+    }
+    _lastFixLat = fix.lat;
+    _lastFixLng = fix.lng;
 
     final innovationSigma = _pipeline.innovationSigmaForS(sGps);
     onGpsFix(fix, innovationSigma: innovationSigma);
+  }
+
+  static double _haversineMeters(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    const r = 6371000.0;
+    final dLat = (lat2 - lat1) * math.pi / 180.0;
+    final dLon = (lon2 - lon1) * math.pi / 180.0;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180.0) *
+            math.cos(lat2 * math.pi / 180.0) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
   
   /// Notify the orchestrator that GPS is unavailable for this tick.
@@ -279,6 +323,12 @@ class EkfOrchestrator {
     _fftEnabled = enabled;
   }
 
+  /// G21: propagate a detected gyroscope-less device to the filter so it keeps
+  /// reported position uncertainty honest (wider σs floor).
+  void setNoGyro(bool noGyro) {
+    _pipeline.setNoGyro(noGyro);
+  }
+
   void setStationContext({
     required List<double> stationMeters,
     required bool isMetroLeg,
@@ -308,6 +358,8 @@ class EkfOrchestrator {
     _pendingMotionCount = 0;
     _lastMotionDecisionAt = null;
     _hasGpsFix = false;
+    _lastFixLat = null;
+    _lastFixLng = null;
     _lastSnappedStationIndex = -1;
     // Reset bias initialization state
     _biasInitWindow.clear();

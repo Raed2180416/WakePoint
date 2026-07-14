@@ -1,0 +1,852 @@
+[
+ {
+  "topic": "Non-standard consumer device edge cases for WakePoint (Flutter Android transit wake-up alarm), 2026 / Android 15\u201316",
+  "headline": "Core local-alarm loop survives almost everywhere (GPS + local FGS + local notification need no Google services), but Google Maps, FCM push, Ads and Play Billing all hard-break on no-GMS devices; the real threats to \"fire on time with screen off for 2h\" are OEM battery-killers and Android Go LMK on 2GB phones, not the exotic device types.",
+  "version_matrix": [
+   {
+    "mechanism": "Foreground service TYPE is mandatory \u2014 startForeground() throws MissingForegroundServiceTypeException/SecurityException if the running service's android:foregroundServiceType and matching FOREGROUND_SERVICE_* permission are not both declared",
+    "api_level": "API 34 (Android 14)",
+    "behavior": "WakePoint's flutter_background_service already declares foregroundServiceType=\"location|mediaPlayback\" and both FOREGROUND_SERVICE_LOCATION + FOREGROUND_SERVICE_MEDIA_PLAYBACK perms \u2014 this is correct. The location type ALSO requires ACCESS_FINE_LOCATION granted before startForeground, or it is rejected.",
+    "what_wakepoint_must_do": "Guard: only call the location FGS after ACCESS_FINE_LOCATION is granted (Build.VERSION.SDK_INT>=34). Keep the manifest service type = location|mediaPlayback. If GPS/location perm is ever revoked at runtime, the FGS can be force-stopped by the system \u2014 catch and re-prompt.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/fgs-types-required"
+   },
+   {
+    "mechanism": "Restrictions on starting a foreground service from the background; the SYSTEM_ALERT_WINDOW exemption narrowed \u2014 an app now needs a currently-VISIBLE TYPE_APPLICATION_OVERLAY window, not just the permission, to start an FGS from background",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "If WakePoint tries to (re)start its location FGS from a background/killed state (e.g. after an OEM kill) it will throw ForegroundServiceStartNotAllowedException unless it has a qualifying exemption (battery-optimization-exempt, or a visible overlay, or user just interacted).",
+    "what_wakepoint_must_do": "Start the FGS while the Activity is foreground (at ride-arm time), not lazily from background. Request REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (this exemption still lets an exempt app start FGS from bg). Do not rely on SYSTEM_ALERT_WINDOW alone on API>=35. Test with: adb shell am compat enable FGS_SAW_RESTRICTIONS <pkg>.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start"
+   },
+   {
+    "mechanism": "Motion/position sensor sampling rate capped at 200 Hz unless HIGH_SAMPLING_RATE_SENSORS is declared; if the user's mic toggle is OFF, sensors are ALWAYS rate-limited regardless of the permission",
+    "api_level": "API 31 (Android 12)",
+    "behavior": "WakePoint targets 50\u2013100 Hz, which is UNDER the 200 Hz cap, so the permission is not strictly required \u2014 but the manifest already declares HIGH_SAMPLING_RATE_SENSORS (harmless, future-proof). Real risk: if the device mic toggle is off, delivery may drop below requested rate.",
+    "what_wakepoint_must_do": "Keep the permission (harmless). Do not assume the OS honors your requested Hz \u2014 measure actual inter-sample delta in the isolate and adapt the EKF timestep to real dt rather than nominal 50/100 Hz. Never hard-require >100 Hz.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview"
+   },
+   {
+    "mechanism": "Devices with <=2 GB RAM must return ActivityManager.isLowRamDevice()==true and ship as Android (Go edition); Go applies extra background limits and a far more aggressive LowMemoryKiller",
+    "api_level": "Android 11+ (API 30) for the 2GB mandate; isLowRamDevice available since API 19",
+    "behavior": "An FGS is initially shielded from LMK but is NOT immune \u2014 under sustained pressure the system will kill even a location FGS. A 2h screen-off run on a 2GB Go device is the single biggest reliability risk after OEM killers.",
+    "what_wakepoint_must_do": "At runtime read isLowRamDevice(): if true, drop sensor rate to 50 Hz, evict map tiles/heavy UI from memory while backgrounded, keep the background isolate RSS minimal, and lean harder on GPS-only geofence checks. Hold a partial WakeLock + battery-optimization exemption. Treat Go as DEGRADED, not guaranteed.",
+    "source_url": "https://developer.android.com/guide/topics/androidgo/develop"
+   },
+   {
+    "mechanism": "USE_FULL_SCREEN_INTENT: fresh installs no longer get the full-screen-intent capability auto-granted; only apps whose core function is alarm or calling are eligible, and Play requires a declaration",
+    "api_level": "API 34 (Android 14)",
+    "behavior": "WakePoint's guaranteed audible/visual wake screen relies on a full-screen intent notification. On API>=34 this is granted by default ONLY because an alarm app qualifies; otherwise the notification demotes to a heads-up banner and will NOT wake a sleeping rider with screen off.",
+    "what_wakepoint_must_do": "Keep USE_FULL_SCREEN_INTENT in the manifest. On API>=34 check NotificationManager.canUseFullScreenIntent(); if false, deep-link the user to the FSI settings toggle. Declare the alarm use-case in Play Console. Do not depend solely on FSI \u2014 also start an Activity with showWhenLocked/turnScreenOn (already set) + audio FGS as belt-and-suspenders.",
+    "source_url": "https://support.google.com/googleplay/android-developer/answer/13392821"
+   },
+   {
+    "mechanism": "geolocator resolves the location engine at runtime: FusedLocationProviderClient when Google Play Services is present, else automatic fallback to the platform LocationManager (raw GPS/GNSS)",
+    "api_level": "Package behavior (geolocator ^14), not an OS API level \u2014 applies on all no-GMS devices",
+    "behavior": "On Huawei/HMS and other no-GMS devices, location still works via LocationManager, but you lose fused Wi-Fi/cell-assisted fixes, faster TTFF, and the fused dead-reckoning that helps in metro tunnels. Accuracy/battery are worse and cold-fix is slower.",
+    "what_wakepoint_must_do": "Do NOT set forceAndroidLocationManager blindly (known null-fix bugs when GMS present). Let geolocator auto-select. Because fused tunnel assistance is absent on no-GMS, WakePoint's own accel/EKF dead-reckoning becomes the primary in-tunnel signal \u2014 make the EKF the source of truth between GPS fixes, not an add-on.",
+    "source_url": "https://pub.dev/packages/geolocator"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "No-GMS Huawei / Honor (HMS) phones",
+    "works": "DEGRADED",
+    "requirements": "CORE ALARM WORKS: geolocator falls back to LocationManager (raw GPS), local FGS runs, flutter_local_notifications fires locally, sensors_plus works \u2014 none need Google services. BROKEN: google_maps_flutter renders a blank/grey map or crashes (needs GMS Maps) \u2192 must fall back to flutter_map/OSM (project already bundles assets/osm/, so wire that path for GMS-absent devices). BROKEN: FCM push (no remote wake \u2014 but the alarm is LOCAL so this is non-fatal; only remote config/marketing is lost). BROKEN: google_mobile_ads and in_app_purchase/Play Billing require Play Store \u2192 no monetization on AppGallery. DEGRADED: no fused Wi-Fi/cell location, worse tunnel fixes \u2192 lean on EKF. Solo-founder verdict: do NOT integrate the HMS SDK stack (Location/Map/Push Kit + AppGallery listing) \u2014 Huawei's no-GMS share in India is tiny and shrinking. Instead: detect GMS at runtime (GoogleApiAvailability / try google_maps_flutter and catch), auto-switch to OSM map, keep local alarm, and hide Ads/IAP gracefully."
+   },
+   {
+    "device_class": "Android Go edition / <=2-3 GB RAM budget phones (the India core market)",
+    "works": "DEGRADED",
+    "requirements": "FGS is shielded from LMK only initially; a 2h screen-off run can still be killed under memory pressure \u2014 this plus OEM killers is the top reliability risk. Requirements: read ActivityManager.isLowRamDevice() and, when true, cut sensor rate to 50 Hz, evict map tiles and heavy widgets from RAM while backgrounded, keep the background isolate footprint minimal; hold a partial WakeLock; obtain REQUEST_IGNORE_BATTERY_OPTIMIZATIONS exemption; keep the ongoing FGS notification visible. Add a watchdog: persist ride state to Hive and, if the isolate is respawned after a kill, immediately re-arm. Treat as best-effort, warn power-users to whitelist the app."
+   },
+   {
+    "device_class": "Tablets & foldables",
+    "works": "WITH_SETUP",
+    "requirements": "Config-change safe: the Activity already lists screenSize|smallestScreenSize|screenLayout|density|uiMode|orientation|locale|layoutDirection|fontScale in configChanges, so fold/unfold/rotate will NOT recreate the Activity or interrupt the background isolate \u2014 good. Two gaps: (a) many Wi-Fi-only tablets have NO GPS \u2014 check PackageManager.hasSystemFeature(FEATURE_LOCATION_GPS) and block/warn if absent (UNSUPPORTED without GPS); (b) build a responsive layout for large screens (Play large-screen quality). Foldable posture changes are handled by the configChanges flags; verify the map/list reflows."
+   },
+   {
+    "device_class": "Phones with NO gyroscope / low-quality accelerometer (very common on budget India devices)",
+    "works": "WITH_SETUP",
+    "requirements": "Gyroscope must be OPTIONAL. sensors_plus gyroscopeEventStream will error or never emit on gyro-less devices \u2014 guard by checking SensorManager.getDefaultSensor(TYPE_GYROSCOPE)==null (or catch the stream error) at startup. WakePoint's motion/arrival logic must run on accelerometer + GPS alone; the EKF should degrade to an accel-only mode (no gyro orientation term) rather than failing. For noisy cheap accelerometers, apply low-pass filtering and rely on GPS as the absolute-position corrector so bad IMU data cannot cause a false/late alarm. Never gate ride-arming on gyro presence."
+   },
+   {
+    "device_class": "China-market ROMs with no Google at all (e.g. domestic Xiaomi/Oppo/Vivo China builds)",
+    "works": "UNSUPPORTED",
+    "requirements": "Out of scope for an India-first launch \u2014 do not invest. Same GMS breakage as Huawei PLUS Google endpoints (Maps tiles, Places REST, FCM) are network-blocked in China, and OSM tiles may be throttled. Core local alarm + LocationManager GPS could still function if the user sideloads, but maps/autocomplete will fail. If you ever target China you'd need a domestic tile/map provider (Amap/AutoNavi) and a China push channel \u2014 a separate product. Default stance: detect and show a clear 'maps unavailable in this region' fallback, keep local alarm running."
+   },
+   {
+    "device_class": "Region / RTL / locale / 12-24h time format",
+    "works": "WITH_SETUP",
+    "requirements": "Add android:supportsRtl=\"true\" to the <application> tag (currently MISSING) so native views mirror for Urdu/RTL users. In Flutter, wire MaterialApp localizationsDelegates + supportedLocales and let Directionality follow the locale (manifest already keeps locale|layoutDirection in configChanges, so switching language won't recreate the Activity). Format all clock times through intl and honor MediaQuery.alwaysUse24HourFormat \u2014 India mixes 12h phone UI with 24h rail timetables, so never hardcode either. Localize the arrival/ETA strings and numerals (Devanagari digits where appropriate)."
+   },
+   {
+    "device_class": "Dual-SIM / eSIM / no-SIM (data-only) devices",
+    "works": "FULLY",
+    "requirements": "Essentially a non-issue: GPS and the local alarm need no SIM or telephony. Do NOT request READ_PHONE_STATE or assume a cellular network. Only caveat: on a no-SIM device there is no cell-tower-assisted location, so cold-fix and tunnel fallback are slightly worse \u2014 mitigated by the EKF and by allowing Wi-Fi. Ensure map/Places calls tolerate Wi-Fi-only connectivity (connectivity_plus already present). Dual-SIM/eSIM require zero special handling."
+   }
+  ],
+  "wakepoint_actions": [
+   "Add a single runtime GMS-availability probe (GoogleApiAvailability.isGooglePlayServicesAvailable or a caught google_maps_flutter init) and branch: GMS present \u2192 Google Map; absent \u2192 flutter_map/OSM using the already-bundled assets/osm/ tiles. This one switch covers Huawei, no-GMS, and China map breakage.",
+   "Make the accel/EKF the primary between-fix position source, not a supplement \u2014 this is what keeps arrivals accurate in metro tunnels AND on no-GMS phones that lack fused dead-reckoning. Gate NOTHING on gyroscope: detect TYPE_GYROSCOPE==null and run an accel-only EKF mode.",
+   "Harden against LMK + OEM killers (the real 2h-screen-off threats): request REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, hold a partial WakeLock, keep the FGS notification visible, persist ride state to Hive, and add a respawn-and-re-arm watchdog. Read isLowRamDevice() and downshift sensor rate + memory on Go devices. Ship a dontkillmyapp-style per-OEM (Xiaomi/MIUI autostart, Oppo/Vivo/Realme) whitelist walkthrough in onboarding.",
+   "Protect the wake mechanism on API>=34: keep USE_FULL_SCREEN_INTENT, check NotificationManager.canUseFullScreenIntent() and deep-link to its toggle if denied, declare the alarm use-case in Play Console, and keep showWhenLocked/turnScreenOn + an audio (mediaPlayback) FGS as redundant wake paths so a demoted notification never silently fails.",
+   "Guard the location FGS start: only startForeground after ACCESS_FINE_LOCATION is granted, and start it while the Activity is foreground (not from a background/killed state) to avoid the Android 15 ForegroundServiceStartNotAllowedException; rely on the battery-optimization exemption for post-kill restarts.",
+   "Treat monetization as GMS-only: wrap google_mobile_ads and in_app_purchase so their absence on no-GMS devices degrades silently rather than crashing the core alarm. Do not build HMS/AppGallery support as a solo founder \u2014 the ROI for India is not there.",
+   "Fix locale/RTL gaps: add android:supportsRtl=\"true\" to <application>, add Flutter localization delegates, and format every time via intl honoring alwaysUse24HourFormat. Do not require SIM/telephony permissions \u2014 dual-SIM/eSIM/no-SIM need no special code.",
+   "Resolve the build-config conflict noted in the brief: having both build.gradle and build.gradle.kts is undefined behavior \u2014 pick one (Gradle uses .kts if present) and delete the other before shipping, and confirm minSdk explicitly (Flutter default may be too low for the FGS-type and sensor guards above)."
+  ],
+  "report_markdown": "## WakePoint \u2014 Non-standard consumer device edge cases (2026 / Android 15\u201316)\n\n**Bottom line:** WakePoint's *core value loop* \u2014 GPS tracking + a location foreground service + a locally-scheduled full-screen audible alarm \u2014 depends on **zero Google services** and therefore survives on almost every device class, including no-GMS phones. What breaks on the edges is the *Google-branded surface*: Google Maps rendering, FCM push, AdMob, and Play Billing. The genuine threats to \"fire on time, screen off, 2 hours\" are **OEM battery-killers (Xiaomi/Oppo/Vivo/Realme)** and the **Android Go LowMemoryKiller on 2 GB phones** \u2014 i.e. the *mainstream cheap India phone*, not the exotic device.\n\nI verified the current manifest and pubspec. Good news already in place: `FOREGROUND_SERVICE_LOCATION` + `FOREGROUND_SERVICE_MEDIA_PLAYBACK` perms, `foregroundServiceType=\"location|mediaPlayback\"`, `HIGH_SAMPLING_RATE_SENSORS`, `USE_FULL_SCREEN_INTENT`, `showWhenLocked`/`turnScreenOn`, a broad `configChanges` list, and bundled `assets/osm/` tiles. Gaps and per-class actions below.\n\nManifest: `/home/raed/Projects/WakePoint/android/app/src/main/AndroidManifest.xml`\nPubspec: `/home/raed/Projects/WakePoint/pubspec.yaml`\n\n---\n\n### (1) No-GMS Huawei / Honor (HMS) \u2014 **DEGRADED**\n- **Location \u2014 WORKS (degraded):** `geolocator ^14` auto-falls back from `FusedLocationProviderClient` to the platform `LocationManager` (raw GNSS) when Play Services is absent. You lose Wi-Fi/cell-assisted fixes, fast TTFF, and fused tunnel dead-reckoning. Do **not** force `forceAndroidLocationManager` (known null-fix bug when GMS *is* present).\n- **Maps \u2014 BROKEN:** `google_maps_flutter` shows a blank/grey map or crashes without GMS. Fall back to `flutter_map`/OSM (you already ship `assets/osm/`). Huawei Map Kit exists but is not worth a solo founder's time.\n- **Places autocomplete \u2014 WORKS:** `google_places_flutter` uses the Places **REST** API over HTTPS \u2014 not GMS-dependent (needs only an API key + internet + billing enabled).\n- **Push \u2014 BROKEN but non-fatal:** FCM needs GMS. The alarm is *local*, so no remote wake is required; only remote config/marketing is lost.\n- **Ads + IAP \u2014 BROKEN:** `google_mobile_ads` and `in_app_purchase` (Play Billing) require the Play Store \u2192 no monetization on AppGallery.\n- **Solo-founder call:** Skip the whole HMS SDK path. Huawei's no-GMS footprint in India is small and shrinking. Just detect GMS absence at runtime and degrade (OSM map, hidden ads/IAP, local alarm).\n\n### (2) Android Go / \u22642\u20133 GB RAM (the India core market) \u2014 **DEGRADED**\n- Devices with \u22642 GB **must** return `isLowRamDevice()==true` (Android 11+ mandate) and get Go's extra background limits + aggressive LMK. An FGS is shielded *initially* but **not immune** \u2014 a 2 h screen-off run can be killed.\n- **Do:** read `isLowRamDevice()` \u2192 drop sensors to 50 Hz, evict map tiles/heavy UI from RAM while backgrounded, keep the isolate lean; hold a partial `WakeLock`; get `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`; persist ride state to Hive and re-arm on isolate respawn. This is best-effort, not guaranteed.\n\n### (3) Tablets & foldables \u2014 **WITH_SETUP**\n- Config-change safe already (`screenSize|smallestScreenSize|screenLayout|density|uiMode|orientation|locale|layoutDirection|fontScale` in `configChanges`) \u2192 fold/unfold/rotate won't recreate the Activity or interrupt the isolate.\n- **Gaps:** many Wi-Fi-only tablets have **no GPS** \u2192 check `hasSystemFeature(FEATURE_LOCATION_GPS)` and block/warn (UNSUPPORTED without GPS). Add a responsive large-screen layout (Play large-screen quality).\n\n### (4) No gyroscope / low-quality accelerometer (very common on budget India phones) \u2014 **WITH_SETUP**\n- Make gyro **optional**: `sensors_plus` gyro stream errors/never emits on gyro-less devices \u2014 guard with `getDefaultSensor(TYPE_GYROSCOPE)==null` (or catch the stream error). Run an **accel-only EKF mode**; use GPS as the absolute-position corrector so noisy cheap IMUs can't cause a false/late alarm. Never gate ride-arming on gyro presence.\n\n### (5) China-market ROMs, no Google at all \u2014 **UNSUPPORTED (out of scope)**\n- Same GMS breakage as Huawei *plus* Google endpoints (Maps, Places REST, FCM) are network-blocked and OSM tiles may be throttled. Local alarm + LocationManager GPS could still run if sideloaded, but maps/autocomplete fail. Don't invest for an India-first launch; show a clear regional fallback.\n\n### (6) Region / RTL / locale / 12-24h \u2014 **WITH_SETUP**\n- **Add `android:supportsRtl=\"true\"`** to `<application>` (currently missing) for Urdu/RTL mirroring of native views. Wire Flutter `localizationsDelegates` + `supportedLocales`; the manifest's `locale|layoutDirection` in `configChanges` means language switches won't recreate the Activity. Format all times through `intl`, honoring `MediaQuery.alwaysUse24HourFormat` \u2014 India mixes 12 h phone UI with 24 h rail timetables, so never hardcode.\n\n### (7) Dual-SIM / eSIM / no-SIM (data-only) \u2014 **FULLY**\n- Non-issue. GPS + local alarm need no SIM/telephony \u2014 don't request `READ_PHONE_STATE`. Only caveat: no-SIM loses cell-assisted location (slightly worse cold fix/tunnel fallback), covered by the EKF + Wi-Fi. Dual-SIM/eSIM need zero special handling.\n\n---\n\n### Cross-cutting reliability note (applies to all classes)\nThe dominant real-world failure mode in India is **OEM power management** (MIUI autostart/background limits, Oppo/Vivo/Realme killers) plus **Go-device LMK** \u2014 not the device *type*. Mitigate with: battery-optimization exemption, visible FGS notification, WakeLock, Hive-persisted state + respawn watchdog, and a per-OEM whitelist walkthrough in onboarding (dontkillmyapp.com guides).\n\n### Housekeeping flagged by the brief\nBoth `build.gradle` and `build.gradle.kts` present is undefined \u2014 Gradle prefers `.kts` if it exists; pick one, delete the other, and confirm an explicit `minSdk` (Flutter's default may be too low for the API-level guards above) before shipping.\n\n**Facts marked HARD FACT** are the cited API-level behavior changes in the version matrix (FGS types API 34, bg-FGS/SAW API 35, sensor 200 Hz cap API 31, isLowRamDevice mandate API 30, FSI restriction API 34, geolocator fallback = documented package behavior). Everything about *whether a given cheap phone kills your service* is **INFERENCE** \u2014 it is OEM- and firmware-specific and must be validated on real hardware.\n\nSources: [FGS types required (API 34)](https://developer.android.com/about/versions/14/changes/fgs-types-required) \u00b7 [Restrictions on bg FGS start / SAW (API 35)](https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start) \u00b7 [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15) \u00b7 [Sensors overview / 200 Hz cap (API 31)](https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview) \u00b7 [Android Go develop guide](https://developer.android.com/guide/topics/androidgo/develop) \u00b7 [Memory management](https://developer.android.com/topic/performance/memory-management) \u00b7 [Full-screen intent policy](https://support.google.com/googleplay/android-developer/answer/13392821) \u00b7 [geolocator (fused\u2192LocationManager fallback)](https://pub.dev/packages/geolocator) \u00b7 [google_maps_flutter needs GMS (flutter#85787)](https://github.com/flutter/flutter/issues/85787) \u00b7 [Don't kill my app!](https://dontkillmyapp.com/)"
+ },
+ {
+  "topic": "Correct SDK config (min/target/compile SDK, Java, Kotlin, NDK) and Google Play 2026 compliance for the WakePoint Flutter location+alarm app",
+  "headline": "Ship compileSdk 36 / targetSdk 36 / minSdk 24 / Java 11 + desugaring / NDK r28; the active build.gradle's targetSdk 34 is already Play-non-compliant and the duplicate .kts files are dead code that must be deleted.",
+  "version_matrix": [
+   {
+    "mechanism": "Google Play target API level requirement \u2014 new apps & updates (current, in force)",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "Since 31 Aug 2025, every NEW app and every app UPDATE submitted to Play must targetSdk >= 35 or the Play Console rejects the upload. WakePoint's ACTIVE config (android/app/build.gradle) is targetSdk 34 \u2014 this is ALREADY rejected today (Jul 2026).",
+    "what_wakepoint_must_do": "Raise targetSdk from 34 to at least 35 immediately; go straight to 36 (see next row). This is the single most urgent fix.",
+    "source_url": "https://developer.android.com/google/play/requirements/target-sdk"
+   },
+   {
+    "mechanism": "Google Play target API level requirement \u2014 next bump (imminent)",
+    "api_level": "API 36 (Android 16)",
+    "behavior": "From 31 Aug 2026 (~7 weeks out), new apps and updates must targetSdk 36; existing apps must be >=35 to stay discoverable to new users on Android 16/17 devices. One-time extension requestable to 1 Nov 2026. Wear/TV/Auto are one level behind.",
+    "what_wakepoint_must_do": "Set compileSdk 36 and targetSdk 36 now so a single build survives both the current rule and the 31 Aug 2026 deadline without a second migration.",
+    "source_url": "https://median.co/blog/google-plays-target-api-level-requirement-for-android-apps"
+   },
+   {
+    "mechanism": "16 KB memory page-size support for native (.so) libraries",
+    "api_level": "API 35 (Android 15) \u2014 enforced for apps targeting 35+",
+    "behavior": "Since 1 Nov 2025, new apps/updates targeting API 35+ must ship 64-bit native libraries aligned to 16 KB ELF pages or they crash/are rejected on 16 KB-page devices (Pixel 8+/flagships on Android 15+). NDK r28+ compiles 16 KB-aligned by default.",
+    "what_wakepoint_must_do": "Keep ndkVersion r28 (already 28.2.13676358) and AGP 8.5.1+; rebuild after upgrading every native plugin (sensors_plus, geolocator, google_maps_flutter, google_mobile_ads, vibration, connectivity_plus) to a 16 KB-aligned release; verify with `zipalign -c -P 16` / check-elf-alignment on the AAB.",
+    "source_url": "https://developer.android.com/guide/practices/page-sizes"
+   },
+   {
+    "mechanism": "Edge-to-edge display enforcement",
+    "api_level": "API 35 (opt-out allowed) / API 36 (opt-out removed)",
+    "behavior": "targetSdk 35 forces the window behind the system bars; you may opt out via android:windowOptOutEdgeToEdgeEnforcement=true. At targetSdk 36 that attribute is deprecated/ignored \u2014 edge-to-edge is mandatory, so content can render under the status/nav bars.",
+    "what_wakepoint_must_do": "Because you go to targetSdk 36, do NOT rely on opt-out. Wrap Flutter UI in SafeArea and apply SystemChrome.setSystemUIOverlayStyle so the full-screen alarm and map controls are not hidden behind system bars.",
+    "source_url": "https://developer.android.com/about/versions/16/behavior-changes-16"
+   },
+   {
+    "mechanism": "Foreground service types required + Play FGS declaration",
+    "api_level": "API 34 (Android 14) \u2014 behavior tied to targetSdk 34+",
+    "behavior": "Apps targeting 34+ must declare a foregroundServiceType for every FGS and hold the matching permission, or the service throws at startForeground(). location and mediaPlayback are already declared in the manifest. Play also requires a Foreground Service declaration in Play Console App Content justifying the 'location' type for a 2h screen-off use case.",
+    "what_wakepoint_must_do": "Keep FOREGROUND_SERVICE_LOCATION + FOREGROUND_SERVICE_MEDIA_PLAYBACK permissions and the service's foregroundServiceType='location|mediaPlayback'; file the Play Console FGS declaration with a video showing the transit wake-up flow.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/fgs-types-required"
+   },
+   {
+    "mechanism": "Exact-alarm permission gating + Play restricted-permission policy",
+    "api_level": "API 31 (SCHEDULE_EXACT_ALARM runtime) / API 33 (USE_EXACT_ALARM)",
+    "behavior": "For targetSdk 33+, SCHEDULE_EXACT_ALARM is NOT auto-granted; USE_EXACT_ALARM (auto-granted, API 33+) is a Play-restricted permission allowed ONLY for genuine alarm/timer/calendar apps. WakePoint qualifies as an alarm app, but the manifest currently declares NEITHER exact-alarm permission.",
+    "what_wakepoint_must_do": "Add USE_EXACT_ALARM (core alarm functionality) and submit the Play restricted-permission declaration with a demo video; do not rely on inexact alarms for the final wake-up trigger. Declaring it works on API 33+ and is harmlessly ignored below 33.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/schedule-exact-alarms"
+   },
+   {
+    "mechanism": "POST_NOTIFICATIONS runtime permission",
+    "api_level": "API 33 (Android 13)",
+    "behavior": "On API 33+ the foreground-service notification (and alarm notification) requires the user to grant POST_NOTIFICATIONS at runtime; denied means no visible FGS notification. Permission is declared but only prompts on 33+.",
+    "what_wakepoint_must_do": "Request POST_NOTIFICATIONS at runtime (permission_handler) guarded by Build.VERSION.SDK_INT >= 33; keep the manifest declaration. No minSdk impact.",
+    "source_url": "https://developer.android.com/develop/ui/views/notifications/notification-permission"
+   },
+   {
+    "mechanism": "google_mobile_ads (Google Mobile Ads SDK v24) minimum SDK floor",
+    "api_level": "API 23 (Android 6) \u2014 HARD dependency floor",
+    "behavior": "GMA SDK 24.0.0 (Feb 2025), wrapped by google_mobile_ads ^6.0.0, requires minSdk >= 23 or the manifest merger fails. This is the highest minSdk floor among WakePoint's plugins (maps/in_app_purchase/geolocator sit at 21).",
+    "what_wakepoint_must_do": "minSdk cannot go below 23 while AdMob is included. Set minSdk 24 (only ~0.4% extra reach cost over 23) for a clean modern floor, or 23 to squeeze the last fraction.",
+    "source_url": "https://ads-developers.googleblog.com/2025/02/announcing-android-google-mobile-ads.html"
+   },
+   {
+    "mechanism": "Background location separate grant (India cheap-phone reality)",
+    "api_level": "API 30 (Android 11)",
+    "behavior": "From targetSdk 30, ACCESS_BACKGROUND_LOCATION cannot be requested in the same prompt as foreground location \u2014 the user must pick 'Allow all the time' from a separate Settings screen. Play requires a Location Permissions declaration justifying background use.",
+    "what_wakepoint_must_do": "Two-step runtime request (foreground first, then background via Settings deep-link); file the Play background-location declaration. Consider whether a foreground-only FGS 'location' with the service started while app is open avoids needing background location at all.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/location/permissions"
+   },
+   {
+    "mechanism": "Duplicate build.gradle vs build.gradle.kts precedence",
+    "api_level": "N/A (Gradle build-tooling behavior)",
+    "behavior": "When both a Groovy build.gradle and a Kotlin build.gradle.kts exist in the SAME directory, Gradle uses the Groovy build.gradle and silently ignores the .kts. So the ACTIVE config is the Groovy files (compileSdk 36, targetSdk 34, Java 8); the .kts files (Java 11, flutter.* SDK values) are dead code and a maintenance trap.",
+    "what_wakepoint_must_do": "Delete android/build.gradle.kts and android/app/build.gradle.kts (project is Groovy \u2014 settings.gradle is Groovy-only). Then fix the surviving Groovy android/app/build.gradle values.",
+    "source_url": "https://docs.gradle.org/current/userguide/organizing_gradle_projects.html"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "Standard GMS phones, Android 7.0\u201316 (API 24\u201336), 3GB+ RAM",
+    "works": "FULLY",
+    "requirements": "With compileSdk/targetSdk 36, minSdk 24, correct FGS + exact-alarm + notification permissions, and a battery-optimization exemption prompt. This is the primary target and the 2h screen-off alarm is reliable here."
+   },
+   {
+    "device_class": "Aggressive-OEM phones (Xiaomi MIUI/HyperOS, Oppo/Vivo/Realme ColorOS, Samsung OneUI, Transsion) \u2014 dominant in India",
+    "works": "WITH_SETUP",
+    "requirements": "Foreground service + wakelock survive only if the user grants Autostart and sets battery usage to 'Unrestricted/No restrictions'. WakePoint must detect OEM (device_info_plus) and deep-link the user to the per-OEM autostart/battery screen (android_intent_plus) during onboarding, plus request REQUEST_IGNORE_BATTERY_OPTIMIZATIONS. Without this the service is killed well before 2h."
+   },
+   {
+    "device_class": "Android Go / low-RAM (2GB, Android 11\u201315) budget India phones",
+    "works": "WITH_SETUP",
+    "requirements": "50\u2013100Hz accel/gyro streaming + wakelock + FGS is heavy; the OS kills low-priority services under memory pressure. Needs battery-optimization exemption, a persistent high-importance FGS notification, and ideally a lower sensor rate fallback. HIGH_SAMPLING_RATE_SENSORS (API 31+) is declared and required for >200Hz but 50\u2013100Hz is fine without it."
+   },
+   {
+    "device_class": "16 KB page-size devices (Pixel 8+/flagships on Android 15/16)",
+    "works": "WITH_SETUP",
+    "requirements": "Every bundled native .so (Flutter engine + sensors_plus, geolocator, maps, ads, vibration) must be 16 KB-aligned. Guaranteed only after building with NDK r28+ (already set) and updating all native plugins to 16 KB-compliant releases; otherwise the app crashes on launch on these devices and is blocked at Play upload for targetSdk 35+."
+   },
+   {
+    "device_class": "No-GMS / AOSP phones (some India budget SKUs, Huawei, de-Googled)",
+    "works": "DEGRADED",
+    "requirements": "Core wake-up path (AlarmManager exact alarm, sensors_plus, FGS 'location', audible alarm, vibration) works. But google_mobile_ads, google_maps_flutter, google_places, and Fused/GMS-backed location fail without Play Services. Requires graceful fallbacks: raw ACCESS_FINE_LOCATION GPS instead of fused, an alternate map/geocoder, and disabling ads/IAP. Treat GMS features as optional, never on the alarm-critical path."
+   }
+  ],
+  "wakepoint_actions": [
+   "URGENT: In android/app/build.gradle change targetSdkVersion 34 -> 36. targetSdk 34 is already rejected by Play (API 35 rule in force since 31 Aug 2025) and would fail the 31 Aug 2026 API 36 deadline. compileSdk 36 is already correct.",
+   "Set minSdkVersion to 24 (replace `flutter.minSdkVersion`). Hard floor is 23 (google_mobile_ads / GMA SDK v24); 24 costs only ~0.4% extra reach (99.1% cumulative) for a cleaner modern baseline. Do NOT go below 23 while AdMob is included.",
+   "Delete the two dead Kotlin build files: android/build.gradle.kts and android/app/build.gradle.kts. Gradle uses the Groovy build.gradle when both exist, so the .kts files are ignored config that will mislead future edits. Keep the Groovy files (settings.gradle is Groovy-only).",
+   "Raise Java source/target compatibility from VERSION_1_8 to VERSION_11 in the surviving android/app/build.gradle, and set kotlinOptions jvmTarget = '11'. Keep coreLibraryDesugaringEnabled true + desugar_jdk_libs 2.1.4 \u2014 flutter_local_notifications ^19 REQUIRES desugaring regardless of Java level.",
+   "Keep ndkVersion '28.2.13676358' (NDK r28 = 16 KB-aligned by default). Update every native plugin to a 16 KB-compliant release and verify the release AAB's .so files are 16 KB-aligned before the next Play upload (mandatory for targetSdk 35+ since 1 Nov 2025).",
+   "Because you target 36, edge-to-edge is mandatory (no opt-out). Wrap all screens in SafeArea and set SystemChrome overlay style so the map controls and full-screen alarm are not hidden under the status/nav bars.",
+   "Add USE_EXACT_ALARM to the manifest (WakePoint is a genuine alarm app) and file the Play Console restricted-permission declaration + video. Do not rely on inexact alarms for the final wake-up.",
+   "Complete Play Console declarations: Foreground Service (location type, 2h screen-off justification), Background Location (ACCESS_BACKGROUND_LOCATION), and the exact-alarm restricted-permission form. Missing declarations = policy rejection even with correct SDK config.",
+   "Confirm no Firebase: pubspec.yaml has NO firebase_* packages, so the earlier 'firebase? (verify)' is resolved \u2014 none present, no Firebase Gradle plugin needed.",
+   "Fix the placeholder Google Maps API key hardcoded in build.gradle defaultConfig and the AdMob test app-id in the manifest before release; unify applicationId (already com.geowake.app) and consider changing namespace com.example.geowake2 off the example. prefix."
+  ],
+  "report_markdown": "## WakePoint \u2014 2026 SDK config & Play compliance\n\n### Recommended exact values (Groovy `android/app/build.gradle`)\n\n```groovy\nandroid {\n    namespace \"com.geowake.app\"          // move off com.example.geowake2\n    compileSdk 36                         // Android 16  (already correct)\n    ndkVersion \"28.2.13676358\"           // NDK r28 -> 16 KB-aligned by default (keep)\n\n    defaultConfig {\n        applicationId \"com.geowake.app\"\n        minSdkVersion 24                  // floor is 23 (AdMob); 24 = 99.1% reach, clean\n        targetSdkVersion 36               // was 34 -> ALREADY Play-rejected; 36 = future-proof\n        versionCode 1\n        versionName \"1.0.0\"\n    }\n\n    compileOptions {\n        coreLibraryDesugaringEnabled true            // REQUIRED by flutter_local_notifications ^19\n        sourceCompatibility JavaVersion.VERSION_11   // was VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_11\n    }\n    kotlinOptions { jvmTarget = \"11\" }               // match Java (Kotlin 2.1.10 from settings)\n\n    buildTypes {\n        release {\n            minifyEnabled true\n            shrinkResources true\n            signingConfig signingConfigs.release      // add a real release signing config\n            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),\n                          'proguard-rules.pro'\n        }\n    }\n}\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n```\n\nToolchain already in place and fine: AGP 8.9.2, Kotlin 2.1.10 (settings.gradle), Gradle from wrapper.\n\n| Setting | Value | Why |\n|---|---|---|\n| compileSdk | **36** | Needed to compile against Android 16 APIs; required for targetSdk 36. |\n| targetSdk | **36** | Play rule since 31 Aug 2025 = min API 35; from **31 Aug 2026** (\u22487 wks) new apps/updates need **36**. Current `34` is rejected today. |\n| minSdk | **24** | Hard floor is **23** (google_mobile_ads \u2192 GMA SDK v24). 24 keeps 99.1% device reach for a cleaner base. |\n| Java src/tgt | **11** | AGP 8.x + modern plugins baseline; keep desugaring on for flutter_local_notifications ^19. |\n| Kotlin jvmTarget | **11** | Must match Java target. |\n| NDK | **r28** (28.2.13676358) | 16 KB page alignment by default \u2014 mandatory for targetSdk 35+ since 1 Nov 2025. |\n\n### The duplicate-build-file problem \u2014 resolved\nGradle uses the **Groovy `build.gradle`** and **silently ignores** the `.kts` when both sit in the same directory ([docs](https://docs.gradle.org/current/userguide/organizing_gradle_projects.html)). So the *live* config is the Groovy pair (compileSdk 36 / **targetSdk 34** / Java 8), and the `.kts` pair (Java 11 / `flutter.*` values) is dead code. **Action: delete `android/build.gradle.kts` and `android/app/build.gradle.kts`.** The project is Groovy \u2014 `settings.gradle` exists only in Groovy form.\n\n### minSdk reach trade-off (cumulative device reach, Android Studio / composables 2026 data)\n- API 21 = **99.9%**, API 23 = **99.5%**, API 24 = **99.1%**, API 26 = **98.3%**.\n- None of WakePoint's *runtime* needs force a high minSdk \u2014 POST_NOTIFICATIONS (33), USE_EXACT_ALARM (33), FGS types (34), background-location split (30) are all guarded by `Build.VERSION.SDK_INT` / targetSdk, not minSdk. **The only real floor is google_mobile_ads = API 23.** India's old-device tail (Android 6/7) is <1% in 2026 and largely can't run AdMob anyway, so 24 is the sweet spot.\n\n### HARD FACT vs INFERENCE\n- **HARD FACT** (official docs): API 35 target rule since 31 Aug 2025; 16 KB requirement since 1 Nov 2025 for targetSdk 35+; edge-to-edge enforced at 35 / opt-out removed at 36; FGS types at 34; exact-alarm gating at 31/33; GMA v24 minSdk 23; Groovy-over-kts precedence.\n- **INFERENCE / strong secondary sourcing**: the **31 Aug 2026 \u2192 API 36** bump (Google's annual rolling policy, widely reported but the official target-sdk page still shows the 35 cycle). Even if the official page hasn't updated, targeting 36 is strictly safe and satisfies both the current and next rule.\n\n### Out-of-scope but blocking for release (flagged, not in this topic)\nManifest is missing **WAKE_LOCK**, **RECEIVE_BOOT_COMPLETED**, **USE_EXACT_ALARM/SCHEDULE_EXACT_ALARM**, and **REQUEST_IGNORE_BATTERY_OPTIMIZATIONS** \u2014 all needed for a guaranteed 2h screen-off alarm. Play Console needs FGS, background-location, and restricted-permission (exact alarm) declarations. Replace the hardcoded Maps key and AdMob test IDs. These are separate from SDK config but will block the same release.\n\n### Sources\n- [Play target API requirement (official)](https://developer.android.com/google/play/requirements/target-sdk) \u00b7 [2026/API 36 timeline](https://median.co/blog/google-plays-target-api-level-requirement-for-android-apps)\n- [16 KB page sizes](https://developer.android.com/guide/practices/page-sizes) \u00b7 [16 KB Play blog](https://android-developers.googleblog.com/2025/05/prepare-play-apps-for-devices-with-16kb-page-size.html)\n- [Android 16 behavior changes (edge-to-edge)](https://developer.android.com/about/versions/16/behavior-changes-16) \u00b7 [FGS types required](https://developer.android.com/about/versions/14/changes/fgs-types-required) \u00b7 [Exact alarms](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)\n- [GMA SDK v24 minSdk 23](https://ads-developers.googleblog.com/2025/02/announcing-android-google-mobile-ads.html) \u00b7 [Android distribution](https://composables.com/android-distribution-chart) \u00b7 [Gradle build-file layout](https://docs.gradle.org/current/userguide/organizing_gradle_projects.html)"
+ },
+ {
+  "topic": "Foreground Service + Location + Runtime Permissions across Android API 24-36 for WakePoint",
+  "headline": "Use foregroundServiceType=\"location\" as the sole FGS type (no timeout, survives 2h+, can be started from BOOT_COMPLETED); DROP mediaPlayback \u2014 it is timeout-free but is BANNED from BOOT_COMPLETED on Android 15+ and risks a Play FGS-policy rejection, and it is not needed since location already has no timeout. Critical gap in the current manifest: WAKE_LOCK is missing, so the CPU is not guaranteed to stay awake with the screen off.",
+  "version_matrix": [
+   {
+    "mechanism": "FOREGROUND_SERVICE install-time permission required",
+    "api_level": "API 28 (Android 9)",
+    "behavior": "Apps targeting API 28+ that call startForeground() without holding android.permission.FOREGROUND_SERVICE get a SecurityException.",
+    "what_wakepoint_must_do": "Keep <uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\"/> (already present). No SDK_INT guard needed \u2014 it is a normal permission, harmless on all levels.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/changes"
+   },
+   {
+    "mechanism": "foregroundServiceType=\"location\" introduced + while-in-use location model",
+    "api_level": "API 29 (Android 10)",
+    "behavior": "A FGS that accesses location must declare the location service type. Android 10 also splits location into while-in-use vs background, and adds the separate ACCESS_BACKGROUND_LOCATION permission.",
+    "what_wakepoint_must_do": "Declare android:foregroundServiceType=\"location\" on the service (present, but currently combined with mediaPlayback \u2014 see actions). Location access from a FGS while the app is backgrounded requires ACCESS_BACKGROUND_LOCATION.",
+    "source_url": "https://developer.android.com/about/versions/10/privacy/changes"
+   },
+   {
+    "mechanism": "ACCESS_BACKGROUND_LOCATION runtime permission introduced",
+    "api_level": "API 29 (Android 10)",
+    "behavior": "Accessing location while the app is not visible now requires a distinct dangerous runtime permission. On API 29 it can still be granted in the same dialog as foreground location.",
+    "what_wakepoint_must_do": "Guard the request: only request ACCESS_BACKGROUND_LOCATION when Build.VERSION.SDK_INT >= 29. On API 29 you may request it together with foreground; on API 30+ you MUST request it separately (next row). WakePoint needs it because the service runs with screen off / app backgrounded for ~2h.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/location/permissions/background"
+   },
+   {
+    "mechanism": "ACTIVITY_RECOGNITION runtime permission introduced",
+    "api_level": "API 29 (Android 10)",
+    "behavior": "Step-counter/step-detector sensors and the Activity Recognition / Transition APIs now require the dangerous runtime permission android.permission.ACTIVITY_RECOGNITION. RAW accelerometer/gyroscope from Sensor.TYPE_ACCELEROMETER/GYROSCOPE do NOT require it.",
+    "what_wakepoint_must_do": "WakePoint streams RAW accel/gyro via sensors_plus, which does NOT need this permission. REMOVE ACTIVITY_RECOGNITION from the manifest unless you actually call the step counter or Activity Transition API. If you do use it, request it at runtime only when SDK_INT >= 29 (pre-29 uses the legacy com.google.android.gms.permission.ACTIVITY_RECOGNITION, install-time).",
+    "source_url": "https://developer.android.com/about/versions/10/privacy/changes"
+   },
+   {
+    "mechanism": "\"Allow all the time\" removed from dialog; background location must be granted from Settings; incremental request mandatory",
+    "api_level": "API 30 (Android 11)",
+    "behavior": "On API 30+ the runtime dialog no longer offers 'Allow all the time'. Requesting foreground + background location in the SAME requestPermissions() call is IGNORED and grants NEITHER. Background must be requested after foreground is already granted, and the user is sent to a Settings page to pick 'Allow all the time'.",
+    "what_wakepoint_must_do": "Two-step flow guarded by SDK_INT >= 30: (1) request ACCESS_FINE_LOCATION (+COARSE) and wait for grant; (2) THEN separately request ACCESS_BACKGROUND_LOCATION \u2014 expect the OS to deep-link the user to Settings, so add in-app UI explaining they must choose 'Allow all the time'. Never bundle the two. permission_handler ^12 handles the split but your UX must sequence it.",
+    "source_url": "https://developer.android.com/about/versions/11/privacy/location"
+   },
+   {
+    "mechanism": "One-time (\"Only this time\") permission + auto-reset of unused permissions",
+    "api_level": "API 30 (Android 11)",
+    "behavior": "Location/mic/camera dialogs gain an 'Only this time' option granting a temporary permission revoked when the app leaves foreground. Separately, if a targeting-30+ app is unused for a few months, the system auto-resets its granted runtime permissions.",
+    "what_wakepoint_must_do": "On every alarm/ride start, re-check location permission with PermissionChecker instead of assuming a prior grant persists \u2014 a one-time grant or an auto-reset can silently drop it and kill the service. Consider prompting users to disable auto-reset (Intent ACTION_APPLICATION_DETAILS_SETTINGS) since WakePoint may sit unused between commutes.",
+    "source_url": "https://developer.android.com/about/versions/11/privacy/permissions"
+   },
+   {
+    "mechanism": "Cannot start a FGS from the background (+ exemption list) \u2014 ForegroundServiceStartNotAllowedException",
+    "api_level": "API 31 (Android 12)",
+    "behavior": "Apps targeting API 31+ cannot call startForegroundService() while in the background except under specific exemptions: transition from a visible activity; high-priority FCM (PRIORITY_HIGH); user action on a notification/widget/bubble; an EXACT ALARM firing; geofencing / activity-recognition transition event; ACTION_BOOT_COMPLETED/LOCKED_BOOT_COMPLETED/MY_PACKAGE_REPLACED; TIMEZONE/TIME/LOCALE_CHANGED; NFC ACTION_TRANSACTION_DETECTED; Companion Device Manager; battery optimizations turned OFF by user; SYSTEM_ALERT_WINDOW. Otherwise throws ForegroundServiceStartNotAllowedException.",
+    "what_wakepoint_must_do": "Start the service while an activity is visible (user taps 'Start ride'). To (re)start it later from the background, rely on an EXACT ALARM (SCHEDULE_EXACT_ALARM/USE_EXACT_ALARM) or a user notification tap, or ask the user to disable battery optimization (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS). Guard any background-start logic with SDK_INT >= 31 and always wrap startForegroundService in try/catch for ForegroundServiceStartNotAllowedException.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start"
+   },
+   {
+    "mechanism": "Approximate vs precise location toggle; must declare FINE + COARSE together",
+    "api_level": "API 31 (Android 12)",
+    "behavior": "Even when you request ACCESS_FINE_LOCATION, the user can grant only 'Approximate' (coarse). To request FINE you MUST also declare ACCESS_COARSE_LOCATION in the manifest or the request is ignored and neither is granted.",
+    "what_wakepoint_must_do": "Keep both ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION (present). Detect at runtime whether only approximate was granted (checkSelfPermission FINE vs COARSE) and warn the user that stop-accuracy degrades \u2014 a metro wake-up needs precise location, so surface a 'Precise location required' prompt guarded by SDK_INT >= 31.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/location/permissions/runtime"
+   },
+   {
+    "mechanism": "POST_NOTIFICATIONS runtime permission",
+    "api_level": "API 33 (Android 13)",
+    "behavior": "Notifications are OFF by default; apps must request the POST_NOTIFICATIONS runtime permission. You do NOT need it to START a FGS, but the mandatory FGS notification will be silently hidden if the user denies it \u2014 and a hidden alarm/ongoing notification undermines user trust and the FGS contract.",
+    "what_wakepoint_must_do": "Request POST_NOTIFICATIONS at runtime only when SDK_INT >= 33 (keep the manifest entry, present). Treat denial as a serious degradation: the alarm's full-screen intent still fires, but block silent operation \u2014 explain that the ongoing notification is required. Do NOT request it on API <= 32.",
+    "source_url": "https://developer.android.com/develop/ui/views/notifications/notification-permission"
+   },
+   {
+    "mechanism": "FGS types MANDATORY + matching FOREGROUND_SERVICE_* permission per type + Play declaration",
+    "api_level": "API 34 (Android 14)",
+    "behavior": "Every FGS must declare a foregroundServiceType AND the app must hold the matching FOREGROUND_SERVICE_<TYPE> permission, else startForeground() throws SecurityException. location type => FOREGROUND_SERVICE_LOCATION (+ ACCESS_FINE or COARSE at runtime + location services enabled). mediaPlayback => FOREGROUND_SERVICE_MEDIA_PLAYBACK (no runtime prereq). Each declared type must also be declared/justified in Play Console > Policy > App content.",
+    "what_wakepoint_must_do": "Keep FOREGROUND_SERVICE_LOCATION (present). Since the current service type is location|mediaPlayback you currently must ALSO justify mediaPlayback in Play Console \u2014 another reason to drop it. Ensure ACCESS_FINE_LOCATION is granted and location services are ON before startForeground on SDK_INT >= 34, or catch SecurityException.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/fgs-types-required"
+   },
+   {
+    "mechanism": "Cannot CREATE a while-in-use (location/camera/mic) FGS from background w/o the while-in-use grant; microphone banned from BOOT_COMPLETED",
+    "api_level": "API 34 (Android 14)",
+    "behavior": "A location FGS cannot be promoted to foreground while the app is in the background UNLESS ACCESS_BACKGROUND_LOCATION is granted (Logcat: 'Foreground service started from background can not have location/camera/microphone access'). microphone FGS additionally cannot be launched from a BOOT_COMPLETED receiver.",
+    "what_wakepoint_must_do": "ACCESS_BACKGROUND_LOCATION is REQUIRED (present) for the service to keep location access when the phone is pocketed/screen-off. Verify it is granted before any background (re)start on SDK_INT >= 34. WakePoint does not use microphone, so the BOOT_COMPLETED microphone ban does not apply.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start"
+   },
+   {
+    "mechanism": "dataSync & mediaProcessing 6h/24h timeout with Service.onTimeout()",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "For apps targeting API 35+, dataSync and mediaProcessing FGS may run only 6 hours per 24-hour window; then Service.onTimeout(int,int) fires and you must call stopSelf() within seconds or the system throws RemoteServiceException. Starting another after the quota throws ForegroundServiceStartNotAllowedException ('Time limit already exhausted').",
+    "what_wakepoint_must_do": "NEVER use dataSync (or mediaProcessing) as WakePoint's service type \u2014 a 6h cap would eventually kill long/interrupted trips and re-starts. This confirms location is the correct type. No code needed beyond avoiding these types.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/timeout"
+   },
+   {
+    "mechanism": "location FGS has NO automatic timeout",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "The Android 15 timeout applies ONLY to dataSync and mediaProcessing. The location FGS type has no automatic timeout and can run indefinitely (subject to OEM battery managers) as long as the ongoing notification is shown.",
+    "what_wakepoint_must_do": "This is WakePoint's guarantee for 2h+ screen-off operation: run as a pure location FGS. Because location has no timeout, mediaPlayback adds no lifetime benefit and should be removed. Rely on location type alone.",
+    "source_url": "https://developer.android.com/about/versions/15/behavior-changes-15"
+   },
+   {
+    "mechanism": "BOOT_COMPLETED receiver cannot launch dataSync / camera / mediaPlayback / mediaProjection / phoneCall FGS (microphone already banned since 14)",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "For apps targeting API 35+, a BOOT_COMPLETED (or LOCKED_BOOT_COMPLETED) receiver that starts any of those FGS types throws ForegroundServiceStartNotAllowedException. location, connectedDevice, specialUse, systemExempted are NOT in the banned list, so a pure location FGS CAN be started from BOOT_COMPLETED.",
+    "what_wakepoint_must_do": "CRITICAL: the current combined type location|mediaPlayback WILL throw on Android 15+ if the service is (re)started from a BOOT_COMPLETED receiver, because mediaPlayback is banned from boot. If you want auto-restart after reboot, the service MUST be pure location type. Add a RECEIVE_BOOT_COMPLETED receiver only if you need boot restart, and start it as location-only.",
+    "source_url": "https://developer.android.com/about/versions/15/changes/foreground-service-types"
+   },
+   {
+    "mechanism": "SYSTEM_ALERT_WINDOW background-start exemption narrowed",
+    "api_level": "API 35 (Android 15)",
+    "behavior": "For apps targeting API 35+, the SYSTEM_ALERT_WINDOW exemption for background FGS start now requires the app to actually have a VISIBLE TYPE_APPLICATION_OVERLAY window, not merely hold the permission.",
+    "what_wakepoint_must_do": "Do not rely on SYSTEM_ALERT_WINDOW as a background-start trick on SDK_INT >= 35. Prefer exact alarms + user-visible activity start. Only relevant if you were considering overlay-based restarts.",
+    "source_url": "https://developer.android.com/about/versions/15/behavior-changes-15"
+   },
+   {
+    "mechanism": "Jobs running concurrently with a FGS must obey job runtime quotas (ALL apps, regardless of targetSdk)",
+    "api_level": "API 36 (Android 16)",
+    "behavior": "On Android 16, JobScheduler/WorkManager/DownloadManager jobs that run while a FGS is active are subject to their normal runtime quotas (previously effectively exempt while a FGS ran). No new location or FGS-lifetime restriction was added for location in API 36.",
+    "what_wakepoint_must_do": "Keep sensor streaming and location logic INSIDE the foreground service itself, not in a background WorkManager/JobScheduler job piggybacking on the FGS, or the job may be quota-throttled on Android 16. The location FGS itself is unaffected. No SDK_INT guard needed; it applies to all apps on Android 16 devices.",
+    "source_url": "https://developer.android.com/about/versions/16/behavior-changes-all"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "Stock Android / Pixel (API 34-36, GMS present)",
+    "works": "FULLY",
+    "requirements": "Correct FGS type (location), FOREGROUND_SERVICE_LOCATION, ACCESS_FINE+COARSE+BACKGROUND_LOCATION granted via the two-step Settings flow, POST_NOTIFICATIONS granted, WAKE_LOCK held. location FGS has no timeout so 2h screen-off is reliable. Doze is handled because a foreground service with a partial wake lock keeps the CPU running."
+   },
+   {
+    "device_class": "Samsung One UI (API 33-36)",
+    "works": "WITH_SETUP",
+    "requirements": "Same permissions as stock, PLUS Samsung's 'Deep sleeping apps' / 'Sleeping apps' battery list aggressively suspends apps. Must guide the user to add WakePoint to 'Never sleeping apps' and disable 'Put unused apps to sleep'. Request REQUEST_IGNORE_BATTERY_OPTIMIZATIONS."
+   },
+   {
+    "device_class": "Xiaomi MIUI / HyperOS (India-heavy, API 33-36)",
+    "works": "WITH_SETUP",
+    "requirements": "OS-level killer independent of Android version. User MUST enable 'Autostart' for WakePoint and set battery saver to 'No restrictions'. Lock the app in recents. Full-screen-intent alarm and USE_FULL_SCREEN_INTENT are essential because MIUI suppresses heads-up notifications. Without autostart, BOOT_COMPLETED restart and background service survival are unreliable."
+   },
+   {
+    "device_class": "Oppo / Vivo / realme / OnePlus (ColorOS/FuntouchOS, India-heavy)",
+    "works": "WITH_SETUP",
+    "requirements": "Very aggressive background termination. Require: disable battery optimization, enable 'Allow auto-launch'/'Startup manager', allow background activity, and lock in recents. Provide an in-app onboarding wizard deep-linking to these OEM settings (android_intent_plus). This is the highest product-death risk class for a metro wake-up alarm."
+   },
+   {
+    "device_class": "Non-GMS devices (some budget Indian phones, Huawei/HMS, AOSP forks)",
+    "works": "DEGRADED",
+    "requirements": "geolocator must fall back to the platform LocationManager (GPS/network) since fused location (Play Services) is absent \u2014 expect lower accuracy and slower fixes. Google Activity Recognition Transition API is unavailable, but raw accel/gyro via sensors_plus still work (no ACTIVITY_RECOGNITION needed). google_mobile_ads / in_app_purchase / google_maps_flutter degrade or fail without GMS \u2014 gate them. Core alarm can still function on raw sensors + platform location."
+   },
+   {
+    "device_class": "Older devices API 24-28 (Android 7-9)",
+    "works": "FULLY",
+    "requirements": "No FGS type system, no per-type permission, no background-start restriction, no POST_NOTIFICATIONS, no runtime background-location split (background granted with foreground). Only FOREGROUND_SERVICE (API 28) and ACCESS_FINE/COARSE + WAKE_LOCK needed. All the newer guards must be SDK_INT-gated so they no-op here. Alarm reliability is actually highest on these versions."
+   }
+  ],
+  "wakepoint_actions": [
+   "CHANGE THE FGS TYPE to location ONLY. Edit android/app/src/main/AndroidManifest.xml line 54: android:foregroundServiceType=\"location\" (remove |mediaPlayback). Reason: location has NO Android-15 timeout so mediaPlayback adds zero lifetime benefit, AND mediaPlayback is BANNED from BOOT_COMPLETED on Android 15+ (would throw ForegroundServiceStartNotAllowedException on reboot restart), AND declaring mediaPlayback forces a second Play Console FGS justification you cannot honestly satisfy (WakePoint is not a media player). If the guaranteed alarm audio genuinely needs a background media session, keep mediaPlayback but be ready with a Play justification and NEVER start the service from BOOT_COMPLETED with that type.",
+   "ADD WAKE_LOCK \u2014 it is MISSING from the manifest. Add <uses-permission android:name=\"android.permission.WAKE_LOCK\"/>. Hold a PARTIAL_WAKE_LOCK inside the service for the duration of the ride; without it the CPU can sleep in Doze with the screen off and the 50-100Hz sensor stream + alarm timing become unreliable \u2014 a direct product-death risk. (flutter_background_service_android usually merges WAKE_LOCK, but declare it explicitly rather than depend on transitive merge.)",
+   "REMOVE the two conflicting build files. You have BOTH android/app/build.gradle and android/app/build.gradle.kts (and both android/build.gradle and android/build.gradle.kts). Gradle will error or pick unpredictably. Keep exactly one (recommended: the .kts set matching current Flutter templates) and delete the other, then verify targetSdk/compileSdk there.",
+   "RAISE targetSdk to 35 (ideally 36) and set compileSdk to 36. Play requires targetSdk 35 for new/updated apps in 2026. Targeting 35 is what ACTIVATES the location-no-timeout guarantee and the BOOT_COMPLETED rules you depend on; test the whole matrix at target 35/36.",
+   "REMOVE ACTIVITY_RECOGNITION unless you actually call the step counter or Activity Transition API. Raw accel/gyro (sensors_plus at 50-100Hz) do not need it, and it adds a dangerous runtime prompt (API 29+) that hurts onboarding conversion. If you DO use activity transitions to detect the train moving, keep it and request at runtime guarded by SDK_INT >= 29.",
+   "REMOVE HIGH_SAMPLING_RATE_SENSORS unless you exceed 200Hz. It is only required above 200Hz; at 50-100Hz it is unnecessary (harmless normal permission, but trim for a clean permission profile).",
+   "IMPLEMENT the incremental location-permission flow: request ACCESS_FINE_LOCATION (+COARSE) first; only AFTER it is granted, and only when SDK_INT >= 30, request ACCESS_BACKGROUND_LOCATION separately \u2014 and show in-app UI telling users to pick 'Allow all the time' in the Settings page the OS opens. Bundling them (or requesting background before foreground) grants NEITHER on Android 11+.",
+   "DETECT approximate-only grants on SDK_INT >= 31 (FINE requested but only COARSE granted) and block/degrade with a 'Precise location required' prompt \u2014 a metro stop wake-up cannot rely on approximate location.",
+   "GATE POST_NOTIFICATIONS request behind SDK_INT >= 33; keep the ongoing FGS notification and full-screen-intent alarm so denial does not silence the wake-up. Keep USE_FULL_SCREEN_INTENT (present) \u2014 required for a lockscreen alarm; note Play now audits full-screen-intent usage, justify it as an alarm.",
+   "DESIGN background (re)start around allowed exemptions on SDK_INT >= 31: start the service from a visible activity ('Start ride'), and for later/rebooted restarts use an EXACT ALARM (add SCHEDULE_EXACT_ALARM/USE_EXACT_ALARM) or a user notification tap. Add a RECEIVE_BOOT_COMPLETED receiver ONLY if you need reboot restart and ONLY start the location-type service from it. Always wrap startForegroundService() in try/catch for ForegroundServiceStartNotAllowedException and SecurityException.",
+   "BUILD an OEM battery-exemption onboarding wizard for India-first devices (Xiaomi/MIUI Autostart, Oppo/Vivo/realme auto-launch, Samsung 'Never sleeping apps'). Request REQUEST_IGNORE_BATTERY_OPTIMIZATIONS and deep-link to OEM settings via android_intent_plus. This is the single biggest reliability lever on the target market and is independent of Android API level.",
+   "PREPARE the Play Console background-location declaration: complete the permissions declaration form (Policy > App content), add an in-app PROMINENT DISCLOSURE shown in normal app flow (not buried in settings/privacy policy) explaining background location collection, record a YouTube/MP4 video of the disclosure + consent flow, and post a privacy policy both in Console and in-app. Background location is core functionality (waking a rider), which is the approvable justification \u2014 frame it that way.",
+   "KEEP sensor streaming and location work INSIDE the foreground service, not in a WorkManager/JobScheduler job, because on Android 16 (API 36, all apps) jobs running concurrently with a FGS are subject to job runtime quotas and can be throttled.",
+   "VERIFY the firebase dependency: confirm whether Firebase is actually wired (the brief flags it as unverified). If you use high-priority FCM as a background-FGS-start exemption on API 31+, you must check RemoteMessage.getPriority()==PRIORITY_HIGH at receipt since the system can downgrade it."
+  ],
+  "report_markdown": "## WakePoint Android Platform Research \u2014 FGS + Location + Runtime Permissions (API 24-36)\n\n### Bottom line for WakePoint's architecture\n\n**Run the background service as a pure `location` foreground service.** The `location` FGS type is the ONLY type that (a) has **no Android-15 timeout** (dataSync/mediaProcessing are capped at 6h/24h), (b) is **NOT banned from `BOOT_COMPLETED`** on Android 15+, and (c) directly matches an approvable Play Store justification (waking a rider at a stop). This satisfies the \"~2h, screen-off, firing-late-is-death\" requirement at the platform level. OEM battery managers, not Android itself, are the real threat (see device matrix).\n\n**Two concrete bugs in the current manifest** (`android/app/src/main/AndroidManifest.xml`):\n\n1. Line 54 declares `foregroundServiceType=\"location|mediaPlayback\"`. On **Android 15+ (API 35)**, `mediaPlayback` is on the list of types that **cannot be started from a `BOOT_COMPLETED` receiver** \u2014 so any reboot-restart of this combined-type service throws `ForegroundServiceStartNotAllowedException`. It also forces a second, hard-to-justify Play Console FGS declaration. **HARD FACT** ([Android 15 FGS-type changes](https://developer.android.com/about/versions/15/changes/foreground-service-types)). Since `location` already has no timeout, `mediaPlayback` buys nothing \u2014 drop it.\n2. **`WAKE_LOCK` is missing entirely.** To \"hold the CPU awake\" with the screen off through Doze, the service must hold a `PARTIAL_WAKE_LOCK`, which requires the `WAKE_LOCK` permission. Without it, 50-100Hz sensor sampling and alarm timing are not guaranteed. (Note `flutter_background_service_android` typically merges it, but declare it explicitly.)\n\nAlso: two conflicting Gradle files exist (`build.gradle` **and** `build.gradle.kts` at both `android/` and `android/app/`) \u2014 resolve to one set. And `targetSdk 34` should move to **35 (min for Play in 2026) or 36**; targeting 35+ is what activates the location-no-timeout guarantee you rely on.\n\n### The FGS type decision (location vs mediaPlayback vs dataSync) \u2014 explicit\n\n| Type | Timeout (API 35+) | Startable from BOOT_COMPLETED (API 35+) | Runtime prereq | Verdict for WakePoint |\n|---|---|---|---|---|\n| `location` | **None** | **Yes** | ACCESS_FINE/COARSE + location ON; background needs ACCESS_BACKGROUND_LOCATION | **USE THIS (sole type)** |\n| `mediaPlayback` | None | **No (banned)** | none | Drop \u2014 no benefit, boot-ban, Play-justification burden |\n| `dataSync` | **6h / 24h** | **No (banned)** | none | Never \u2014 cap would eventually kill long/interrupted trips |\n| `mediaProcessing` | **6h / 24h** | No | none | Never |\n\nSources: [FGS timeouts](https://developer.android.com/develop/background-work/services/fgs/timeout), [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15), [service types](https://developer.android.com/develop/background-work/services/fgs/service-types).\n\n### Version matrix\nThe full API-24-to-36 matrix (mechanism, exact API level, documented behavior, required WakePoint action, source URL) is delivered in the `version_matrix` field \u2014 16 rows covering: FGS permission (28), location type + background-location + activity-recognition (29), Settings-only background grant + one-time/auto-reset (30), background-start restriction + approximate location (31), POST_NOTIFICATIONS (33), mandatory types + per-type permission + while-in-use background-create rule (34), timeouts + location-no-timeout + BOOT_COMPLETED bans + SYSTEM_ALERT_WINDOW narrowing (35), and job-quota-under-FGS (36).\n\n### HARD FACT vs INFERENCE\n- **HARD FACT** (documented, cited in matrix): every API-level guard, the timeout numbers, the BOOT_COMPLETED ban list, the incremental background-location flow, per-type permission requirements, POST_NOTIFICATIONS behavior, approximate-location rules.\n- **INFERENCE**: (1) `mediaPlayback` is *unnecessary* for lifetime \u2014 deduced from \"location has no timeout.\" (2) OEM battery-killer severity ranking (MIUI/ColorOS worst) is from field consensus, not an Android doc; the Android platform does not document OEM behavior. (3) That the alarm's short audio burst does not itself justify a persistent `mediaPlayback` FGS is a Play-policy judgment call, not a black-letter rule.\n\n### Play Store gate\nBackground location requires: the **permissions declaration form** (Console > Policy > App content), an in-app **prominent disclosure** shown during normal use (not in settings/privacy-policy only), a **video** of that flow, and a privacy policy in both Console and app. Core-functionality framing (\"wake a sleeping rider before their stop\") is the approvable path. Source: [Understanding background location permissions](https://support.google.com/googleplay/android-developer/answer/9799150).\n\n### Device-class reality (India-first)\nDelivered in `device_class_requirements`. Summary: stock/Pixel and old API 24-28 devices work **fully**; Samsung/Xiaomi/Oppo/Vivo/realme need an **OEM battery-exemption onboarding wizard** (the top product-death risk, independent of Android version); non-GMS budget/Huawei devices are **degraded** (platform LocationManager fallback, no fused location, no Play Activity Recognition \u2014 but raw accel/gyro and the core alarm still function).\n\n### Key file\n- Manifest to edit: `/home/raed/Projects/WakePoint/android/app/src/main/AndroidManifest.xml` (FGS type line 54; add WAKE_LOCK; consider removing ACTIVITY_RECOGNITION and HIGH_SAMPLING_RATE_SENSORS)."
+ },
+ {
+  "topic": "Background sensor delivery + wakelock + boot across Android API 24\u201336 for a continuous 50\u2013100 Hz accel/gyro, screen-off, location-FGS transit alarm",
+  "headline": "A location FGS alone does NOT keep 50\u2013100 Hz sensors flowing with the screen off \u2014 you MUST hold a PARTIAL_WAKE_LOCK AND obtain battery-optimization exemption, because deep Doze (which a stationary sleeping rider's phone enters) ignores wake locks entirely.",
+  "version_matrix": [
+   {
+    "mechanism": "Non-wake-up sensor suspend (accel/gyro default = non-wake-up)",
+    "api_level": "All (AOSP HAL contract, unchanged 24\u201336)",
+    "behavior": "HARD FACT: Non-wake-up sensors 'do not prevent the SoC from going into suspend mode and do not wake the SoC up to report data. The drivers are not allowed to hold wake-locks.' When the SoC suspends, events go into a hardware FIFO; if the FIFO is too small 'the older events are lost; the oldest data is dropped.' SensorManager does NOT acquire a wake lock on the app's behalf unless the sensor is a wake-up sensor (isWakeUpSensor()). Default TYPE_ACCELEROMETER / TYPE_GYROSCOPE returned by getDefaultSensor() are non-wake-up.",
+    "what_wakepoint_must_do": "The app itself must hold a PARTIAL_WAKE_LOCK for the ENTIRE duration it needs the 50\u2013100 Hz stream. Register the default accel+gyro with maxReportLatencyUs=0 (no batching) for real-time delivery. Do not rely on the sensor HAL or SensorManager to keep the CPU up. Optionally prefer a wake-up variant via getDefaultSensor(type, true) as a belt-and-suspenders, but availability is not guaranteed on cheap Indian SKUs, so the wakelock is the real guarantee.",
+    "source_url": "https://source.android.com/docs/core/interaction/sensors/suspend-mode"
+   },
+   {
+    "mechanism": "PARTIAL_WAKE_LOCK + WAKE_LOCK permission",
+    "api_level": "24+ (unchanged; API guard needed only for Doze interaction below)",
+    "behavior": "HARD FACT: android.permission.WAKE_LOCK is a normal (install-time, auto-granted) permission. PowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, tag) keeps the CPU running with the screen off. acquire() with no timeout holds indefinitely; acquire(timeoutMs) auto-releases after the timeout. There is NO documented hard maximum-duration cap on a partial wake lock at the OS API level (a 2 h hold is legal), but see Doze row \u2014 the OS can neutralize it.",
+    "what_wakepoint_must_do": "Declare <uses-permission android:name=\"android.permission.WAKE_LOCK\"/>. Acquire a single PARTIAL_WAKE_LOCK in the native foreground service onStartCommand (most reliable) or via wakelock_plus from the FGS isolate. Use a reference-counted single lock; release exactly once when the ride ends. Prefer acquire() (indefinite) guarded by your own end-of-ride release, OR acquire(2.5h) as a safety auto-release so a crashed release path can't pin the CPU forever.",
+    "source_url": "https://developer.android.com/develop/background-work/background-tasks/awake/wakelock/set"
+   },
+   {
+    "mechanism": "Deep Doze IGNORES wake locks",
+    "api_level": "23 (Doze introduced); still true 24\u201336",
+    "behavior": "HARD FACT: 'The system applies the following restrictions to your apps while in Doze: Suspends network access. Ignores wake locks. Defers standard AlarmManager alarms...' Deep Doze is entered when the device is unplugged, screen off, AND STATIONARY for a period. In deep Doze a held PARTIAL_WAKE_LOCK is ignored, the SoC suspends, and non-wake-up sensor events are dropped/batched-and-lost. GPS/Wi-Fi scans are also blocked.",
+    "what_wakepoint_must_do": "This is the product-death path: a sleeping rider's phone lying still on a lap/seat/bag CAN go stationary and hit deep Doze even mid-ride, killing the sensor stream and location. MUST obtain a battery-optimization exemption (next row) so the wake lock is honored during Doze. Do NOT assume 'phone is on a moving train' saves you \u2014 vibration is often below the stationarity threshold.",
+    "source_url": "https://developer.android.com/training/monitoring-device-state/doze-standby"
+   },
+   {
+    "mechanism": "Battery-optimization exemption (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS whitelist)",
+    "api_level": "23+ (exemption semantics unchanged through 36)",
+    "behavior": "HARD FACT: 'An app that is partially exempt can use the network and hold partial wake locks during Doze and App Standby.' This is the ONLY documented, OS-sanctioned way to keep a PARTIAL_WAKE_LOCK effective (CPU up) once the device is in deep Doze. Google Play restricts the ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS direct-prompt to a small set of eligible use cases; an alarm/wake-up app that must run with screen off qualifies, but you must justify it in Play Console.",
+    "what_wakepoint_must_do": "On ride-arm, if not already whitelisted, send users to the exemption prompt (ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS via android_intent_plus) or Settings. Gate the alarm-arm UI on isIgnoringBatteryOptimizations()==true and warn loudly if false ('alarm may fire late'). Declare REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in the manifest and be ready to defend the Play 'High priority / exact alarm & wake' policy declaration. This is non-negotiable for the 2 h screen-off guarantee.",
+    "source_url": "https://developer.android.com/training/monitoring-device-state/doze-standby"
+   },
+   {
+    "mechanism": "Light Doze / 'Doze on the go'",
+    "api_level": "24 (Android 7.0)",
+    "behavior": "HARD FACT: Android 7.0 added a lighter Doze tier that engages a short time after screen-off on battery WITHOUT requiring the device to be stationary (e.g. phone in a moving pocket). Light Doze restricts network and defers jobs/syncs but does NOT apply the full CPU/PowerManager.WakeLock restrictions that DEEP Doze applies. Movement keeps the device in light (not deep) Doze; sustained stationarity escalates to deep Doze.",
+    "what_wakepoint_must_do": "Good news for a genuinely moving train: light Doze does not ignore wake locks, so a moving-device ride can survive on wakelock + FGS even without exemption. BUT you cannot depend on continuous motion (station dwells, smooth track, phone cushioned). Treat light Doze as the lucky case and deep Doze (+exemption) as the design target. Do not remove the exemption requirement on the assumption the rider is always moving.",
+    "source_url": "https://developer.android.com/about/versions/nougat/android-7.0-changes"
+   },
+   {
+    "mechanism": "200 Hz sensor sampling cap + HIGH_SAMPLING_RATE_SENSORS permission",
+    "api_level": "31 (Android 12)",
+    "behavior": "HARD FACT: From API 31, third-party apps are capped at 200 Hz for accel/gyro/magnetometer unless they declare android.permission.HIGH_SAMPLING_RATE_SENSORS (a normal, auto-granted permission \u2014 no runtime consent). Requesting > 200 Hz WITHOUT the permission throws a SecurityException on API 31+.",
+    "what_wakepoint_must_do": "WakePoint's target is 50\u2013100 Hz, which is BELOW the 200 Hz cap, so HIGH_SAMPLING_RATE_SENSORS is NOT required and you will not hit the cap or the SecurityException. Only add the permission if you ever raise the rate above 200 Hz. sensors_plus does not request it, so leave the rate \u2264200 Hz to stay safe on all API 31\u201336 devices.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview"
+   },
+   {
+    "mechanism": "Microphone privacy toggle rate-limits ALL motion/position sensors",
+    "api_level": "31 (Android 12)",
+    "behavior": "HARD FACT: If the user turns OFF the device 'Microphone access' privacy toggle, motion and position sensors (accel/gyro) are ALWAYS rate-limited regardless of whether you hold HIGH_SAMPLING_RATE_SENSORS. This is because high-rate motion sensors can be used to infer audio.",
+    "what_wakepoint_must_do": "Edge case to detect and warn: if the user has the mic toggle off, your effective sample rate drops (throttled), which can degrade the EKF/dead-reckoning. Since you only need \u2264100 Hz you may still get acceptable data, but log/telemetry the actual delivered rate at runtime and surface a soft warning if it collapses. Do not architect around exactly 100 Hz being guaranteed.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview"
+   },
+   {
+    "mechanism": "Sensor batching (registerListener maxReportLatencyUs) vs zero-latency",
+    "api_level": "19+ (batching); semantics unchanged 24\u201336",
+    "behavior": "HARD FACT: registerListener(listener, sensor, samplingPeriodUs, maxReportLatencyUs). maxReportLatencyUs=0 = no batching, immediate delivery, SoC must stay awake. maxReportLatencyUs>0 lets events accumulate in the hardware FIFO so the SoC can sleep between flushes. SENSOR_DELAY_GAME\u224820 ms (50 Hz), SENSOR_DELAY_FASTEST=0 (as fast as HW allows). sensors_plus uses samplingPeriod only and effectively maxReportLatency=0.",
+    "what_wakepoint_must_do": "For real-time between-GPS dead reckoning you WANT maxReportLatencyUs=0 (zero latency), which is exactly why the PARTIAL_WAKE_LOCK is mandatory \u2014 batching would let the SoC sleep and defeat real-time detection. Set sensors_plus samplingPeriod to ~10 ms (100 Hz) or ~20 ms (50 Hz). Do NOT enable batching for the approach-detection window. If you later add a low-power idle phase far from the stop, batching + wake-up sensor is the power-saving lever, but the wakelock must return before the critical approach.",
+    "source_url": "https://developer.android.com/reference/android/hardware/SensorManager"
+   },
+   {
+    "mechanism": "Location foreground service type + FOREGROUND_SERVICE_LOCATION permission",
+    "api_level": "34 (Android 14)",
+    "behavior": "HARD FACT: Apps targeting API 34+ must declare a specific foregroundServiceType and, for location, the android.permission.FOREGROUND_SERVICE_LOCATION permission in addition to FOREGROUND_SERVICE, and hold ACCESS_FINE_LOCATION at runtime. The <service> must set android:foregroundServiceType=\"location\" and the startForeground call must pass FOREGROUND_SERVICE_TYPE_LOCATION. A location FGS keeps location + CPU work running when the app is backgrounded (but is still subject to Doze unless battery-exempt).",
+    "what_wakepoint_must_do": "Declare FOREGROUND_SERVICE, FOREGROUND_SERVICE_LOCATION, ACCESS_FINE_LOCATION (and ACCESS_BACKGROUND_LOCATION if you ever start the FGS from the background). Configure flutter_background_service_android with foregroundServiceType location and ensure its <service> entry in the merged manifest carries android:foregroundServiceType=\"location\". The FGS keeps the process alive; the wakelock keeps the CPU up; the exemption keeps both honored in Doze. All three are required together.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/service-types"
+   },
+   {
+    "mechanism": "Starting a foreground service from a BOOT_COMPLETED receiver",
+    "api_level": "34 (microphone restricted) \u2192 35 (Android 15: dataSync, camera, mediaPlayback, phoneCall, mediaProjection restricted)",
+    "behavior": "HARD FACT: Apps targeting API 35 CANNOT start these FGS types from a BOOT_COMPLETED receiver (throws ForegroundServiceStartNotAllowedException): dataSync, camera, mediaPlayback, phoneCall, mediaProjection (microphone already restricted since API 34). location is NOT in the restricted list \u2014 a LOCATION foreground service IS still allowed to be started from BOOT_COMPLETED on Android 15/API 35.",
+    "what_wakepoint_must_do": "CRITICAL: use foregroundServiceType=\"location\" (NOT dataSync) if you ever restart the ride service after a reboot. flutter_background_service defaults can select dataSync \u2014 that would be BLOCKED from boot on API 35 and would ALSO time out at 6 h. Force the location type. Note current project targetSdk=34, so the API-35 boot restrictions are gated off today, but they activate the moment you bump targetSdk to 35 \u2014 design for location now.",
+    "source_url": "https://developer.android.com/about/versions/15/behavior-changes-15#fgs-boot-completed"
+   },
+   {
+    "mechanism": "RECEIVE_BOOT_COMPLETED + reboot survival",
+    "api_level": "24+ (receiver runs only after first unlock on some OEMs; direct-boot caveats)",
+    "behavior": "HARD FACT: android.permission.RECEIVE_BOOT_COMPLETED lets an app receive ACTION_BOOT_COMPLETED. INFERENCE/EDGE: on many aggressive Indian OEMs (Xiaomi/MIUI, Oppo/ColorOS, Vivo/FuntouchOS, Realme, Transsion) the boot receiver and background autostart are DISABLED by default and require the user to enable 'Autostart' per-app; the AOSP permission alone is insufficient.",
+    "what_wakepoint_must_do": "Declare RECEIVE_BOOT_COMPLETED and a boot receiver that re-arms an active ride and (on API \u226434, or with location type on 35) restarts the location FGS. Because a mid-ride reboot is rare and OEM autostart is unreliable, do NOT treat boot-restart as the primary reliability mechanism \u2014 it is a recovery path. Detect the OEM (device_info_plus) and deep-link users to the Autostart / battery settings during onboarding.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/changes"
+   },
+   {
+    "mechanism": "Holding the wakelock from the flutter_background_service BACKGROUND isolate",
+    "api_level": "N/A (plugin/architecture, all versions)",
+    "behavior": "INFERENCE (architecture, not an OS doc): flutter_background_service runs the Dart onStart in a background FlutterEngine/isolate inside the foreground service process. Plugins invoked from that isolate work only if they register on the background engine. A wakelock acquired in Dart via a plugin lives only as long as that isolate and is subject to plugin-registration timing races on cold start.",
+    "what_wakepoint_must_do": "Most reliable: acquire the PARTIAL_WAKE_LOCK in NATIVE code inside the foreground service's onStartCommand (Kotlin), tied to the service lifecycle, and release in onDestroy \u2014 independent of Dart isolate readiness. If you use wakelock_plus from the isolate instead, acquire it as the first action in onStart and verify it survives isolate restarts. Never acquire the wakelock from the Activity/UI isolate \u2014 it dies when the Activity is destroyed with the screen off.",
+    "source_url": "https://developer.android.com/develop/background-work/background-tasks/awake/wakelock/set"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "Stock/near-stock Android 12\u201316 (Pixel, Motorola, Nokia, Android One), GMS present, API 31\u201336",
+    "works": "WITH_SETUP",
+    "requirements": "FOREGROUND_SERVICE + FOREGROUND_SERVICE_LOCATION + ACCESS_FINE_LOCATION + WAKE_LOCK declared; location FGS with foregroundServiceType=location; native PARTIAL_WAKE_LOCK held for whole ride; battery-optimization exemption granted (mandatory for deep-Doze survival while stationary). \u2264100 Hz so no HIGH_SAMPLING_RATE_SENSORS needed. This is the best-case device class and the reference implementation target."
+   },
+   {
+    "device_class": "Aggressive Chinese OEMs \u2014 Xiaomi/MIUI/HyperOS, Oppo/Realme/OnePlus ColorOS, Vivo/iQOO FuntouchOS, API 28\u201336 (dominant in India)",
+    "works": "WITH_SETUP",
+    "requirements": "Everything above PLUS user must manually enable per-app 'Autostart' and set battery to 'No restrictions/Don't optimize' \u2014 these OEMs kill FGS + ignore wake locks and battery-exemption more aggressively than AOSP. Boot-restart is unreliable (autostart off by default). Must ship OEM-specific onboarding deep-links (detect via device_info_plus) and verify the FGS survived a screen-off soak test on real MIUI/ColorOS hardware. Even then, some builds throttle background CPU; treat as the primary risk class."
+   },
+   {
+    "device_class": "Transsion (Tecno/Infinix/itel) and other ultra-budget India-first phones, often 2\u20134 GB RAM, API 29\u201334",
+    "works": "DEGRADED",
+    "requirements": "Same setup as above but aggressive low-memory process killing can reclaim the FGS process under memory pressure, and cheap/absent sensor FIFOs make deep-Doze event loss worse. Requires battery exemption + autostart + a lightweight process footprint. Validate delivered sensor rate at runtime; expect occasional stream gaps and design the arrival-detection to tolerate them (fuse with periodic GPS). Do not promise the same guarantee as stock devices."
+   },
+   {
+    "device_class": "No-GMS devices (some India/AOSP builds, Huawei/HarmonyOS \u0431\u0435\u0437 GMS)",
+    "works": "DEGRADED",
+    "requirements": "Core mechanism (sensors + wakelock + location FGS + Doze exemption) is pure AOSP and works WITHOUT Google Play services. However geolocator's fused provider and google_maps_flutter depend on GMS \u2014 you must fall back to the raw LocationManager GPS/network provider and a non-Google map/geometry source. Sensor + wakelock path is unaffected. HarmonyOS adds its own aggressive power manager requiring manual whitelisting."
+   },
+   {
+    "device_class": "Legacy Android 7\u201310 (API 24\u201329), still common on old cheap phones",
+    "works": "WITH_SETUP",
+    "requirements": "No 200 Hz cap, no per-type FGS permission, no BOOT_COMPLETED FGS restriction \u2014 simpler. Still MUST hold PARTIAL_WAKE_LOCK (non-wake-up suspend behavior is identical) and get battery-optimization exemption for deep Doze (present since API 23). Guard all API-34/35-specific manifest attributes so they no-op on these levels. Light-Doze-on-the-go (API 24+) helps moving riders."
+   },
+   {
+    "device_class": "Android 15/16 targeting API 35+ (future state once project bumps targetSdk from 34)",
+    "works": "WITH_SETUP",
+    "requirements": "MUST use foregroundServiceType=location (NOT dataSync \u2014 dataSync is now blocked from BOOT_COMPLETED and capped at 6 h). location FGS remains allowed from boot. All API-34 location-FGS requirements apply. Re-test the FGS-from-boot path with adb 'am compat enable FGS_BOOT_COMPLETED_RESTRICTIONS <pkg>' before shipping the targetSdk bump."
+   }
+  ],
+  "wakepoint_actions": [
+   "Add to AndroidManifest: WAKE_LOCK, FOREGROUND_SERVICE, FOREGROUND_SERVICE_LOCATION, ACCESS_FINE_LOCATION, RECEIVE_BOOT_COMPLETED, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS. Do NOT add HIGH_SAMPLING_RATE_SENSORS (unneeded at \u2264100 Hz).",
+   "Force the flutter_background_service foreground service to android:foregroundServiceType=\"location\" (verify in the merged manifest). Never leave it as dataSync \u2014 dataSync is blocked from BOOT_COMPLETED and capped at 6 h on API 35.",
+   "Acquire ONE PARTIAL_WAKE_LOCK in NATIVE onStartCommand of the foreground service (Kotlin), reference-counted, released in onDestroy \u2014 not from the Activity isolate. Optionally acquire(2.5h) as a safety auto-release.",
+   "Register default accel+gyro via SensorManager with samplingPeriod ~10 ms (100 Hz) or 20 ms (50 Hz) and maxReportLatencyUs=0 (no batching) for real-time delivery. sensors_plus already does maxReportLatency=0.",
+   "MANDATORY: gate ride-arming on isIgnoringBatteryOptimizations()==true; if false, launch ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS and block/loudly-warn. Deep Doze ignores wake locks without this \u2014 a stationary sleeping rider's phone will otherwise suspend the SoC and drop sensors.",
+   "Detect OEM via device_info_plus and deep-link Xiaomi/Oppo/Vivo/Realme/Transsion users to Autostart + 'no battery restriction' settings during onboarding; boot-restart and background survival fail silently otherwise.",
+   "Resolve the build.gradle vs build.gradle.kts conflict (only one may exist) and confirm the location FGS type is declared consistently; keep targetSdk=34 aware that bumping to 35 activates the FGS-from-boot restrictions.",
+   "Add a runtime telemetry check of the actual delivered sensor rate; if the user disabled the Microphone privacy toggle (API 31+) motion sensors are throttled regardless \u2014 degrade gracefully and fuse with periodic GPS.",
+   "Add a BOOT_COMPLETED receiver that re-arms an active ride and restarts the location FGS (allowed from boot for location on all levels incl. API 35) \u2014 treat as a recovery path, not the primary reliability mechanism.",
+   "Run a real-hardware screen-off soak test (phone stationary on a desk, unplugged, 60\u2013120 min) on a stock Pixel AND a MIUI/ColorOS device to prove the sensor stream survives deep Doze with the exemption granted."
+  ],
+  "report_markdown": "## WakePoint \u2014 Background Sensor + Wakelock + Boot: the load-bearing recipe (API 24\u201336)\n\n### The one thing that will kill this product if you get it wrong\nA running **location foreground service does NOT keep the CPU awake** for a screen-off, backgrounded app. Default accelerometer/gyroscope are **non-wake-up sensors**: the HAL contract states they *\"do not prevent the SoC from going into suspend mode\"* and *\"the drivers are not allowed to hold wake-locks.\"* When the SoC suspends, non-wake-up events go into a hardware FIFO and, if it overflows, *\"the oldest data is dropped.\"* SensorManager will not save you \u2014 it only auto-holds a wake lock for wake-up sensors. **Your app must hold a PARTIAL_WAKE_LOCK for the entire ride.** ([suspend-mode](https://source.android.com/docs/core/interaction/sensors/suspend-mode))\n\n### The edge case that makes the wakelock insufficient on its own: deep Doze\nDoze's documented restrictions include *\"Ignores wake locks.\"* Deep Doze engages when the device is unplugged, screen off, **and stationary**. A **sleeping rider's phone on a lap/seat/bag can go stationary mid-ride** \u2014 track vibration is frequently below the stationarity threshold. In deep Doze your PARTIAL_WAKE_LOCK is ignored, the SoC suspends, and the sensor stream (and GPS) die. ([doze-standby](https://developer.android.com/training/monitoring-device-state/doze-standby))\n\nThe only OS-sanctioned escape: a **battery-optimization exemption**. *\"An app that is partially exempt can use the network and hold partial wake locks during Doze and App Standby.\"* So the guaranteed recipe is **three things together**: location FGS (keeps process alive) + PARTIAL_WAKE_LOCK (keeps CPU up) + battery-optimization exemption (keeps the wake lock honored in Doze). Drop any one and the 2 h screen-off promise breaks.\n\nThe lucky case: **Light Doze / \"Doze on the go\" (API 24+)** engages on a *moving* device and does **not** apply the full wake-lock restriction \u2014 so a genuinely moving train can survive on wakelock+FGS alone. But you cannot depend on continuous motion, so design for deep Doze. ([android-7.0-changes](https://developer.android.com/about/versions/nougat/android-7.0-changes))\n\n### Sensor rate specifics\n- WakePoint's 50\u2013100 Hz is **below** the API 31 (Android 12) **200 Hz cap**, so **HIGH_SAMPLING_RATE_SENSORS is NOT required** and you will not hit the SecurityException. Only add it if you ever exceed 200 Hz. ([sensors_overview](https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview))\n- Register with **`maxReportLatencyUs = 0`** (no batching) for real-time between-GPS dead reckoning \u2014 which is exactly why the wake lock is mandatory (batching would let the SoC sleep). sensors_plus already uses zero batching; set samplingPeriod to ~10 ms (100 Hz) / ~20 ms (50 Hz). ([SensorManager](https://developer.android.com/reference/android/hardware/SensorManager))\n- **Edge:** if the user turns off the **Microphone privacy toggle** (API 31+), motion sensors are throttled *regardless* of any permission. Measure the delivered rate at runtime and degrade gracefully.\n\n### Foreground service type + boot (the dataSync trap)\nOn **Android 15 / API 35**, these FGS types are **blocked from BOOT_COMPLETED**: `dataSync`, `camera`, `mediaPlayback`, `phoneCall`, `mediaProjection` (`microphone` already blocked at API 34). **`location` is NOT restricted \u2014 a location FGS is still allowed from boot.** ([behavior-changes-15](https://developer.android.com/about/versions/15/behavior-changes-15#fgs-boot-completed)) flutter_background_service can default to `dataSync`; that would be **blocked from boot and hit the 6 h cap** \u2014 you must force `foregroundServiceType=\"location\"`. From API 34 you must also declare **FOREGROUND_SERVICE_LOCATION** and hold ACCESS_FINE_LOCATION. Your project's `targetSdk=34` means the API-35 boot rules are dormant today but activate the instant you bump to 35.\n\n### Where to hold the wakelock in a flutter_background_service app (INFERENCE)\nAcquire the PARTIAL_WAKE_LOCK in **native Kotlin `onStartCommand`** of the foreground service, tied to service lifecycle, released in `onDestroy` \u2014 independent of the Dart background isolate's registration timing. Holding it via `wakelock_plus` from the isolate is possible but races on cold start; **never** hold it from the Activity/UI isolate (it dies when the Activity is destroyed with the screen off).\n\n### Per-API-level manifest/permission recipe (guard with Build.VERSION.SDK_INT)\n- **All (24\u201336):** `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `FOREGROUND_SERVICE`, `ACCESS_FINE_LOCATION`; native PARTIAL_WAKE_LOCK; battery-optimization exemption gate before arming.\n- **\u2265 31 (Android 12):** stay \u2264200 Hz (no HIGH_SAMPLING_RATE_SENSORS); handle mic-toggle throttling.\n- **\u2265 34 (Android 14):** add `FOREGROUND_SERVICE_LOCATION`; `foregroundServiceType=\"location\"`; `startForeground(..., FOREGROUND_SERVICE_TYPE_LOCATION)`; microphone FGS blocked from boot (irrelevant \u2014 you use location).\n- **\u2265 35 (Android 16 target, future):** keep `location` type (never `dataSync`); re-test boot path with `adb shell am compat enable FGS_BOOT_COMPLETED_RESTRICTIONS <pkg>`.\n\n### India-first reality\nXiaomi/MIUI-HyperOS, Oppo/Realme/OnePlus-ColorOS, Vivo-FuntouchOS and Transsion (Tecno/Infinix/itel) disable **Autostart** by default and kill FGS + ignore battery-exemption more aggressively than AOSP. The AOSP permissions are necessary but **not sufficient** \u2014 ship OEM-detected onboarding deep-links to Autostart + \"no battery restriction\", and validate on real MIUI/ColorOS hardware with a 60\u2013120 min stationary screen-off soak test. No-GMS devices: the sensor+wakelock+Doze path is pure AOSP and works, but geolocator's fused provider and google_maps_flutter need GMS fallbacks.\n\n### HARD FACT vs INFERENCE summary\n- HARD FACT (documented): non-wake-up suspend behavior; Doze ignores wake locks; exemption allows partial wake locks in Doze; light Doze (API 24) doesn't require stationarity; 200 Hz cap + HIGH_SAMPLING_RATE_SENSORS at API 31; mic-toggle throttling; FGS-from-boot restricted list at API 34/35 with `location` exempt; FOREGROUND_SERVICE_LOCATION at API 34; WAKE_LOCK is a normal permission; maxReportLatency batching semantics.\n- INFERENCE: OEM autostart behavior; best place to hold the wakelock in the flutter_background_service isolate; Transsion low-memory process killing; no-GMS location fallbacks."
+ },
+ {
+  "topic": "Exact alarms, full-screen intent, Doze/App Standby, notification channels/DND & battery-optimization exemption across Android API 24-36 for a transit wake-up alarm (WakePoint)",
+  "headline": "WakePoint is a genuine alarm-clock app, so it must ride the USE_EXACT_ALARM + setAlarmClock() + USE_FULL_SCREEN_INTENT path (all auto-granted for alarm apps) rather than the SCHEDULE_EXACT_ALARM/battery-exemption path \u2014 that combination is the only one that fires guaranteed, on-time, screen-off, through Doze on API 34+, and is explicitly Play-policy-permitted for alarm apps.",
+  "version_matrix": [
+   {
+    "mechanism": "Doze mode + high-priority alarm exemption",
+    "api_level": "API 23 (Android 6.0)",
+    "behavior": "HARD FACT: When unplugged, stationary, screen-off, the device enters Doze. Standard setExact()/setWindow()/set() alarms, jobs, syncs, network and wakelocks are deferred to periodic maintenance windows. setAlarmClock(), setAndAllowWhileIdle() and setExactAndAllowWhileIdle() are the only alarm APIs that still fire in Doze; the system exits Doze shortly before a setAlarmClock() fires. setAndAllowWhileIdle/setExactAndAllowWhileIdle are rate-limited to once per 9 minutes per app.",
+    "what_wakepoint_must_do": "Schedule the wake-up as an ALARM_CLOCK via AlarmManager.setAlarmClock(AlarmClockInfo, showIntent). This is the ONLY API that gives precise, Doze-immune, non-rate-limited delivery for a 2h screen-off window. Do not rely on WorkManager/JobScheduler (deferred in Doze) or setExact() (deferred). Guard: for the recurring 'am I near the stop' checks, if you use setExactAndAllowWhileIdle, respect the 9-min floor; better, drive geofence/location foreground service for proximity and reserve setAlarmClock for the final fire.",
+    "source_url": "https://developer.android.com/training/monitoring-device-state/doze-standby"
+   },
+   {
+    "mechanism": "App Standby Buckets throttling of alarms",
+    "api_level": "API 28 (Android 9.0)",
+    "behavior": "HARD FACT: Apps are placed in buckets (active, working set, frequent, rare, restricted). Per the power-management resource-limits table, alarm delivery is throttled by bucket: active = no execution limits; working set = 10/hour; frequent = 2/hour; rare = 1/hour (network disabled); restricted = 1 alarm per day (exact OR inexact) and network disabled. INFERENCE (well-supported): setAlarmClock is treated as a high-priority alarm and is not throttled like ordinary exact alarms, consistent with its Doze exemption.",
+    "what_wakepoint_must_do": "Because WakePoint is opened, given a foreground location service, and the user taps its notification, it stays in the active/working-set bucket during a ride, so throttling is a non-issue for the actual ride. Still fire the terminal wake via setAlarmClock() so bucket state is irrelevant. Verify bucket in QA with adb shell am get-standby-bucket <pkg>.",
+    "source_url": "https://developer.android.com/topic/performance/power/power-details"
+   },
+   {
+    "mechanism": "Restricted bucket (harshest throttling) + USE_EXACT_ALARM exemption",
+    "api_level": "API 31 (Android 12) added Restricted bucket; threshold 45 days idle on API 31-32, tightened to 8 days idle on API 33+",
+    "behavior": "HARD FACT: Restricted bucket caps the app to one alarm per day (exact or inexact) and disables background network, even while charging. HARD FACT: apps holding the USE_EXACT_ALARM permission (also ACCESS_BACKGROUND_LOCATION, dialer role, active widgets, device/profile owner, VPN, companion apps, user-designated unrestricted) are exempt from being placed in the Restricted bucket.",
+    "what_wakepoint_must_do": "Declaring USE_EXACT_ALARM (which WakePoint already needs as an alarm app) doubles as a hard exemption from the Restricted bucket \u2014 a major reliability win. This is a concrete reason to prefer USE_EXACT_ALARM over SCHEDULE_EXACT_ALARM.",
+    "source_url": "https://developer.android.com/topic/performance/appstandby"
+   },
+   {
+    "mechanism": "SCHEDULE_EXACT_ALARM special-access permission introduced",
+    "api_level": "API 31 (Android 12.0)",
+    "behavior": "HARD FACT: setExact(), setExactAndAllowWhileIdle() and setAlarmClock() begin requiring the 'Alarms & reminders' special app access, gated by the SCHEDULE_EXACT_ALARM permission, or they throw SecurityException. On API 31-32 this permission is auto-granted on install but the user can revoke it in Settings > Apps > Special app access > Alarms & reminders. Check with AlarmManager.canScheduleExactAlarms(); request via ACTION_REQUEST_SCHEDULE_EXACT_ALARM. The OnAlarmListener setExact(...) variant does NOT require it.",
+    "what_wakepoint_must_do": "For API 31-32 devices declare SCHEDULE_EXACT_ALARM with android:maxSdkVersion=\"32\" in the manifest (on 33+ USE_EXACT_ALARM supersedes it). At runtime guard every schedule with if (Build.VERSION.SDK_INT < 31 || alarmManager.canScheduleExactAlarms()) before setAlarmClock, else route the user to ACTION_REQUEST_SCHEDULE_EXACT_ALARM.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/schedule-exact-alarms"
+   },
+   {
+    "mechanism": "USE_EXACT_ALARM normal permission for alarm/calendar apps",
+    "api_level": "API 33 (Android 13.0)",
+    "behavior": "HARD FACT: USE_EXACT_ALARM is a normal permission that is auto-granted at install and CANNOT be revoked by the user; holding it grants full exact-alarm capability (setExact/setExactAndAllowWhileIdle/setAlarmClock) identically to SCHEDULE_EXACT_ALARM. HARD FACT (Play policy): it is a restricted permission \u2014 only apps whose core user-facing functionality is an alarm clock, timer, or a calendar showing event notifications may declare it; non-qualifying apps are rejected/removed at review.",
+    "what_wakepoint_must_do": "WakePoint IS an alarm clock, so declare <uses-permission android:name=\"android.permission.USE_EXACT_ALARM\"/> (no maxSdkVersion). This makes exact alarms un-revokable on API 33+, avoids the Android 14 denial entirely, and exempts from the Restricted bucket. Be ready to justify the alarm use case in Play Console review.",
+    "source_url": "https://developer.android.com/develop/background-work/services/alarms"
+   },
+   {
+    "mechanism": "SCHEDULE_EXACT_ALARM denied by default on new installs",
+    "api_level": "API 34 (Android 14.0)",
+    "behavior": "HARD FACT: A newly installed app that targets API 33+ and declares SCHEDULE_EXACT_ALARM (and is not a calendar/alarm app, not otherwise exempt/pre-granted) has the permission DENIED by default on Android 14+. Backup-restore keeps it denied; an app that already held it before OS upgrade keeps it. USE_EXACT_ALARM holders are unaffected. System sends AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED when state flips.",
+    "what_wakepoint_must_do": "Do NOT depend on SCHEDULE_EXACT_ALARM being granted on Android 14+. Rely on USE_EXACT_ALARM (auto-granted for alarm apps). If you ever keep SCHEDULE_EXACT_ALARM as a fallback, register a receiver for ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED and re-schedule/re-prompt on grant.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/schedule-exact-alarms"
+   },
+   {
+    "mechanism": "USE_FULL_SCREEN_INTENT normal permission introduced",
+    "api_level": "API 29 (Android 10.0)",
+    "behavior": "HARD FACT: To attach a full-screen intent (Notification.Builder.setFullScreenIntent) that launches an activity over the lock screen, the app must declare USE_FULL_SCREEN_INTENT. From API 29 through 33 it is a normal permission auto-granted at install with no functional restriction.",
+    "what_wakepoint_must_do": "Declare <uses-permission android:name=\"android.permission.USE_FULL_SCREEN_INTENT\"/>. On API 29-33 no runtime action is needed; the alarm activity will launch full-screen over the lock screen.",
+    "source_url": "https://source.android.com/docs/core/permissions/fsi-limits"
+   },
+   {
+    "mechanism": "USE_FULL_SCREEN_INTENT restricted to calling/alarm apps",
+    "api_level": "API 34 (Android 14.0)",
+    "behavior": "HARD FACT: USE_FULL_SCREEN_INTENT changes from a normal permission to a special app-access appop. Only apps whose core functionality is a high-priority alarm or receiving phone/video calls are auto-granted; the Play Store revokes the default grant for all others (enforced Jan 22, 2025). Apps check NotificationManager.canUseFullScreenIntent() and send users to Settings via ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT. HARD FACT (AOSP behavior table): when the permission is GRANTED the FSI launches full-screen in every screen state (unlocked, locked, screen-off, AOD); when DENIED it degrades to a 60-second heads-up notification.",
+    "what_wakepoint_must_do": "As an alarm app WakePoint keeps the default grant on API 34+, but MUST NOT assume it: guard with if (Build.VERSION.SDK_INT < 34 || notificationManager.canUseFullScreenIntent()) { post FSI } else { startActivity(ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT for package) and post a max-importance heads-up + loud sound as fallback }. Never let a denied FSI mean silence \u2014 the heads-up + alarm-audio channel must still fire the sound.",
+    "source_url": "https://developer.android.com/about/versions/14/behavior-changes-14"
+   },
+   {
+    "mechanism": "Full-screen intent default-grant reaffirmed / target-gated",
+    "api_level": "API 35 (Android 15) and API 36 (Android 16)",
+    "behavior": "HARD FACT: Android 15 keeps the Android-14 rule \u2014 default USE_FULL_SCREEN_INTENT grant only for calling and alarm apps. For apps targeting Android 16 (API 36), using full-screen intents requires the app to explicitly declare USE_FULL_SCREEN_INTENT in the manifest and, if not an auto-granted category, obtain user permission. INFERENCE: no new API-surface change beyond continued enforcement; canUseFullScreenIntent()/ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT remain the mechanism.",
+    "what_wakepoint_must_do": "Nothing new beyond API 34 handling as long as the alarm category is genuine. Keep the manifest declaration and the canUseFullScreenIntent() guard; they satisfy API 35 and 36. Note the separate Play mandate to target API 36 by Aug 31, 2026.",
+    "source_url": "https://source.android.com/docs/core/permissions/fsi-limits"
+   },
+   {
+    "mechanism": "Play Console full-screen-intent declaration",
+    "api_level": "Policy (applies to apps targeting API 34+)",
+    "behavior": "HARD FACT: Since May 31, 2024 any app declaring USE_FULL_SCREEN_INTENT must complete the Play Console App-content declaration stating whether it has permitted core functionality (alarm or calling). From Jan 22, 2025 only declared alarm/calling apps keep the permission enabled by default; others must request it at runtime and degrade gracefully.",
+    "what_wakepoint_must_do": "In Play Console > App content, declare USE_FULL_SCREEN_INTENT with 'alarm' as the permitted core functionality. Have a screen recording of the wake-up alarm ready for review.",
+    "source_url": "https://support.google.com/googleplay/android-developer/answer/13392821?hl=en"
+   },
+   {
+    "mechanism": "Notification channels (importance immutable) + heads-up",
+    "api_level": "API 26 (Android 8.0)",
+    "behavior": "HARD FACT: Every notification must be posted to a NotificationChannel. Channel importance (IMPORTANCE_HIGH needed for heads-up + sound), sound/AudioAttributes, vibration, and DND-bypass are set at channel creation and are IMMUTABLE afterward \u2014 changing them requires deleting and recreating the channel (or the user's per-channel settings win). setPriority on the notification is ignored on 26+.",
+    "what_wakepoint_must_do": "Create a dedicated 'wake_alarm' channel with IMPORTANCE_HIGH, CATEGORY_ALARM on the notification, a loud looping sound, and AudioAttributes USAGE_ALARM. Get it right on first creation; if you must change sound/bypass later, bump the channel id (e.g. wake_alarm_v2). Ship a separate low-importance channel for the persistent foreground-service notice.",
+    "source_url": "https://developer.android.com/develop/ui/views/notifications/channels"
+   },
+   {
+    "mechanism": "Alarm audio usage bypasses the ringer (silent/vibrate)",
+    "api_level": "API 21+ (AudioAttributes), enforced per-channel API 26+",
+    "behavior": "HARD FACT: Audio played with AudioAttributes USAGE_ALARM (or STREAM_ALARM) is routed to the alarm volume stream, which is independent of the ringer. So a USAGE_ALARM sound plays even when the phone's ringer is set to silent or vibrate. It does NOT by itself override Do Not Disturb \u2014 DND can still suppress it unless the channel bypasses DND.",
+    "what_wakepoint_must_do": "Set the channel's AudioAttributes to USAGE_ALARM + CONTENT_TYPE_SONIFICATION so the alarm rings through silent/vibrate. Also raise/verify STREAM_ALARM volume before firing (do not touch ringer). Loop the sound yourself (ongoing notification + MediaPlayer/Ringtone looped) so it persists until dismissed.",
+    "source_url": "https://developer.android.com/reference/android/media/AudioAttributes"
+   },
+   {
+    "mechanism": "DND bypass via channel + notification-policy access",
+    "api_level": "API 23+ (policy access), per-channel API 26+",
+    "behavior": "HARD FACT: To make a channel sound through Do Not Disturb you call NotificationChannel.setBypassDnd(true). That call only takes effect if the app holds ACCESS_NOTIFICATION_POLICY, which the USER must grant via the ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS screen (check NotificationManager.isNotificationPolicyAccessGranted()). You cannot force it programmatically.",
+    "what_wakepoint_must_do": "Declare <uses-permission android:name=\"android.permission.ACCESS_NOTIFICATION_POLICY\"/>. In onboarding, if isNotificationPolicyAccessGranted() is false, explain and launch ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS; once granted, set setBypassDnd(true) on the wake_alarm channel so the alarm fires even in DND. Treat this as best-effort and still rely on USAGE_ALARM + FSI if the user declines.",
+    "source_url": "https://developer.android.com/reference/android/app/NotificationManager#isNotificationPolicyAccessGranted()"
+   },
+   {
+    "mechanism": "Battery-optimization exemption + Play acceptability",
+    "api_level": "API 23+ (Doze allowlist)",
+    "behavior": "HARD FACT: PowerManager.isIgnoringBatteryOptimizations() + REQUEST_IGNORE_BATTERY_OPTIMIZATIONS gate the Doze allowlist. The direct-grant dialog ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS is Play-policy restricted to a short list of acceptable use cases (IM/calling that can't use FCM, VOIP, safety, task-automation, companion-device). Alarm clocks are NOT on that list. The non-restricted ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS (opens the full list, user finds the app) is allowed for any app. Google's stated position: a correct exact-alarm app does not need battery-optimization exemption because setAlarmClock/USE_EXACT_ALARM already pierce Doze.",
+    "what_wakepoint_must_do": "Do NOT make ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS a hard dependency (Play-review risk for an alarm app). Rely on USE_EXACT_ALARM + setAlarmClock for the guaranteed fire. Because WakePoint ALSO runs a 2h continuous location foreground service + high-rate sensors (which OEMs kill), it is legitimate to guide users to the non-restricted battery-settings screen as an optional reliability step, framed around the foreground service, not the alarm.",
+    "source_url": "https://developer.android.com/training/monitoring-device-state/doze-standby"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "Android < 12 (API 24-30): stock + most OEMs",
+    "works": "FULLY",
+    "requirements": "Exact alarms need no special permission before API 31; setAlarmClock() fires through Doze (API 23+). Declare USE_FULL_SCREEN_INTENT (auto-granted API 29-30). Notification channel + USAGE_ALARM audio for API 26+. Optional ACCESS_NOTIFICATION_POLICY for DND bypass. No Play FSI/exact-alarm declaration friction at these API levels."
+   },
+   {
+    "device_class": "Android 12-13 (API 31-33): Pixel/stock",
+    "works": "FULLY",
+    "requirements": "Declare USE_EXACT_ALARM (API 33) + SCHEDULE_EXACT_ALARM maxSdkVersion=32 (API 31-32). USE_EXACT_ALARM is auto-granted and un-revokable for alarm apps. USE_FULL_SCREEN_INTENT still auto-granted (<API 34). Guard setAlarmClock with canScheduleExactAlarms() on 31-32 in case the user revoked it."
+   },
+   {
+    "device_class": "Android 14-16 (API 34-36): Pixel/stock",
+    "works": "WITH_SETUP",
+    "requirements": "USE_EXACT_ALARM keeps exact alarms working with no user prompt. USE_FULL_SCREEN_INTENT stays auto-granted ONLY because the app is a declared alarm app \u2014 must complete Play Console FSI declaration (alarm) and guard with canUseFullScreenIntent(). Optionally request ACCESS_NOTIFICATION_POLICY for DND bypass. Foreground location service needs FOREGROUND_SERVICE_LOCATION (API 34) + runtime location + notification-permission (POST_NOTIFICATIONS, API 33)."
+   },
+   {
+    "device_class": "Samsung One UI (all supported)",
+    "works": "WITH_SETUP",
+    "requirements": "Honors USE_EXACT_ALARM/setAlarmClock and FSI, but 'Sleeping apps'/'Deep sleeping apps' and adaptive battery can suspend the foreground service over a 2h window. Onboarding must guide user to exclude WakePoint from Sleeping-apps and set battery to Unrestricted (via non-restricted battery settings screen). The alarm itself is reliable; the continuous sensor/location service is the fragile part."
+   },
+   {
+    "device_class": "Xiaomi MIUI/HyperOS, Oppo/Realme ColorOS, Vivo/iQOO Funtouch, OnePlus OxygenOS (India-dominant, aggressive OEMs)",
+    "works": "DEGRADED",
+    "requirements": "These aggressively kill background/foreground services and ignore the Doze allowlist; setAlarmClock generally still fires (alarm apps are whitelisted by these OEMs' own alarm handling), but the 2h location foreground service + sensor stream is routinely killed. Required setup: enable per-app Autostart (MIUI Autostart, ColorOS Startup Manager), lock the app in recents, set battery to No restrictions/Don't optimize, and disable OEM 'battery saver' for the app. Consider a redundant setAlarmClock scheduled up-front (not depending on the service staying alive) so the wake fires even if the service is killed. Point users to dontkillmyapp.com-style guidance per OEM."
+   },
+   {
+    "device_class": "No-GMS / AOSP-based (some India budget + Huawei)",
+    "works": "DEGRADED",
+    "requirements": "No Play Store means no Play FSI/exact-alarm review gating (permissions still enforced by the OS), but also NO Firebase Cloud Messaging high-priority fallback to re-wake a killed process. Must self-contain: schedule setAlarmClock at ride start so delivery does not depend on any network/FCM, and rely on the OS alarm subsystem alone. Verify canScheduleExactAlarms()/USE_EXACT_ALARM handling on the specific fork; some forks pre-deny exact alarms."
+   },
+   {
+    "device_class": "Go-edition / very-low-RAM budget phones (India-first target)",
+    "works": "DEGRADED",
+    "requirements": "High memory pressure makes the OS kill the foreground service and sensor stream aggressively during a 2h screen-off ride. setAlarmClock() remains the reliability anchor because it lives in the system AlarmManager, not the app process. Keep the persistent service lightweight (throttle 50-100Hz sensor capture, batch, avoid heavy allocation) and always pre-arm a terminal setAlarmClock so a killed process still wakes the rider."
+   }
+  ],
+  "wakepoint_actions": [
+   "Manifest: declare <uses-permission android:name=\"android.permission.USE_EXACT_ALARM\"/> (no maxSdk, covers API 33+, un-revokable, exempts from Restricted bucket) AND <uses-permission android:name=\"android.permission.SCHEDULE_EXACT_ALARM\" android:maxSdkVersion=\"32\"/> (covers API 31-32). Also USE_FULL_SCREEN_INTENT, ACCESS_NOTIFICATION_POLICY, POST_NOTIFICATIONS, FOREGROUND_SERVICE + FOREGROUND_SERVICE_LOCATION, and the location/sensor perms.",
+   "Fire the terminal wake-up with AlarmManager.setAlarmClock(AlarmClockInfo(triggerAtMillis, showIntent), operationPendingIntent) \u2014 NOT setExact/setExactAndAllowWhileIdle/WorkManager. Only setAlarmClock is precise, Doze-immune, un-rate-limited, and pierces every bucket. Pre-arm it at ride start so it survives the service being killed.",
+   "Guard exact-alarm scheduling: if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()) { setAlarmClock(...) } else { launch ACTION_REQUEST_SCHEDULE_EXACT_ALARM }. With USE_EXACT_ALARM declared, canScheduleExactAlarms() returns true on API 33+ automatically.",
+   "Guard full-screen intent: if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || notificationManager.canUseFullScreenIntent()) { post notification with setFullScreenIntent(pi, true) } else { startActivity(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT with package uri) and still post a max-importance heads-up + looping alarm sound }.",
+   "Create the 'wake_alarm_v1' NotificationChannel once with IMPORTANCE_HIGH, setSound(alarmUri, AudioAttributes.Builder().setUsage(USAGE_ALARM).setContentType(CONTENT_TYPE_SONIFICATION).build()), setBypassDnd(true), and post notifications with CATEGORY_ALARM. Channel settings are immutable \u2014 bump the id if you must change sound/bypass later. USAGE_ALARM makes it ring through silent/vibrate.",
+   "DND bypass is best-effort: declare ACCESS_NOTIFICATION_POLICY, and in onboarding if !notificationManager.isNotificationPolicyAccessGranted() explain and launch ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS; only then does setBypassDnd(true) take effect. Never make the alarm depend solely on it.",
+   "Play Console: complete the App-content FSI declaration selecting the ALARM permitted core functionality (required since May 31 2024, enforced Jan 22 2025). Be ready to justify USE_EXACT_ALARM (restricted permission) as a genuine alarm-clock use at review. Have a screen recording of the wake alarm.",
+   "Do NOT hard-depend on ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (Play-policy restricted; alarm apps are not on the acceptable-use list and setAlarmClock already pierces Doze). For the separate 2h location foreground-service reliability, guide users to the non-restricted ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS list and OEM autostart/unrestricted-battery settings, framed around the foreground service, not the alarm.",
+   "Belt-and-suspenders architecture: (1) location foreground service for proximity detection, (2) a pre-armed setAlarmClock as the guaranteed fire that survives process death, (3) FSI + IMPORTANCE_HIGH heads-up + USAGE_ALARM looping audio + DND bypass at fire time, (4) on API 34+ register a receiver for ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED if any SCHEDULE_EXACT_ALARM fallback path is kept.",
+   "Resolve the config conflict noted in the brief: pick ONE Gradle DSL (build.gradle OR build.gradle.kts) to avoid non-deterministic manifest merging of these permissions; targetSdk 34 keeps you clear of API 36 FSI target-gating for now, but plan the API 36 target migration before the Aug 31 2026 Play deadline (FSI handling above already satisfies API 35/36)."
+  ],
+  "report_markdown": "# WakePoint \u2014 Exact Alarms, Full-Screen Intent, Doze/Standby, Notifications/DND & Battery Exemption (API 24-36)\n\n## Bottom line\nWakePoint is a **genuine alarm-clock app**. That single fact unlocks the only combination that gives a *guaranteed, on-time, screen-off, Doze-proof* fire and is *Play-policy-permitted*:\n\n- **`USE_EXACT_ALARM`** (API 33+, auto-granted, un-revokable, alarm-app only) instead of `SCHEDULE_EXACT_ALARM` (which is **denied by default on Android 14+**).\n- **`AlarmManager.setAlarmClock()`** for the terminal fire (Doze-immune, not rate-limited, pierces every App Standby bucket).\n- **`USE_FULL_SCREEN_INTENT`** (auto-granted for alarm apps on API 34+, guarded by `canUseFullScreenIntent()`).\n- A dedicated **`IMPORTANCE_HIGH` channel with `USAGE_ALARM` audio** (rings through silent/vibrate) + optional **DND bypass**.\n- **Avoid** `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` as a hard dependency (Play risk; unnecessary once the above are in place).\n\n---\n\n## 1. Exact alarms \u2014 the API-level story\n\n| API | Change | HARD FACT |\n|---|---|---|\n| 23 | Doze introduced | Only `setAlarmClock`, `setAndAllowWhileIdle`, `setExactAndAllowWhileIdle` fire in Doze. The last two are capped at **once / 9 min / app**. `setAlarmClock` has no such cap and the system exits Doze just before it fires. |\n| 31 | `SCHEDULE_EXACT_ALARM` special access | `setExact`/`setExactAndAllowWhileIdle`/`setAlarmClock` now need it or throw `SecurityException`. Auto-granted on 31-32 but **user-revokable**. Check `canScheduleExactAlarms()`. |\n| 33 | `USE_EXACT_ALARM` normal permission | Auto-granted, **cannot be revoked**, full exact-alarm capability. **Play-restricted** to alarm/timer/calendar apps. |\n| 34 | `SCHEDULE_EXACT_ALARM` **denied by default** | New installs targeting 33+ get it denied. **`USE_EXACT_ALARM` holders unaffected.** |\n\n**Manifest (WakePoint):**\n```xml\n<uses-permission android:name=\"android.permission.USE_EXACT_ALARM\"/>\n<uses-permission android:name=\"android.permission.SCHEDULE_EXACT_ALARM\"\n    android:maxSdkVersion=\"32\"/>\n```\n\n**Schedule guard:**\n```kotlin\nval am = context.getSystemService(AlarmManager::class.java)\nif (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()) {\n    am.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent), opPi)\n} else {\n    context.startActivity(Intent(AlarmManager.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)\n        .setData(Uri.fromParts(\"package\", context.packageName, null)))\n}\n```\nWith `USE_EXACT_ALARM` declared, `canScheduleExactAlarms()` is `true` on 33+ with no prompt.\n\n> Why `setAlarmClock` and not `setExactAndAllowWhileIdle`: the latter is throttled to once/9-min in Doze and is a plain exact alarm subject to bucket limits; `setAlarmClock` is the OS's highest-priority alarm, exits Doze, and is the intended API for user-facing alarm clocks.\n\n---\n\n## 2. Doze & App Standby buckets\n\n**Doze (API 23+):** screen-off + stationary + unplugged \u21d2 network, jobs, syncs, wakelocks, standard alarms deferred to maintenance windows. High-priority alarms (above) pierce it.\n\n**Buckets (API 28+) \u2014 alarm limits (HARD FACT, power-management table):**\n\n| Bucket | Alarm limit | Network |\n|---|---|---|\n| Active | none | full |\n| Working set | 10/hr | full |\n| Frequent | 2/hr | full |\n| Rare | 1/hr | **off** |\n| Restricted (API 31+) | **1/day** (exact or inexact) | **off** |\n\n**Key exemption (HARD FACT):** apps holding **`USE_EXACT_ALARM`** are **exempt from the Restricted bucket** entirely. Restricted threshold: 45 days idle (API 31-32) \u2192 8 days idle (API 33+). During an actual ride WakePoint is in active/working-set anyway (foreground service + user interaction), and `setAlarmClock` is not throttled regardless \u2014 buckets are effectively a non-issue for the fire itself.\n\n---\n\n## 3. Full-screen intent (the \"wake the rider over the lock screen\" mechanism)\n\n| API | Behavior (HARD FACT) |\n|---|---|\n| 29-33 | `USE_FULL_SCREEN_INTENT` is a normal, auto-granted permission. FSI launches full-screen over lock screen. |\n| 34 | Becomes a **special app-access appop**. Only **alarm/calling** apps auto-granted; Play revokes the default for others (enforced **Jan 22 2025**). Check `canUseFullScreenIntent()`; send users to `ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT`. |\n| 35 | Same rule reaffirmed. |\n| 36 | Apps targeting 16 must explicitly declare the permission; alarm category still auto-granted. |\n\n**AOSP screen-state table (HARD FACT):** when **granted**, FSI launches full-screen in **every** state \u2014 unlocked, locked, screen-off, always-on-display. When **denied**, it degrades to a 60-second heads-up notification. This is exactly WakePoint's screen-off scenario, so a *granted* FSI is a genuine full-screen wake.\n\n**Guard:**\n```kotlin\nval nm = context.getSystemService(NotificationManager::class.java)\nval canFsi = Build.VERSION.SDK_INT < 34 || nm.canUseFullScreenIntent()\nval b = Notification.Builder(context, WAKE_CHANNEL)\n    .setCategory(Notification.CATEGORY_ALARM)\n    .setFullScreenIntent(alarmActivityPi, true)  // ignored gracefully if not permitted\n// if !canFsi: also start ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT and rely on\n// IMPORTANCE_HIGH heads-up + looping USAGE_ALARM audio as the fallback.\n```\n**Play Console:** App content \u2192 declare `USE_FULL_SCREEN_INTENT` with **alarm** core functionality (required since **May 31 2024**).\n\n---\n\n## 4. Notification channel, alarm audio, ringer & DND\n\n- **Channels (API 26+):** importance/sound/bypass are **immutable after creation**. Create one dedicated `wake_alarm_v1` channel: `IMPORTANCE_HIGH`, `CATEGORY_ALARM` on the notification.\n- **Ring through silent/vibrate (HARD FACT):** set the channel sound with `AudioAttributes` `USAGE_ALARM` + `CONTENT_TYPE_SONIFICATION`. Alarm-stream audio is independent of the ringer, so it plays in silent/vibrate. (Raise/verify `STREAM_ALARM` volume; don't touch the ringer.)\n- **DND bypass (best-effort):** `channel.setBypassDnd(true)` only works if the app holds **`ACCESS_NOTIFICATION_POLICY`**, which the **user must grant** via `ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS` (check `isNotificationPolicyAccessGranted()`). Prompt during onboarding; treat denial as non-fatal.\n\n```kotlin\nval attrs = AudioAttributes.Builder()\n    .setUsage(AudioAttributes.USAGE_ALARM)\n    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()\nval ch = NotificationChannel(\"wake_alarm_v1\", \"Wake-up alarm\", NotificationManager.IMPORTANCE_HIGH)\nch.setSound(alarmUri, attrs)\nch.setBypassDnd(true)   // effective only with ACCESS_NOTIFICATION_POLICY granted\n```\nAlso declare **`POST_NOTIFICATIONS`** (runtime permission, API 33+).\n\n---\n\n## 5. Battery-optimization exemption \u2014 use carefully\n\n- `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (direct-grant dialog) is **Play-policy restricted**; alarm clocks are **not** on the acceptable-use list, and Google's position is that a correct exact-alarm app **doesn't need it** because `USE_EXACT_ALARM` + `setAlarmClock` already pierce Doze.\n- The **non-restricted** `ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS` (opens the full list) is allowed for any app.\n- **WakePoint nuance:** the *alarm* doesn't need exemption, but the **2-hour continuous location foreground service + 50-100Hz sensor stream** is exactly what aggressive OEMs kill. So request exemption/autostart **framed around the foreground service**, via the non-restricted path, not as an alarm requirement.\n\n---\n\n## 6. Resilience architecture (belt & suspenders)\n1. **Location foreground service** (`FOREGROUND_SERVICE_LOCATION`, API 34) for proximity.\n2. **Pre-armed `setAlarmClock`** at ride start \u2014 survives process death (lives in system AlarmManager, not your process). This is the single most important reliability decision for cheap/aggressive-OEM/no-GMS phones.\n3. **At fire time:** FSI + `IMPORTANCE_HIGH` heads-up + looping `USAGE_ALARM` audio + DND bypass.\n4. On no-GMS devices there is **no FCM re-wake** \u2014 so (2) must not depend on any network.\n\n---\n\n## HARD FACT vs INFERENCE\n- **HARD FACT (documented):** all API-level permission changes, the Doze/bucket tables, the FSI screen-state table, channel immutability, `USAGE_ALARM` ringer independence, `setBypassDnd` needing `ACCESS_NOTIFICATION_POLICY`, `USE_EXACT_ALARM` exempting from Restricted bucket, Play FSI/exact-alarm declaration policy and dates.\n- **INFERENCE (well-supported):** `setAlarmClock` not being throttled by ordinary bucket alarm limits (consistent with its Doze exemption and \"high-priority alarm\" status, though the power table doesn't call it out by name); OEM alarm whitelisting on MIUI/ColorOS/Funtouch behavior in the device matrix (empirically observed, not in official docs).\n\n## Sources\n- [Schedule exact alarms are denied by default (Android 14)](https://developer.android.com/about/versions/14/changes/schedule-exact-alarms)\n- [Schedule alarms \u2014 Background work](https://developer.android.com/develop/background-work/services/alarms)\n- [Behavior changes: apps targeting Android 14](https://developer.android.com/about/versions/14/behavior-changes-14)\n- [Full-screen intent limits (AOSP)](https://source.android.com/docs/core/permissions/fsi-limits)\n- [Play: foreground service & full-screen intent requirements](https://support.google.com/googleplay/android-developer/answer/13392821?hl=en)\n- [Optimize for Doze and App Standby](https://developer.android.com/training/monitoring-device-state/doze-standby)\n- [App Standby Buckets](https://developer.android.com/topic/performance/appstandby)\n- [Power-management resource limits](https://developer.android.com/topic/performance/power/power-details)\n- [Notification channels](https://developer.android.com/develop/ui/views/notifications/channels)\n- [AudioAttributes (USAGE_ALARM)](https://developer.android.com/reference/android/media/AudioAttributes)\n- [NotificationManager (DND policy access)](https://developer.android.com/reference/android/app/NotificationManager)\n"
+ },
+ {
+  "topic": "WakePoint (Flutter Android transit wake-up alarm) \u2014 2026 SDK config, SDK_INT code guardrails, and per-device-class capability statement",
+  "headline": "Ship compileSdk/targetSdk 36, minSdk 24, Java/Kotlin 11 + desugaring, NDK r28 in the Groovy build.gradle (delete the dead .kts pair); the guaranteed 2h screen-off wake is delivered by USE_EXACT_ALARM + setAlarmClock() as the process-death-proof anchor, a pure location FGS, a PARTIAL_WAKE_LOCK, and (for a stationary sleeping rider's phone in deep Doze) a battery-optimization exemption framed around the foreground service \u2014 and on aggressive Indian OEMs the app is only WITH_SETUP, never FULLY, no matter how correct the code is.",
+  "version_matrix": [
+   {
+    "mechanism": "Google Play target API level requirement (new apps + all updates)",
+    "api_level": "API 35 in force since 31 Aug 2025; API 36 required 31 Aug 2026",
+    "behavior": "Play Console rejects any upload below the current floor. The active android/app/build.gradle is targetSdk 34 \u2014 ALREADY rejected today (Jul 2026). A single jump to 36 satisfies both the current rule and the 31 Aug 2026 bump with no second migration.",
+    "what_wakepoint_must_do": "In the Groovy android/app/build.gradle set targetSdkVersion 36 (compileSdk 36 is already correct). This is the single most urgent fix.",
+    "source_url": "https://developer.android.com/google/play/requirements/target-sdk"
+   },
+   {
+    "mechanism": "Duplicate build.gradle vs build.gradle.kts precedence",
+    "api_level": "N/A (Gradle tooling)",
+    "behavior": "When both a Groovy build.gradle and a Kotlin build.gradle.kts sit in the same directory, Gradle uses the Groovy file and silently ignores the .kts. Verified: settings.gradle is Groovy-only (no settings.gradle.kts), so the LIVE config is the Groovy pair (targetSdk 34, Java 1.8, namespace com.example.geowake2); the .kts pair (Java 11, com.geowake.app, flutter.* values) is dead code.",
+    "what_wakepoint_must_do": "Delete android/build.gradle.kts and android/app/build.gradle.kts, then fix the surviving Groovy android/app/build.gradle.",
+    "source_url": "https://docs.gradle.org/current/userguide/organizing_gradle_projects.html"
+   },
+   {
+    "mechanism": "google_mobile_ads (GMA SDK v24) minSdk floor",
+    "api_level": "API 23 (hard dependency floor)",
+    "behavior": "google_mobile_ads ^6.0.0 wraps GMA SDK 24.x which requires minSdk >= 23 or the manifest merger fails. This is the highest floor among WakePoint's plugins (maps/geolocator/in_app_purchase sit at 21).",
+    "what_wakepoint_must_do": "Replace minSdkVersion flutter.minSdkVersion with a literal 24 (floor is 23; 24 costs only ~0.4% reach for a clean modern base, 99.1% cumulative). Do NOT go below 23 while AdMob is included.",
+    "source_url": "https://ads-developers.googleblog.com/2025/02/announcing-android-google-mobile-ads.html"
+   },
+   {
+    "mechanism": "Java/Kotlin language level + core-library desugaring",
+    "api_level": "AGP 8.x baseline; flutter_local_notifications ^19 requires desugaring",
+    "behavior": "Active Groovy build is VERSION_1_8 / jvmTarget 1.8. flutter_local_notifications ^19 REQUIRES coreLibraryDesugaringEnabled regardless of Java level (already enabled with desugar_jdk_libs 2.1.4).",
+    "what_wakepoint_must_do": "Raise sourceCompatibility/targetCompatibility to VERSION_11 and kotlinOptions jvmTarget to '11' (matching Kotlin 2.1.10 from settings.gradle). Keep desugaring on.",
+    "source_url": "https://developer.android.com/studio/write/java8-support"
+   },
+   {
+    "mechanism": "16 KB memory page-size native (.so) alignment",
+    "api_level": "API 35 (enforced for apps targeting 35+ since 1 Nov 2025)",
+    "behavior": "Apps targeting 35+ must ship 64-bit native libs aligned to 16 KB ELF pages or they crash / are rejected on 16 KB-page devices (Pixel 8+/flagships). NDK r28+ compiles 16 KB-aligned by default; ndkVersion 28.2.13676358 is already set.",
+    "what_wakepoint_must_do": "Keep NDK r28. Update every native plugin (sensors_plus, geolocator, google_maps_flutter, google_mobile_ads, vibration, connectivity_plus, battery_plus) to 16 KB-compliant releases and verify the release AAB .so files with check-elf-alignment before upload.",
+    "source_url": "https://developer.android.com/guide/practices/page-sizes"
+   },
+   {
+    "mechanism": "Edge-to-edge display enforcement",
+    "api_level": "API 35 (opt-out allowed) / API 36 (opt-out removed)",
+    "behavior": "At targetSdk 36 the windowOptOutEdgeToEdgeEnforcement attribute is ignored; content can render under the status/nav bars.",
+    "what_wakepoint_must_do": "Because you target 36, do NOT rely on opt-out. Wrap Flutter UI in SafeArea and set SystemChrome.setSystemUIOverlayStyle so the full-screen alarm and map controls are not hidden behind system bars.",
+    "source_url": "https://developer.android.com/about/versions/16/behavior-changes-16"
+   },
+   {
+    "mechanism": "WAKE_LOCK permission + PARTIAL_WAKE_LOCK (CPU awake, screen off)",
+    "api_level": "API 24+ (WAKE_LOCK is a normal permission, all levels)",
+    "behavior": "Non-wake-up accel/gyro (the sensors_plus defaults) do NOT hold a wake lock; when the SoC suspends, events are batched into a FIFO and the oldest are dropped. The app MUST hold its own PARTIAL_WAKE_LOCK to keep 50-100Hz real-time delivery. VERIFIED MISSING from the current manifest.",
+    "what_wakepoint_must_do": "Add <uses-permission android:name=\"android.permission.WAKE_LOCK\"/> and hold a single reference-counted PARTIAL_WAKE_LOCK inside the native FGS for the whole ride (use acquire(2.5h) safety timeout so a crashed release path can't pin the CPU). Register accel+gyro with maxReportLatencyUs=0 (no batching).",
+    "source_url": "https://developer.android.com/develop/background-work/background-tasks/awake/wakelock/set"
+   },
+   {
+    "mechanism": "Deep Doze IGNORES wake locks; battery-optimization exemption restores them",
+    "api_level": "API 23+ (Doze); light Doze API 24+",
+    "behavior": "Deep Doze (unplugged + screen-off + STATIONARY) suspends the SoC and IGNORES held wake locks, dropping sensor events and blocking GPS. A sleeping rider's phone lying still on a lap/seat CAN hit deep Doze mid-ride. Only a battery-optimization exemption (isIgnoringBatteryOptimizations()==true) keeps a PARTIAL_WAKE_LOCK effective in Doze. Light Doze (API 24+, triggered by screen-off even while moving) does NOT ignore wake locks, so a genuinely moving train is the lucky case \u2014 but you cannot depend on continuous motion.",
+    "what_wakepoint_must_do": "Design for deep Doze: guide the user to a battery-optimization exemption FRAMED AROUND THE 2h LOCATION FOREGROUND SERVICE (not the alarm). Prefer the non-restricted ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS list; only use the direct ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS prompt cautiously. Gate the ride-arm UI on the exemption and warn loudly if absent. Never rely on 'the train is moving' to save you.",
+    "source_url": "https://developer.android.com/training/monitoring-device-state/doze-standby"
+   },
+   {
+    "mechanism": "USE_EXACT_ALARM + setAlarmClock() \u2014 the guaranteed, Doze-immune, process-death-proof fire",
+    "api_level": "USE_EXACT_ALARM API 33+ (auto-granted, un-revokable, alarm-app only); SCHEDULE_EXACT_ALARM API 31-32",
+    "behavior": "setAlarmClock() is the only alarm API that is precise, Doze-immune, not rate-limited, pierces every App Standby bucket, and lives in the system AlarmManager (survives the app process being killed). USE_EXACT_ALARM is un-revokable on 33+ and also exempts the app from the harsh Restricted App Standby bucket. SCHEDULE_EXACT_ALARM is DENIED by default on Android 14+, so do not depend on it. Both exact-alarm perms are VERIFIED MISSING from the manifest.",
+    "what_wakepoint_must_do": "Add USE_EXACT_ALARM (no maxSdk) AND SCHEDULE_EXACT_ALARM android:maxSdkVersion=32. Pre-arm the terminal wake at ride start via setAlarmClock(AlarmClockInfo(triggerAtMillis, showIntent), opPi) so it fires even if the FGS is killed. Guard: if (SDK_INT < 31 || alarmManager.canScheduleExactAlarms()) setAlarmClock else route to ACTION_REQUEST_SCHEDULE_EXACT_ALARM. File the Play restricted-permission declaration (alarm) with a demo video.",
+    "source_url": "https://developer.android.com/about/versions/14/changes/schedule-exact-alarms"
+   },
+   {
+    "mechanism": "Foreground service TYPE \u2014 use location ONLY, drop mediaPlayback",
+    "api_level": "API 34 (types mandatory + matching permission) / API 35 (BOOT_COMPLETED bans + timeouts)",
+    "behavior": "location FGS has NO Android-15 timeout (dataSync/mediaProcessing are capped 6h/24h) AND is NOT banned from BOOT_COMPLETED. mediaPlayback is banned from BOOT_COMPLETED on API 35+ (throws ForegroundServiceStartNotAllowedException on reboot restart) and forces a second, hard-to-justify Play FGS declaration. The current manifest declares location|mediaPlayback.",
+    "what_wakepoint_must_do": "Change the service foregroundServiceType to \"location\" only (remove |mediaPlayback) and drop FOREGROUND_SERVICE_MEDIA_PLAYBACK. Keep FOREGROUND_SERVICE + FOREGROUND_SERVICE_LOCATION. Ensure ACCESS_FINE_LOCATION is granted and location services are ON before startForeground on SDK_INT>=34, or catch SecurityException. Never let flutter_background_service default to dataSync.",
+    "source_url": "https://developer.android.com/about/versions/15/changes/foreground-service-types"
+   },
+   {
+    "mechanism": "Incremental background-location grant + prominent disclosure",
+    "api_level": "API 29 (ACCESS_BACKGROUND_LOCATION) / API 30 (Settings-only, separate request)",
+    "behavior": "On API 30+ the runtime dialog drops 'Allow all the time'; requesting foreground+background in the same call grants NEITHER. Background must be requested AFTER foreground is granted and the OS deep-links to Settings. A location FGS created while backgrounded needs ACCESS_BACKGROUND_LOCATION on API 34+ or it loses location access.",
+    "what_wakepoint_must_do": "Two-step flow guarded by SDK_INT>=30: request ACCESS_FINE(+COARSE) first, then separately request ACCESS_BACKGROUND_LOCATION with in-app UI explaining 'Allow all the time'. Re-check permission at every ride start (one-time grants and auto-reset can silently drop it). File the Play background-location declaration + prominent disclosure + video.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/location/permissions"
+   },
+   {
+    "mechanism": "Approximate vs precise location toggle",
+    "api_level": "API 31 (Android 12)",
+    "behavior": "Even when FINE is requested the user can grant only Approximate (coarse). A metro-stop wake-up cannot rely on approximate location.",
+    "what_wakepoint_must_do": "Keep both ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION (present). On SDK_INT>=31 detect FINE-requested-but-only-COARSE-granted and surface a blocking 'Precise location required' prompt.",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/location/permissions/runtime"
+   },
+   {
+    "mechanism": "POST_NOTIFICATIONS runtime permission",
+    "api_level": "API 33 (Android 13)",
+    "behavior": "On 33+ the FGS/alarm notification is hidden if the user denies POST_NOTIFICATIONS. You do NOT need it to start the FGS, but a hidden ongoing notification breaks the FGS contract and user trust.",
+    "what_wakepoint_must_do": "Request POST_NOTIFICATIONS at runtime only when SDK_INT>=33 (permission already in manifest). Treat denial as serious degradation but keep the full-screen-intent alarm + USAGE_ALARM audio firing regardless.",
+    "source_url": "https://developer.android.com/develop/ui/views/notifications/notification-permission"
+   },
+   {
+    "mechanism": "USE_FULL_SCREEN_INTENT restricted to alarm/calling apps",
+    "api_level": "API 34 (special app-access appop; Play enforced 22 Jan 2025) / reaffirmed 35 & 36",
+    "behavior": "On 34+ FSI becomes an appop; only declared alarm/calling apps keep the default grant. When granted, FSI launches full-screen in EVERY state (unlocked, locked, screen-off, AOD); when denied it degrades to a 60s heads-up. WakePoint qualifies as an alarm app.",
+    "what_wakepoint_must_do": "Keep USE_FULL_SCREEN_INTENT (present). Guard: if (SDK_INT<34 || notificationManager.canUseFullScreenIntent()) post FSI; else launch ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT and still fire a max-importance heads-up + looping USAGE_ALARM audio. File the Play FSI declaration (alarm). Never let a denied FSI mean silence.",
+    "source_url": "https://source.android.com/docs/core/permissions/fsi-limits"
+   },
+   {
+    "mechanism": "Notification channel immutability + alarm audio through silent/vibrate + DND bypass",
+    "api_level": "API 26 (channels) / 23+ (policy access) / 31+ (per-channel)",
+    "behavior": "Channel importance/sound/DND-bypass are immutable after creation. Audio with AudioAttributes USAGE_ALARM routes to the alarm stream and rings through silent/vibrate but does NOT override DND unless the channel bypasses it. setBypassDnd(true) only works if the app holds ACCESS_NOTIFICATION_POLICY, which the USER must grant. ACCESS_NOTIFICATION_POLICY is VERIFIED MISSING.",
+    "what_wakepoint_must_do": "Create channel 'wake_alarm_v1' once: IMPORTANCE_HIGH, setSound(alarmUri, USAGE_ALARM+CONTENT_TYPE_SONIFICATION), setBypassDnd(true), post with CATEGORY_ALARM; bump the id if you must change sound later. Add ACCESS_NOTIFICATION_POLICY and, in onboarding, if !isNotificationPolicyAccessGranted() launch ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS. Treat DND bypass as best-effort; USAGE_ALARM already rings through silent/vibrate.",
+    "source_url": "https://developer.android.com/develop/ui/views/notifications/channels"
+   },
+   {
+    "mechanism": "200 Hz sensor cap + HIGH_SAMPLING_RATE_SENSORS; ACTIVITY_RECOGNITION",
+    "api_level": "API 31 (200 Hz cap) / API 29 (ACTIVITY_RECOGNITION)",
+    "behavior": "Above 200 Hz throws SecurityException without HIGH_SAMPLING_RATE_SENSORS. WakePoint targets 50-100 Hz (below the cap) so the permission is unnecessary. Raw accel/gyro do NOT need ACTIVITY_RECOGNITION; only the step counter / Activity Transition API does. Both permissions are present in the manifest but unused. The mic-privacy toggle being OFF rate-limits motion sensors regardless.",
+    "what_wakepoint_must_do": "Remove HIGH_SAMPLING_RATE_SENSORS and ACTIVITY_RECOGNITION unless you actually exceed 200 Hz or call activity transitions (each is a needless permission / onboarding-friction risk). Keep sensor rate <=100 Hz. At runtime log the delivered rate and soft-warn if it collapses (mic toggle off).",
+    "source_url": "https://developer.android.com/develop/sensors-and-location/sensors/sensors_overview"
+   },
+   {
+    "mechanism": "Background FGS-start restriction + boot restart",
+    "api_level": "API 31 (ForegroundServiceStartNotAllowedException) / API 35 (boot type bans)",
+    "behavior": "On 31+ you cannot startForegroundService from the background except via exemptions (visible activity, exact alarm firing, notification tap, BOOT_COMPLETED, battery-opt off, etc.). On 35+ a pure location FGS CAN be started from BOOT_COMPLETED (mediaPlayback/dataSync cannot). RECEIVE_BOOT_COMPLETED is VERIFIED MISSING.",
+    "what_wakepoint_must_do": "Start the service from a visible activity ('Start ride'); for later/rebooted restarts use the pre-armed exact alarm or a notification tap. Add RECEIVE_BOOT_COMPLETED + a receiver ONLY if you need reboot restart, and start the location-type service only. Always wrap startForegroundService in try/catch for ForegroundServiceStartNotAllowedException and SecurityException, guarded by SDK_INT>=31.",
+    "source_url": "https://developer.android.com/develop/background-work/services/fgs/restrictions-bg-start"
+   },
+   {
+    "mechanism": "Jobs under a FGS obey job quotas",
+    "api_level": "API 36 (Android 16, all apps)",
+    "behavior": "On Android 16 JobScheduler/WorkManager jobs running concurrently with a FGS are subject to normal runtime quotas (previously effectively exempt). The location FGS itself is unaffected.",
+    "what_wakepoint_must_do": "Keep sensor streaming and location logic INSIDE the foreground service, not in a piggybacking WorkManager/JobScheduler job, or it may be throttled on Android 16. No SDK_INT guard needed.",
+    "source_url": "https://developer.android.com/about/versions/16/behavior-changes-all"
+   }
+  ],
+  "device_class_requirements": [
+   {
+    "device_class": "Mainstream GMS Android \u2014 Pixel / recent Samsung / stock, API 24-36, 3GB+ RAM",
+    "works": "FULLY",
+    "requirements": "Works as intended with no user tinkering beyond standard permission prompts. Requires: targetSdk 36 build, USE_EXACT_ALARM + setAlarmClock terminal fire, pure location FGS, WAKE_LOCK/PARTIAL_WAKE_LOCK, ACCESS_FINE + BACKGROUND_LOCATION granted (two-step), POST_NOTIFICATIONS granted, USE_FULL_SCREEN_INTENT (auto-granted alarm app). Because the location FGS has no timeout and setAlarmClock pierces Doze, the 2h screen-off wake is reliable. NOTE Samsung specifically edges toward WITH_SETUP: its 'Sleeping apps / Deep sleeping apps' list can suspend the continuous sensor/location service over 2h, so add WakePoint to 'Never sleeping apps' \u2014 the alarm fires regardless, but the live tracking is fragile without it."
+   },
+   {
+    "device_class": "Aggressive-OEM Android \u2014 Xiaomi MIUI/HyperOS, Oppo/Realme/OnePlus ColorOS-OxygenOS, Vivo/iQOO Funtouch, Transsion (Tecno/Infinix/itel) \u2014 dominant in India",
+    "works": "WITH_SETUP",
+    "requirements": "These OS-level killers act independently of the Android version and are the single biggest product-death risk. The pre-armed setAlarmClock terminal fire generally still rings (OEMs whitelist their own alarm subsystem), but the 2h location FGS + 50-100Hz sensor stream is routinely killed. The user MUST, via an in-app onboarding wizard that deep-links per-OEM (device_info_plus + android_intent_plus): (1) enable Autostart / Auto-launch / Startup Manager, (2) set battery to 'No restrictions / Unrestricted', (3) lock the app in recents. USE_FULL_SCREEN_INTENT is essential because these skins suppress heads-up notifications. HONEST LIMIT: some OEM/firmware combos ignore even these settings; the pre-armed system alarm is the fallback that still wakes the rider even if live tracking dies mid-ride."
+   },
+   {
+    "device_class": "Android Go / low-RAM (2GB) budget India phones, Android 11-15",
+    "works": "WITH_SETUP",
+    "requirements": "High memory pressure makes the OS kill the FGS and sensor stream aggressively over a 2h screen-off ride. Reliability anchor is the pre-armed setAlarmClock (lives in system AlarmManager, not the app process) so a killed process still wakes the rider. Requires battery-optimization exemption, a persistent high-importance FGS notification, and a lightweight service (throttle/batch sensor capture away from the stop, avoid heavy allocation). 50-100Hz is within budget and needs no HIGH_SAMPLING_RATE_SENSORS. Live approach-detection quality degrades but the terminal wake is preserved."
+   },
+   {
+    "device_class": "No-gyroscope phones (many sub-$100 India SKUs)",
+    "works": "DEGRADED",
+    "requirements": "The app still wakes the rider: GPS/location proximity + accelerometer dead-reckoning drive the trigger, and setAlarmClock fires the alarm. What is lost is gyro-fused orientation/dead-reckoning accuracy between GPS fixes, so tunnel/underground segments and tight stop-spacing are less precise. WakePoint must detect gyroscope absence at runtime (sensors_plus) and fall back to an accel-plus-GPS-only estimator with a wider safety margin (wake slightly earlier). Never assume a gyro is present."
+   },
+   {
+    "device_class": "Huawei / Honor and other no-GMS / AOSP / de-Googled phones",
+    "works": "DEGRADED",
+    "requirements": "Core wake path works fully OFFLINE: setAlarmClock exact alarm, sensors_plus, location FGS, USAGE_ALARM audio, vibration, full-screen intent \u2014 none require Play Services, and there is no Play policy gating on the OS itself. What breaks: google_maps_flutter, google_places_flutter, google_mobile_ads, in_app_purchase, and fused/GMS-backed location all fail without GMS, and there is NO FCM re-wake for a killed process. Required fallbacks: raw ACCESS_FINE_LOCATION via platform LocationManager instead of fused (lower accuracy, slower fixes); an alternate map/geocoder (the project already bundles assets/osm/); disable ads/IAP; and self-contained scheduling that never depends on network/FCM. Treat all GMS features as optional and never on the alarm-critical path. Some AOSP forks pre-deny exact alarms \u2014 verify canScheduleExactAlarms() on-device."
+   },
+   {
+    "device_class": "iOS (planned)",
+    "works": "UNSUPPORTED",
+    "requirements": "HONEST UN-CLOSABLE CASE for the current 'CPU-awake, 50-100Hz sensors, screen-off for 2h, guaranteed audible alarm' architecture. iOS does not grant an equivalent to a long-lived location foreground service with a partial wake lock and high-rate background sensor streaming; background execution is suspended and there is no user-facing alarm API that fires arbitrary audio from a killed/suspended app. A partial iOS product is buildable but architecturally different (region-monitoring / significant-location-change wake-ups, local notifications with a critical-alert entitlement requiring Apple approval, no continuous high-rate IMU in the background) and cannot promise the same on-time, screen-off guarantee. Do not represent iOS as delivering the Android feature set; scope it as a separate, reduced design or defer it."
+   }
+  ],
+  "wakepoint_actions": [
+   "GRADLE (Groovy android/app/build.gradle): targetSdkVersion 34 -> 36 (URGENT \u2014 34 is already Play-rejected); replace minSdkVersion flutter.minSdkVersion -> 24; sourceCompatibility/targetCompatibility VERSION_1_8 -> VERSION_11; kotlinOptions jvmTarget '1.8' -> '11'; keep compileSdk 36, ndkVersion 28.2.13676358, coreLibraryDesugaringEnabled true + desugar_jdk_libs 2.1.4.",
+   "DELETE android/build.gradle.kts and android/app/build.gradle.kts \u2014 verified dead code (settings.gradle is Groovy-only). Then unify identity: move namespace off com.example.geowake2 to com.geowake.app in the surviving Groovy build (applicationId is already com.geowake.app).",
+   "MANIFEST \u2014 ADD the missing permissions: WAKE_LOCK (CPU awake \u2014 currently missing, a direct product-death gap), USE_EXACT_ALARM (no maxSdk) + SCHEDULE_EXACT_ALARM android:maxSdkVersion=32, ACCESS_NOTIFICATION_POLICY (DND bypass), and RECEIVE_BOOT_COMPLETED (only if you implement reboot restart).",
+   "MANIFEST \u2014 CHANGE the FGS type: android:foregroundServiceType=\"location\" only (remove |mediaPlayback) and remove FOREGROUND_SERVICE_MEDIA_PLAYBACK. location has no Android-15 timeout and is boot-restart-legal; mediaPlayback adds zero lifetime, is banned from BOOT_COMPLETED, and forces an unjustifiable Play declaration.",
+   "MANIFEST \u2014 REMOVE the unused permissions ACTIVITY_RECOGNITION and HIGH_SAMPLING_RATE_SENSORS (raw accel/gyro at <=100Hz need neither; each is needless onboarding friction / permission-profile bloat). Keep ACCESS_FINE + ACCESS_COARSE + ACCESS_BACKGROUND_LOCATION, FOREGROUND_SERVICE + FOREGROUND_SERVICE_LOCATION, POST_NOTIFICATIONS, USE_FULL_SCREEN_INTENT, INTERNET.",
+   "ALARM ARCHITECTURE \u2014 pre-arm AlarmManager.setAlarmClock(AlarmClockInfo(triggerAtMillis, showIntent), opPi) at ride start as the guaranteed, Doze-immune, process-death-proof terminal fire. Do NOT use setExact/setExactAndAllowWhileIdle/WorkManager for the wake. Guard with canScheduleExactAlarms() on SDK_INT>=31.",
+   "WAKELOCK \u2014 hold a single reference-counted PARTIAL_WAKE_LOCK inside the native location FGS for the whole ride (acquire with a ~2.5h safety timeout); register accel+gyro with maxReportLatencyUs=0 (no batching) for real-time delivery.",
+   "BATTERY EXEMPTION \u2014 because a stationary sleeping rider's phone hits deep Doze (which ignores wake locks), guide users to a battery-optimization exemption FRAMED AROUND THE FOREGROUND SERVICE via the non-restricted ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS, plus per-OEM autostart deep-links. Do not hard-depend on the restricted direct-prompt for the alarm.",
+   "NOTIFICATIONS/AUDIO \u2014 create channel 'wake_alarm_v1' once: IMPORTANCE_HIGH, USAGE_ALARM + CONTENT_TYPE_SONIFICATION sound (rings through silent/vibrate), setBypassDnd(true), CATEGORY_ALARM; loop the sound yourself. Separate low-importance channel for the ongoing FGS notice. Channel settings are immutable \u2014 bump the id to change them.",
+   "SDK_INT GUARDS (implement all): >=30 two-step location request (foreground then background via Settings, never bundled); >=31 canScheduleExactAlarms() before setAlarmClock, approximate-only detection, try/catch ForegroundServiceStartNotAllowedException; >=33 request POST_NOTIFICATIONS; >=34 canUseFullScreenIntent() gate with heads-up fallback, ACCESS_BACKGROUND_LOCATION verified before background FGS start; every newer permission no-ops below its level.",
+   "EDGE-TO-EDGE (mandatory at target 36) \u2014 wrap all screens in SafeArea and set SystemChrome.setSystemUIOverlayStyle so the full-screen alarm and map controls are not hidden under status/nav bars.",
+   "BUILD OEM-BATTERY ONBOARDING WIZARD (device_info_plus + android_intent_plus) deep-linking Xiaomi Autostart, Oppo/Vivo/Realme auto-launch, Samsung 'Never sleeping apps' \u2014 the single biggest reliability lever for the India-first market, independent of Android version.",
+   "GRACEFUL DEGRADATION \u2014 detect gyroscope absence and no-GMS at runtime; fall back to accel+GPS-only estimation (wider safety margin) and platform LocationManager instead of fused location, and disable ads/IAP/maps on no-GMS. Keep all GMS features off the alarm-critical path.",
+   "PLAY CONSOLE \u2014 file all declarations before upload: Foreground Service (location type, 2h screen-off justification + video), Background Location (prominent in-app disclosure + video + privacy policy), exact-alarm restricted-permission (alarm), and full-screen-intent (alarm). Missing declarations = policy rejection even with correct SDK config.",
+   "PRE-RELEASE HYGIENE \u2014 replace the hardcoded Google Maps dev key in build.gradle defaultConfig and the AdMob TEST app-id (ca-app-pub-3940256099942544~3347511713) in the manifest with real IDs via key.properties; add a real release signingConfig (currently none in the Groovy release block). Confirmed no Firebase in pubspec, so no Firebase Gradle plugin is needed."
+  ],
+  "report_markdown": "## WakePoint \u2014 Unified 2026 SDK config, code guardrails & per-device-class capability\n\nSynthesis of five compatibility research outputs, cross-checked against the live project files (`android/app/build.gradle`, the dead `.kts` pair, `AndroidManifest.xml`, `pubspec.yaml`).\n\n---\n\n### 1. RECOMMENDED gradle SDK config\n\nEdit the **Groovy** `android/app/build.gradle` (the live file \u2014 Gradle ignores the `.kts` when both exist, and `settings.gradle` is Groovy-only so there is no `.kts` fallback):\n\n```groovy\nandroid {\n    namespace \"com.geowake.app\"          // move off com.example.geowake2\n    compileSdk 36                         // already correct\n    ndkVersion \"28.2.13676358\"            // NDK r28 -> 16 KB-aligned by default (keep)\n\n    defaultConfig {\n        applicationId \"com.geowake.app\"\n        minSdkVersion 24                  // floor is 23 (AdMob GMA v24); 24 = 99.1% reach\n        targetSdkVersion 36               // was 34 -> ALREADY Play-rejected; 36 future-proofs\n        versionCode 1\n        versionName \"1.0.0\"\n    }\n    compileOptions {\n        coreLibraryDesugaringEnabled true            // REQUIRED by flutter_local_notifications ^19\n        sourceCompatibility JavaVersion.VERSION_11   // was VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_11\n    }\n    kotlinOptions { jvmTarget = \"11\" }               // was \"1.8\"; match Kotlin 2.1.10\n    buildTypes {\n        release {\n            minifyEnabled true\n            shrinkResources true\n            signingConfig signingConfigs.release      // add a REAL release signing config\n            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'\n        }\n    }\n}\ndependencies { coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4' }\n```\n\n| Setting | Value | Justification |\n|---|---|---|\n| compileSdk | **36** | Compile against Android 16 APIs; required for targetSdk 36. Already set. |\n| targetSdk | **36** | Play floor is 35 since 31 Aug 2025 and **36 from 31 Aug 2026**. Live value `34` is rejected today. One jump = one migration. |\n| minSdk | **24** | Hard floor **23** (google_mobile_ads \u2192 GMA SDK v24). 24 keeps 99.1% reach for a clean base. Replaces `flutter.minSdkVersion`. |\n| Java src/tgt | **11** | AGP 8.9.2 baseline; keep desugaring for flutter_local_notifications ^19. Live value is 1.8. |\n| Kotlin jvmTarget | **11** | Must match Java. Live value is 1.8. |\n| NDK | **r28** (28.2.13676358) | 16 KB page alignment (mandatory for targetSdk 35+). Already set. |\n\n**Build-file resolution (VERIFIED):** the live config is the Groovy pair; the `.kts` pair (Java 11, `com.geowake.app`, `flutter.*` values) is dead code and a maintenance trap. **Delete `android/build.gradle.kts` and `android/app/build.gradle.kts`.** Confirmed by the presence of a Groovy-only `settings.gradle`.\n\n---\n\n### 2. CODE GUARDRAILS CHECKLIST \u2014 every `Build.VERSION.SDK_INT` branch\n\n| SDK_INT | Guard | Do |\n|---|---|---|\n| **>= 30** | Background-location split | Request `ACCESS_FINE`(+COARSE) first; only after grant, separately request `ACCESS_BACKGROUND_LOCATION` (OS opens Settings). Never bundle \u2014 bundling grants neither. Re-check at every ride start (one-time grants + auto-reset drop silently). |\n| **>= 31** | Exact-alarm gate | `if (SDK_INT < 31 \\|\\| alarmManager.canScheduleExactAlarms()) setAlarmClock(...) else startActivity(ACTION_REQUEST_SCHEDULE_EXACT_ALARM)`. With `USE_EXACT_ALARM` declared this returns true on 33+. |\n| **>= 31** | Approximate-only location | Detect FINE-requested-but-COARSE-granted; block with \"Precise location required\". |\n| **>= 31** | Background FGS start | Wrap `startForegroundService` in try/catch for `ForegroundServiceStartNotAllowedException`; only (re)start from a visible activity, exact-alarm fire, notification tap, or BOOT_COMPLETED. |\n| **>= 33** | Notifications | Request `POST_NOTIFICATIONS` at runtime (no-op below 33). |\n| **>= 34** | Full-screen intent | `if (SDK_INT < 34 \\|\\| nm.canUseFullScreenIntent()) postFSI() else { startActivity(ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT); post max-importance heads-up + looping USAGE_ALARM audio }`. Denied FSI must never mean silence. |\n| **>= 34** | Location FGS prereq | Verify `ACCESS_FINE_LOCATION` granted + location services ON + `ACCESS_BACKGROUND_LOCATION` for background start, before `startForeground`, else catch `SecurityException`. |\n| **>= 35** | FGS type | Start service as **`location`** only from BOOT_COMPLETED (mediaPlayback/dataSync are boot-banned). |\n| **all** | Doze/wake lock | Hold `PARTIAL_WAKE_LOCK`; gate ride-arm on `isIgnoringBatteryOptimizations()` and warn if false (deep Doze ignores wake locks). |\n| **all** | Sensors | Register accel+gyro at <=100 Hz, `maxReportLatencyUs=0`; detect gyro absence \u2192 accel+GPS fallback; log delivered rate (mic-toggle-off throttles). Keep sensor+location work INSIDE the FGS (Android 16 job quotas). |\n\n---\n\n### 3. PER-DEVICE-CLASS capability statement (for founder \u2192 users/investors)\n\n- **Mainstream Android (Pixel / recent Samsung / stock) \u2014 FULLY.** Wakes reliably with only standard permission prompts. The no-timeout location service + Doze-piercing `setAlarmClock` deliver the 2h screen-off guarantee. *Samsung caveat:* add WakePoint to \"Never sleeping apps\" so live tracking survives (the alarm fires either way).\n- **Aggressive-OEM Android (Xiaomi, Oppo, Vivo, Realme, OnePlus, Transsion) \u2014 WITH_SETUP.** The dominant India class and the top product-death risk. The pre-armed system alarm still rings, but the live tracking service is killed unless the user enables **Autostart**, sets battery to **Unrestricted**, and **locks the app in recents** \u2014 driven by an in-app OEM onboarding wizard. Honest limit: some firmware ignores even these; the system-level pre-armed alarm is the safety net.\n- **Android Go / low-RAM (2GB) \u2014 WITH_SETUP.** Memory pressure kills the service; the pre-armed `setAlarmClock` (in system AlarmManager, not the app process) is the anchor. Needs battery exemption, a lightweight throttled/batched service, and a persistent notification. Live accuracy degrades; the wake is preserved.\n- **No-gyroscope phones \u2014 DEGRADED.** Still wakes the rider via GPS + accelerometer + alarm; loses gyro-fused precision between fixes (tunnels, tight stops). App detects gyro absence and widens the safety margin (wakes slightly earlier).\n- **Huawei/Honor & no-GMS/AOSP \u2014 DEGRADED.** The entire wake path works **offline** (exact alarm, sensors, location FGS, alarm audio, vibration, full-screen intent). Maps, Places, Ads, IAP, fused location, and FCM re-wake all fail \u2014 require raw LocationManager + bundled OSM assets + disabled monetization, all kept off the alarm-critical path. Some forks pre-deny exact alarms; verify on-device.\n- **iOS \u2014 UNSUPPORTED (honest, un-closable for this architecture).** iOS gives no equivalent to a long-lived location foreground service + partial wake lock + high-rate background IMU + arbitrary alarm audio from a suspended app. A reduced iOS product (region monitoring, significant-location-change, critical-alert local notifications needing Apple approval) is possible but cannot make the same on-time screen-off promise. Scope separately or defer; do not represent it as feature-parity.\n\n---\n\n### HARD FACT vs INFERENCE\n- **HARD FACT (official docs):** Play target-API floors (35 now / 36 by 31 Aug 2026); 16 KB alignment for targetSdk 35+; edge-to-edge at 36; FGS types + per-type permission (34); location FGS has no timeout and is boot-restart-legal while mediaPlayback/dataSync are boot-banned (35); `SCHEDULE_EXACT_ALARM` denied by default on 14; `USE_EXACT_ALARM` un-revokable + Restricted-bucket exemption (33); FSI appop for alarm/calling apps (34); deep Doze ignores wake locks; non-wake-up sensors don't hold a wake lock; 200 Hz cap (31); GMA v24 minSdk 23; Groovy-over-`.kts` precedence.\n- **INFERENCE / field consensus:** `setAlarmClock` not being bucket-throttled (consistent with its Doze exemption though not named in the power table); OEM battery-killer severity ranking and OEM alarm-whitelisting behavior (empirical, not documented by Android); the API-36 \u2192 31 Aug 2026 date (Google's rolling annual policy, widely reported) \u2014 targeting 36 is strictly safe either way.\n\n### Key files\n- `/home/raed/Projects/WakePoint/android/app/build.gradle` (fix SDK/Java/Kotlin/minSdk/namespace)\n- `/home/raed/Projects/WakePoint/android/build.gradle.kts` + `/home/raed/Projects/WakePoint/android/app/build.gradle.kts` (delete)\n- `/home/raed/Projects/WakePoint/android/app/src/main/AndroidManifest.xml` (add WAKE_LOCK / USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM@maxSdk32 / ACCESS_NOTIFICATION_POLICY / RECEIVE_BOOT_COMPLETED; change FGS type to location-only + drop FOREGROUND_SERVICE_MEDIA_PLAYBACK; remove ACTIVITY_RECOGNITION + HIGH_SAMPLING_RATE_SENSORS; replace test AdMob id)"
+ }
+]

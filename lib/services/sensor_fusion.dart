@@ -142,6 +142,13 @@ class SensorFusionManager {
       position.longitude,
     );
     if (sGps != null && sGps.isFinite) {
+      // E1: only a VALID on-route fix marks GPS "alive". An off-route/phantom
+      // fix (projection NaN) must NOT refresh this clock — otherwise a burst of
+      // off-route fixes keeps the EKF out of degraded dead-reckoning even though
+      // none of them ever update the filter (it discards NaN projections).
+      // Frozen-phantom + off-route rejection itself lives in
+      // EkfOrchestrator.onGpsFixAuto so production and the replay harness share it.
+      _lastGpsFixTs = timestamp;
       final leg = _legForProgress(sGps);
       if (leg != null) {
         ekf.setStationContext(
@@ -171,17 +178,35 @@ class SensorFusionManager {
   StreamSubscription? _gyroscopeSubscription;
   GyroscopeEvent? _lastGyro;
   Stopwatch? _imuClock;
+  // G21: no-gyroscope detection. If no gyro sample arrives during a warm-up
+  // window of accel samples, the device has no gyro (common on budget phones).
+  int _accelSampleCount = 0;
+  bool _noGyroDeclared = false;
+  // E1: IMU-clock timestamp of the last real GPS fix. Used to transition the
+  // EKF to DEGRADED mode when GPS goes silent (tunnels) — without this the
+  // orchestrator never enters degraded DR in production.
+  Duration? _lastGpsFixTs;
+  static const Duration _noFixDegradeThreshold = Duration(seconds: 3);
+  Duration? _lastGpsUnavailableTs;
 
   /// Starts sensor fusion by listening to accelerometer events.
   void startFusion() {
     try {
       _imuClock ??= Stopwatch()..start();
       _lastGyro = null;
+      _accelSampleCount = 0; // G21: restart no-gyro detection each session
+      _noGyroDeclared = false;
+      _lastGpsFixTs = null; // E1: restart GPS-silence tracking each session
+      _lastGpsUnavailableTs = null;
 
       // Lazily resolve the default sensors stream so unit/widget tests that
       // don't have the plugin registered don't throw during construction.
       final Stream<AccelerometerEvent> stream =
-          (accelerometerStream ?? accelerometerEvents).handleError((_) {});
+          (accelerometerStream ??
+                  accelerometerEventStream(
+                    samplingPeriod: SensorInterval.gameInterval,
+                  ))
+              .handleError((_) {});
 
       _accelerometerSubscription = stream.listen(
         (AccelerometerEvent event) {
@@ -221,6 +246,20 @@ class SensorFusionManager {
 
           final ekf = _ekfOrchestrator;
           if (ekf != null) {
+            // G21: detect a gyroscope-less device. If no gyro sample has arrived
+            // after a ~2s warm-up (100 accel samples @ ~50Hz), the device has no
+            // gyro; a missing gyro otherwise reads as "perfectly quiet" and
+            // over-triggers ZUPT/stationary. Tell the filter so it keeps σs
+            // honest (wider floor → the critical-fractile fires earlier = safe).
+            if (!_noGyroDeclared) {
+              _accelSampleCount++;
+              if (_lastGyro != null) {
+                _noGyroDeclared = true; // gyro present; stop checking
+              } else if (_accelSampleCount >= 100) {
+                _noGyroDeclared = true;
+                ekf.setNoGyro(true);
+              }
+            }
             final timestamp = Duration(
               microseconds:
                   _imuClock?.elapsedMicroseconds ??
@@ -229,6 +268,17 @@ class SensorFusionManager {
             final gx = _lastGyro?.x ?? 0.0;
             final gy = _lastGyro?.y ?? 0.0;
             final gz = _lastGyro?.z ?? 0.0;
+            // E1: if GPS has gone silent past the threshold, notify the EKF so
+            // it enters DEGRADED mode (honest σ growth + DR damping). Throttled
+            // so we don't re-notify on every 50Hz sample.
+            if (_lastGpsFixTs != null &&
+                (timestamp - _lastGpsFixTs!) > _noFixDegradeThreshold &&
+                (_lastGpsUnavailableTs == null ||
+                    (timestamp - _lastGpsUnavailableTs!) >
+                        const Duration(milliseconds: 500))) {
+              _lastGpsUnavailableTs = timestamp;
+              ekf.onGpsUnavailable(timestamp);
+            }
             ekf.onImuSample(
               ImuSample(
                 ax: event.x,
@@ -252,7 +302,9 @@ class SensorFusionManager {
         cancelOnError: true,
       );
 
-      final gyroStream = gyroscopeStream ?? gyroscopeEvents;
+      final gyroStream =
+          gyroscopeStream ??
+          gyroscopeEventStream(samplingPeriod: SensorInterval.gameInterval);
       _gyroscopeSubscription = gyroStream
           .handleError((_) {})
           .listen(

@@ -27,6 +27,10 @@ class EkfPipeline {
   EkfMode _mode = EkfMode.surface;
   MotionState _motion = MotionState.vehicle;
   bool _allowReverse = true;
+  // G21: set when the device has no gyroscope (common on budget phones). A
+  // missing gyro reads as "perfectly quiet", so we raise the σs floor to keep
+  // reported uncertainty honest (→ the critical-fractile fires earlier = safe).
+  bool _noGyro = false;
 
   double _s = double.nan;
   double _v = double.nan;
@@ -79,6 +83,11 @@ class EkfPipeline {
     _allowReverse = allow;
   }
 
+  /// G21: mark the device as gyroscope-less (raises the σs floor for honesty).
+  void setNoGyro(bool noGyro) {
+    _noGyro = noGyro;
+  }
+
   void onImuSample(ImuSample sample) {
     onForwardAccel(sample.timestamp, sample.ax);
   }
@@ -116,12 +125,26 @@ class EkfPipeline {
       return;
     }
     if (dt > 1.0) {
-      // IMU integration unreliable after 1s gap - position error accumulates O(t²)
-      // Reset velocity and bias, inflate position covariance significantly
-      onLog?.call('PIPELINE: Large dt=$dt > 1s, resetting velocity/bias');
-      _v = 0.0;
-      _b = 0.0;
-      _inflateCovariance(4.0); // 2x σ, 4x variance
+      // Large gap (Doze / OEM sensor-batching in a tunnel — exactly the target
+      // scenario). Do NOT zero velocity: freezing under-progresses and fires
+      // LATE (measured: a 300 s gap lost 2.85 km of progress). Instead COAST
+      // forward at the last velocity (constant-velocity model; the acceleration
+      // term is unreliable over a long gap) and inflate covariance to reflect
+      // the unmodelled interval. Failing forward = early = the safe direction.
+      onLog?.call('PIPELINE: Large dt=$dt > 1s, coasting at last velocity');
+      _v = _v.clamp(-25.0, 25.0); // never coast forward on a runaway velocity
+      final sBeforeGap = _s;
+      // Coast forward, but CAP the coasted distance at ~one inter-station span.
+      // A genuine Doze/batching gap is seconds; a much larger dt is a timestamp
+      // glitch in the sensor stream (seen in real data: a ~20000 s jump), and an
+      // uncapped v·dt fabricated a 500 km spike that fired the alarm on garbage.
+      // Freezing would under-progress (late); a bounded coast fails slightly
+      // early (safe). Covariance still inflates with the full gap (honest).
+      final coastDist = (_v * dt).clamp(-1500.0, 1500.0);
+      _s = _s + coastDist;
+      if (!_allowReverse && _s < sBeforeGap) _s = sBeforeGap;
+      final grow = 1.0 + dt.clamp(0.0, 60.0); // σ grows with the gap length
+      _inflateCovariance(grow * grow);
       return;
     }
     if (dt < _config.minDt || dt > _config.maxDt) {
@@ -198,6 +221,12 @@ class EkfPipeline {
       }
     }
 
+    // Clamp velocity to physically-possible metro speed BEFORE integrating
+    // position. Non-predict update paths (GPS-speed fusion, station snap, ZUPT)
+    // set _v without re-clamping, so a bad GPS speed could leave _v far above
+    // the limit; integrating that produced a 242 km / 10x-route blow-up on real
+    // data. Clamping here guarantees s never advances faster than a real train.
+    _v = _v.clamp(-25.0, 25.0);
     _s = _s + _v * dt + 0.5 * aBias * dt2;
     _v = (_v + aBias * dt) * vDamping;
 
@@ -454,13 +483,14 @@ class EkfPipeline {
     _p[2][1] = _p[2][1] - k2 * p11;
     _p[2][2] = _p[2][2] - k2 * p12;
 
-    // Post-ZUPT covariance tightening:
-    // After confirmed stop, we have high confidence in position and velocity.
-    // Shrink covariance to prevent over-confident DR when train departs.
+    // Post-ZUPT covariance tightening (VELOCITY ONLY) — A1/G20.
+    // A ZUPT is a velocity measurement (v ≈ 0), NOT a position measurement: a
+    // confirmed stop in a tunnel does NOT tell us WHICH station we are at, so
+    // forcing σs ≤ 10m fabricated position certainty and produced wrong
+    // geometric station snaps. Position certainty must come ONLY from a real
+    // station snap (onStationCandidates). Keep the velocity tightening.
     //
-    // Max σs = 10m (station platform uncertainty)
     // Max σv = 0.5 m/s (near-zero velocity confidence)
-    _p[0][0] = math.min(_p[0][0], 10.0 * 10.0); // σs ≤ 10m
     _p[1][1] = math.min(_p[1][1], 0.5 * 0.5); // σv ≤ 0.5 m/s
 
     _enforceSymmetry();
@@ -527,6 +557,13 @@ class EkfPipeline {
     if (_v.isNaN || _v.isInfinite) _v = 0.0;
     if (_b.isNaN || _b.isInfinite) _b = 0.0;
 
+    // Velocity can only be a physically-possible train speed. The non-predict
+    // update paths (GPS-speed fusion, station snap, ZUPT) set _v without
+    // re-clamping — on real data a transient blew _v to ~1091 m/s, producing a
+    // spurious ~518 km position spike that fired the alarm on a glitch. This is
+    // the shared post-update guard, so clamp velocity here for every path.
+    _v = _v.clamp(-25.0, 25.0);
+
     if (_b.abs() > _config.biasLimit) {
       _b = _b.clamp(-_config.biasLimit, _config.biasLimit);
     }
@@ -538,7 +575,10 @@ class EkfPipeline {
     if (_p[1][1].isNaN || _p[1][1].isInfinite) _p[1][1] = 100.0 * 100.0;
     if (_p[2][2].isNaN || _p[2][2].isInfinite) _p[2][2] = 1.0;
 
-    _p[0][0] = math.max(_p[0][0], _config.sigmaSFloor * _config.sigmaSFloor);
+    // G21: no-gyro devices carry a wider honest position floor (20m vs 5m).
+    final sFloor =
+        _noGyro ? math.max(_config.sigmaSFloor, 20.0) : _config.sigmaSFloor;
+    _p[0][0] = math.max(_p[0][0], sFloor * sFloor);
     _p[1][1] = math.max(_p[1][1], _config.sigmaVFloor * _config.sigmaVFloor);
     _p[2][2] = math.max(_p[2][2], _config.sigmaBiasFloor);
   }
@@ -552,7 +592,13 @@ class EkfPipeline {
     // TUNING: maxSigmaS = 200m keeps station association viable:
     //   Window = 3*200 + 100 = 700m, enough to disambiguate most stations
     // Previous 10km cap made ALL stations candidates → MULTIPLE_CANDIDATES
-    const maxSigmaS = 200.0; // 200m max position uncertainty (was 10km!)
+    // A1/G20: 3000m lets σs grow HONESTLY during long tunnel dead-reckoning
+    // instead of being clamped to a falsely-confident 200m (which produced a
+    // too-small critical-fractile margin, firing close to late). The geometric
+    // 3σ station-association window is only trusted on the surface (small σs);
+    // underground the association falls back to nearest-ahead / dwell-ordinal,
+    // which does not widen with σs. Fits under _sanitizeCovariance (P00≤1e8).
+    const maxSigmaS = 3000.0; // 3km max position uncertainty (honest DR growth)
     const maxSigmaV = 100.0; // 100 m/s max velocity uncertainty
     const maxSigmaB = 1.0; // 1 m/s² max bias uncertainty
     _p[0][0] =
@@ -577,7 +623,13 @@ class EkfPipeline {
     if (_sPub.isNaN) {
       _sPub = _s;
     } else {
-      _sPub = math.max(_sPub, _s);
+      // Monotonic forward progress, but RATE-LIMITED so a single-tick internal
+      // _s glitch (a transient spike to hundreds of km was seen on real data)
+      // cannot latch into published progress and fire the alarm on garbage. The
+      // 1600 m headroom admits the legitimate dt>1s coast (capped at 1500 m)
+      // while bounding any single-update jump to something physically plausible.
+      final target = math.max(_sPub, _s);
+      _sPub = math.min(target, _sPub + 1600.0);
     }
   }
 

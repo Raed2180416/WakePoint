@@ -199,7 +199,9 @@ void main() {
 
       final payload = await TrackingStateStore.loadProgressPayload();
       expect(payload, isNotNull);
-      expect(payload!.title, 'Tracking paused');
+      // G3: heartbeat-timeout copy reworded so it no longer falsely implies the
+      // wake-up alarm stopped (eval continues in the background isolate).
+      expect(payload!.title, 'Running in background');
       expect(payload.isTracking, isFalse);
 
       expect(NotificationService.testRecordedNotifications, isNotEmpty);

@@ -22,6 +22,27 @@ class RouteSwitchEvent {
   }) : at = at ?? DateTime.now();
 }
 
+/// Emitted when the rider is confidently snapped on-route yet net along-route
+/// progress regresses (moves toward the origin, i.e. wrong direction / wrong
+/// train) for a sustained window. Works on metro legs because it relies on the
+/// sign of delta-progress (velocity projected onto the route tangent toward the
+/// destination), NOT on lateral deviation.
+class WrongDirectionAlert {
+  final String activeKey;
+  final double netRegressionMeters;
+  final Duration sustainedFor;
+  final bool isMetro;
+  final DateTime at;
+
+  WrongDirectionAlert({
+    required this.activeKey,
+    required this.netRegressionMeters,
+    required this.sustainedFor,
+    required this.isMetro,
+    DateTime? at,
+  }) : at = at ?? DateTime.now();
+}
+
 class ActiveRouteState {
   final String activeKey;
   final LatLng snapped;
@@ -86,21 +107,46 @@ class ActiveRouteManager {
   final _stateCtrl = StreamController<ActiveRouteState>.broadcast();
   final _switchCtrl = StreamController<RouteSwitchEvent>.broadcast();
   final _stationSnapCtrl = StreamController<StationSnapConfirmed>.broadcast();
+  final _wrongDirCtrl = StreamController<WrongDirectionAlert>.broadcast();
 
   Stream<ActiveRouteState> get stateStream => _stateCtrl.stream;
   Stream<RouteSwitchEvent> get switchStream => _switchCtrl.stream;
   Stream<StationSnapConfirmed> get stationSnapStream => _stationSnapCtrl.stream;
+  Stream<WrongDirectionAlert> get wrongDirectionStream => _wrongDirCtrl.stream;
+
+  /// Per-sample delta-progress noise floor (m). Below this magnitude a progress
+  /// change is treated as GPS jitter and neither accumulates nor resets state.
+  static const double _dirNoiseEpsilonMeters = 5.0;
 
   String? get activeKey => _activeKey;
 
   /// Last station index that was snapped via EKF (for monotonic gating).
   int _lastEkfSnapIndex = -1;
 
+  // --- G14/G15 wrong-direction detection config ---
+  /// Minimum time of sustained backward motion before alerting.
+  final Duration wrongDirectionSustain;
+  /// Minimum net backward distance (m) accumulated during the sustain window.
+  final double wrongDirectionMinNetRegressionMeters;
+  /// Max lateral offset (m) for which we consider the rider "snapped on-route".
+  /// Above this the snap/progress is ambiguous and we do not accuse the rider.
+  final double onRouteMaxOffsetMeters;
+
+  // --- G14/G15 wrong-direction detection state ---
+  String? _dirKey;
+  double? _dirLastProgress;
+  double _dirNetRegression = 0.0;
+  Stopwatch? _wrongDirTimer;
+  bool _wrongDirActive = false;
+
   ActiveRouteManager({
     required this.registry,
     this.sustainDuration = const Duration(seconds: 6),
     this.switchMarginMeters = 50,
     this.postSwitchBlackout = const Duration(seconds: 5),
+    this.wrongDirectionSustain = const Duration(seconds: 12),
+    this.wrongDirectionMinNetRegressionMeters = 60.0,
+    this.onRouteMaxOffsetMeters = 80.0,
   });
 
   void setActive(String key) {
@@ -111,6 +157,14 @@ class ActiveRouteManager {
     _candidateTimer = null;
     _blackoutTimer =
         Stopwatch()..start(); // start blackout immediately on activation
+
+    // G14/G15: reset wrong-direction tracking on any (re)activation/switch so a
+    // route change never carries a stale regression accumulator across routes.
+    _dirKey = null;
+    _dirLastProgress = null;
+    _dirNetRegression = 0.0;
+    _wrongDirTimer = null;
+    _wrongDirActive = false;
   }
 
   void ingestPosition(LatLng rawPosition, {bool isFinalAlarm = false}) {
@@ -246,6 +300,16 @@ class ActiveRouteManager {
       }
     }
 
+    // G14/G15: signed along-route direction / wrong-train detection. `now`,
+    // `progress`, `snapForState` and `activeEntry` are already in scope above.
+    _updateDirection(
+      currentActiveKey,
+      progress,
+      snapForState.lateralOffsetMeters,
+      activeEntry.mode == 'transit',
+      now,
+    );
+
     _stateCtrl.add(
       ActiveRouteState(
         activeKey: currentActiveKey,
@@ -271,15 +335,87 @@ class ActiveRouteManager {
   }
 
   double _headingAgreement(RouteEntry entry, SnapResult s) {
-    // Estimate local segment heading at snapped segment
+    // Estimate agreement from the sign of delta-progress on the candidate route
+    // (delta-progress is velocity projected onto the route tangent toward the
+    // destination). No gyro/compass needed.
     final idx = s.segmentIndex;
     if (idx < 0 || idx >= entry.points.length - 1) return 0.0;
-    // Without user heading history, approximate agreement by ensuring progress increases
-    final last = entry.lastProgressMeters ?? 0.0;
-    final progressOk = s.progressMeters >= last - 10; // allow small regression
-    if (!progressOk) return 0.0;
-    // Return nominal agreement (could be enhanced with gyro/compass later)
-    return 0.5;
+    final last = entry.lastProgressMeters;
+    if (last == null) {
+      // No history yet on this candidate: neutral acceptance (legacy behavior).
+      return 0.5;
+    }
+    final delta = s.progressMeters - last;
+    if (delta < -_dirNoiseEpsilonMeters) return 0.0; // moving backward on it
+    if (delta > _dirNoiseEpsilonMeters) return 1.0; // clear forward motion
+    return 0.5; // near-stationary / within noise
+  }
+
+  /// G14/G15: signed along-route direction check for the ACTIVE route.
+  /// Uses the sign of delta-progress; works on metro legs because it does not
+  /// rely on lateral deviation. Emits a WrongDirectionAlert when the rider is
+  /// snapped on-route yet net progress regresses (toward origin) for a sustained
+  /// window. Forward motion resets the accumulator.
+  void _updateDirection(
+    String activeKey,
+    double progress,
+    double offsetMeters,
+    bool isMetro,
+    DateTime now,
+  ) {
+    // Reset whenever the active route changes (progress domain changes).
+    if (_dirKey != activeKey) {
+      _dirKey = activeKey;
+      _dirLastProgress = progress;
+      _dirNetRegression = 0.0;
+      _wrongDirTimer = null;
+      _wrongDirActive = false;
+      return;
+    }
+
+    final last = _dirLastProgress;
+    _dirLastProgress = progress;
+    if (last == null) return;
+
+    final delta = progress - last; // + toward destination, - toward origin
+
+    // Only evaluate while confidently snapped on-route.
+    if (offsetMeters > onRouteMaxOffsetMeters) {
+      _dirNetRegression = 0.0;
+      _wrongDirTimer = null;
+      _wrongDirActive = false;
+      return;
+    }
+
+    if (delta > _dirNoiseEpsilonMeters) {
+      // Clear forward motion -> reset any accumulating wrong-direction state.
+      _dirNetRegression = 0.0;
+      _wrongDirTimer = null;
+      _wrongDirActive = false;
+    } else if (delta < -_dirNoiseEpsilonMeters) {
+      // Backward motion beyond noise: accumulate and start the sustain timer.
+      _dirNetRegression += -delta;
+      _wrongDirTimer ??= (Stopwatch()..start());
+
+      final sustainedLongEnough =
+          _wrongDirTimer!.elapsed >= wrongDirectionSustain;
+      final regressedFarEnough =
+          _dirNetRegression >= wrongDirectionMinNetRegressionMeters;
+
+      if (sustainedLongEnough && regressedFarEnough && !_wrongDirActive) {
+        _wrongDirActive = true; // latch: emit once per sustained episode
+        _wrongDirCtrl.add(
+          WrongDirectionAlert(
+            activeKey: activeKey,
+            netRegressionMeters: _dirNetRegression,
+            sustainedFor: _wrongDirTimer!.elapsed,
+            isMetro: isMetro,
+            at: now,
+          ),
+        );
+      }
+    }
+    // |delta| within noise: hold state (neither reset nor accumulate).
   }
 
   /// Handle a confirmed station snap from EKF per §24.2.
@@ -316,5 +452,6 @@ class ActiveRouteManager {
     _stateCtrl.close();
     _switchCtrl.close();
     _stationSnapCtrl.close();
+    _wrongDirCtrl.close();
   }
 }

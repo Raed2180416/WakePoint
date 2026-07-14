@@ -7,6 +7,9 @@
 
 import 'dart:async';
 import 'dart:developer' as dev;
+import 'dart:math';
+
+import 'package:geowake2/config/fire_decision_config.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
@@ -53,6 +56,16 @@ class AlarmContext {
   final int etaSamples;
   final double distanceTravelledMeters;
 
+  // G11/G12/G13: dead-reckoned EKF signals for the fire decision.
+  /// EKF velocity (m/s), used as the speed source when [preferEkfSpeed].
+  final double? ekfSpeedMps;
+  /// EKF position std-dev (m) for the critical-fractile stop cushion.
+  final double? ekfSigmaS;
+  /// EKF velocity std-dev (m/s) for ETA-variance inflation.
+  final double? ekfSigmaV;
+  /// True when the EKF is authoritative (metro / degraded / GPS blackout).
+  final bool preferEkfSpeed;
+
   AlarmContext({
     this.destination,
     this.alarmMode,
@@ -75,6 +88,10 @@ class AlarmContext {
     this.timeAlarmEligible = false,
     this.etaSamples = 0,
     this.distanceTravelledMeters = 0.0,
+    this.ekfSpeedMps,
+    this.ekfSigmaS,
+    this.ekfSigmaV,
+    this.preferEkfSpeed = false,
   });
 }
 
@@ -275,14 +292,33 @@ class AlarmController {
     }
 
     if (isBackgroundIsolate) {
-      // Background isolate cannot reliably start audio playback on all Android
-      // builds (audio focus + routing may be delayed until user interaction).
-      // Always delegate sound playback to the foreground isolate.
+      // G6: raise the alarm SELF-CONTAINED in the background isolate. The UI
+      // isolate is frequently dead (app swiped away) at wake-up time, so
+      // delegating via service.invoke('triggerAlarm') would drop the alarm.
+      // NotificationService + AlarmPlayer(audioplayers) + Vibration are all pub
+      // plugins registered on the background engine, so showing the full-screen
+      // notification and starting audio/vibration here works directly.
+      try {
+        await NotificationService().showWakeUpAlarm(
+          title: title,
+          body: body,
+          allowContinueTracking: allowContinueTracking,
+          playSound: true,
+        );
+      } catch (e) {
+        dev.log(
+          'Background self-contained alarm raise failed, delegating to UI: $e',
+          name: 'AlarmController',
+        );
+      }
+      // Belt-and-suspenders: also notify the UI isolate IF it is alive, so an
+      // open foreground can update its own alarm UI state. Harmless if dead
+      // (NotificationService de-dupes via _alarmCurrentlyShowing).
       service.invoke('triggerAlarm', {
         'title': title,
         'body': body,
         'allowContinue': allowContinueTracking,
-        'playSound': true,
+        'playSound': false,
       });
     } else {
       // Foreground isolate - can show notifications directly
@@ -576,10 +612,21 @@ class AlarmController {
     required List<RouteEventBoundary> activeEvents,
     void Function()? onAlarmFired,
   }) async {
-    // Determine current speed
-    double? currentSpeed = context.smoothedSpeed;
-    if (currentSpeed == null || currentSpeed <= 0.5) {
-      currentSpeed = context.lastSpeedMps;
+    // Determine current speed.
+    // G11: When the EKF is authoritative (metro leg, degraded, or GPS blackout)
+    // the dead-reckoned EKF velocity is the correct speed source — GPS-derived
+    // smoothed speed is stale/zero underground. On the surface, fall back to the
+    // smoothed GPS speed then the raw last GPS speed.
+    double? currentSpeed;
+    if (context.preferEkfSpeed &&
+        context.ekfSpeedMps != null &&
+        context.ekfSpeedMps!.isFinite) {
+      currentSpeed = context.ekfSpeedMps;
+    } else {
+      currentSpeed = context.smoothedSpeed;
+      if (currentSpeed == null || currentSpeed <= 0.5) {
+        currentSpeed = context.lastSpeedMps;
+      }
     }
 
     trackingLog.debug(
@@ -677,9 +724,19 @@ class AlarmController {
         }
       }
 
+      // G12: fire on the critical fractile (median - k*sigma), never the median.
+      final double etaSigma = (etaSeconds != null && etaSeconds.isFinite)
+          ? _etaSigmaSeconds(
+              etaSeconds: etaSeconds,
+              speedMps: currentSpeed,
+              sigmaSMeters: context.ekfSigmaS,
+              sigmaVMps: context.ekfSigmaV,
+            )
+          : 0.0;
       if (etaSeconds != null &&
           etaSeconds.isFinite &&
-          etaSeconds <= thresholdSeconds) {
+          (etaSeconds - FireDecisionConfig.fractileK * etaSigma) <=
+              thresholdSeconds) {
         setDestinationAlarmFiredForKey(alarmKey, true);
 
         final key = context.activeKey;
@@ -1012,6 +1069,10 @@ class AlarmController {
         stepDurationsSeconds: context.stepDurationsSeconds, // API durations
         currentSpeedMps: currentSpeed,
         legStartMeters: legStartMeters,
+        // G12/G13: EKF uncertainty for critical-fractile stop-reach + ETA.
+        positionSigmaMeters: context.ekfSigmaS,
+        velocitySigmaMps: context.ekfSigmaV,
+        fractileK: FireDecisionConfig.fractileK,
       );
 
       trackingLog.debug(
@@ -1395,6 +1456,32 @@ class AlarmController {
   ) async {
     if (eventType == AlarmEventType.finalDestination) return false;
     return await TrackingStateStore.destinationOnlyMetroTimeEnabled();
+  }
+
+  /// First-order ETA std-dev (s): sigmaEta^2 = (sigmaS/v)^2 + (ETA*sigmaV/v)^2.
+  /// Returns 0 when speed/sigmas are unusable (degrades to median firing).
+  static double _etaSigmaSeconds({
+    required double etaSeconds,
+    required double? speedMps,
+    required double? sigmaSMeters,
+    required double? sigmaVMps,
+  }) {
+    if (!etaSeconds.isFinite) return 0.0;
+    final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
+        ? speedMps
+        : 0.0;
+    if (v <= 0.0) return 0.0;
+    final sS =
+        (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
+            ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)
+            : 0.0;
+    final sV = (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
+        ? sigmaVMps
+        : 0.0;
+    final termS = sS / v;
+    final termV = etaSeconds * sV / v;
+    final varc = termS * termS + termV * termV;
+    return varc > 0 ? sqrt(varc) : 0.0;
   }
 
   /// Cancel the alarm stop poll timer.

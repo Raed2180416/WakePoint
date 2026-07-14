@@ -13,9 +13,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:geowake2/services/alarm_evaluator.dart';
+import 'package:geowake2/services/transfer_utils.dart';
+
 import 'imu_replay_engine_v2.dart';
 import 'ekf_types.dart';
 import 'ekf_orchestrator.dart';
+import 'ekf_metrics.dart';
 import 'route_geometry.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,6 +199,49 @@ class EkfTestLogEntry {
 
 enum EkfTestLogCategory { gps, imu, zupt, snap, station, ekf, control, alarm }
 
+/// Result of the in-sim alarm decision, evaluated against the EKF's estimated
+/// progress using the real [AlarmEvaluator].
+class EkfAlarmResult {
+  /// Event type from the alarm evaluator (e.g. 'destination').
+  final String eventType;
+
+  /// Human-readable message from the evaluator.
+  final String message;
+
+  /// Sim elapsed time (seconds) when the alarm fired, per EKF progress.
+  final double fireElapsedSeconds;
+
+  /// EKF-estimated progress (meters) at fire time.
+  final double ekfProgressMeters;
+
+  /// Ground-truth progress (meters) at fire time.
+  final double trueProgressMeters;
+
+  /// Total route length (meters).
+  final double routeMeters;
+
+  /// Total route duration (seconds), used as the ground-truth arrival time.
+  final double routeDurationSeconds;
+
+  const EkfAlarmResult({
+    required this.eventType,
+    required this.message,
+    required this.fireElapsedSeconds,
+    required this.ekfProgressMeters,
+    required this.trueProgressMeters,
+    required this.routeMeters,
+    required this.routeDurationSeconds,
+  });
+
+  /// Signed EKF position error at fire time (ekf - true), meters.
+  /// Positive => EKF ran ahead of reality so the alarm fired early.
+  double get leadErrorMeters => ekfProgressMeters - trueProgressMeters;
+
+  /// Seconds of warning the user got: gap between fire time and the true
+  /// arrival time (route duration). Positive => fired before true arrival.
+  double get leadSeconds => routeDurationSeconds - fireElapsedSeconds;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EKF TEST CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,11 +292,25 @@ class EkfTestController {
   EkfOrchestrator? _ekfOrchestrator;
   RouteGeometry? _routeGeometry;
   bool _isActive = false;
+  bool _isFinished = false;
   StreamSubscription? _tickSub;
   StreamSubscription? _logSub;
   StreamSubscription? _accelSub; // Raw IMU from engine
   StreamSubscription? _gyroSub; // Raw IMU from engine
   StreamSubscription? _imuSub; // Combined IMU samples
+
+  // Ground-truth accuracy metrics (EKF vs simulator truth per tick).
+  final EkfMetrics _metrics = EkfMetrics();
+
+  // In-sim alarm decision state (evaluated against EKF progress).
+  bool _alarmFired = false;
+  EkfAlarmResult? _alarmResult;
+
+  /// Called when the playback engine auto-finishes (end of route/log).
+  void Function()? onFinished;
+
+  /// Called once when the in-sim alarm fires against EKF progress.
+  void Function(EkfAlarmResult)? onAlarm;
 
   // External stream injection (for TrackingService)
   final _gpsController = StreamController<Position>.broadcast();
@@ -293,11 +354,23 @@ class EkfTestController {
 
   bool get isActive => _isActive;
   bool get isPlaying => _engine?.isPlaying ?? false;
+  bool get isFinished => _isFinished || (_engine?.isFinished ?? false);
   double get elapsedSeconds => _engine?.elapsedSeconds ?? 0.0;
   double get progress => _engine?.progress ?? 0.0;
   double get progressMeters => _engine?.progressMeters ?? 0.0;
   TestRoute? get route => _engine?.route;
   List<EkfTestLogEntry> get logs => List.unmodifiable(_logs);
+
+  // ─── Ground-truth metrics (surfaced in the dashboard metrics panel) ───────
+  EkfMetrics get metrics => _metrics;
+  double get ekfCurrentError => _metrics.currentError;
+  double get ekfMaxDrift => _metrics.maxDrift;
+  double get ekfRmse => _metrics.rmse;
+  double get ekfMaxBlackoutError => _metrics.maxBlackoutError;
+
+  // ─── In-sim alarm ─────────────────────────────────────────────────────────
+  bool get alarmFired => _alarmFired;
+  EkfAlarmResult? get alarmResult => _alarmResult;
 
   /// Statistics for the current test run.
   Map<String, dynamic> get statistics => {
@@ -314,6 +387,11 @@ class EkfTestController {
     'elapsedSeconds': elapsedSeconds.toStringAsFixed(1),
     'progressMeters': progressMeters.toStringAsFixed(0),
     'scenario': _scenario.name,
+    'currentErrorM': _metrics.currentError.toStringAsFixed(1),
+    'maxDriftM': _metrics.maxDrift.toStringAsFixed(1),
+    'rmseM': _metrics.rmse.toStringAsFixed(1),
+    'maxBlackoutErrorM': _metrics.maxBlackoutError.toStringAsFixed(1),
+    'alarmFired': _alarmFired,
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -344,9 +422,13 @@ class EkfTestController {
 
     await _engine!.loadTestRoute(routeId);
 
-    // Subscribe to engine events
-    _tickSub = _engine!.tickStream.listen(_onTick);
-    _logSub = _engine!.logStream.listen(_onEngineLog);
+    // Wire the REAL EKF so every scenario preset dead-reckons through GPS
+    // dropout (previously only the log loaders initialised the orchestrator).
+    _initializeEkf();
+    _subscribeToEngineImu();
+
+    // Subscribe to engine events (leak-free, wires FINISHED callback)
+    _resubscribeEngine();
 
     _isActive = true;
     _resetStatistics();
@@ -364,12 +446,32 @@ class EkfTestController {
   }
 
   /// Load a specific route for custom testing.
+  ///
+  /// Builds a fresh engine, applies the current GPS-dropout/warp config, wires
+  /// the REAL EKF (orchestrator + IMU stream) and subscribes leak-free so route
+  /// presets dead-reckon through GPS dropout just like the log loaders.
   Future<void> loadRoute(TestRouteId routeId) async {
-    _engine ??= ImuReplayEngineV2();
+    _engine = ImuReplayEngineV2();
+    _engine!.logVerbosity = logVerbosity;
+    _engine!.gpsDropoutMode = _gpsDropoutMode;
+    _engine!.warpFactor = _warpFactor;
+
     await _engine!.loadTestRoute(routeId);
+
+    // Wire the REAL EKF (was previously only done in the log loaders).
+    _initializeEkf();
+    _subscribeToEngineImu();
+
+    // Subscribe to engine events (leak-free, wires FINISHED callback)
+    _resubscribeEngine();
+
+    _isActive = true;
     _resetStatistics();
 
-    _log(EkfTestLogCategory.control, 'INFO', 'Loaded route: ${routeId.name}');
+    _log(EkfTestLogCategory.control, 'INFO', 'Loaded route: ${routeId.name}', {
+      'gpsMode': _gpsDropoutMode.name,
+      'warpFactor': _warpFactor,
+    });
   }
 
   /// Load a log for replay.
@@ -386,9 +488,8 @@ class EkfTestController {
     // Subscribe to raw IMU streams for high-frequency EKF updates
     _subscribeToEngineImu();
 
-    // Subscribe to engine events
-    _tickSub = _engine!.tickStream.listen(_onTick);
-    _logSub = _engine!.logStream.listen(_onEngineLog);
+    // Subscribe to engine events (leak-free, wires FINISHED callback)
+    _resubscribeEngine();
 
     _isActive = true;
     _resetStatistics();
@@ -415,9 +516,8 @@ class EkfTestController {
     // Subscribe to raw IMU streams
     _subscribeToEngineImu();
 
-    // Subscribe to engine events
-    _tickSub = _engine!.tickStream.listen(_onTick);
-    _logSub = _engine!.logStream.listen(_onEngineLog);
+    // Subscribe to engine events (leak-free, wires FINISHED callback)
+    _resubscribeEngine();
 
     _isActive = true;
     _resetStatistics();
@@ -442,9 +542,8 @@ class EkfTestController {
     // Subscribe to raw IMU streams for high-frequency EKF updates
     _subscribeToEngineImu();
 
-    // Subscribe to engine events
-    _tickSub = _engine!.tickStream.listen(_onTick);
-    _logSub = _engine!.logStream.listen(_onEngineLog);
+    // Subscribe to engine events (leak-free, wires FINISHED callback)
+    _resubscribeEngine();
 
     _isActive = true;
     _resetStatistics();
@@ -510,6 +609,26 @@ class EkfTestController {
     _log(EkfTestLogCategory.ekf, 'EVENT', 'Subscribed to combined IMU stream');
   }
 
+  /// (Re)subscribe to the engine's tick/log streams, cancelling any prior
+  /// subscriptions first. Loaders previously leaked subscriptions by assigning
+  /// `_tickSub`/`_logSub` without cancelling the old engine's listeners; this
+  /// centralises that so every load path is leak-free and wires the
+  /// end-of-run (FINISHED) callback.
+  void _resubscribeEngine() {
+    _tickSub?.cancel();
+    _logSub?.cancel();
+
+    _isFinished = false;
+    _tickSub = _engine!.tickStream.listen(_onTick);
+    _logSub = _engine!.logStream.listen(_onEngineLog);
+
+    _engine!.onFinished = () {
+      _isFinished = true;
+      _log(EkfTestLogCategory.control, 'EVENT', 'Playback finished', statistics);
+      onFinished?.call();
+    };
+  }
+
   /// Called when EKF confirms a station snap (for purple dots).
   void _onEkfStationSnap(StationSnapConfirmed snap) {
     // Project stationMeters onto route to get position for purple dot
@@ -527,6 +646,75 @@ class EkfTestController {
       'stationMeters': snap.stationMeters.toStringAsFixed(0),
       'sigmaS': snap.sigmaS.toStringAsFixed(1),
     });
+  }
+
+  /// Run the REAL alarm decision (destination) against the EKF's estimated
+  /// progress, read-only. Fires at most once per run. Uses the evaluator's
+  /// fallback (no transit-leg context) path: a single final-destination event
+  /// at the route end, so the genuine "direct fire < 200m" rule decides.
+  void _evaluateAlarm({
+    required double ekfProgressMeters,
+    required double trueProgressMeters,
+    required double ekfVelocityMps,
+  }) {
+    if (_alarmFired) return;
+
+    final route = _engine?.route;
+    if (route == null) return;
+    final totalMeters = route.totalMeters;
+    if (totalMeters <= 0) return;
+    if (!ekfProgressMeters.isFinite) return;
+
+    final ekfState = _ekfOrchestrator?.publicState;
+
+    // Single destination event at the route end; empty transit legs selects the
+    // evaluator's fallback destination rules (direct-fire < 200m).
+    final destination = RouteEventBoundary(
+      meters: totalMeters,
+      type: AlarmEventType.finalDestination,
+    );
+
+    final AlarmTrigger? trigger = AlarmEvaluator.evaluateCoinciding(
+      mode: AlarmMode.distance,
+      userValue: 0,
+      progressMeters: ekfProgressMeters,
+      allEvents: [destination],
+      firedEventIndexes: const {},
+      firedLegIds: const {},
+      isMetroLeg: route.allStations.isNotEmpty,
+      transitLegs: const [],
+      currentLegIndex: 0,
+      isFinalLeg: true,
+      currentSpeedMps: ekfVelocityMps,
+      positionSigmaMeters: ekfState?.sigmaS,
+      velocitySigmaMps: ekfState?.sigmaV,
+    );
+
+    if (trigger == null) return;
+
+    _alarmFired = true;
+    final result = EkfAlarmResult(
+      eventType: trigger.eventType,
+      message: trigger.message,
+      fireElapsedSeconds: elapsedSeconds,
+      ekfProgressMeters: ekfProgressMeters,
+      trueProgressMeters: trueProgressMeters,
+      routeMeters: totalMeters,
+      routeDurationSeconds: route.totalDurationSeconds,
+    );
+    _alarmResult = result;
+
+    _log(EkfTestLogCategory.alarm, 'EVENT', '🔔 ALARM: ${trigger.message}', {
+      'eventType': trigger.eventType,
+      'reason': trigger.reason,
+      'fireElapsedS': result.fireElapsedSeconds.toStringAsFixed(1),
+      'ekfProgressM': ekfProgressMeters.toStringAsFixed(0),
+      'trueProgressM': trueProgressMeters.toStringAsFixed(0),
+      'leadErrorM': result.leadErrorMeters.toStringAsFixed(1),
+      'leadSeconds': result.leadSeconds.toStringAsFixed(1),
+    });
+
+    onAlarm?.call(result);
   }
 
   void _configureForScenario(TestScenario scenario) {
@@ -583,6 +771,12 @@ class EkfTestController {
     _rawGpsTrail.clear();
     _lastRawGpsPosition = null;
     _lastZuptLogTime = null;
+
+    // Reset ground-truth metrics and in-sim alarm state
+    _metrics.reset();
+    _alarmFired = false;
+    _alarmResult = null;
+    _tickCount = 0;
 
     // Reset EKF orchestrator if exists
     _ekfOrchestrator?.reset();
@@ -683,6 +877,28 @@ class EkfTestController {
       if (!ekfState.s.isNaN && ekfState.s >= 0) {
         ekfPosition = _routeGeometry!.positionAt(ekfState.s);
       }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 3.2 GROUND-TRUTH METRICS (EKF estimate vs simulator truth)
+    // ─────────────────────────────────────────────────────────────────────
+    if (_ekfOrchestrator != null && ekfProgressMeters != null) {
+      _metrics.update(
+        ekfProgressMeters: ekfProgressMeters,
+        trueProgressMeters: tick.progressMeters,
+        gpsAvailable: tick.gpsAvailable,
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 3.3 IN-SIM ALARM DECISION (real AlarmEvaluator, EKF progress)
+    // ─────────────────────────────────────────────────────────────────────
+    if (ekfProgressMeters != null) {
+      _evaluateAlarm(
+        ekfProgressMeters: ekfProgressMeters,
+        trueProgressMeters: tick.progressMeters,
+        ekfVelocityMps: ekfVelocityMps,
+      );
     }
 
     // ─────────────────────────────────────────────────────────────────────

@@ -1,0 +1,19 @@
+name: wakepoint_native
+description: Native bridge for WakePoint (partial wake lock + full-screen-intent capability check), registered on BOTH the UI and flutter_background_service engines via GeneratedPluginRegistrant.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.geowake.wakepoint_native
+        pluginClass: WakepointNativePlugin

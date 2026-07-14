@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Geowake2</string>
+		<string>GeoWake</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -47,6 +47,16 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Background execution: WakePoint must keep the EKF+IMU tracker alive while the
+		     phone is locked/backgrounded during an underground GPS blackout. Without the
+		     `location` background mode iOS suspends the app within seconds of backgrounding
+		     and the tracker (and therefore the wake-up alarm) dies. This key is REQUIRED and
+		     must be paired with AppleSettings.allowBackgroundLocationUpdates=true in
+		     lib/services/position/gps_position_provider.dart (the plist key alone is inert). -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>location</string>
+		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Location is used to navigate and trigger wake-up alarms near your destination.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

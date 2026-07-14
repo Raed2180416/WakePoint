@@ -4,9 +4,38 @@
 // Wraps the geolocator package with the PositionProvider interface.
 
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/core/logging/app_logger.dart';
 import 'package:geowake2/services/position/position_provider.dart';
+
+/// Default location settings, platform-branched.
+///
+/// On iOS, background location delivery requires BOTH the `location` entry in
+/// UIBackgroundModes (ios/Runner/Info.plist) AND `allowBackgroundLocationUpdates`
+/// on an [AppleSettings] instance — the plist key alone is inert and the stream
+/// silently stops delivering the moment the app is backgrounded. Because WakePoint's
+/// whole purpose is to keep tracking through an underground GPS blackout while the
+/// phone is locked, this is load-bearing, not cosmetic.
+LocationSettings _defaultLocationSettings() {
+  if (Platform.isIOS) {
+    return AppleSettings(
+      accuracy: LocationAccuracy.high,
+      activityType: ActivityType.otherNavigation,
+      distanceFilter: 5,
+      pauseLocationUpdatesAutomatically: false,
+      // Keep the standard-location-service running in the background.
+      allowBackgroundLocationUpdates: true,
+      // Show the blue status bar so the user knows tracking is active (App Store
+      // review expects this when allowBackgroundLocationUpdates is set).
+      showBackgroundLocationIndicator: true,
+    );
+  }
+  return const LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 5, // meters
+  );
+}
 
 /// GPS-based position provider using the device's location services.
 ///
@@ -23,12 +52,7 @@ class GpsPositionProvider implements PositionProvider {
   final LocationSettings _locationSettings;
 
   GpsPositionProvider({LocationSettings? locationSettings})
-    : _locationSettings =
-          locationSettings ??
-          const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 5, // meters
-          );
+    : _locationSettings = locationSettings ?? _defaultLocationSettings();
 
   @override
   Stream<Position> get positionStream => _controller.stream;

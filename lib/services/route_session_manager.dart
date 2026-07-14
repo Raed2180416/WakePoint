@@ -49,11 +49,16 @@ class RouteSessionManager {
   final _deviationStateCtrl = StreamController<DeviationState>.broadcast();
   Stream<DeviationState> get deviationStateStream => _deviationStateCtrl.stream;
 
+  // G14/G15 wrong-direction / wrong-train alerts (forwarded from ActiveRouteManager)
+  final _wrongDirCtrl = StreamController<WrongDirectionAlert>.broadcast();
+  Stream<WrongDirectionAlert> get wrongDirectionStream => _wrongDirCtrl.stream;
+
   // Internal subscriptions
   StreamSubscription<ActiveRouteState>? _mgrStateSub;
   StreamSubscription<RouteSwitchEvent>? _mgrSwitchSub;
   StreamSubscription<DeviationState>? _devSub;
   StreamSubscription<RerouteDecision>? _rerouteSub;
+  StreamSubscription<WrongDirectionAlert>? _mgrWrongDirSub;
 
   // Current State
   ActiveRouteState? lastActiveState;
@@ -89,6 +94,7 @@ class RouteSessionManager {
     await _mgrSwitchSub?.cancel();
     await _devSub?.cancel();
     await _rerouteSub?.cancel();
+    await _mgrWrongDirSub?.cancel();
     activeManager?.dispose();
     devMonitor?.dispose();
     reroutePolicy?.dispose();
@@ -96,6 +102,7 @@ class RouteSessionManager {
     await _routeSwitchCtrl.close();
     await _rerouteCtrl.close();
     await _deviationStateCtrl.close();
+    await _wrongDirCtrl.close();
     clearSession();
   }
 
@@ -1081,6 +1088,12 @@ class RouteSessionManager {
     _mgrSwitchSub = activeManager!.switchStream.listen((e) {
       _routeSwitchCtrl.add(e);
       _maybeBroadcastCachedRoute(force: true); // Update inactive routes
+    });
+
+    // G14/G15: forward wrong-direction / wrong-train alerts to session consumers.
+    _mgrWrongDirSub?.cancel();
+    _mgrWrongDirSub = activeManager!.wrongDirectionStream.listen((a) {
+      _wrongDirCtrl.add(a);
     });
   }
 

@@ -1,0 +1,132 @@
+{
+ "L0_RUNTIME (is it even running?)": [
+  [
+   "OS suspends background isolate (Doze/iOS)",
+   "sim assumes continuous 100Hz; real bg may be 10Hz or PAUSED",
+   "HARMFUL: no tracking = no alarm"
+  ],
+  [
+   "App killed by OS memory pressure mid-journey",
+   "sim never restarts; no persistence tested",
+   "HARMFUL: silent death"
+  ],
+  [
+   "Battery optimization throttles sensors",
+   "throttle axis tested to 10Hz, but not full stop",
+   "HARMFUL: degraded or dead"
+  ],
+  [
+   "User's phone battery dies",
+   "not modeled",
+   "HARMFUL: obvious but must warn user"
+  ]
+ ],
+ "L1_SENSOR (is the data usable?)": [
+  [
+   "Phone in pocket/bag: different tilt, muffled vibration",
+   "sim carry-modes exist but regressor trained mostly in_hand",
+   "DEGRADED velocity -> ETA drift"
+  ],
+  [
+   "Screen-off low-power IMU: lower rate + more quantization",
+   "not modeled distinctly from throttle",
+   "DEGRADED"
+  ],
+  [
+   "Phone flat on lap / table (not on person)",
+   "no motion coupling to vehicle at all",
+   "HARMFUL: no signal to track"
+  ],
+  [
+   "Sensor axis convention differs iOS vs Android",
+   "device-generalization noted, not tested per-OS",
+   "DEGRADED"
+  ],
+  [
+   "Magnetometer/heading garbage underground",
+   "1D filter doesn't use heading \u2014 OK",
+   "low"
+  ]
+ ],
+ "L2_MOTION (does motion match assumptions?)": [
+  [
+   "User walks around INSIDE moving train",
+   "not modeled: adds pedestrian signal on top of train",
+   "phantom dwell/ZUPT confusion"
+  ],
+  [
+   "Crowded train: no seat, swaying standing",
+   "excessive-motion overlay covers partially",
+   "DEGRADED velocity"
+  ],
+  [
+   "Train stops between stations (signal hold)",
+   "= phantom dwell -> dwell-count associator ADVANCES WRONGLY",
+   "HARMFUL: miscounts stops"
+  ],
+  [
+   "Very long dwell / short dwell variance",
+   "dwell detector min_dwell_s=8 fixed",
+   "missed or false dwell"
+  ],
+  [
+   "Express train skips stations",
+   "route assumes all stops; skip = count mismatch",
+   "HARMFUL: wrong stop count"
+  ]
+ ],
+ "L3_ROUTE (is the map right?)": [
+  [
+   "User boards WRONG train / wrong direction",
+   "no route-mismatch detection tested",
+   "HARMFUL: tracks fiction"
+  ],
+  [
+   "Prefetched route stale (line changed/closed)",
+   "assumes route is truth",
+   "HARMFUL"
+  ],
+  [
+   "Boarding mid-route not at station 0",
+   "sim starts at route start",
+   "init offset error"
+  ],
+  [
+   "Cold start already underground (no GPS ever)",
+   "sim always has initial surface GPS",
+   "HARMFUL: can't initialize s"
+  ],
+  [
+   "Route branches / interchange ambiguity",
+   "single polyline assumed",
+   "wrong branch"
+  ]
+ ],
+ "L4_ALARM (does it fire correctly & usefully?)": [
+  [
+   "ETA jitter fires late (time mode)",
+   "MEASURED: +61s late possible; crit-fractile fixes",
+   "HARMFUL if not fixed"
+  ],
+  [
+   "User dismisses alarm, falls back asleep",
+   "no re-alarm/escalation tested",
+   "HARMFUL: misses stop"
+  ],
+  [
+   "Target < 2 stops from boarding (short trip)",
+   "N-stops-before infeasible",
+   "no useful warning"
+  ],
+  [
+   "Alarm fires but phone silent/DND/vibrate-only",
+   "notification delivery not modeled",
+   "HARMFUL: unheard"
+  ],
+  [
+   "Duplicate/ghost alarm from re-fire",
+   "fired-once flags exist in dart; test",
+   "annoyance"
+  ]
+ ]
+}

@@ -5,6 +5,7 @@ import 'package:geowake2/services/polyline_decoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/all_india_stops.dart'; // Source of Truth Fallback
+import 'package:geowake2/data/metro_line_sequences.dart'; // hardcoded ordered per-line sequences
 
 /// Represents a transit leg's stop positions along the route.
 /// Used for accurate "N stops prior" alarm tracking.
@@ -40,6 +41,13 @@ class TransitLegStops {
   /// Names of each stop (from stop assets).
   /// Empty list if not available (legacy uniform estimation).
   final List<String> stopNames;
+
+  /// G16: confidence in the intermediate stop COUNT (numStops).
+  /// 1.0 = OSM and Google agree (or trusted OSM-derived count).
+  /// <1.0 = OSM/Google diverged beyond tolerance; the count came from the
+  /// conservative Google API fallback and downstream alarm logic should treat
+  /// "N stops before" as low-confidence (prefer firing early).
+  final double stopCountConfidence;
 
   String get legId {
     try {
@@ -100,6 +108,7 @@ class TransitLegStops {
     this.isActualPositions = false,
     this.isMetro = false,
     this.stopNames = const [],
+    this.stopCountConfidence = 1.0,
   });
 
   /// Serialize for persistence.
@@ -116,6 +125,7 @@ class TransitLegStops {
     'isActualPositions': isActualPositions,
     'isMetro': isMetro,
     'stopNames': stopNames,
+    'stopCountConfidence': stopCountConfidence,
   };
 
   /// Deserialize from persistence.
@@ -150,6 +160,8 @@ class TransitLegStops {
       isMetro: m['isMetro'] == true,
       stopNames:
           (m['stopNames'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      stopCountConfidence:
+          (m['stopCountConfidence'] as num?)?.toDouble() ?? 1.0,
     );
   }
 
@@ -182,6 +194,7 @@ class TransitLegStops {
     bool? isActualPositions,
     bool? isMetro,
     List<String>? stopNames,
+    double? stopCountConfidence,
   }) {
     return TransitLegStops(
       legStartMeters: legStartMeters ?? this.legStartMeters,
@@ -193,6 +206,7 @@ class TransitLegStops {
       isActualPositions: isActualPositions ?? this.isActualPositions,
       isMetro: isMetro ?? this.isMetro,
       stopNames: stopNames ?? this.stopNames,
+      stopCountConfidence: stopCountConfidence ?? this.stopCountConfidence,
     );
   }
 }
@@ -877,6 +891,25 @@ class TransferUtils {
 
   /// Extract all transit leg stop positions from directions for accurate stop tracking.
   /// Returns a list of [TransitLegStops] for each transit leg in the route.
+  /// G18: Sum of all leg `duration.value` seconds across the first route.
+  /// Leg 0 alone under-counts multi-leg journeys, so callers that need the
+  /// whole-journey duration (e.g. the creation-time sanity guard) use this.
+  static int totalPlannedDurationSeconds(Map<String, dynamic> directions) {
+    try {
+      final legs = ((directions['routes'] as List).first
+          as Map<String, dynamic>)['legs'] as List;
+      int total = 0;
+      for (final leg in legs) {
+        final v = ((leg as Map<String, dynamic>)['duration']
+            as Map<String, dynamic>?)?['value'] as num?;
+        total += (v ?? 0).toInt();
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
+  }
+
   static List<TransitLegStops> extractTransitLegStops(
     Map<String, dynamic> directions,
   ) {
@@ -1154,6 +1187,90 @@ class TransferUtils {
 
   /// Enhance transit leg stops with actual station positions from OSM List.
   ///
+  /// G16: Decide whether the OSM-derived intermediate stop count diverges from
+  /// Google's `num_stops` beyond tolerance. When true, the caller must fall back
+  /// to the API count and mark the leg low-confidence (firing LATE is product
+  /// death, so a smaller/inconsistent OSM count is never trusted blindly).
+  ///
+  /// Tolerance = max(1, round(20% of apiNumStops)). An OSM count of 0 against a
+  /// positive API count always diverges.
+  static bool osmStopCountDiverges({
+    required int apiNumStops,
+    required int osmNumStops,
+  }) {
+    if (apiNumStops <= 0) return false; // no API baseline to compare against
+    if (osmNumStops == 0) return true; // OSM found nothing intermediate
+    final divergence = (osmNumStops - apiNumStops).abs();
+    final tolerance = math.max(1, (apiNumStops * 0.2).round());
+    return divergence > tolerance;
+  }
+
+  /// Color/name tokens that anchor a line's canonical identity. Kept as-is
+  /// (no synonym merging) so distinct lines that happen to share a family
+  /// (e.g. Delhi's Magenta vs Pink, Violet vs Purple) never collapse together.
+  static const Set<String> _lineColorTokens = {
+    'blue',
+    'green',
+    'red',
+    'yellow',
+    'purple',
+    'pink',
+    'orange',
+    'aqua',
+    'magenta',
+    'violet',
+    'grey',
+    'gray',
+    'cyan',
+    'teal',
+    'brown',
+    'silver',
+    'gold',
+    'black',
+    'white',
+  };
+
+  /// Generic transit words that carry no line identity and are stripped before
+  /// tokenising (so "Blue Line" and "Blue" canonicalize identically).
+  static final RegExp _lineGenericWords = RegExp(
+    r'\b(line|metro|rail|railway|subway|the|express|corridor|rapid|transit|route)\b',
+  );
+
+  /// HTML entity matcher: numeric refs (`&#x25D9;`, `&#123;`) and named
+  /// entities (`&amp;`). OSM's `line` labels are polluted with these.
+  static final RegExp _htmlEntity = RegExp(r'&#?[a-z0-9]+;');
+
+  /// Reduce a raw line label to a stable, comparable token.
+  ///
+  /// Normalizes Google's clean `leg.lineName` (e.g. "Blue Line", "Blue") and
+  /// OSM's dirty `line` (e.g. "&#x25D9;  Blue Line") to the same key ("blue").
+  /// Strips HTML entities, punctuation and whitespace, lowercases, drops
+  /// generic transit words, and prefers a color anchor token when present;
+  /// otherwise joins the remaining alphanumeric tokens (e.g. "Line 7" → "7").
+  static String _canonLine(String? s) {
+    if (s == null) return '';
+    var t = s.toLowerCase();
+    t = t.replaceAll(_htmlEntity, ' '); // strip &#x25D9; &amp; etc.
+    t = t.replaceAll(RegExp(r'[^a-z0-9]+'), ' '); // punctuation → space
+    t = t.replaceAll(_lineGenericWords, ' '); // drop "line"/"metro"/...
+    final tokens =
+        t.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (tokens.isEmpty) return '';
+    // A color word is the strongest, most stable anchor for a line.
+    for (final tok in tokens) {
+      if (_lineColorTokens.contains(tok)) return tok;
+    }
+    // No color: fall back to the concatenation of remaining tokens
+    // (e.g. numbered lines "M1" / "Line 1" → "m1" / "1").
+    return tokens.join();
+  }
+
+  /// Reduce a city label to a stable, comparable token.
+  static String _canonCity(String? s) {
+    if (s == null) return '';
+    return s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  }
+
   /// **OSM-ONLY MODE**: Completely ignores Google API's `num_stops`.
   /// Uses ONLY OSM stops that fall within 500m of the polyline, snapped directly.
   /// No interpolation, no uniform baseline, no slot-filling.
@@ -1163,8 +1280,12 @@ class TransferUtils {
   /// where OSM coverage is complete.
   static Future<List<TransitLegStops>> enhanceTransitLegStopsWithOsm(
     List<TransitLegStops> legs,
-    Map<String, dynamic> directions,
-  ) async {
+    Map<String, dynamic> directions, {
+    // Test-only seam: inject a synthetic stop bundle instead of the bundled
+    // `allIndiaStops`. Production callers never pass this (default = null), so
+    // runtime behavior is unchanged.
+    List<Map<String, dynamic>>? stopsOverride,
+  }) async {
     if (legs.isEmpty) return legs;
 
     final enhanced = <TransitLegStops>[];
@@ -1173,9 +1294,13 @@ class TransferUtils {
       // Extract all transit step polylines from directions
       final transitPolylines = _extractTransitPolylines(directions);
 
-      // Load OSM stops as the SINGLE source of truth
+      // Load OSM stops as the SINGLE source of truth. Carry the `line` and
+      // `city` labels through so we can filter matches to the leg's own line
+      // (fixes WRONG-METRO-STATION-SNAP: a parallel OTHER-line station ~150m
+      // away must not be injected into this line's stop list).
+      final stopSource = stopsOverride ?? allIndiaStops;
       final List<Stop> loadedStops =
-          allIndiaStops.where(_isActiveStop).map((m) {
+          stopSource.where(_isActiveStop).map((m) {
             return Stop(
               id: m['id'] as String,
               name: m['name'] as String,
@@ -1183,6 +1308,8 @@ class TransferUtils {
                 (m['lat'] as num).toDouble(),
                 (m['lng'] as num).toDouble(),
               ),
+              line: m['line'] as String?,
+              city: m['city'] as String?,
             );
           }).toList();
 
@@ -1246,9 +1373,136 @@ class TransferUtils {
             continue;
           }
 
+          // LINE FILTER (fixes WRONG-METRO-STATION-SNAP):
+          // `matchedAll` contains EVERY active OSM station within 500m of the
+          // polyline — across all cities/lines. A parallel OTHER-line station
+          // (e.g. Mumbai DN Nagar/Blue vs Andheri West/Yellow ~140m apart)
+          // therefore leaks into this leg's stop list. Keep only stops whose
+          // canonical line matches this leg's line, in the same city.
+          final legLineKey = _canonLine(leg.lineName);
+          // Derive the leg's city from the majority city of the matched stops
+          // (they are all geographically on/near this polyline, so the majority
+          // is this leg's city).
+          final cityVotes = <String, int>{};
+          for (final m in matchedAll) {
+            final c = _canonCity(m.stop.city);
+            if (c.isEmpty) continue;
+            cityVotes[c] = (cityVotes[c] ?? 0) + 1;
+          }
+          String legCityKey = '';
+          int bestVotes = 0;
+          cityVotes.forEach((c, v) {
+            if (v > bestVotes) {
+              bestVotes = v;
+              legCityKey = c;
+            }
+          });
+
+          // LINE-FIRST (ordered): if this line has a CONFIDENT hardcoded ordered
+          // sequence, match THAT against the leg polyline. The 500m radius match
+          // naturally slices to just this leg's segment, arc-length-ordered — so
+          // stop-counting is exact and uses ONLY this line's own stations. Falls
+          // through to the OSM line-filter below when no confident sequence
+          // matches (unknown line / degenerate slice).
+          List<MatchedStop>? orderedMatches;
+          final orderedSeq = kMetroLineSequences[legCityKey]?[legLineKey];
+          if (orderedSeq != null && orderedSeq.length >= 2) {
+            final seqStops =
+                orderedSeq
+                    .map(
+                      (s) => Stop(
+                        id: 'seq_${legCityKey}_${legLineKey}_${s.name}',
+                        name: s.name,
+                        location: LatLng(s.lat, s.lng),
+                        line: legLineKey,
+                        city: legCityKey,
+                      ),
+                    )
+                    .toList();
+            final matchedSeq = StopMatcher.matchStopsToPolyline(
+              polyline: polylinePoints,
+              stops: seqStops,
+              radiusMeters: 500.0,
+              dedupeMeters: 80.0,
+            );
+            if (matchedSeq.length >= 2) {
+              orderedMatches = matchedSeq;
+              dev.log(
+                'TransferUtils: Leg $i (${leg.lineName}) — using hardcoded ordered '
+                'sequence ($legCityKey/$legLineKey): ${matchedSeq.length} stops.',
+                name: 'TransferUtils',
+              );
+            }
+          }
+
+          final lineFiltered =
+              matchedAll.where((m) {
+                if (legLineKey.isEmpty) return false; // no line label to match
+                if (_canonLine(m.stop.line) != legLineKey) return false;
+                // City guard: only enforce when both sides carry a city label.
+                if (legCityKey.isNotEmpty) {
+                  final stopCity = _canonCity(m.stop.city);
+                  if (stopCity.isNotEmpty && stopCity != legCityKey) {
+                    return false;
+                  }
+                }
+                return true;
+              }).toList();
+
+          // SAFETY NET: never produce ZERO stops. Prefer the line-filtered set,
+          // but fall back to the unfiltered `matchedAll` when line filtering
+          // wipes everything out (unknown/dirty line label) or drops FAR below
+          // Google's num_stops while the unfiltered set is closer to it.
+          final apiNumStopsForFilter = leg.numStops;
+          List<MatchedStop> effectiveMatches;
+          if (orderedMatches != null) {
+            // Hardcoded ordered sequence wins: exact, own-line, in order.
+            effectiveMatches = orderedMatches;
+          } else if (lineFiltered.isEmpty) {
+            effectiveMatches = matchedAll;
+            dev.log(
+              '⚠️ TransferUtils: Line filter empty for "${leg.lineName}" '
+              '(key="$legLineKey"). Falling back to all ${matchedAll.length} '
+              'matched stops (safety net).',
+              name: 'TransferUtils',
+            );
+          } else if (apiNumStopsForFilter > 0) {
+            final farFewer =
+                lineFiltered.length < (apiNumStopsForFilter * 0.5);
+            final filteredDiff =
+                (lineFiltered.length - apiNumStopsForFilter).abs();
+            final allDiff = (matchedAll.length - apiNumStopsForFilter).abs();
+            if (farFewer && allDiff < filteredDiff) {
+              effectiveMatches = matchedAll;
+              dev.log(
+                '⚠️ TransferUtils: Line filter kept only ${lineFiltered.length} '
+                'stops vs API num_stops=$apiNumStopsForFilter for '
+                '"${leg.lineName}"; unfiltered (${matchedAll.length}) is closer. '
+                'Falling back (safety net).',
+                name: 'TransferUtils',
+              );
+            } else {
+              effectiveMatches = lineFiltered;
+              dev.log(
+                'TransferUtils: Line filter kept ${lineFiltered.length}/'
+                '${matchedAll.length} stops for "${leg.lineName}" '
+                '(key="$legLineKey", city="$legCityKey").',
+                name: 'TransferUtils',
+              );
+            }
+          } else {
+            effectiveMatches = lineFiltered;
+            dev.log(
+              'TransferUtils: Line filter kept ${lineFiltered.length}/'
+              '${matchedAll.length} stops for "${leg.lineName}" '
+              '(key="$legLineKey", city="$legCityKey").',
+              name: 'TransferUtils',
+            );
+          }
+
           // Dedupe by stop ID (keep closest to polyline for each unique ID)
           final byId = <String, MatchedStop>{};
-          for (final m in matchedAll) {
+          for (final m in effectiveMatches) {
             final id = m.stop.id;
             if (!byId.containsKey(id) ||
                 m.distanceToPolylineMeters <
@@ -1349,31 +1603,55 @@ class TransferUtils {
           // The actual number of intermediate stops from OSM
           final actualNumStops = intermediateStops.length;
 
+          // G16: cross-check OSM vs Google `num_stops`. `leg` here is the
+          // pre-enhancement API-derived leg (API numStops + uniform stopMeters),
+          // so falling back to it costs nothing and stays self-consistent.
+          final apiNumStops = leg.numStops;
+          final diverged = osmStopCountDiverges(
+            apiNumStops: apiNumStops,
+            osmNumStops: actualNumStops,
+          );
+
           dev.log('''
-🎯 OSM-ONLY ENHANCEMENT: ${leg.lineName}
+🎯 OSM ENHANCEMENT (cross-checked): ${leg.lineName}
    Leg range: ${leg.legStartMeters.toStringAsFixed(0)}m - ${leg.legEndMeters.toStringAsFixed(0)}m (length: ${legLength.toStringAsFixed(0)}m)
    Polyline length: ${polylineTotalMeters.toStringAsFixed(0)}m
-   API num_stops (ignored): ${leg.numStops}
+   API num_stops:           $apiNumStops
    OSM matched total:       ${matchedAll.length}
    Unique by ID:            ${uniqueOrdered.length}
-   Intermediate stops:      $actualNumStops
+   OSM intermediate stops:  $actualNumStops
+   Diverged (fallback=$diverged)
    Stop names: ${stopNames.take(5).join(', ')}${stopNames.length > 5 ? '...' : ''}
    Stop meters: ${stopMeters.take(5).map((m) => m.toStringAsFixed(0)).join(', ')}${stopMeters.length > 5 ? '...' : ''}
 ''', name: 'TransferUtils');
 
-          enhanced.add(
-            TransitLegStops(
-              legStartMeters: leg.legStartMeters,
-              legEndMeters: leg.legEndMeters,
-              numStops: actualNumStops, // Use OSM count, not API count
-              stopPositions: stopPositions,
-              stopMeters: stopMeters,
-              lineName: leg.lineName,
-              isActualPositions: true, // Always true when using OSM data
-              isMetro: leg.isMetro,
-              stopNames: stopNames,
-            ),
-          );
+          if (diverged) {
+            dev.log(
+              '⚠️ TransferUtils: OSM/API stop-count divergence for ${leg.lineName} '
+              '(OSM=$actualNumStops, API=$apiNumStops). Falling back to API count '
+              '(low confidence).',
+              name: 'TransferUtils',
+            );
+            // Keep the API-derived leg (uniform stopMeters + API numStops) and
+            // flag it. Never adopt a smaller/inconsistent OSM count that could
+            // make the alarm fire late.
+            enhanced.add(leg.copyWith(stopCountConfidence: 0.5));
+          } else {
+            enhanced.add(
+              TransitLegStops(
+                legStartMeters: leg.legStartMeters,
+                legEndMeters: leg.legEndMeters,
+                numStops: actualNumStops, // OSM count (agrees with API)
+                stopPositions: stopPositions,
+                stopMeters: stopMeters,
+                lineName: leg.lineName,
+                isActualPositions: true,
+                isMetro: leg.isMetro,
+                stopNames: stopNames,
+                stopCountConfidence: 1.0,
+              ),
+            );
+          }
         } catch (e) {
           dev.log(
             '⚠️ TransferUtils: OSM enhancement failed for ${leg.lineName}: $e',

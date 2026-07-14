@@ -28,6 +28,7 @@ import 'package:geowake2/services/sensor_fusion.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/core/ekf/ekf_types.dart';
 import 'package:geowake2/services/transfer_utils.dart';
+import 'package:geowake2/config/fire_decision_config.dart';
 
 /// Context needed for location stream processing.
 class LocationStreamContext {
@@ -129,6 +130,10 @@ class LocationStreamHandler {
 
   // Guard for sequential alarm checking
   bool _isCheckingAlarm = false;
+
+  // G10: last time a dead-reckoned alarm evaluation was driven by the dropout
+  // tick, used to rate-limit re-evaluation during a GPS blackout.
+  DateTime? _lastDropoutAlarmEvalAt;
 
   // Callback for notification update
   void Function(ServiceInstance service)? onUpdateNotification;
@@ -435,6 +440,11 @@ class LocationStreamHandler {
     // Check for GPS dropout and enable fusion
     _checkGpsDropout(ctx);
 
+    // G10: During a GPS blackout, drive alarm evaluation from the EKF here —
+    // the positionStream is silent, so this periodic tick is the only thing
+    // running. Rate-limited and only when we already have a dead-reckoned EKF.
+    _maybeEvaluateAlarmDuringDropout(ctx);
+
     // Update notification
     onUpdateNotification?.call(ctx.service);
 
@@ -527,6 +537,50 @@ class LocationStreamHandler {
       if (_lastProcessedPosition != null) {
         _ensureFusionManagerPosition(_lastProcessedPosition!, ctx);
       }
+    }
+  }
+
+  /// G10: When GPS has been silent past the dropout buffer, evaluate the alarm
+  /// against the dead-reckoned EKF state. Synthesizes a Position whose speed is
+  /// EKF.v and whose accuracy is a sentinel so _checkAndTriggerAlarm refuses to
+  /// snap/ingest it (arc-progress is taken from EKF.s downstream). lat/lng carry
+  /// the last known fix only for logging/geofence fallbacks.
+  void _maybeEvaluateAlarmDuringDropout(LocationStreamContext ctx) {
+    final last = _lastGpsUpdate;
+    if (last == null) return; // no fix yet — nothing to dead-reckon from
+    final now = DateTime.now();
+    if (now.difference(last) < gpsDropoutBuffer) return; // GPS still live
+
+    final ekf = _lastEkfState;
+    if (ekf == null || !ekf.s.isFinite) return; // no dead-reckon available
+
+    // Rate-limit (tick can be ~1s; ~2s re-eval avoids notification churn).
+    if (_lastDropoutAlarmEvalAt != null &&
+        now.difference(_lastDropoutAlarmEvalAt!) <
+            FireDecisionConfig.dropoutEvalMinInterval) {
+      return;
+    }
+    _lastDropoutAlarmEvalAt = now;
+
+    final lastPos = _lastProcessedPosition;
+    final synth = Position(
+      latitude: lastPos?.latitude ?? 0.0,
+      longitude: lastPos?.longitude ?? 0.0,
+      timestamp: now,
+      accuracy: FireDecisionConfig.deadReckonAccuracySentinel,
+      altitude: 0.0,
+      heading: 0.0,
+      speed: ekf.v.isFinite ? ekf.v : 0.0,
+      speedAccuracy: 0.0,
+      altitudeAccuracy: 0.0,
+      headingAccuracy: 0.0,
+    );
+
+    if (!_isCheckingAlarm) {
+      _isCheckingAlarm = true;
+      onCheckAlarm?.call(synth, ctx.service).whenComplete(() {
+        _isCheckingAlarm = false;
+      });
     }
   }
 

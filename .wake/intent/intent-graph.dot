@@ -44,7 +44,7 @@ digraph WakePoint {
   "user-facing-screens" -> "live-tracking-runtime" [penwidth=4.00 color="#cc7722"];
   "user-facing-screens" -> "platform-connectivity-services" [penwidth=3.32 color="#cc7722"];
   "user-facing-screens" -> "routing-route-sessions" [penwidth=3.81 color="#cc7722"];
-  "user-facing-screens" -> "wakeup-alarm-engine" [penwidth=2.58 color="#cc7722"];
+  "user-facing-screens" -> "wakeup-alarm-engine" [penwidth=3.32 color="#cc7722"];
   "wakeup-alarm-engine" -> "live-tracking-runtime" [penwidth=2.00 color="#cc7722"];
   "wakeup-alarm-engine" -> "routing-route-sessions" [penwidth=2.00 color="#cc7722"];
 }

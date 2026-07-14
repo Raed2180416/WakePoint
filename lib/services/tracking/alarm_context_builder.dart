@@ -38,6 +38,10 @@ class AlarmContextBuilder {
     required bool timeAlarmEligible,
     required int etaSamples,
     required double distanceTravelledMeters,
+    double? ekfSpeedMps,
+    double? ekfSigmaS,
+    double? ekfSigmaV,
+    bool preferEkfSpeed = false,
   }) {
     final routeEvents =
         (alarmKey != null && routeEventsByKey.containsKey(alarmKey))
@@ -86,6 +90,10 @@ class AlarmContextBuilder {
       timeAlarmEligible: timeAlarmEligible,
       etaSamples: etaSamples,
       distanceTravelledMeters: distanceTravelledMeters,
+      ekfSpeedMps: ekfSpeedMps,
+      ekfSigmaS: ekfSigmaS,
+      ekfSigmaV: ekfSigmaV,
+      preferEkfSpeed: preferEkfSpeed,
     );
   }
 }

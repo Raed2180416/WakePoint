@@ -6,6 +6,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/permission_service.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
+import 'package:geowake2/services/saved_route.dart';
+import 'package:geowake2/services/saved_routes_service.dart';
 import 'package:geowake2/services/places_service.dart';
 import 'package:geowake2/services/metro_stop_service.dart';
 import 'package:geowake2/services/stop_logic_engine.dart';
@@ -18,6 +20,7 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:geowake2/services/api_client.dart';
 // import 'package:geowake2/services/direction_service.dart';
 import 'package:geowake2/services/offline_coordinator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:geowake2/services/tracking_state_store.dart';
 
@@ -34,6 +37,7 @@ class HomeScreenState extends State<HomeScreen> {
   String? _currentCountryCode;
 
   List<Map<String, dynamic>> _recentLocations = [];
+  List<RouteMemory> _savedRoutes = [];
   List<Map<String, dynamic>> _autocompleteResults = [];
   Map<String, dynamic>? _selectedLocation;
 
@@ -72,6 +76,7 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _placesService = PlacesService();
     _loadRecentLocations();
+    _loadSavedRoutes();
     _initBatteryMonitoring();
     // OfflineCoordinator.instance is now used via getter, no need to initialize here
 
@@ -459,6 +464,178 @@ class HomeScreenState extends State<HomeScreen> {
     await RecentLocationsService.saveRecentLocations(_recentLocations);
   }
 
+  // =======================================================================
+  // ROUTE MEMORY — automatic recents + frequent trips (no manual saving).
+  // GeoWake is position-dependent, so we LEARN routes from behaviour instead of
+  // pinning fixed Home/Work destinations: the last few trips show as one-tap
+  // recents, and a trip armed repeatedly is pinned as "frequent".
+  // =======================================================================
+  Future<void> _loadSavedRoutes() async {
+    final loaded = await RouteMemoryService.list();
+    if (mounted) setState(() => _savedRoutes = loaded);
+  }
+
+  /// Silently record the just-armed trip into route memory (upsert by coarse
+  /// signature; bumps the frequency counter). Origin is captured so a future
+  /// re-arm from the same spot can reuse a cached route instead of calling the
+  /// Directions API. Never throws into the arming path.
+  Future<void> _recordRouteMemory({
+    required String destinationName,
+    required double destLat,
+    required double destLng,
+    required String alarmMode,
+    required double alarmValue,
+    required bool metroMode,
+    String? metroLine,
+    double? originLat,
+    double? originLng,
+    String? placeId,
+  }) async {
+    try {
+      await RouteMemoryService.record(
+        destinationName: destinationName,
+        lat: destLat,
+        lng: destLng,
+        placeId: placeId,
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
+        metroMode: metroMode,
+        metroLine: metroLine,
+        originLat: originLat,
+        originLng: originLng,
+      );
+      await _loadSavedRoutes();
+    } catch (e) {
+      dev.log('Failed to record route memory: $e', name: 'HomeScreen');
+    }
+  }
+
+  /// One-tap arm: pre-fill destination + alarm mode/value from a remembered
+  /// route, then run the normal Wake-Me flow (permissions, validation).
+  Future<void> _armSavedRoute(RouteMemory r) async {
+    if (_isTracking) return;
+    // Apply alarm mode/value onto the same state the Wake-Me flow reads.
+    setState(() {
+      _metroMode = r.metroMode;
+      switch (r.alarmMode) {
+        case 'stops':
+          _useDistanceMode = true;
+          _metroMode = true; // stops mode only exists under metro mode
+          _stopsSliderValue = r.alarmValue.clamp(1.0, 10.0);
+          break;
+        case 'distance':
+          _useDistanceMode = true;
+          _metroMode = false; // distance is the non-metro distance mode
+          _distanceSliderValue = r.alarmValue.clamp(0.5, 10.0);
+          break;
+        case 'time':
+        default:
+          _useDistanceMode = false; // keep metroMode as saved (metro-time is valid)
+          _timeSliderValue = r.alarmValue.clamp(1.0, 60.0);
+          break;
+      }
+    });
+    // Set destination (updates marker, search field and camera) then arm.
+    await _setSelectedLocation(r.destinationName, r.lat, r.lng);
+    if (r.placeId != null && r.placeId!.isNotEmpty) {
+      _selectedLocation!['place_id'] = r.placeId;
+    }
+    await _onWakeMePressed();
+  }
+
+  /// Long-press menu for a remembered route: arm, or forget it.
+  Future<void> _showSavedRouteOptions(RouteMemory r) async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.destinationName.isEmpty
+                          ? 'Recent trip'
+                          : r.destinationName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      r.isFrequent
+                          ? 'Frequent · travelled ${r.timesTravelled}×'
+                          : 'Recent trip',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_active),
+              title: const Text('Arm this trip'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _armSavedRoute(r);
+              },
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.delete_outline, color: Colors.redAccent),
+              title: const Text('Forget this trip'),
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                await RouteMemoryService.remove(r.id);
+                await _loadSavedRoutes();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// G24: surface a plain-spoken reliability/safety disclaimer exactly once.
+  /// On some phones (aggressive battery managers, Do-Not-Disturb, very deep
+  /// sleep) the wake-up alarm may not fire, so riders should keep a backup
+  /// alarm. Persists a "shown" flag in shared_preferences so it never nags.
+  Future<void> _maybeShowReliabilityDisclaimer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('reliability_disclaimer_shown') == true) return;
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Please keep a backup alarm'),
+          content: const Text(
+            'WakePoint does its best to wake you at your stop, but no phone app '
+            'can guarantee it. On some phones, aggressive battery savers, Do Not '
+            'Disturb, or very deep sleep can delay or silence the alarm.\n\n'
+            'For any trip you truly can\'t miss, please also set a backup alarm.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Got it'),
+            ),
+          ],
+        ),
+      );
+      await prefs.setBool('reliability_disclaimer_shown', true);
+    } catch (_) {
+      // Never block arming a session on the disclaimer.
+    }
+  }
+
   Future<void> _onWakeMePressed() async {
     final stopwatch = Stopwatch()..start();
     dev.log(
@@ -489,6 +666,10 @@ class HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     if (canProceed) {
+      // G24: honest, one-time reliability disclaimer before the first armed
+      // session. Non-blocking beyond a single "Got it" dismissal.
+      await _maybeShowReliabilityDisclaimer();
+      if (!mounted) return;
       // Permissions were granted, proceed with tracking!
       setState(() => _isTracking = true);
       await _proceedWithDirections(stopwatch);
@@ -624,6 +805,26 @@ class HomeScreenState extends State<HomeScreen> {
 
       final initialETA =
           directions['routes'][0]['legs'][0]['duration']['value'] as int;
+
+      // G18: The flagship use case is a 6-10h single-stop sleeper journey, so
+      // long journeys are intentionally NOT capped. We only refuse plainly
+      // invalid (>24h) total durations, which indicate corrupt/looping route
+      // data rather than a real trip. Computed across ALL legs so a multi-leg
+      // journey isn't under-measured by leg 0 alone.
+      final totalPlannedSeconds =
+          TransferUtils.totalPlannedDurationSeconds(directions);
+      const int maxSaneJourneySeconds = 24 * 3600; // 86400s ceiling, ~2.4x max sleeper
+      if (totalPlannedSeconds > maxSaneJourneySeconds) {
+        _showErrorDialog(
+          "Route Too Long",
+          "This route appears longer than 24 hours, which usually means the route data is invalid. Please re-select your destination.",
+        );
+        setState(() {
+          _isTracking = false;
+          _isLoading = false;
+        });
+        return;
+      }
 
       final trackingService = TrackingService();
 
@@ -764,6 +965,32 @@ class HomeScreenState extends State<HomeScreen> {
         );
       }
 
+      // Pre-arm confirmation: resolve the abstract alarm setting into concrete
+      // terms so the rider trusts it enough to actually sleep. Dismissible.
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false; // Clear spinner so the sheet is presented cleanly.
+      });
+      final confirmed = await _showPreArmConfirmation(
+        destinationName: _selectedLocation?['description'] ?? 'your destination',
+        alarmMode: alarmMode,
+        alarmValue: alarmValue,
+        totalEtaSeconds: totalPlannedSeconds,
+        directions: directions,
+      );
+      if (!mounted) return;
+      if (confirmed != true) {
+        // Rider backed out — abort arming, leave them on the home screen.
+        setState(() {
+          _isTracking = false;
+          _isLoading = false;
+        });
+        return;
+      }
+      setState(() {
+        _isLoading = true; // Re-show spinner while tracking spins up.
+      });
+
       // 1. Start Tracking (Ensure service is running)
       // Parallelize state persistence for faster startup
       try {
@@ -811,6 +1038,23 @@ class HomeScreenState extends State<HomeScreen> {
       dev.log(
         '[StartupPerf] Tracking Service Started: ${stopwatch.elapsedMilliseconds}ms',
         name: 'Performance',
+      );
+
+      // Remember this trip (recents + frequency). Fire-and-forget — must never
+      // block or fail the arming flow. Origin lets a later re-arm reuse cache.
+      unawaited(
+        _recordRouteMemory(
+          destinationName:
+              _selectedLocation?['description'] ?? 'Your Destination',
+          destLat: destLat,
+          destLng: destLng,
+          alarmMode: alarmMode,
+          alarmValue: alarmValue,
+          metroMode: _metroMode,
+          originLat: userLat,
+          originLng: userLng,
+          placeId: _selectedLocation?['place_id'] as String?,
+        ),
       );
 
       // 2. Register Route (fire-and-forget for faster navigation)
@@ -887,6 +1131,149 @@ class HomeScreenState extends State<HomeScreen> {
         });
       }
     }
+  }
+
+  /// Human-readable short ETA (e.g. "45 min", "2.5 hr").
+  String _formatEtaShort(num seconds) {
+    final s = seconds.toDouble();
+    if (!s.isFinite || s <= 0) return 'a moment';
+    if (s < 90) return '${s.round()} sec';
+    if (s < 3600) return '${(s / 60).round()} min';
+    final h = s / 3600.0;
+    return h < 10 ? '${h.toStringAsFixed(1)} hr' : '${h.round()} hr';
+  }
+
+  /// Trim a double for display: drop the decimal when it's a whole number.
+  String _trimNum(double v) =>
+      v == v.roundToDouble() ? v.round().toString() : v.toStringAsFixed(1);
+
+  /// Best-effort name of the last transit alighting stop, for stops-mode copy.
+  /// Falls back to null so the caller can substitute the destination name.
+  String? _lastAlightingStopName(Map<String, dynamic> directions) {
+    try {
+      final routes = directions['routes'] as List?;
+      if (routes == null || routes.isEmpty) return null;
+      final legs = (routes.first as Map)['legs'] as List?;
+      String? name;
+      for (final leg in legs ?? const []) {
+        final steps = (leg as Map)['steps'] as List? ?? const [];
+        for (final step in steps) {
+          final td = (step as Map)['transit_details'] as Map?;
+          final arr = td?['arrival_stop'] as Map?;
+          final n = arr?['name'] as String?;
+          if (n != null && n.trim().isNotEmpty) name = n.trim();
+        }
+      }
+      return name;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Show a short, dismissible confirmation sheet that resolves the abstract
+  /// alarm setting into concrete terms before we start tracking. Returns true
+  /// only if the rider explicitly confirms.
+  Future<bool?> _showPreArmConfirmation({
+    required String destinationName,
+    required String alarmMode,
+    required double alarmValue,
+    required num totalEtaSeconds,
+    required Map<String, dynamic> directions,
+  }) async {
+    final etaStr = _formatEtaShort(totalEtaSeconds);
+
+    String wakeLine;
+    switch (alarmMode) {
+      case 'stops':
+        final n = alarmValue.round();
+        final stop = _lastAlightingStopName(directions) ?? destinationName;
+        wakeLine = "We'll wake you $n stop${n == 1 ? '' : 's'} before $stop.";
+        break;
+      case 'distance':
+        wakeLine =
+            "We'll wake you ${_trimNum(alarmValue)} km before $destinationName.";
+        break;
+      case 'time':
+      default:
+        wakeLine =
+            "We'll wake you ${alarmValue.round()} min before $destinationName.";
+    }
+
+    return showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: true,
+      isScrollControlled: false,
+      showDragHandle: true,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.bedtime, color: cs.primary, size: 28),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Ready to sleep?',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Arriving at $destinationName in ~$etaStr.',
+                  style: const TextStyle(fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  wakeLine,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Not yet'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: cs.primary,
+                          foregroundColor: cs.onPrimary,
+                        ),
+                        icon: const Icon(Icons.notifications_active, size: 20),
+                        label: const Text('Wake me'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // Removed legacy km-per-stop estimator (now use stops mode directly)
@@ -1148,6 +1535,8 @@ class HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                   ),
+                SizedBox(height: screenHeight * 0.01),
+                _buildSavedRoutesSection(isDarkMode, colorScheme),
                 SizedBox(height: screenHeight * 0.02),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -1275,7 +1664,7 @@ class HomeScreenState extends State<HomeScreen> {
                     });
                   },
                 ),
-                SizedBox(height: screenHeight * 0.03),
+                SizedBox(height: screenHeight * 0.015),
                 ElevatedButton(
                   onPressed:
                       (_selectedLocation == null ||
@@ -1331,6 +1720,87 @@ class HomeScreenState extends State<HomeScreen> {
         ),
       ),
       // No floating action button in production
+    );
+  }
+
+  /// Compact horizontal "Recent trips" row, auto-populated from route memory.
+  /// One tap re-arms the trip; long-press offers Arm/Forget. Frequent trips are
+  /// pinned first (marked with a star). Hidden when nothing's been travelled.
+  Widget _buildSavedRoutesSection(bool isDarkMode, ColorScheme cs) {
+    if (_savedRoutes.isEmpty) return const SizedBox.shrink();
+    final ordered = _savedRoutes; // already frequent-first, then recent
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              'Recent trips',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: ordered.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) =>
+                  _buildSavedRouteChip(ordered[i], isDarkMode, cs),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSavedRouteChip(RouteMemory r, bool isDarkMode, ColorScheme cs) {
+    final IconData icon = r.isFrequent ? Icons.star : Icons.history;
+    // Short label: destination name trimmed to the first, most-recognisable part.
+    String label = r.destinationName.trim();
+    if (label.isEmpty) label = 'Recent trip';
+    final comma = label.indexOf(',');
+    if (comma > 2) label = label.substring(0, comma);
+    if (label.length > 22) label = '${label.substring(0, 21)}…';
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: _isTracking ? null : () => _armSavedRoute(r),
+      onLongPress: () => _showSavedRouteOptions(r),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDarkMode ? Colors.white24 : Colors.grey.shade300,
+            width: 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: r.isFrequent ? Colors.amber[700] : cs.primary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

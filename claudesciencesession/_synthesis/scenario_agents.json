@@ -1,0 +1,1076 @@
+[
+ {
+  "dimension": "device-hardware",
+  "cases": [
+   {
+    "scenario": "Aggressive OEM battery manager (MIUI/ColorOS/FuntouchOS on cheap Xiaomi/Oppo/Vivo/Realme \u2014 dominant in India) kills the flutter_background_service foreground isolate while the rider sleeps, because the app is not whitelisted from battery optimization.",
+    "failure_mode": "Foreground service is force-stopped; GPS stream and alarm evaluation stop entirely; the rider is never woken and misses the stop.",
+    "coverage": "GAP",
+    "evidence": "AndroidManifest.xml declares FOREGROUND_SERVICE_LOCATION etc. but has NO REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission and no code path requests an exemption (grep for IGNORE_BATTERY/isIgnoringBatteryOptimizations returns nothing). trackingservice.dart:212 sets autoStart:false. Nothing counters OEM background-kill, which on Indian budget phones happens routinely to backgrounded apps.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Phone battery dies mid-journey (common on cheap phones) and the rider puts it on charge; the phone reboots but the app is not reopened because the rider is asleep.",
+    "failure_mode": "Tracking never resumes after reboot; the persisted TrackingSnapshot is only consumed on manual app launch (splash) or OS-driven isolate restart, so no alarm ever fires.",
+    "coverage": "GAP",
+    "evidence": "AndroidManifest.xml has no BOOT_COMPLETED receiver and no RECEIVE_BOOT_COMPLETED permission; trackingservice.dart:212/220 use autoStart:false. Recovery from snapshot at trackingservice.dart:2020-2102 only runs if the OS restarts the background isolate (process death), which does not happen across a full reboot. splash_screen.dart:105-140 restores only when the user opens the app.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Budget Android phone with NO gyroscope (very common < \u20b912k tier) enters a metro tunnel; GPS drops and the EKF dead-reckoning fallback must carry progress.",
+    "failure_mode": "gyroscopeEvents never emits (or errors and is cancelled), so gyro is treated as identically zero; TiltFilter orientation and MotionClassifier gyro features degrade, ZUPT/station-association confidence gates rarely pass, so DR drifts and station snaps are rejected \u2014 no reliable progress underground.",
+    "coverage": "GAP",
+    "evidence": "sensor_fusion.dart:255-267 subscribes to gyroscopeEvents with handleError/cancelOnError; sensor_fusion.dart:229-231 substitutes gx=gy=gz=0.0 when _lastGyro is null. ekf_orchestrator.dart:554-558 computes gyroVariance from those zeros, feeding TiltFilter (line 118-119), ZUPT (357-361), and the \u03c3\u226460m degraded snap gate (449-452) that then cannot confirm.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Very noisy cheap accelerometer (poor MEMS part) during a GPS dropout / tunnel segment.",
+    "failure_mode": "Static-bias estimation and ZUPT never trigger because their variance thresholds are never met, so accelerometer bias is never removed and the 1-D position integrates unbounded drift; station snaps get rejected by the \u03c3 gate \u2014 DR position is meaningless, alarm fires late or not at all.",
+    "coverage": "GAP",
+    "evidence": "ekf_orchestrator.dart:713 requires accelVar<0.5 AND gyroVar<0.1 to collect bias; ZUPT check at 357-359 needs accelVar<0.1 and gyroVar<0.01. A noisy accel keeps variance above these, so _biasInitialized stays false (line 720-731) and DR keeps raw bias. sensor_fusion.dart:204-213 also integrates raw event.x/y with only a fixed 0.9 decay, no noise model.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Low max sensor sample rate or aggressive sensor batching (power-saving SoCs deliver IMU samples in bursts, not at ~100Hz).",
+    "failure_mode": "EKF windows assume ~100Hz; batched samples are processed in a tight loop where DateTime.now() dt\u22480, corrupting velocity integration, the feature-extractor's computed sampleRateHz, and time-based ZUPT/motion gating \u2014 motion misclassification and bad DR during the exact dropout the EKF exists to cover.",
+    "coverage": "GAP",
+    "evidence": "ekf_orchestrator.dart:69,87-88 hardcode window sizes as '~1s at 100Hz'; sensor_fusion.dart:189 computes dt from DateTime.now() (wall clock, \u22480 in a batch drain) and uses it for _velX/_velY integration (204-213). extractMotionFeatures (588) derives sampleRateHz from timestamps, which collapses under batching. No de-batching or per-sample event-timestamp handling.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider is on low battery (or forces battery-saver on) expecting the app to conserve power without losing accuracy.",
+    "failure_mode": "The low/medium PowerPolicy tiers (LocationAccuracy.low/medium, larger distanceFilter) are computed but never applied \u2014 GPS always runs at high accuracy/distanceFilter 0, draining the battery faster, so a low phone dies sooner mid-journey (see reboot GAP). The 'power saving' is dead code.",
+    "coverage": "PARTIAL",
+    "evidence": "PowerPolicyManager.forBatteryLevel (power_policy.dart:28-57) returns accuracy/distanceFilter tiers, but location_manager.dart:45-48 hardcodes LocationAccuracy.high, distanceFilter:0 and start() (line 94) always uses that. location_stream_handler.dart:194-200 and trackingservice.dart:2136-2141 only consume policy.gpsDropoutBuffer/notificationTick \u2014 never accuracy/distanceFilter.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Battery drains across tiers during a long journey (e.g. starts at 60%, drops to 15% during a 45-min ride).",
+    "failure_mode": "Power policy (dropout buffer, notification tick, reroute cooldown) is fixed at journey start and never re-read, so timing parameters no longer match the actual battery state; FFT motion classification chosen at start is also frozen.",
+    "coverage": "PARTIAL",
+    "evidence": "Battery is read once in location_stream_handler.dart:179-197 and trackingservice.dart:2122-2139 at stream start; _fftEnabled is latched at location_stream_handler.dart:200 (batteryLevel>=20). No listener updates the policy when battery_plus onBatteryStateChanged fires (that listener exists only for UI in homescreen.dart:197).",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "New Android (API 34/35) where USE_FULL_SCREEN_INTENT is restricted to calling/alarm-category apps \u2014 a general utility app's full-screen alarm may be downgraded to a normal notification.",
+    "failure_mode": "The wake-up screen may not turn on / show over the lockscreen; if the rider relies on the visual full-screen alarm they may sleep through it.",
+    "coverage": "PARTIAL",
+    "evidence": "AndroidManifest.xml declares USE_FULL_SCREEN_INTENT and MainActivity showWhenLocked/turnScreenOn, targetSdkVersion 34 (android/app/build.gradle:21). No runtime canUseFullScreenIntent() check or fallback is present; on API34+ the intent is only auto-granted to eligible categories, otherwise it surfaces as a heads-up notification. (Audio via alarm_player may still ring, mitigating.)",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Device clock jumps mid-journey (NTP correction, dual-SIM network time change, or user sets manual time) while tracking underground/near the stop.",
+    "failure_mode": "A backward jump makes 'silentFor' negative so a real GPS dropout is not detected (fusion never engaged); a forward jump triggers a false dropout and spins up sensor fusion unnecessarily; IMU dt also corrupts one integration step.",
+    "coverage": "PARTIAL",
+    "evidence": "GPS dropout detection uses wall clock: location_stream_handler.dart:525 silentFor = DateTime.now().difference(last) vs gpsDropoutBuffer. sensor_fusion.dart:189 dt from DateTime.now(). Speed derivation is guarded (location_manager.dart:188,202-207 require dt>minDt and clamp), and the IMU EKF timestamp uses a monotonic Stopwatch (sensor_fusion.dart:178,226), which limits but does not fully prevent the dropout-detection error.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Storage full on a cheap 32GB phone so Hive writes fail when caching the prefetched route and persisting tracking snapshots.",
+    "failure_mode": "Route-cache and snapshot writes throw; the current journey continues from in-memory data, but no snapshot is saved, so if the OS later kills the isolate the recovery flow finds no fresh snapshot and stops itself \u2014 silent loss of tracking after process death.",
+    "coverage": "PARTIAL",
+    "evidence": "route_cache.dart:163-168 put() has no try/catch (caller in direction_service.dart:331 swallows it, so the live route survives). Snapshot save in location_stream_handler.dart:389-413 catches and only logs failure. Recovery at trackingservice.dart:2029-2090 calls stopSelf() when loadSnapshot() returns null. route_cache.dart:75-83 even deletes the box on open failure, discarding prior cache.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Phone overheats in a hot bag/pocket (Indian summer, cheap phone) and the SoC thermally throttles the CPU during the ride.",
+    "failure_mode": "Heavy EKF/FFT compute and the alarm pipeline run slower on the background isolate; alarm evaluation (which only runs on position callbacks) can lag, and throttling can starve the isolate, delaying a stop alarm.",
+    "coverage": "GAP",
+    "evidence": "No thermal state monitoring anywhere. Alarm evaluation is only invoked from _handlePositionUpdate (location_stream_handler.dart:268-273) via onCheckAlarm; the periodic _handleGpsCheckTick (428-452) does NOT evaluate alarms, so if position processing is starved, no timer-based safety net fires the alarm.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Very old Android (API < 26/29) budget device where foregroundServiceType='location' and the newer permissions have no effect and Doze/background limits differ.",
+    "failure_mode": "Foreground-service-with-location semantics and HIGH_SAMPLING_RATE_SENSORS/POST_NOTIFICATIONS are no-ops on old APIs; background execution guarantees weaken, raising the chance the service is throttled or the high-rate IMU the EKF expects is unavailable.",
+    "coverage": "PARTIAL",
+    "evidence": "AndroidManifest.xml service uses android:foregroundServiceType='location|mediaPlayback' (meaningful only API29+); HIGH_SAMPLING_RATE_SENSORS is API31+. minSdk is flutter.minSdkVersion (android/app/build.gradle:20), not pinned high. permission_service.dart requests location/locationAlways/notification/activityRecognition but there is no per-API-level branching or graceful degradation for the sensor-rate assumption.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "Wi-Fi-only tablet or foldable used as the tracking device (no cellular/GNSS chip, or GPS only via network).",
+    "failure_mode": "GPS positions never arrive or are extremely coarse; time-mode alarm never becomes eligible and distance/stop progress never advances, so no alarm fires.",
+    "coverage": "GAP",
+    "evidence": "location_manager.dart:94 unconditionally subscribes to Geolocator.getPositionStream; there is no check for GNSS availability or a coarse/network-only fallback strategy. Time-alarm eligibility requires real movement/speed samples (location_stream_handler.dart:601-607: moved>=100m, >=3 speed samples, >=30s), which a stationary/no-fix device never satisfies.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "Wrong timezone set on the device (traveler's phone still on another region's TZ) for a time-before or scheduled/departure-anchored route.",
+    "failure_mode": "Displayed clock times are off, but alarm firing itself is unaffected because triggering is relative (ETA seconds / geometric progress), and the route-cache departure key uses UTC epoch seconds.",
+    "coverage": "COVERED",
+    "evidence": "Time-mode alarms compare ETA seconds to a threshold, not wall-clock time (alarm_evaluator.dart:181-183,344-351). route_cache.dart makeKey uses departureTime as unix epoch seconds (line 100), which is timezone-independent. No wall-clock local-time comparison gates the alarm.",
+    "severity": "LOW"
+   }
+  ]
+ },
+ {
+  "dimension": "route-topology",
+  "cases": [
+   {
+    "scenario": "EXPRESS / skip-stop train: rider sets \"3 stops before\" on a line where the boarded train runs express and skips the modeled intermediate stations (common on Indian suburban rail / some metro peak services).",
+    "failure_mode": "Alarm still fires at the geographic position of the Nth-from-last MODELED stop (progressMeters>=stopMeters), but the express train makes 0-1 physical stops between the alarm point and the destination and travels faster, so the rider's real warning window collapses from an expected ~5 min to seconds; the '3 stops' shown is fictional. If the rider's own destination is a skipped minor stop, the train blows past it (routing failure) though the rider is at least woken.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_evaluator.dart:775-797 counts passed stops solely by distance (progressMeters>=sm), with no notion of whether the train physically stopped; transfer_utils.dart:1164-1368 models stops from the static OSM asset, not from the actual service pattern.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "WRONG DIRECTION: rider boards the correct line at the wrong platform and travels away from the destination, underground (no GPS).",
+    "failure_mode": "On a metro leg the soft-lock/deviation check is skipped and progress = EKF arc-length, which integrates speed magnitude with no signed direction-along-route check. EKF 's' keeps INCREASING as the train moves, so the app 'advances' toward the modeled destination and fires a spurious 'Arriving' alarm while the rider heads the opposite way; the true stop is never reached and no correct alarm ever comes. (On an elevated/GPS section the reverse failure occurs: snapping to the one-directional polyline makes progress DECREASE, so the destination threshold is never crossed and no alarm fires.) Either way the rider misses.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:1143 soft-lock runs only `if (!isMetroStep)`; trackingservice.dart:1175-1185 uses ekfState.s for metro progress; there is no board-direction validation anywhere in alarm_controller.dart / trackingservice.dart.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "WRONG TRAIN, right platform: two lines share a platform/corridor (e.g. a common trunk before diverging); rider boards the wrong line going the correct general direction.",
+    "failure_mode": "Metro leg ignores lateral deviation, so the app never notices the train is geographically off the prefetched polyline. EKF dead-reckons along the WRONG (prefetched) line's arc-length and fires 'N stops before' / destination at the modeled distance, which corresponds to a completely different physical location on the actual line. Rider is woken at the wrong time/place and is on the wrong train.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:1120-1143 (metro legs ignore position deviation); progress is EKF arc-length not GPS-matched (trackingservice.dart:1183-1185); reroute is only driven by deviation which is suppressed on metro legs.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "BRANCHING line splits: after a shared trunk the line forks (e.g. Y-branch); the rider's train takes the branch OPPOSITE to the prefetched one.",
+    "failure_mode": "After the divergence point the train is physically off-route, but metro-leg deviation is disabled so it's undetected; EKF continues integrating along the prefetched branch and fires the destination alarm at the modeled arc-length while the train is kilometres away on the other branch. Rider woken at wrong time and is on the wrong branch with no correct alarm.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:1143 metro deviation skipped; snap_to_route.dart windowed/heading logic only affects GPS snapping which isn't used for metro-leg progress; no branch/consist awareness in transfer_utils.extractTransitLegStops.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "TRAIN SPLITS mid-route: a consist divides into two portions bound for different destinations and the rider is seated in the wrong half.",
+    "failure_mode": "App has no concept of train consist or which half the rider is in; after the split the rider's physical path diverges from the prefetched route. On a metro leg this is undetectable (deviation off, EKF marches along modeled route), so the destination alarm fires at the modeled distance regardless of which half the rider rode. Rider misses.",
+    "coverage": "GAP",
+    "evidence": "No consist/portion model exists (route is a single polyline in RouteModel/route_models.dart); metro-leg progress is EKF arc-length (trackingservice.dart:1183-1185) with deviation disabled (trackingservice.dart:1143).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "TERMINAL / first station as the target: destination is the line's terminus (guaranteed hard stop where the train reverses).",
+    "failure_mode": "Destination is the final leg end; the final-destination path fires either via N-stops or the 0-intermediate 60%-distance rule. Terminus arrival is guaranteed and the train dwells (ZUPT re-anchors EKF), so this case is handled; only risk is that the terminus dwell/reverse could re-anchor slightly late but the alarm has already fired before arrival.",
+    "coverage": "COVERED",
+    "evidence": "alarm_evaluator.dart:726-737 (final destination on metro leg) and :667-771 (0-intermediate 60% rule) both terminate at legEndMeters; station_association.dart re-anchors on ZUPT dwell at terminus.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "SINGLE-STATION HOP: destination is only 1-2 stops away, so there is very little runway (short leg, possibly high speed).",
+    "failure_mode": "With 0 modeled intermediate stops the alarm uses the 60%-distance rule (fire after 40% of the leg). On a 2-minute hop that is ~40-70s of warning at best; combined with background-isolate audio being delegated to the foreground isolate (added latency), a fast short hop can fire only seconds before arrival, effectively too late to gather belongings / stand up.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_evaluator.dart:667-674 fires at metersInLeg>=legLength*0.4; alarm_controller.dart:277-286 delegates sound to foreground isolate ('audio playback ... may be delayed').",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "STALE prefetched station data: a newly-opened station exists on the line but is absent from the bundled static OSM asset (or a station is closed/renamed vs the asset).",
+    "failure_mode": "OSM asset is treated as the SOLE source of truth and Google's num_stops is explicitly ignored. A missing new station makes the modeled intermediate-stop count too low, so 'N stops before' is spaced too far apart and fires too LATE (rider can miss). A stale closed station still in the asset makes it fire too early (annoyance). Renamed stations give wrong labels. No versioning/expiry on the asset.",
+    "coverage": "GAP",
+    "evidence": "transfer_utils.dart:1155-1163 ('Completely ignores Google API num_stops. Uses ONLY OSM stops...') and :1368 (`numStops: actualNumStops` from OSM); all_india_stops.dart is a GENERATED static file with no runtime freshness check; _isActiveStop (transfer_utils.dart:236-249) only filters by a static status field.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Unscheduled SIGNAL HOLD / dwell far longer than modeled (train stuck in a tunnel between stations).",
+    "failure_mode": "Stops-mode: progress does not advance while stopped, so no spurious fire and counting resumes correctly on movement \u2014 handled. Time-mode: ETA falls back to fixed modeled step durations when speed~0, so a long hold makes the app fire the N-minute alarm too EARLY relative to actual (delayed) arrival \u2014 an annoyance, not a miss. Secondary risk: if the hold happens near a modeled station, EKF ZUPT can false-anchor progress to that station and jump 's'.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_evaluator.dart:1298-1404 estimateEtaSecondsToMeters prefers step-duration ETA when speed<=0.5 (ignores the hold); station_association.dart:104-118 re-anchors on any ZUPT dwell>=3s with a candidate in window.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "SERVICE ENDS / last train DIVERTS TO DEPOT before reaching the rider's stop.",
+    "failure_mode": "The train leaves the modeled route toward a depot. On the metro leg this divergence is invisible (deviation disabled), and EKF either keeps integrating and fires the destination alarm at the modeled arc-length (rider woken but train is heading to depot, not their stop) or the train terminates early and the rider must alight at an earlier station where progress is still below the alarm threshold, so NO alarm fires. Reroute cannot help underground/offline.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:1143 metro deviation skipped; reroute_policy.dart onSustainedDeviation returns early when `!_online`; no early-termination / short-turn detection in trackingservice.dart.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "SHORT-TURN: the boarded train terminates at an intermediate station short of the rider's destination (peak-hour short-turn working).",
+    "failure_mode": "Train reaches an intermediate terminus and empties; EKF ZUPTs and stalls at that station's arc-length, which is below the destination/N-stops threshold, so the alarm never fires. The rider (asleep) is not warned to alight and does not learn they must change to a through train.",
+    "coverage": "GAP",
+    "evidence": "Alarm firing requires progressMeters to reach the modeled threshold (alarm_evaluator.dart:796-797, 776-782); nothing detects that forward motion has permanently stopped short of the target; metro-leg deviation disabled (trackingservice.dart:1143).",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "REPLACEMENT BUS for a closed metro section: at planning time the section was open so the prefetched route is metro geometry, but the actual service is a road-following rail-replacement bus.",
+    "failure_mode": "The leg is still flagged isMetro, so the app disables deviation checking and uses rail-tuned EKF dead-reckoning, while the bus follows a slower, geometrically different road path. Progress (EKF arc-length along metro geometry) desynchronizes badly from reality, producing a mistimed or spurious alarm. If instead Google had routed the bus as a non-metro leg, it would be handled \u2014 the gap is specifically stale metro data.",
+    "coverage": "GAP",
+    "evidence": "isMetro is decided from cached directions vehicle type (transfer_utils.dart:251-275); metro legs skip soft-lock and use EKF (trackingservice.dart:1120-1143, 1175-1185); no runtime check that the metro section is actually operating.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "LOOP / CIRCLE line where the route arc nearly closes on itself (chosen direction wraps most of the way around, so the polyline passes close to its own start).",
+    "failure_mode": "On elevated/GPS portions, snapping can mis-match between the near-touching outbound and return segments: the windowed search (+/-25 segments) plus the backward-movement penalty can either lock onto the wrong nearby segment or resist legitimate progress, causing progress jumps/stalls and thus a mistimed alarm. (Underground metro sections avoid this only because they bypass GPS snapping entirely and use EKF.)",
+    "coverage": "PARTIAL",
+    "evidence": "snap_to_route.dart:129-137 constrains search to a +/-25 segment window around the previous index, and :171 applies a +100 penalty for i<prevIdx-3 (hard resistance to backward movement) \u2014 both assume a simple non-self-approaching route.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "MISSED TRANSFER: rider must change lines mid-journey but oversleeps the transfer alarm (or the transfer walk) and stays on the first train past the interchange.",
+    "failure_mode": "Transfer detection itself is implemented and a transfer alarm fires N stops before the interchange, and boundary-overshoot handling still fires it if progress jumps past the exact switch point. But if the rider misses it and stays aboard, the app keeps evaluating the SECOND leg's stops (which assume the rider transferred), so subsequent alarms are anchored to the wrong physical line; there is no re-plan offline and no 'you failed to transfer' detection.",
+    "coverage": "PARTIAL",
+    "evidence": "transfer_utils.dart:382-715 builds transfer events and alarm_evaluator.dart:128-144 handles boundary overshoot for the previous metro leg; however leg advancement is purely geometric (alarm_controller.dart:897-919) and assumes the modeled transfer occurred; reroute is gated offline (reroute_policy.dart onSustainedDeviation `!_online`).",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "rider-behavior",
+  "cases": [
+   {
+    "scenario": "Rider starts tracking, screen auto-locks, and they fall asleep. On a cheap India-common phone (MIUI/ColorOS/Realme/Samsung) Doze or the OEM memory-killer freezes/kills the foreground Flutter UI isolate while the screen is off.",
+    "failure_mode": "The UI isolate stops sending its 1s heartbeat. Within 4s the background service's HeartbeatMonitor concludes the app was 'swiped away', sets paused=true, cancels the journey progress notification and shows a 'Tracking paused \u2014 Resume to continue' notification, then STOPS monitoring. No alarm evaluation runs again until the sleeping rider manually taps Resume \u2014 so the alarm NEVER fires and they sail past their stop.",
+    "coverage": "GAP",
+    "evidence": "lib/services/tracking/heartbeat_monitor.dart:22-99 (timeout=4s, checkInterval=2s; on timeout -> TrackingStateStore.setPaused(true); showTrackingPaused(); stop()). Heartbeat is sent every 1s only from the foreground isolate: lib/services/tracking/foreground_bridge.dart:314-327. Comment at trackingservice.dart:499-505 assumes the foreground Dart timer 'continues to run' when merely backgrounded, which does not hold under Doze / aggressive OEM freezing. No WAKE_LOCK / REQUEST_IGNORE_BATTERY_OPTIMIZATIONS in android/app/src/main/AndroidManifest.xml to defend against this.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "A tidy rider clears the app from the recents/task-switcher (or a game/other app pushes it out of memory) before dozing off, intending the persistent tracking notification to keep working.",
+    "failure_mode": "Same heartbeat-timeout path: swiping the UI away stops heartbeats, the service flips to paused and shows 'Resume to continue', and self-suspends alarm checking. The rider believes tracking is live (a notification is still visible) but it is a paused notification requiring a manual tap \u2014 the wake-up never comes.",
+    "coverage": "GAP",
+    "evidence": "lib/services/tracking/heartbeat_monitor.dart:57-91 treats missing heartbeat as 'foreground gone' and pauses. Resume only happens via user action: NotificationService RESUME_TRACKING handler (notification_service.dart:1482-1540) or resumeFromNotification (trackingservice.dart:1761-1766). There is no auto-resume and no continued alarm evaluation while paused.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Rider's phone is at low battery (forgot the powerbank) and the metro enters a long tunnel where GPS drops out \u2014 exactly the dead-reckoning scenario the EKF exists for.",
+    "failure_mode": "PowerPolicy for <20% battery drops GPS to LocationAccuracy.low, distanceFilter 50m, and stretches gpsDropoutBuffer to 40s before fusion even engages; separately FFT (used for EKF station detection) is disabled below 20%. Degraded EKF progress in the tunnel underestimates position, so the 'N stops before' / distance alarm fires late or after the target stop.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/config/power_policy.dart:49-57 (low tier: accuracy low, 50m filter, 40s dropout buffer). lib/services/tracking/location_stream_handler.dart:200 `_fftEnabled = batteryLevel >= 20;` disables FFT precisely when battery is low. EKF is only validated against one Bangalore ride (per task), so degraded-mode accuracy is unproven. Power tier keys off battery LEVEL only, not charging state, so a powerbank helps only by raising the level.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider props the phone flat on the tray table / seat and the train runs through a smooth-track tunnel (or briefly holds in the tunnel) with GPS unavailable.",
+    "failure_mode": "In degraded mode EKF velocity drifts; if the phone is very still and the ride is smooth, the ZUPT detector's ultra-quiet path can falsely confirm a zero-velocity 'stop', pinning progress and under-counting distance/stops. The metro alarm (geometric progress) then fires late or never for that leg.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/core/ekf/zupt_detector.dart:58-75 degradedUltraQuietPath fires on accelVar<0.15 & gyroVar<0.05 & motionHint stationary independent of true velocity. Metro alarm progress can come from EKF s: lib/services/trackingservice.dart:1175-1185 (useEkfForAlarmProgress for metro/degraded). Thresholds are tuned to one ride's IMU (zupt_detector.dart:7-11 comments), so real-world quiet tunnels risk false ZUPT.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider wears Bluetooth (or wired) earphones to sleep, alarm audio is captured by the headset, then they roll over / the buds fall out into a bag or dangle off the ear.",
+    "failure_mode": "Alarm audio keeps playing into the disconnected/idle headset route and the rider hears little or nothing. There is no AUDIO_BECOMING_NOISY handling and no forcing of the alarm to the loudspeaker; on iOS the AVAudioSession playback route follows the BT device. Only the vibration loop remains as a backstop.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/services/alarm_player.dart:13-24 sets AndroidUsageType.alarm (which many OEMs route to speaker, but not guaranteed) and iOS AVAudioSessionCategory.playback with mixWithOthers (follows active BT route). No becomingNoisy/route-change listener anywhere (grep found none). Vibration fallback: notification_service.dart:433-468 / alarm_haptics.dart.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider enables Do-Not-Disturb (or 'silent'/priority-only) before sleeping so notifications and calls won't wake them.",
+    "failure_mode": "If the sound were driven by the notification channel it would be suppressed under DND. The app instead plays via a dedicated alarm-usage audio stream, which Android normally exempts from DND \u2014 but custom 'Total silence' DND modes, or users who route alarms through DND, and iOS's notification-sound suppression can still mute the cue, leaving only vibration.",
+    "coverage": "PARTIAL",
+    "evidence": "Notification channel plays no sound (notification_service.dart:609-619 playSound:false) and alarm audio uses AudioAttributesUsage.alarm / category alarm (alarm_player.dart:13-24, notification_service.dart:731-732). This bypasses standard DND on Android but there is no runtime DND detection, no 'bypass DND' channel flag set, and no iOS critical-alert entitlement, so aggressive DND profiles remain a hole.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider silences the ringer / sets media volume to 0 (common when commuting) before napping, without touching the alarm volume.",
+    "failure_mode": "A media-stream alarm would be inaudible; here it is routed to the alarm stream so ringer/media mute does not silence it. Residual hole: if the system ALARM-stream volume itself is low/zero there is no detection or escalation, so the cue can still be too quiet.",
+    "coverage": "COVERED",
+    "evidence": "lib/services/alarm_player.dart:26-39 _configureAlarmAudioRoute forces the alarm stream specifically to fix the 'media volume 0' case (documented in comments), re-applied at play time (alarm_player.dart:80-87). setVolume(1.0) is applied (line 84-86) but is relative to the system alarm volume.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "A very deep sleeper needs a louder and longer alarm than a normal notification chime to actually wake.",
+    "failure_mode": "The alarm loops indefinitely (good for 'longer') but there is no gradually-escalating volume, no override of the system alarm volume to maximum, and a single fixed vibration pattern. A deep sleeper who left alarm volume low simply is not woken loudly enough.",
+    "coverage": "PARTIAL",
+    "evidence": "Looping is handled (alarm_player.dart:53 ReleaseMode.loop; INSISTENT+NO_CLEAR flags notification_service.dart:743). Volume is a single setVolume(1.0) capped by system alarm volume (alarm_player.dart:84-86) with no ramp/boost. Vibration pattern is a fixed constant (notification_service.dart:408-416) with no 'stronger' option.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider stuffs the phone deep in a bag or trouser pocket to sleep, heavily attenuating GPS (accuracy balloons past 50m and fixes get intermittent).",
+    "failure_mode": "Poor-accuracy fixes degrade snap-to-route progress; on a non-metro (bus/walk) leg the noisy lateral offset can trip the soft-lock/deviation logic and cause a spurious reroute, or simply stall progress so the distance/time alarm drifts. GPS health degrades to the EKF fallback which is under-validated.",
+    "coverage": "PARTIAL",
+    "evidence": "GpsHealthMonitor marks degraded at accuracy>50m (gps_health_monitor.dart:24-25,113). Soft-lock uses raw GPS accuracy and lateral offset on non-metro legs (trackingservice.dart:1143-1172). LocationManager treats sub-accuracy movement as jitter (location_manager.dart:196-207) which helps speed but not progress stalls. Fallback to EKF is exercised but validated on one ride only.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider dozes off holding the phone and it slips from the hand to the lap or floor, sharply re-orienting the device mid-journey.",
+    "failure_mode": "The sudden drop injects a large transient acceleration and a new device orientation. With GPS present the EKF re-anchors and the tilt filter re-converges, so progress is fine; but if the drop happens inside a tunnel (GPS gone) the transient can bias dead-reckoned velocity/position and shift the alarm timing.",
+    "coverage": "PARTIAL",
+    "evidence": "TiltFilter is a complementary gyro/accel filter that re-converges and gates on motion state (tilt_filter.dart:58-163, setMotionState). EKF is GPS-corrected when fixes arrive (sensor_fusion.dart:132-164 updateGps). The legacy raw-integration path in SensorFusionManager integrates device-frame accel with no gravity/tilt removal and resets every 10s (sensor_fusion.dart:186-220, 45-46) \u2014 but its fusedPositionStream is not what drives alarms, so impact is limited to the tunnel/no-GPS window.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider switches on Airplane mode before sleeping (to save battery / block calls), assuming the prefetched route means everything still works offline.",
+    "failure_mode": "If GNSS stays on and the route is already cached, GPS-driven alarms can still work; but airplane mode removes A-GPS (slow/cold first fix) and all networking, so no reroute is possible if the rider deviates, and on phones where airplane mode also disables location the EKF never gets an initial GPS anchor and progress/alarm never advance.",
+    "coverage": "PARTIAL",
+    "evidence": "No airplane-mode or isLocationServiceEnabled handling found in tracking/permission code (grep returned nothing). Reroute requires fetching new directions over network (trackingservice.dart:1310-1320 _handleRerouteDecision). EKF/fusion require an initial GPS position to seed (sensor_fusion.dart:85-99, location_stream_handler.dart:541-574). Offline alarm eval itself works from cached route registry/events.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "On a long-distance train the awake rider walks to the toilet or stands by the door for several minutes, carrying the phone.",
+    "failure_mode": "Intra-carriage walking adds IMU motion and small GPS wander. This could in principle bias EKF progress or trip deviation logic, causing an early/spurious alarm.",
+    "coverage": "COVERED",
+    "evidence": "Metro/transit alarms trigger on geometric route progress and stops, not raw heading (alarm_evaluator.dart:598-828). Walking speed keeps EKF velocity above the ZUPT threshold so no false 'stop' (zupt_detector.dart:14,52-53). LocationManager jitter/spike guards damp small GPS wander (location_manager.dart:196-251). Deviation soft-lock is skipped entirely on metro legs (trackingservice.dart:1124-1143).",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "Rider gets off one stop early or changes their mind mid-route and leaves the train before the alarm has fired.",
+    "failure_mode": "Route progress freezes when they stop moving toward the destination, so the wake-up simply never fires \u2014 acceptable since they are awake. The real hole is if they then board a different train/line: the original alarm target is now meaningless and the app has no notion the plan changed on a metro leg.",
+    "coverage": "PARTIAL",
+    "evidence": "On non-metro legs leaving the corridor triggers deviation/soft-lock and a reroute attempt (trackingservice.dart:1143-1172, _handleRerouteDecision:1310+), but metro legs deliberately ignore positional deviation (trackingservice.dart:1122-1143) so a mind-change on metro is not re-planned; alarm just stays bound to the original leg target. No spurious miss for the awake rider, but no adaptation either.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "On an Android 14+ budget phone, the phone is locked in the rider's pocket when the alarm should fire.",
+    "failure_mode": "Android 14 revoked the default USE_FULL_SCREEN_INTENT grant for apps not classified as alarm/calendar. If the grant is absent the full-screen lockscreen alarm UI does not launch \u2014 the rider gets only a heads-up notification. Audio+vibration still fire, but the intended can't-miss lockscreen takeover degrades to a normal notification.",
+    "coverage": "PARTIAL",
+    "evidence": "Alarm relies on fullScreenIntent:true (notification_service.dart:729) and the manifest declares USE_FULL_SCREEN_INTENT (android/app/src/main/AndroidManifest.xml). There is no runtime check/request for the Android 14 special access (canUseFullScreenIntent) and no fallback strategy if it is denied; sound/vibration still play via AlarmPlayer + haptics.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "network-positioning",
+  "cases": [
+   {
+    "scenario": "Metro rider is asleep; train enters a long tunnel with full GPS blackout and reaches their target stop while still underground before GPS returns.",
+    "failure_mode": "No new Position events arrive, so the alarm is never re-evaluated and never fires until GPS returns after the stop \u2014 rider sleeps past their stop (product death).",
+    "coverage": "GAP",
+    "evidence": "Alarm eval is invoked ONLY from LocationStreamHandler._handlePositionUpdate on a LocationManager position event (location_stream_handler.dart:268-273 onCheckAlarm). The periodic GPS-check timer _handleGpsCheckTick (location_stream_handler.dart:428-452) does NOT call onCheckAlarm \u2014 it only starts sensor fusion via _checkGpsDropout. EKF advances 's' but is read only when a GPS fix triggers _resolveAlarmRouteState (trackingservice.dart:1183 useEkfForAlarmProgress); no timer fires the alarm from EKF alone. Sensor-fusion's fused-position stream (sensor_fusion.dart:220 _positionController.add) has zero consumers \u2014 location_stream_handler only subscribes ekfStateStream (line 585). EKF is not wired to fire alarms.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Rider opens the app to start a journey while already underground / inside a station with no GPS lock (cold start, no recent fix).",
+    "failure_mode": "getCurrentPosition throws underground, origin is null, so tracking never starts and the rider gets an error dialog instead of a monitored journey \u2014 or, if a stale cached fix exists, it starts but then gets no underground positions to evaluate.",
+    "coverage": "PARTIAL",
+    "evidence": "_proceedWithDirections uses a cached position only if <30s old (homescreen.dart:511-530), else _getCurrentLocation()->Geolocator.getCurrentPosition() which returns null on failure (homescreen.dart:920-926). Null origin -> 'Could not get your current location' error dialog and tracking aborts (homescreen.dart:538-548). No last-known-position fallback (getLastKnownPosition is never called anywhere in lib/).",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Train emerges from a long tunnel and the phone needs a fresh GNSS fix; with no mobile data there is no A-GPS assistance, so the first fix takes 20-60s+.",
+    "failure_mode": "During the cold-start window after surfacing, no positions arrive so the alarm still cannot evaluate; if the target stop sits at or just past the tunnel exit, the rider blows past it before the first fix lands.",
+    "coverage": "GAP",
+    "evidence": "Same root cause as the tunnel-blackout gap: alarm eval is position-driven (location_stream_handler.dart:268). Nothing bridges the post-tunnel fix latency \u2014 no time-based EKF alarm and no A-GPS/warm-start handling. gpsDropoutBuffer only triggers fusion start (location_stream_handler.dart:521-531), not alarm firing.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "User granted 'Approximate location' only (Android 12+ coarse toggle), so the OS returns ~1-3km-accuracy fixes despite the app requesting high accuracy.",
+    "failure_mode": "Distance/stop alarms compute against a fix that can be 1-3km off, firing kilometres early or, worse, reporting the rider as not-yet-near so the alarm fires late or never at the real stop.",
+    "coverage": "GAP",
+    "evidence": "PermissionService checks Permission.location.isGranted (permission_service.dart:31-51), which is TRUE for coarse-only grants; there is no ACCESS_FINE vs COARSE verification and no accuracy floor. LocationManager requests LocationAccuracy.high (location_manager.dart:45-48) but cannot force fine. Distance-mode fires on raw Geolocator.distanceBetween with no accuracy gate (alarm_controller.dart:425-460). GpsHealthMonitor's 50m poorAccuracy threshold (gps_health_monitor.dart:25) is never wired into production (only referenced by its own file + test).",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider (or Android auto-reset) has device master Location Services toggled OFF at the OS level while app location permission is still granted, or toggles it off mid-journey.",
+    "failure_mode": "At start, position acquisition fails (recoverable error dialog); mid-journey the position stream silently stops with no user-facing warning, so no alarm fires and the rider isn't told tracking is dead.",
+    "coverage": "GAP",
+    "evidence": "Geolocator.isLocationServiceEnabled() / openLocationSettings() are never called anywhere in lib/ (grep returned nothing). Permission checks (permission_service.dart) verify grant status but not the service master switch. Mid-journey there is no detection: _checkGpsDropout only starts fusion (location_stream_handler.dart:521-531), which produces no alarm.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "GPS multipath in an urban canyon (elevated metro between highrises) produces a confident but WRONG fix that momentarily reads the rider inside the distance threshold, or snaps route progress backward/forward.",
+    "failure_mode": "A spurious early alarm fires (minor), or a bad fix mis-advances/regresses snapped progress feeding a stop-count alarm, causing a mistimed alert.",
+    "coverage": "PARTIAL",
+    "evidence": "No innovation/accuracy gating on the raw position that drives alarm timing: distance straight-line fires on distMeters<=threshold directly (alarm_controller.dart:447-460). The EKF's GpsDegradationDetector does innovation gating (gps_degradation_detector.dart:42-45, badInnovationSigma) but only inside sensor_fusion (line 159) and only affects EKF internal state, not whether the raw fix fires the alarm. SnapToRoute uses accuracy for soft-lock only on non-metro legs; metro legs 'effectively ignore position deviation' (trackingservice.dart:1120-1143).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Cell-only / network-based coarse location (no satellite lock indoors or in a covered station) yields fixes with ~500-1500m accuracy while the stream keeps flowing.",
+    "failure_mode": "Alarm evaluates against coarse fixes as if they were precise, firing at the wrong distance from the stop; degradation is detected internally but changes nothing.",
+    "coverage": "GAP",
+    "evidence": "GpsHealthMonitor classifies accuracy>50m as degraded/unavailable (gps_health_monitor.dart:23-25,113) but is dead in production (only its own file + test reference it \u2014 confirmed via grep across lib/). Raw coarse fixes still flow through LocationManager (no accuracy floor, location_manager.dart) and fire alarms (alarm_controller.dart:425-460).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider prefetches a route above ground, then waits on the platform >5 minutes before the train arrives and descends where connectivity drops.",
+    "failure_mode": "If any refetch/reroute is triggered underground, the cached route is past its 5-minute TTL so the cache returns null and the offline fetch throws, killing route-dependent recovery.",
+    "coverage": "PARTIAL",
+    "evidence": "RouteCache.defaultTtl = Duration(minutes:5) and get() returns null past TTL (route_cache.dart:62,130). OfflineCoordinator.getRoute throws StateError('Offline and no cached route available') when offline with no fresh cache (offline_coordinator.dart:165-178). The already-active route in the registry survives tracking, but underground reroute/refetch cannot recover.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Airplane mode is ON for the whole ride (common for battery saving on long commutes).",
+    "failure_mode": "GNSS still works receive-only so tracking can continue, but the app assumes no such distinction; with no network the initial A-GPS fix is slow and any route fetch requires a fresh cache, and there is no messaging that GPS is still viable.",
+    "coverage": "PARTIAL",
+    "evidence": "Positioning relies purely on Geolocator/GNSS (gps_position_provider.dart, location_manager.dart) which functions in airplane mode; connectivity_plus flips offline (homescreen.dart:78-92) forcing cache-only routes (offline_coordinator.dart:165-178). No explicit airplane-mode branch; behavior is incidental, and cold-start latency (see A-GPS scenario) is unmitigated.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "User grants location as 'While in use' only and denies 'Allow all the time' background access.",
+    "failure_mode": "Without background location the sleeping rider's screen-off/backgrounded app would stop receiving updates \u2014 but the app instead refuses to start tracking, so the failure is a blocked start rather than a silent miss.",
+    "coverage": "COVERED",
+    "evidence": "_requestBackgroundLocation requires Permission.locationAlways.isGranted and returns false otherwise (permission_service.dart:59-72); requestEssentialPermissions returns false, so canProceed is false and tracking is blocked with a dialog (homescreen.dart:482-499). Safe-fails. Hole: on Android 11+ locationAlways cannot be granted inline by request() (permission_service.dart:70) so users must manually enable it in settings, and there is no mid-journey re-check if the OS later downgrades the grant.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider uses a WiFi-only tablet or a cheap device with weak/absent GNSS hardware; WiFi drops once the metro leaves the station.",
+    "failure_mode": "On devices lacking real GPS hardware there is no position source at all once WiFi network-location is gone, so no alarm ever fires; the app never detects the absence of a usable position source.",
+    "coverage": "GAP",
+    "evidence": "No GNSS-hardware capability check exists; the app assumes Geolocator yields fixes (gps_position_provider.dart, location_manager.dart). Connectivity loss forces cache-only routes (offline_coordinator.dart:165-178) but nothing surfaces 'no positions arriving'. GpsHealthMonitor.unavailable exists but is unwired (gps_health_monitor.dart:11, dead in production).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "A mock-location / fake-GPS app (common in India for other apps) or GPS spoofing feeds fabricated coordinates.",
+    "failure_mode": "The app trusts spoofed fixes as real, firing the alarm at the wrong place or advancing progress incorrectly.",
+    "coverage": "GAP",
+    "evidence": "No position.isMocked check anywhere in the alarm path; positions flow unfiltered through LocationManager._processPosition (location_manager.dart:177-280) and drive alarms in alarm_controller.dart. isEstimated is hardcoded false for GPS (gps_position_provider.dart:43) with no mock/authenticity distinction.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "Shallow cutting or elevated-to-underground transition where GPS flickers: one sparse fix every ~20-30s with gaps near gpsDropoutBuffer.",
+    "failure_mode": "The alarm can only fire on the sparse fixes; if the stop threshold is crossed between two fixes, the alert lands late (on the next fix, already past the stop) rather than before the stop.",
+    "coverage": "PARTIAL",
+    "evidence": "Each arriving fix triggers exactly one eval (location_stream_handler.dart:268); between fixes there is no interpolation-driven firing. Distance-mode still fires on a late fix (alarm_controller.dart:447) but 'before the stop' timing is not guaranteed. gpsDropoutBuffer is 5s in-handler but overridden by policy to as high as 25s (trackingservice.dart:66, location_stream_handler.dart:199) before fusion even starts.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "timing-duration",
+  "cases": [
+   {
+    "scenario": "Long intercity sleeper (6-10h, one stop) that crosses a state boundary, e.g. Bangalore->Chennai, Mumbai->Ahmedabad. Rider tries to set the alarm before boarding.",
+    "failure_mode": "Journey creation is refused entirely, so the rider never arms an alarm for the exact use case (multi-hour single-stop sleeper) the product is meant for; they fall back to nothing and oversleep.",
+    "coverage": "GAP",
+    "evidence": "homescreen.dart:255-306 _validateSameState reverse-geocodes origin+dest and homescreen.dart:289-294 returns false on mismatch; homescreen.dart:607-616 hard-blocks with 'Routes that cross state boundaries are not supported' and returns before startTracking. Most Indian intercity trains are cross-state, so the flagship long-journey case is unsupported. (Only fail-open if geocode errors, homescreen.dart:280/303.)",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Long one-stop intercity in distance mode where GPS drops to null for a stretch (tunnels/rural) while the train is geographically near the destination city but still far by rail (rail routes curve; straight-line << along-route distance).",
+    "failure_mode": "Straight-line fallback fires the destination alarm hours early AND latches destinationAlarmFired=true, so the real arrival later is permanently suppressed -> rider is woken far too early, ignores it, then gets NO alarm at the actual stop.",
+    "coverage": "GAP",
+    "evidence": "alarm_controller.dart:415-461: when progressMeters==null it computes Geolocator.distanceBetween(current,dest) vs alarmValue*1000 and fires; line 448 setDestinationAlarmFiredForKey(alarmKey,true) latches before triggering. EKF (route-aware DR) is not wired into this path, so there is no along-route fallback.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "OS kills the foreground service mid-journey overnight (common on cheap India phones with aggressive OEM battery killers) and restarts it, but the route in the persisted snapshot has no usable 'directions' (minimization dropped it / large metro route) while the rider is in STOPS mode.",
+    "failure_mode": "Route can't be restored, so stops evaluation is impossible; the geofence fallback only implements distance and time modes, so a stops/metro rider gets no further alarm and sleeps past the stop.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:2049-2069 restores route only via restoreFromSnapshotIfDirectionsPresent; if absent, _evaluateGeofence (alarm_controller.dart:1233-1276) handles only alarmMode=='distance'/'time' \u2014 there is no stops branch. Snapshot directions are lossily minimized in tracking_state_store.dart:93-234.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "OS kills the service in the first ~30s of a journey (before the first throttled snapshot write), e.g. rider starts tracking then pockets the phone and an OEM killer reaps it.",
+    "failure_mode": "On restart the snapshot is null so the service calls stopSelf(); tracking silently dies for the entire journey with no alarm and no user indication.",
+    "coverage": "GAP",
+    "evidence": "location_stream_handler.dart:385-387 only saves a snapshot every >=30s; trackingservice.dart:2029-2089: on recovery with isActive but snapshot==null it logs 'No snapshot found, stopping self' and service.stopSelf().",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Very short non-metro journey in TIME mode that finishes in under ~30s or covers under 100m (short bus hop / last-mile), with 'wake me N min before'.",
+    "failure_mode": "The time-alarm eligibility gate (>=100m traveled AND >=3 ETA samples AND >=30s since start) is never satisfied before arrival, so the time alarm is suppressed and never fires.",
+    "coverage": "GAP",
+    "evidence": "location_stream_handler.dart:602-605 sets _timeAlarmEligible only when _distanceTravelledMeters>=100 && _etaSamples>=3 && sinceStart.inSeconds>=30; alarm_controller.dart:623-634 returns early (skips eval) for time mode when !timeAlarmEligible && !isMetroJourney.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "App opened only seconds before departure with no time to prefetch; transit/stops journey where the directions API call is slow, times out, or fails on flaky station Wi-Fi/cell.",
+    "failure_mode": "homescreen awaits the directions future and its validation before ever calling startTracking; on failure it shows an error and returns, so the rider who believes they armed the alarm actually has nothing running -> missed stop. No offline route means stops mode has no fallback.",
+    "coverage": "GAP",
+    "evidence": "homescreen.dart:592-619 builds directionsFuture and 'await directionsFuture'; stops validation and startTracking (homescreen.dart:803) run only after directions resolve; failures hit _showErrorDialog/return paths (e.g. homescreen.dart:877-884). Geofence fallback covers only distance/time (alarm_controller.dart:1250-1276).",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Repeat same-day identical journey or two simultaneously queued identical A->B routes (e.g. commuter queues the morning trip twice, or round-trip stored where the return has not yet reversed).",
+    "failure_mode": "Route key omits departureTime, so identical origin/dest/mode collide on one key; the queued/second instance shares the first's fired alarm state, and destinationAlarmFiredForKey already true suppresses the destination alarm on the repeat -> missed stop.",
+    "coverage": "GAP",
+    "evidence": "route_session_manager.dart:134-139 RouteCache.makeKey called WITHOUT departureTime (makeKey supports it, route_cache.dart:87-104, but it's not passed). RouteQueue tracks only activeRouteIndex (route_queue.dart:9,28-31). AlarmController state is keyed by this colliding key (alarm_controller.dart:111-186).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "OS kills and restarts the service once mid-journey overnight WITH a valid snapshot (>30s in, directions present).",
+    "failure_mode": "Recovery restores destination/mode/route but the fresh isolate's AlarmController has empty firedLegIds/destination flags and _timeAlarmEligible resets to false; already-passed transfer legs can re-fire spuriously, and a time alarm must re-earn the 100m/30s/3-sample gate, delaying it.",
+    "coverage": "PARTIAL",
+    "evidence": "trackingservice.dart:2020-2102 recovery path restores route via snapshot but never restores _firedLegIds/_destinationAlarmFired; trackingservice.dart:2009-2011 and location_stream_handler.dart:637-639 reset gating state; AlarmController fired-state is in-memory only (alarm_controller.dart:84-99).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Very short non-metro TIME journey that completes in ~30-120s and does cross 100m (short auto/bus ride).",
+    "failure_mode": "Alarm is gated until 100m + 30s + 3 samples elapse, by which point the rider may already be at/near the destination, so the 'N minutes before' warning arrives late or effectively at arrival.",
+    "coverage": "PARTIAL",
+    "evidence": "location_stream_handler.dart:602-605 eligibility thresholds; alarm_controller.dart:623-634 suppresses time eval until eligible. Gate protects against spurious early fires but has no upper bound relative to a tiny total journey.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Long one-stop journey in TIME mode ('wake 30 min before') where a transient GPS speed spike (multipath at a station, brief 200km/h reading) momentarily collapses the ETA below threshold hours early.",
+    "failure_mode": "A single momentary ETA dip fires the destination alarm early and latches it, so the rider is woken hours before arrival and the real arrival is suppressed.",
+    "coverage": "PARTIAL",
+    "evidence": "eta_engine.dart:14 speedAlpha=0.25 EMA and eta_engine.dart:291-309 smoothing dampen spikes (mitigation), but time-mode fires on a single smoothedETA<=threshold with no dwell/persistence requirement (alarm_controller.dart:680-711) and latches via setDestinationAlarmFiredForKey.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Very short journey in DISTANCE mode where the chosen 'N km before' threshold is >= the whole remaining route at start (e.g. 800m trip with '1 km before').",
+    "failure_mode": "remainingMeters<=thresholdMeters is true immediately, so the destination alarm fires at the moment tracking starts (spurious-early); minor annoyance, and it consumes the single destination fire.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_controller.dart:492-532 fires as soon as remainingMeters<=alarmValue*1000 with no minimum-progress gate (distance/stops modes have no eligibility gate \u2014 only time mode does, alarm_controller.dart:623).",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "User sets alarm mode with N greater than the total stops on a metro leg (e.g. '5 stops before' on a 3-stop line, or N larger than the whole journey).",
+    "failure_mode": "If unvalidated, the 'N stops prior' condition (remaining<=N) would be true from boarding, firing immediately and giving no real warning.",
+    "coverage": "COVERED",
+    "evidence": "homescreen.dart:676-716 validateThreshold (first-segment) and homescreen.dart:731-759 validateThresholdAgainstMetroLegs both block with an error dialog before tracking; stop_logic_engine.dart:218-295 enforces userThreshold < min(stops) across all metro legs.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "User targets the boarding station itself (destination == origin station, or a near-zero-length route).",
+    "failure_mode": "Degenerate journey; risk of no meaningful trigger.",
+    "coverage": "COVERED",
+    "evidence": "alarm_evaluator.dart:85-93 direct-fire rule fires 'Arriving at Destination' when remainingMeters<=200m; zero-intermediate-stop metro legs use the 60% distance rule (alarm_evaluator.dart:667-772). Alarm fires (early/immediate) rather than being missed, matching the 'early is acceptable' product rule.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "Overnight date rollover (crossing midnight) during a long journey.",
+    "failure_mode": "Concern that alarm scheduling keyed to a calendar date/time-of-day could break at 00:00.",
+    "coverage": "COVERED",
+    "evidence": "Firing is entirely progress/ETA-relative (alarm_evaluator.dart evaluateCoinciding uses progressMeters/ETA, not wall-clock time-of-day); there is no absolute 'fire at HH:MM' scheduling. Cooldown/rate-limit use now.difference() (alarm_controller.dart:207-223,265), which is unaffected by crossing midnight.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "DST change or timezone crossing mid-journey (spring-forward, or a border intercity into Nepal/Bangladesh time).",
+    "failure_mode": "A wall-clock jump in DateTime.now() could make elapsed-duration timers (deviation-termination, cooldowns) compute negative/inflated durations, prematurely ending tracking or skipping cooldown.",
+    "coverage": "PARTIAL",
+    "evidence": "India (India-first market) observes no DST and a single timezone, so this is largely N/A domestically. Where it applies, tracking_termination_policy.dart:136-173 uses now.difference(deviationStartTime).inMinutes and alarm_controller.dart:207-223 uses wall-clock DateTime differences; a forward jump could trip the sustained-deviation termination early. Core firing is progress-based so not directly affected.",
+    "severity": "LOW"
+   }
+  ]
+ },
+ {
+  "dimension": "environment-integration",
+  "cases": [
+   {
+    "scenario": "Rider swipes WakePoint away from the recents/task switcher after setting the alarm and falls asleep (extremely common: people close apps before sleeping). Background foreground-service isolate keeps GPS running, but the UI isolate is killed.",
+    "failure_mode": "Alarm is detected in the background isolate but NEVER rung. AlarmController.triggerAlarmNotification() with isBackgroundIsolate==true does ONLY `service.invoke('triggerAlarm', ...)` and returns without showing a notification or playing sound (lib/services/tracking/alarm_controller.dart:277-286). That invoke is handled by ForegroundBridge._handleTriggerAlarm in the DEAD UI isolate (lib/services/tracking/foreground_bridge.dart:203-233), so no sound (AlarmPlayer), no vibration (native channel lives in MainActivity), and no full-screen notification fire. HeartbeatMonitor instead posts a 'tracking paused' notification after a 4s timeout and then STOPS monitoring (lib/services/tracking/heartbeat_monitor.dart:83-91) \u2014 a sleeping rider never sees it. Rider sleeps past the stop.",
+    "coverage": "GAP",
+    "evidence": "alarm_controller.dart:277-286 delegates all alarm output to foreground; foreground_bridge.dart:203-233 handles it only in UI isolate; heartbeat_monitor.dart:45-99 downgrades to a silent 'paused' notification when the foreground is gone; background isolate deliberately never plays sound ('Background isolate cannot reliably start audio... Always delegate' comment at alarm_controller.dart:278-280).",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Cheap Indian phone with aggressive OEM battery management (MIUI/Xiaomi, Realme/Oppo/ColorOS, Vivo/Funtouch, Samsung Device Care) silently kills the foreground service during a long sleep ride \u2014 the stated India-first target hardware.",
+    "failure_mode": "The app never requests a battery-optimization / autostart exemption. AndroidManifest.xml declares no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission, and PermissionService only asks for location/notification/activity-recognition (lib/services/permission_service.dart:13-26) \u2014 never isIgnoringBatteryOptimizations or the OEM autostart whitelist. On these OEMs the foreground service is reaped after screen-off, both isolates die, GPS stops, and no alarm fires. There is no restart mechanism (autoStart:false, trackingservice.dart:212).",
+    "coverage": "GAP",
+    "evidence": "android/app/src/main/AndroidManifest.xml (no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS); permission_service.dart:13-99 requests only location/notification/activityRecognition; trackingservice.dart:206-224 configures autoStart:false with no watchdog/restart.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "The metro line runs through a long underground tunnel (Bangalore purple/green underground stretches) and the rider's trigger point (N stops before, or distance/time-before) falls inside the GPS-dead zone.",
+    "failure_mode": "Alarm evaluation is frozen during GPS outage. onCheckAlarm is invoked ONLY from _handlePositionUpdate, which fires only when the GPS positionStream emits (lib/services/tracking/location_stream_handler.dart:209-273). The periodic _gpsCheckTimer tick (_handleGpsCheckTick, line 428-452) never calls onCheckAlarm. The EKF/sensor-fusion runs and updates _lastEkfState via onEkfUpdate (line 585-590) but that estimate is NOT fed to the alarm check \u2014 matching the stated 'EKF built but not wired into production alarm logic.' So underground the alarm cannot fire until GPS returns, which may be at or past the target stop.",
+    "coverage": "GAP",
+    "evidence": "location_stream_handler.dart:209-273 (onCheckAlarm only on real GPS ticks); location_stream_handler.dart:428-452 (dropout tick does not check alarms); location_stream_handler.dart:585-592 (EKF state stored but only broadcast, never drives alarm).",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "OS forces a reboot mid-journey (Android system update install, low-RAM kernel restart, scheduled restart on MIUI, or a battery-related shutdown on a cheap phone) while the rider is asleep on the train.",
+    "failure_mode": "Tracking never comes back. There is no RECEIVE_BOOT_COMPLETED permission and no BootReceiver in native code, and the background service is configured autoStart:false. After reboot the foreground service does not restart, the persisted TrackingSnapshot (saved every 30s in location_stream_handler.dart:381-414) is never used to resume tracking, and the rider gets no alarm.",
+    "coverage": "GAP",
+    "evidence": "AndroidManifest.xml has no RECEIVE_BOOT_COMPLETED and no <receiver>; MainActivity.kt contains only vibration + channel code (no boot handling); trackingservice.dart:212 autoStart:false; snapshot restore (snapshot_route_restorer.dart) is only wired to in-process resume, not boot.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "An incoming phone call arrives (or a call is already in progress) at the moment the wake-up alarm should fire \u2014 very likely for a rider whose family calls to check where they are.",
+    "failure_mode": "The alarm may be inaudible or ducked. AlarmPlayer requests only AndroidAudioFocus.gainTransient (lib/services/alarm_player.dart:17) rather than a stronger exclusive/alarm focus, and there is no phone-state (telephony) listener to detect the call, defer, or force the alarm onto the in-call/earpiece route. On iOS the session uses category playback + mixWithOthers (alarm_player.dart:20-23), which during a call typically yields to telephony. No fallback re-alerts after the call ends.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_player.dart:13-24 (gainTransient focus, iOS mixWithOthers); no telephony/PhoneStateListener anywhere in lib (grep for phone/call/telephony found none). Native vibration uses USAGE_ALARM (MainActivity.kt startAlarmVibration) so vibration may still fire, but only if the UI isolate is alive to call the method channel.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Location permission is downgraded mid-journey (Android 'one-time'/'while in use' expiry, user toggles it, or the OS revokes background-location after inactivity) or the user toggles GPS/Location services off then on.",
+    "failure_mode": "GPS goes permanently silent for the rest of the trip. LocationManager subscribes to Geolocator.getPositionStream once and its onError callback only logs ('Real GPS Stream Error') with no re-subscription or recovery (lib/services/location_manager.dart:92-101). When Geolocator closes the stream on a permission/service error it is never re-established, so no further positions arrive, no alarm check runs, and (per the tunnel gap) the frozen EKF cannot substitute.",
+    "coverage": "GAP",
+    "evidence": "location_manager.dart:86-101 (single subscription, onError logs only, no retry); no listener for permission changes or Geolocator.getServiceStatusStream in lib.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "User (or an OEM 'clean memory' one-tap button they habitually press before sleeping) force-stops the app from the task manager / app-info.",
+    "failure_mode": "Force-stop tears down every isolate and the foreground service; with no boot/restart receiver and autoStart:false, nothing revives tracking. Unlike a crash, force-stop also blocks alarms/receivers until the app is manually reopened. Rider gets no alarm and no indication tracking died.",
+    "coverage": "GAP",
+    "evidence": "trackingservice.dart:206-224 (autoStart:false, no restart-on-kill); no android:stopWithTask handling / restart service; detached lifecycle is acknowledged as unreliable in trackingservice.dart:506-513.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Android 13+ notification permission is revoked mid-journey (user swipes into settings, or the OS auto-revokes for an app they haven't opened in a while).",
+    "failure_mode": "The full-screen intent wake-up notification cannot be posted, so the lockscreen visual + insistent notification alerting is lost, and on newer Android the foreground-service notification suppression can cause the OS to stop the service. The app never re-checks or re-requests notification permission after startup (only checked once in main.dart:78-83 and permission_service.dart:74-90). Alarm audio via AlarmPlayer may still play IF the UI isolate is alive, so it degrades rather than fully fails.",
+    "coverage": "PARTIAL",
+    "evidence": "notification_service.dart:724-741 relies on fullScreenIntent:true (needs notification permission); main.dart:78-83 checks permission only at launch; permission_service.dart:74-90 has no mid-journey re-validation; sound path (notification_service.dart:794-802) is independent of notification posting.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Elevated/underground mixed line or tunnel with open-air gaps where GPS flickers on and off repeatedly (typical of Delhi/Bangalore metro viaduct-to-tunnel transitions).",
+    "failure_mode": "Each brief reacquisition yields a low-accuracy, possibly jumped fix; GpsHealthMonitor needs 5s sustained degradation and 25s silence to change state (gps_health_monitor.dart:23-28,102-133), so rapid flicker keeps it oscillating near 'healthy' and the fusion/EKF is never authoritatively trusted. Because alarms only evaluate on GPS ticks, the alarm could fire on a single noisy re-fix at the wrong location, or not at all between flickers. The health monitor is also documented as pure-observation and 'does NOT trigger any behavioral changes.'",
+    "coverage": "PARTIAL",
+    "evidence": "gps_health_monitor.dart:14-20 (observation only), :102-133 (hysteresis thresholds); location_manager.dart:196-251 jitter/spike guards help but can't manufacture a fix; alarm still gated on GPS ticks (location_stream_handler.dart:267-273).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "iOS rider (product is Flutter Android+iOS): screen locks and the app is backgrounded during the ride.",
+    "failure_mode": "Background location and background audio are not declared. ios/Runner/Info.plist has the NSLocation usage strings but NO UIBackgroundModes key (no 'location'/'audio' entries), and IosConfiguration relies on onForeground/onBackground (trackingservice.dart:219-223). Without UIBackgroundModes, iOS suspends the app on lock, GPS stops, and the alarm cannot fire \u2014 total product death on iOS.",
+    "coverage": "GAP",
+    "evidence": "ios/Runner/Info.plist:1-58 (no UIBackgroundModes present; grep returned none); trackingservice.dart:219-223 iOS config; alarm delivery depends on an alive isolate which iOS suspends.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Onboard metro WiFi (or a captive-portal WiFi) is connected; the phone's fused location provider leans on WiFi/cell positioning while underground.",
+    "failure_mode": "Two risks. (1) Mid-journey network calls (Directions API reroute) can hang on a captive portal with no internet, but the route is prefetched so core tracking survives \u2014 this part is fine. (2) WiFi-based positioning can return a stale/biased 'open-air' fix inside a tunnel, feeding a wrong Position into the alarm check with high apparent accuracy; there is no source-tagging or WiFi-fix rejection (LocationManager treats all Positions identically, location_manager.dart:169-280). Could trigger an early or misplaced alarm.",
+    "coverage": "PARTIAL",
+    "evidence": "location_manager.dart:169-280 (no discrimination of GPS vs network/WiFi fixes); reroute depends on ApiClient/Directions (api_client.dart) but route is cached (route_cache.dart), so navigation continues offline.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Loud media or another alarm app is already playing (rider dozed off with music/podcast, or a separate clock alarm) when the wake-up alarm fires.",
+    "failure_mode": "The alarm requests only transient focus (gainTransient) and routes to the alarm stream, which usually ducks media, but with gainTransient the other app may not fully stop and, if the device's ALARM stream volume is low while media is loud, the wake-up can be masked. The code forces alarm audio attributes and sets volume 1.0 (alarm_player.dart:66-95) but cannot raise the system alarm-stream volume, so a rider who lowered alarm volume gets a quiet alert.",
+    "coverage": "PARTIAL",
+    "evidence": "alarm_player.dart:13-24 (gainTransient, USAGE_ALARM), :84-87 (setVolume(1.0) is player volume, not system alarm stream); no AudioManager stream-volume boost.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Doze / App Standby engages during a long stationary dwell (train held at a platform for many minutes, or the rider is waiting before departure with the phone idle and still).",
+    "failure_mode": "Largely mitigated while the location-typed foreground service is alive (Doze exempts foreground services and the GPS-check timer keeps ticking, location_stream_handler.dart:418-425). Residual risk: on low battery the policy drops to LocationAccuracy.low + 50m distance filter + 40s dropout buffer (power_policy.dart:49-57), coarsening fixes right when precision matters, and on OEMs that ignore FGS Doze-exemption the timer can be throttled. No wake-lock is declared in the app manifest.",
+    "coverage": "PARTIAL",
+    "evidence": "power_policy.dart:27-57 (low-battery tier coarsens GPS); location_stream_handler.dart:418-425 (timer-based checks assume the process is scheduled); AndroidManifest.xml declares no WAKE_LOCK (relies on plugin merge).",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Temperature extremes (phone left in a hot bag / cold outdoor platform) degrade IMU/GPS sensor behavior, or a cheap phone thermally throttles the CPU, slowing the isolate.",
+    "failure_mode": "No thermal or sensor-bias compensation exists, and the EKF is calibrated to a single Bangalore ride. Since the EKF is not wired into alarm logic anyway, the immediate blast radius is limited to degraded ETA/fusion quality; but thermal CPU throttling can delay timer ticks and GPS processing, widening effective dropout windows. Not explicitly handled.",
+    "coverage": "GAP",
+    "evidence": "No thermal/PowerManager.ThermalStatus handling in lib; EKF calibration noted as single-ride (ekf_types.dart / sensor_fusion.dart tuning constants); timer cadence assumes timely scheduling (location_stream_handler.dart:418-425).",
+    "severity": "LOW"
+   }
+  ]
+ },
+ {
+  "dimension": "missing-scenario-dimensions (completeness-critic: whole classes absent from the existing 6-dimension enumeration; case 1 is the single most dangerous under-covered scenario overall)",
+  "cases": [
+   {
+    "scenario": "NEW DIMENSION platform-parity/iOS \u2014 THE SINGLE MOST DANGEROUS. The product is 'Flutter Android+iOS', but the entire tracking/alarm architecture is Android-only. On iOS, once the rider locks the screen and sleeps, iOS suspends the app: there is no foreground-service equivalent, the flutter_background_service iOS handler is a no-op, and Info.plist declares NO UIBackgroundModes (no 'location', no 'audio', no 'processing'). So the GPS stream stops, the EKF never runs, the heartbeat monitor's own logic would pause tracking, and the alarm never fires \u2014 for 100% of iOS riders, every journey.",
+    "failure_mode": "Every iOS rider who locks the phone and sleeps (the core use case) gets zero position updates, zero alarm evaluation, and no wake-up. Silent, total, product-death across an entire declared platform \u2014 worse than any single Android edge case because it is not an edge case, it is the default path on iOS.",
+    "coverage": "GAP",
+    "evidence": "ios/Runner/Info.plist has usage-description strings but NO <key>UIBackgroundModes</key> at all (grep confirms 'NO UIBackgroundModes key found'). onIosBackground (lib/services/trackingservice.dart:604-607) just returns true and does nothing. IosConfiguration wired at trackingservice.dart:219-222. All background-survival evidence in the existing enumeration (foreground service, Doze, heartbeat, WAKE_LOCK, OEM killers, BOOT_COMPLETED) is Android-only; the iOS execution model \u2014 background location deferral, no long-running compute, ~30s background budget, Background App Refresh being user-disableable, killing background audio when nothing is playing \u2014 is never addressed.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "NEW DIMENSION fail-safe/redundancy/dead-man's-switch. There is no independent last-resort backstop: no dumb OS-scheduled local/AlarmManager notification armed for the estimated arrival clock-time that would fire even if the whole tracking isolate is dead (Doze, OEM kill, reboot, iOS suspend, thermal starvation). Every alarm path depends on live position callbacks flowing through one fragile isolate; when that isolate dies for ANY reason there is no plan B, and the sleeping rider is never told tracking stopped.",
+    "failure_mode": "Any of the numerous already-catalogued isolate-death causes (heartbeat pause, OEM battery killer, reboot, storage-full snapshot loss, iOS suspend) becomes an unrecoverable silent miss because nothing independent is scheduled to wake the rider. A single scheduled fallback alarm at ETA would convert most CRITICAL misses into a merely-early annoyance.",
+    "coverage": "GAP",
+    "evidence": "All firing is position-callback-driven (lib/services/tracking/location_stream_handler.dart:268-273 onCheckAlarm); the periodic timer _handleGpsCheckTick does NOT fire alarms. No use of Android AlarmManager exact-alarm / SCHEDULE_EXACT_ALARM or a pre-scheduled local notification at estimated arrival time anywhere. No server-side push backstop. No user-facing 'tracking has stopped' alert when the stream goes silent.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "NEW DIMENSION accessibility \u2014 deaf / hard-of-hearing, low-vision, elderly and cognitively-impaired riders, and screen-reader users. The wake cue assumes an audio-first rider with vibration and a visual takeover as backups; none of these degrade gracefully for disabled riders. A Deaf rider relies solely on vibration, which is useless if the phone rests on a soft seat/lap rather than in contact with the body, and there is only one fixed vibration pattern with no wearable/flash escalation. Low-vision riders get a visual full-screen alarm with no guaranteed large-text/high-contrast/TTS spoken-stop cue. The arming UI (station autocomplete, alarm-mode config) is never validated for TalkBack/VoiceOver.",
+    "failure_mode": "A Deaf rider whose phone is not against their body feels nothing and sleeps past the stop (product death for that population). Low-vision or elderly riders cannot reliably arm the alarm or perceive the wake cue. Zero accessibility consideration in a mass-market India-first app excludes and endangers a large user segment.",
+    "coverage": "GAP",
+    "evidence": "Single fixed vibration constant (notification_service.dart:408-416); no camera-flash/torch alert, no wearable-companion, no repeated-escalating haptic. Alarm audio is not accompanied by a spoken 'your stop is next' TTS. No semantics/accessibility labels evidence in homescreen.dart search/alarm UI; no large-text or high-contrast alarm-screen mode. Accessibility is entirely absent from all 6 existing dimensions.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "NEW DIMENSION first-run / onboarding / permission-education failure. There is no onboarding flow at all, yet correct operation depends on the rider manually doing things the OS will not prompt for: whitelisting the app from battery optimization (no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS prompt exists), granting 'Allow all the time' background location (which on Android 11+ cannot be granted inline and needs a Settings trip), granting exact-alarm/full-screen-intent special access on Android 14+, and enabling POST_NOTIFICATIONS. If any is missed or denied on the very first journey, tracking silently under-performs or dies with no guided remediation.",
+    "failure_mode": "A first-time rider arms an alarm believing it will work, but background location is only 'while in use', battery optimization is on, or notifications are denied \u2014 so the first real overnight journey silently fails. No onboarding teaches the OEM-specific whitelisting that Indian budget phones require, and denial paths dead-end instead of guiding the user to Settings.",
+    "coverage": "GAP",
+    "evidence": "No onboarding/intro/tutorial/welcome files exist in lib (find returned nothing). Notification permission is requested but denial is not handled to explain consequences (main.dart:79-81, permission_service.dart:77-88). No isIgnoringBatteryOptimizations / battery-optimization whitelist prompt anywhere (consistent with the existing device-hardware CRITICAL). locationAlways cannot be granted inline (permission_service.dart:70) and there is no in-app deep-link/education to fix it.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "NEW DIMENSION legal / liability / rider-safety of a failed or mistimed wake. A missed stop is not just 'product death' commercially \u2014 it can strand a sleeping rider alone at a terminus, a depot siding, or an unfamiliar unsafe area late at night (India-first, overnight sleeper use case). There is no liability disclaimer, no 'do not rely on this as your only alarm' messaging, no safety framing for the woken-but-disoriented rider, and (per route-topology gaps) the app can actively wake the rider at the WRONG place with false confidence.",
+    "failure_mode": "A rider harmed by a silent miss (stranded, safety incident) plus a product that made an implicit reliability promise creates real liability exposure; conversely a spuriously-confident wrong-place alarm (wrong-train/branch/depot cases) actively directs a groggy rider to alight in the wrong location. Neither the legal disclaimer nor the human-safety dimension is considered anywhere.",
+    "coverage": "GAP",
+    "evidence": "No terms/disclaimer or 'secondary alarm recommended' copy in the app. The wrong-direction / wrong-train / branch / depot-diversion route-topology cases already fire a confidently-wrong alarm (metro legs ignore deviation, trackingservice.dart:1120-1143). No safety-net messaging on the alarm screen, no 'you may be at the wrong stop' hedge.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "NEW DIMENSION internationalization of station/place names (multilingual India: Kannada, Hindi, Tamil, Telugu, Marathi, Urdu/RTL). The station corpus and matching are English-only, so a rider who reads/searches in a local script cannot find their station, and \u2014 more dangerously \u2014 the OSM-vs-Google station-name matching that drives stop-counting can silently fail across script/transliteration variants (e.g. 'Majestic' vs '\u0cae\u0cc6\u0c9c\u0cc6\u0cb8\u0ccd\u0c9f\u0cbf\u0c95\u0ccd', 'Baiyappanahalli' spelling variants), dropping or mislabeling stops and corrupting 'N stops before'.",
+    "failure_mode": "Non-English-literate riders can't reliably arm a journey; and transliteration mismatches between Google's returned names and the static OSM asset cause stops to be unmatched/miscounted, so 'N stops before' is spaced wrong and fires late \u2014 a miss, not just a cosmetic issue. No TTS/pronunciation of the target stop in the rider's language either.",
+    "coverage": "GAP",
+    "evidence": "all_india_stops.dart contains only ASCII/English names (non-ASCII grep returned nothing). No app localization: no localizationsDelegates/supportedLocales/AppLocalizations usage in lib (grep empty). Stop modeling relies on string-based OSM name matching (transfer_utils.dart), which is brittle across scripts/transliterations. This compounds the existing route-topology 'stale/renamed station' GAP.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "NEW DIMENSION privacy / data-protection (India DPDP Act 2023 + store policy). The app continuously tracks fine location, persists route + position history to on-device Hive snapshots, sends origin/destination to Google Directions/Places, and declares an analytics/tracking intent (NSUserTrackingUsageDescription) \u2014 with no consent flow, no privacy policy surfacing, no data-retention/deletion control, and no account/data-export path.",
+    "failure_mode": "Regulatory non-compliance (DPDP consent + right-to-erasure, Play/App Store data-safety disclosures) and user-trust risk. Persisted location history and diagnostic/EKF logs accumulate with no user-facing deletion; a shared/lost phone leaks the rider's travel patterns.",
+    "coverage": "GAP",
+    "evidence": "NSUserTrackingUsageDescription in Info.plist states analytics use, but there is no consent gate in lib. Location/route persisted via Hive snapshots (tracking_state_store.dart, route_cache.dart) and EKF/app logs (ekf_logger.dart, app_logger.dart) with only a developer 'export' \u2014 no user-facing clear-history / delete-my-data / retention limit. Privacy is absent from all 6 existing dimensions.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "NEW DIMENSION adversarial / abuse / misuse. Beyond the already-noted mock-GPS spoofing, the always-on covert background location tracker is a ready-made stalkerware primitive (install on a partner's/child's phone, it silently tracks and can be observed), and there is no protection against malicious/oversized route injection, notification abuse, or reverse-engineering of the Directions/Places API key.",
+    "failure_mode": "App is repurposed for covert surveillance (a real safety/abuse vector for an always-tracking, quiet-notification app), or a crafted/huge route or spoofed fix corrupts progress and mis-fires the alarm. No tamper/mock detection in the alarm path, no misuse safeguards.",
+    "coverage": "GAP",
+    "evidence": "No position.isMocked check in the alarm path (consistent with the existing network-positioning LOW). Persistent tracking runs with a quiet/paused-style notification (notification_service.dart), i.e. low-visibility background tracking. No API-key restriction/attestation evidence. Abuse/stalkerware and adversarial-input classes are unconsidered.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "NEW DIMENSION multi-user / shared-device / remote-arming. India-common shared family phones and the realistic need to wake someone else (e.g. arm an alarm for a child or elderly parent riding, or hand the phone over) are unmodeled: there is no profile concept, and only one active journey/alarm state keyed by route with no per-user separation.",
+    "failure_mode": "On a shared phone, one family member's armed journey collides with another's (and the existing timing-duration key-collision GAP shows same-route state already clobbers), or a rider who wanted to arm on behalf of another person has no mechanism. Multi-user reality silently corrupts single-user assumptions.",
+    "coverage": "GAP",
+    "evidence": "Alarm/route state is single-tenant and keyed without a user dimension (route_session_manager.dart:134-139 makeKey without user; route_queue.dart tracks only activeRouteIndex). No profiles/accounts. This extends the existing 'repeat/identical-route key collision' timing-duration GAP into the multi-user case.",
+    "severity": "LOW"
+   },
+   {
+    "scenario": "NEW DIMENSION monetization / commercial lifecycle. If/when the app monetizes (trial, subscription, ads), no thought is given to a subscription lapse or expired trial that fires MID-JOURNEY and could gate the alarm, an interstitial ad or paywall obscuring the wake screen, or offline riders being unable to validate entitlement underground. Currently there is no billing code at all, so the entire commercial-edge dimension is simply absent from the design.",
+    "failure_mode": "A future entitlement check that fails closed (e.g. subscription expired at 3am, or offline receipt-validation underground) would block the alarm \u2014 turning a billing state into a missed stop. A paywall/ad over the full-screen alarm would suppress the wake cue. None of this is guarded against because monetization was never scoped.",
+    "coverage": "GAP",
+    "evidence": "No billing/purchase/subscription SDK in lib (grep for in_app_purchase/BillingClient/StoreKit/entitlement empty). Because it is unbuilt, there is no fail-open guarantee that alarm firing is independent of any future entitlement/ads layer \u2014 a design hole to lock down before monetizing.",
+    "severity": "LOW"
+   }
+  ]
+ },
+ {
+  "dimension": "First-run / onboarding / permission-education failure",
+  "cases": [
+   {
+    "scenario": "First-time rider installs on a budget phone (Redmi/Realme, common in India), arms a metro alarm, locks the screen and dozes. Aggressive OS battery optimization (default ON for new apps) freezes/kills the flutter_background_service after some minutes of Doze.",
+    "failure_mode": "The foreground tracking service is suspended, GPS/EKF stops updating, and the alarm never fires. Rider sleeps past the stop. This is the exact 'fire late = product death' outcome.",
+    "coverage": "GAP",
+    "evidence": "There is NO battery-optimization handling anywhere. Manifest (android/app/src/main/AndroidManifest.xml) does not declare REQUEST_IGNORE_BATTERY_OPTIMIZATIONS; grep for isIgnoringBatteryOptimizations/ignoreBatteryOptimizations across lib/ returns nothing. pubspec has battery_plus (reads battery level only) and android_intent_plus but no disable-battery-optimization flow. PermissionService (lib/services/permission_service.dart) requests only location, notification, activityRecognition. Service runs as isForegroundMode:true (lib/services/trackingservice.dart:210) which is necessary but insufficient against OEM Doze without whitelisting.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Rider on Xiaomi MIUI / Oppo/Realme ColorOS / Vivo FuntouchOS (the dominant Indian budget stack) where the OEM aggressively kills backgrounded apps and requires a manual 'Autostart' + 'No battery restrictions' toggle buried in a vendor-specific settings screen.",
+    "failure_mode": "Even with Android-standard permissions granted, the vendor kills the service; the alarm silently never fires. The rider has no idea a hidden OEM toggle exists.",
+    "coverage": "GAP",
+    "evidence": "grep for xiaomi|oppo|vivo|oem|autostart|manufacturer across lib/ returns nothing. No onboarding screen exists (grep onboard|tutorial|walkthrough|firstRun|hasSeen returns nothing). SplashScreen (lib/screens/splash_screen.dart) goes straight to init+home with no education. No per-OEM deep-link or guidance is ever presented.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Android 11+ rider grants foreground location at the 'Wake Me' prompt. The app then immediately calls Permission.locationAlways.request() for 'Allow all the time', which on Android 11+ CANNOT be granted inline \u2014 the OS either returns while-in-use silently or requires a manual trip to app Settings.",
+    "failure_mode": "_requestBackgroundLocation returns false, requestEssentialPermissions returns false, canProceed is false, and _onWakeMePressed just resets the loading spinner. The trip never starts and, if the rider tapped through, tracking runs only 'while in use' \u2014 dies the moment the screen locks. No Settings guidance is offered for background location.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/services/permission_service.dart _requestBackgroundLocation() shows a rationale then calls Permission.locationAlways.request() and returns status.isGranted \u2014 it never checks isPermanentlyDenied and has NO _showSettingsDialog path (unlike location/notification). homescreen.dart:481-499: on failure the else branch only does setState(_isLoading=false) with the comment 'The service already showed the user a dialog' \u2014 which is false for the background-location decline path.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Android 14+ rider (increasingly common on newer budget phones) installs fresh. The wake alarm relies on a full-screen intent to light up the lockscreen. On Android 14+, USE_FULL_SCREEN_INTENT is granted by default only to apps in the alarm/calling category; a generic app must be granted 'full-screen notifications' special access.",
+    "failure_mode": "The full-screen alarm UI is demoted to a normal notification behind the lockscreen. On a silenced/dozing phone the rider is not forcefully woken; the alarm effectively under-fires. There is no runtime check nor education to request this special access.",
+    "coverage": "GAP",
+    "evidence": "Manifest declares USE_FULL_SCREEN_INTENT and notification_service.dart:729 sets fullScreenIntent:true ('critical for lockscreen appearance'), but grep for canUseFullScreenIntent|requestFullScreenIntentPermission returns nothing. No code queries or requests the Android 14+ special access.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Cold first launch: main.dart fires _checkNotificationPermission() from initState, showing the bare Android 13+ POST_NOTIFICATIONS system prompt before the user has seen any explanation of what the app does. Reflexively the user taps 'Deny'.",
+    "failure_mode": "POST_NOTIFICATIONS becomes denied (and after a second denial, permanently denied). Since the wake-up is delivered via a notification channel, a permanent denial later dead-ends: the only remedy PermissionService offers is a Settings dialog the sleepy rider must navigate. Poor priming turns a recoverable prompt into a permanent block.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/main.dart:78-83 _checkNotificationPermission() calls Permission.notification.request() with no rationale/priming, at app-launch, before onboarding. PermissionService._requestNotificationPermission (permission_service.dart) does handle the permanent-denial case with _showSettingsDialog, so it is not a total GAP \u2014 but the un-primed early prompt makes permanent denial likely.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "At the 'Wake Me' rationale/background dialog the (hurried, already-boarding) rider taps 'Not Now' or 'Cancel' instead of Continue.",
+    "failure_mode": "The flow returns false with no follow-up. The user presses Wake Me, dismisses the dialog, and the button silently resets to idle with nothing happening and no error toast \u2014 the rider reasonably assumes the alarm is armed when it is not.",
+    "coverage": "GAP",
+    "evidence": "permission_service.dart _showRationaleDialog returns false on 'Not Now'; the caller returns false. homescreen.dart _onWakeMePressed else branch only does setState(() => _isLoading = false) \u2014 no _showErrorDialog, relying on the incorrect assumption that 'the service already showed the user a dialog'. When the rider declined the rationale, no dialog was shown afterward.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "All permissions are demanded at the moment of arming the trip (Wake Me press) rather than during a calm onboarding \u2014 so the rider is already inside the moving metro/bus, on flaky connectivity, when told to leave the app and go to system Settings to grant 'Allow all the time'.",
+    "failure_mode": "The rider must background the app to fix Settings exactly as the journey begins; many abandon and start the trip with while-in-use location, which dies at screen lock. Worst-possible timing for a multi-step Settings trip.",
+    "coverage": "PARTIAL",
+    "evidence": "Permissions are requested lazily inside _onWakeMePressed (homescreen.dart:481-483), not at install/onboarding. No pre-trip readiness screen exists. The background-location grant inherently requires a Settings excursion on Android 11+ (see permission_service.dart _requestBackgroundLocation), which is triggered at trip-start.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Infrequent rider uses WakePoint only for occasional travel. Android's 'auto-reset permissions for unused apps' (default) revokes location after a few months of non-use; the rider re-arms for a big journey.",
+    "failure_mode": "PermissionService re-checks on each Wake Me press (good), but a revoked-to-permanently-denied background location dead-ends because _requestBackgroundLocation has no Settings path, silently blocking the trip; foreground-only revocation is recoverable but background is not guided.",
+    "coverage": "PARTIAL",
+    "evidence": "PermissionService.requestEssentialPermissions is invoked each Wake Me press (homescreen.dart:481), so foreground location and notification re-prompt with their _showSettingsDialog fallbacks. But _requestBackgroundLocation (permission_service.dart) still lacks any isPermanentlyDenied/_showSettingsDialog branch, so an auto-reset that lands background location in permanent-deny cannot be remediated in-app.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider denies (or the un-guided request silently fails for) ACTIVITY_RECOGNITION / HIGH_SAMPLING_RATE_SENSORS, which the EKF dead-reckoning relies on to keep tracking through underground metro tunnels.",
+    "failure_mode": "When the train enters a tunnel and GPS drops, the EKF has degraded/no IMU input, so dead-reckoning over the known route underperforms \u2014 precisely the tunnel scenario the product exists to solve. The denial is swallowed with no user feedback.",
+    "coverage": "GAP",
+    "evidence": "permission_service.dart _requestActivityRecognitionPermission() calls request() and ignores the result entirely (comment: 'less critical, so we can just request it'), returning void; requestEssentialPermissions treats it as non-critical. Manifest declares ACTIVITY_RECOGNITION and HIGH_SAMPLING_RATE_SENSORS but nothing educates or verifies. (Impact is latent since the task notes EKF is not yet wired into production alarm logic, but the permission gap is baked in.)",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Rider grants everything correctly on the very first journey, but there is no post-setup confirmation that tracking will actually survive a locked, dozing screen (no readiness check combining background-location + battery-whitelist + notification + full-screen-intent status).",
+    "failure_mode": "The rider gets no signal distinguishing 'armed and will really work' from 'armed but will silently die', so the first real overnight trip is the test \u2014 and if any OEM/battery condition is off, they discover it by missing the stop.",
+    "coverage": "GAP",
+    "evidence": "No aggregated readiness/health screen exists; grep for onboard|tutorial|firstRun|hasSeen returns nothing and SplashScreen (splash_screen.dart) only restores session state. PermissionService returns a single bool with no per-condition surfacing of battery-optimization or full-screen-intent status (neither of which it even checks).",
+    "severity": "HIGH"
+   }
+  ]
+ },
+ {
+  "dimension": "platform-parity/iOS \u2014 background execution & alarm delivery (the entire tracking/alarm stack is Android-designed; iOS suspends the app on screen-lock, so the position stream, EKF, and live alarm never run)",
+  "cases": [
+   {
+    "scenario": "Core use case: an iOS rider sets a wake-up alarm, locks the phone, and falls asleep on the train. iOS suspends the Flutter app within seconds of screen-lock/backgrounding.",
+    "failure_mode": "The suspended app produces zero GPS updates, so the position-stream loop that drives ALL alarm evaluation never runs. The rider sails past their stop and is never woken. Silent, total failure for every iOS rider on the primary journey.",
+    "coverage": "GAP",
+    "evidence": "ios/Runner/Info.plist declares NO <key>UIBackgroundModes</key> at all (no 'location', 'audio', or 'processing'). trackingservice.dart:604-607 onIosBackground() is a no-op that just returns true. The alarm is only ever evaluated inside LocationManager().positionStream.listen(...) in location_stream_handler.dart:209 \u2014 when iOS suspends the app that stream stops and the loop dies. There is no OS mechanism keeping the app alive.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Even a rider whose ETA is roughly known in advance (metro N-minutes-before mode) locks the phone; one might expect a pre-scheduled fallback notification to fire at the target time while suspended.",
+    "failure_mode": "There is no pre-scheduled alarm. All alarms are shown live at the moment of evaluation, so while the app is suspended nothing is queued in iOS's notification scheduler to fire. No wake-up.",
+    "coverage": "GAP",
+    "evidence": "notification_service.dart uses _notificationsPlugin.show() everywhere (lines 818, 906, 968, 1100, 1202) and never zonedSchedule/periodicallyShow. Alarm origin is triggerAlarm invoked from the live loop (alarm_controller.dart:281, 449, 521, 694, 788). Nothing is scheduled with iOS ahead of time, so suspension = no delivery.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "iOS rider enters a metro tunnel (the exact case the EKF dead-reckoning was built for) with the phone locked. GPS is lost and the app is already suspended.",
+    "failure_mode": "The EKF/sensor-fusion fallback that is supposed to dead-reckon over the known route also never runs, because it too lives in the suspended background isolate and is fed by the same halted position stream. Motion sensor delivery also stops. The one feature meant to save tunnel riders is doubly dead on iOS.",
+    "coverage": "GAP",
+    "evidence": "SensorFusionManager/EKF is driven from the same background isolate (trackingservice.dart:617 _sensorFusionManager, location_stream_handler.dart:585 ekfStateStream) which iOS suspends. No UIBackgroundModes 'location' or 'processing' in Info.plist means neither Core Location nor a background task keeps the isolate scheduled. NSMotionUsageDescription exists but motion updates are not delivered to a suspended app.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "The app requests 'Always' location permission on iOS, the rider grants it, and reasonably believes background tracking now works.",
+    "failure_mode": "Granting Always-location does nothing without the background-location capability. iOS still stops delivering updates to the suspended app, so the rider gets a false sense of safety, relies on the alarm, and misses the stop. This is worse than an outright denial because it hides the failure.",
+    "coverage": "GAP",
+    "evidence": "permission_service.dart:60-70 requests Permission.locationAlways and Info.plist has NSLocationAlwaysAndWhenInUseUsageDescription, so the user is prompted for Always. But there is NO AppleSettings/allowBackgroundLocationUpdates anywhere (grep of lib/ returns none \u2014 location_manager.dart:45 uses generic LocationSettings) and no UIBackgroundModes 'location'. Background delivery therefore never happens despite the granted permission.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Suppose a notification somehow fires on iOS while the rider is asleep with a Sleep Focus / Do Not Disturb enabled (typical for someone napping) and the phone on silent.",
+    "failure_mode": "The delivered notification is silent and non-urgent: it does not bypass Focus/DND, plays no sound, and the loud alarm audio can't start because it requires the app to be running. The rider sleeps through a soundless banner.",
+    "coverage": "GAP",
+    "evidence": "notification_service.dart:772-774 DarwinNotificationDetails sets presentSound: false and never sets interruptionLevel critical/timeSensitive; DarwinInitializationSettings() at line 563-564 requests no critical-alert permission and there is no ios/*.entitlements file granting com.apple.developer.usernotifications.critical-alerts. The loud sound comes from AlarmPlayer (alarm_player.dart:20 AVAudioSessionCategory.playback) which needs the app alive and has no UIBackgroundModes 'audio' to start playback while backgrounded.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "The heartbeat 'foreground process was killed' safety net is expected to detect loss of tracking on iOS the way it does for Android app-swipe.",
+    "failure_mode": "On iOS the foreground and the background isolate are suspended together, so the heartbeat monitor cannot detect anything (it too is frozen), and even if it did, its recovery action is another show() notification that cannot be delivered while suspended. The one watchdog is inoperative on iOS.",
+    "coverage": "GAP",
+    "evidence": "heartbeat_monitor.dart runs on Timer.periodic inside the background isolate (isEnabled gated on _isBackgroundIsolate, trackingservice.dart:625-627) which iOS pauses; its timeout handler calls NotificationService().showTrackingPaused() (heartbeat_monitor.dart) via show(), unavailable while suspended. The whole design comment says it detects the foreground being 'swiped away/killed' \u2014 an Android model that doesn't map to iOS suspension.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "iOS rider on a cheap/older phone in Low Power Mode (common in India-first market, and common for someone who dozed off with a low battery) backgrounds the app.",
+    "failure_mode": "Low Power Mode makes iOS even more aggressive about suspending and denying background execution and location. With no significant-location-change or CLVisit monitoring registered as a coarse fallback, there is literally no code path that can wake the app to re-evaluate the alarm.",
+    "coverage": "GAP",
+    "evidence": "No significant-location-change / CLVisit / BGTaskScheduler usage anywhere (grep of location_stream_handler.dart and lib/ finds none). The service is configured autoStart:false (trackingservice.dart:220) and start-on-demand only, so once suspended nothing re-launches it.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "iOS rider, realizing they've been asleep, re-opens the app near/at their stop hoping the recovery/snapshot logic catches them up.",
+    "failure_mode": "Snapshot restore only runs when the user manually foregrounds the app; by then the app may resume past the target stop with a stale last-known position, and there was no alarm during the gap. Recovery is user-initiated, not automatic \u2014 useless to a sleeping rider.",
+    "coverage": "PARTIAL",
+    "evidence": "snapshot_route_restorer.dart and _onStart null-initialData snapshot path (trackingservice.dart:2023) exist and can restore route state, but they only execute on app relaunch/foreground (onForeground: _onStart, trackingservice.dart:221). Nothing re-evaluates the alarm during the suspended window; restoration is reactive to the user opening the app.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "iOS-specific notification permission handling: the app relies on the plugin's default Darwin prompt and its explicit permission flow skips iOS entirely.",
+    "failure_mode": "If the user dismisses/denies the iOS notification prompt (or it's never surfaced at the right time), even the one delivery mechanism that could work in-foreground is gone, and the app has no iOS-specific check or re-request to recover \u2014 compounding the background-execution gap with a delivery gap.",
+    "coverage": "PARTIAL",
+    "evidence": "permission_service.dart:74-75 _requestNotificationPermission() returns true immediately for non-Android ('Not needed on iOS in the same way'), so there is no explicit iOS notification-permission verification; it relies solely on DarwinInitializationSettings() (notification_service.dart:563) default prompt with no follow-up status check or settings-redirect on denial.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "fail-safe/redundancy/dead-man's-switch (no independent OS-scheduled backstop alarm at ETA clock-time)",
+  "cases": [
+   {
+    "scenario": "OEM battery killer (Xiaomi MIUI, Realme, Oppo, Vivo, Samsung) silently kills the whole flutter_background_service while rider sleeps mid-route. These skins are the dominant install base in India.",
+    "failure_mode": "The background isolate is destroyed. All position callbacks stop, alarm evaluation stops, and the alarm never fires. Rider blows past the target stop with zero notification. Product death.",
+    "coverage": "GAP",
+    "evidence": "AndroidManifest.xml declares the service (line 53-54) with no restart guarantee; trackingservice.dart:212 sets autoStart:false and there is NO android_alarm_manager_plus/workmanager/zonedSchedule anywhere in lib/android (repo-wide grep empty). Nothing independent of the isolate is armed for the arrival time, so when the OS reaps the isolate there is no plan B.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Phone reboots mid-journey (forced OTA update, thermal shutdown, battery dip, kernel panic) while rider sleeps on a long ride.",
+    "failure_mode": "After reboot the background service never comes back, so the snapshot-based recovery flow is never even reached. Rider sleeps through the stop.",
+    "coverage": "GAP",
+    "evidence": "Manifest has no RECEIVE_BOOT_COMPLETED permission and no boot BroadcastReceiver; trackingservice.dart:212/220 both set autoStart:false. The recovery path at trackingservice.dart:2020-2078 (_onStart with null initialData) can only run if something restarts the isolate \u2014 after a reboot nothing does. No OS AlarmClock/zonedSchedule survives the reboot to wake the rider.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "iOS: rider is asleep, screen off, phone stationary on the seat. iOS suspends then terminates the app to reclaim resources (standard iOS background policy for a motionless, backgrounded app).",
+    "failure_mode": "The Dart isolate is suspended/killed; no position processing, no alarm. iOS gives no location callbacks to a suspended app parked in a tunnel or sitting still between stops.",
+    "coverage": "GAP",
+    "evidence": "onIosBackground (trackingservice.dart:604-607) just calls ensureInitialized() and returns true \u2014 no BGTaskScheduler/BGAppRefresh registration, and no scheduled UNTimeIntervalNotification/zonedSchedule armed for ETA (repo grep for BGTaskScheduler/zonedSchedule empty). Once iOS suspends the app there is nothing scheduled at the OS level to wake the rider.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Rider swipes the app away from recents (thinking they are just tidying the screen before sleeping), then Doze or memory pressure later kills the surviving background isolate.",
+    "failure_mode": "HeartbeatMonitor detects the foreground death and shows a low-key 'Tracking paused' notification, then STOPS monitoring. If the isolate is subsequently killed, the paused notification is stale and no alarm ever fires. Even in the best case the rider only gets a silent passive notification, not a wake-up.",
+    "coverage": "PARTIAL",
+    "evidence": "HeartbeatMonitor (heartbeat_monitor.dart:45-98) runs inside the background isolate and only watches the FOREGROUND heartbeat; on timeout it calls showTrackingPaused then stop() (line 91). showTrackingPaused (notification_service.dart:1123) issues an ordinary _notificationsPlugin.show \u2014 not the full-screen alarm intent \u2014 so a sleeping rider will neither hear nor see it, and there is no scheduled fallback if the isolate then dies.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Low-RAM budget phone (2-3 GB, extremely common in India) under memory pressure: Android LowMemoryKiller reaps the tracking service to free RAM for a foregrounded app the rider opened before dozing off.",
+    "failure_mode": "Service killed by LMK exactly like the OEM-killer case; no restart is guaranteed for a foreground service under LMK, and no independent alarm is scheduled, so the rider misses the stop.",
+    "coverage": "GAP",
+    "evidence": "Same structural gap: single isolate (trackingservice.dart _onStart), no zonedSchedule/AlarmManager backstop, autoStart:false. The in-isolate HeartbeatMonitor cannot help because it dies with the isolate it lives in (heartbeat_monitor.dart:14, constructed at trackingservice.dart:625 in background-isolate scope).",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Storage-full device: snapshot persistence fails (SharedPreferences refuses the write or the directions payload is too large), then the isolate is later killed and the OS happens to restart it.",
+    "failure_mode": "Recovery loads a null/stale snapshot and cannot restore the route, so tracking is silently dead even though a restart occurred \u2014 and there is still no scheduled fallback alarm to cover the gap.",
+    "coverage": "GAP",
+    "evidence": "saveSnapshot (tracking_state_store.dart:339-390) logs 'SharedPreferences refused snapshot write' and rethrows on payload-too-large; loadSnapshot (tracking_state_store.dart:391-403) returns null on missing/corrupt data, and the recovery branch (trackingservice.dart:2029-2030) simply does nothing when snapshot==null. No ETA-time OS alarm exists to backstop the lost snapshot.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "An uncaught exception in the background isolate (EKF pipeline, reroute decision, or ETA math throws on unexpected real-world input) crashes the isolate mid-ride.",
+    "failure_mode": "The isolate terminates; because the watchdog (HeartbeatMonitor) is itself inside that isolate, nothing external observes the death and no alarm fires.",
+    "coverage": "GAP",
+    "evidence": "_onStart wires reroute handling that awaits _handleRerouteDecision (trackingservice.dart:1806-1810) and other listeners without an isolate-level supervisor; there is no external process/AlarmManager job monitoring liveness. The only monitor (heartbeat_monitor.dart) shares the isolate's fate, and no independent scheduled notification exists as a last resort.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Notifications for the app are muted or the POST_NOTIFICATIONS runtime permission is later revoked/never granted, so even a perfectly-alive isolate's show() call is silently dropped by the OS.",
+    "failure_mode": "The live alarm notification is suppressed by the system and the rider is never woken; there is no alternative loud channel (e.g., a pre-scheduled full-screen-intent alarm) armed as redundancy.",
+    "coverage": "GAP",
+    "evidence": "Every alarm surface routes through _notificationsPlugin.show (notification_service.dart:818/906/968/1100/1202). USE_FULL_SCREEN_INTENT is declared in the manifest but only used on the live in-isolate path; nothing pre-schedules a full-screen alarm via zonedSchedule/AlarmClock as an independent redundant channel, so a single muted/denied notification permission is an unrecoverable single point of failure.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "accessibility (Deaf/HoH, low-vision, elderly/cognitively-impaired, screen-reader riders)",
+  "cases": [
+   {
+    "scenario": "A Deaf rider naps with the phone resting flat on the padded metro seat or on their lap (not in a pocket against the body). At the target stop the alarm fires: audio is useless to them, so vibration is their only channel.",
+    "failure_mode": "The single fixed waveform is absorbed by the soft surface and never reaches the body; the rider feels nothing and sleeps past the stop \u2014 product death for this population.",
+    "coverage": "GAP",
+    "evidence": "lib/services/alarm_haptics.dart uses ONE hardcoded pattern (const [0,500,250,500,250,1000,500], repeat:0) with no amplitude/escalation and no alternate cue; if Vibration.hasVibrator()!=true it silently `return`s (lines 40-44). notification_service.dart _alarmVibrationPattern is the same fixed 3s loop. grep for torch/flashlight/Wearable/flutter_tts across lib/ and android/ returns nothing \u2014 there is no flash, LED, wearable, or escalation fallback whatsoever.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "A hard-of-hearing rider wears Bluetooth hearing aids / BT earbuds and relies on them to hear anything. They arm the alarm and doze; audio is their primary channel.",
+    "failure_mode": "AlarmPlayer forces the Android ALARM usage stream, which on most OEMs is pinned to the phone's built-in loudspeaker and is NOT routed to the paired hearing-aid/BT media sink. The rider's aids stay silent; with vibration also unreliable (see seat scenario) they perceive no cue.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/services/alarm_player.dart _alarmAudioContext hardcodes AudioContextAndroid(usageType: AndroidUsageType.alarm, audioFocus: gainTransient) and always setVolume(1.0); there is no companion-device / hearing-aid routing option and no user control over output route. The comment at lines 29-34 confirms the deliberate force-to-alarm-stream choice, made only for the media-volume-zero case, with no consideration of BT-routed hearing aids.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "A low-vision rider has set the OS system font size to Large / 200% (extremely common on cheap India-first phones used by elderly). They open the home screen to arm the alarm.",
+    "failure_mode": "The arming layout is built from fixed fractions of screen size while text scales with the OS setting, so labels, the 'Alert me N stops prior' box, the slider label, and the 'Wake Me!' button overflow/clip or collide; the rider cannot read the current threshold or reliably arm the alarm.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/screens/homescreen.dart sizes containers with SizedBox(height: screenHeight*0.3) for the map and fixed screenHeight/screenWidth fractions for padding, while text uses TextStyle(fontSize: screenWidth*0.045 / *0.05); maptracking.dart uses const TextStyle(fontSize:16/26). grep shows NO textScaler/textScaleFactor/MediaQuery override or clamp anywhere in lib/, so nothing guards against overflow at large scale and there is no large-text/simplified mode.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "A blind TalkBack (or VoiceOver) user swipes through the home screen to set how many stops before their destination to be woken.",
+    "failure_mode": "The stop/distance/time threshold control is a bare GestureDetector wrapping a Container+Text, so the screen reader announces only the static text 'Alert me 2 stops prior' with no button role and no hint it is actionable. The user cannot discover that tapping opens the value dialog, and cannot change the threshold \u2014 they either accept a wrong default or abandon arming.",
+    "coverage": "GAP",
+    "evidence": "lib/screens/homescreen.dart lines 1190-1245: GestureDetector(onTap: showDialog...) -> Container -> Text with no Semantics/button wrapper. grep -c Semantics on homescreen.dart returns 0; zero semanticLabel usage exists in all of lib/.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "A blind rider needs to know WHICH stop to get off at when woken (they cannot glance at the map). The alarm fires in a tunnel near the target station.",
+    "failure_mode": "The wake cue carries no spoken stop-name. The notification title/body are generic ('Time to Wake Up!' / 'Approaching destination') and there is no TTS announcement of the actual station, so even a rider who hears the alarm has no accessible way to learn which stop is next or confirm it's theirs \u2014 they may exit at the wrong station or panic.",
+    "coverage": "GAP",
+    "evidence": "lib/services/notification_service.dart showWakeUpAlarm takes only title/body strings; ensureAlarmNotificationVisible defaults to 'Time to Wake Up!'/'Approaching destination' (lines 858-860). No flutter_tts/TextToSpeech dependency exists (absent from pubspec.yaml and grep of lib/); the full-screen takeover in maptracking.dart is plain Text with no spoken equivalent.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "An elderly / cognitively-impaired first-time rider arms the alarm and wants to confirm it actually works before trusting it enough to fall asleep on a long ride.",
+    "failure_mode": "There is no 'test/preview alarm' that plays the real wake cue (sound + vibration + full-screen). The ringtone screen previews audio only, so a Deaf/HoH user gets no vibration preview and no one can validate the end-to-end cue. The rider either won't sleep (product fails to deliver its core value) or sleeps on a silently-misconfigured or imperceptible alarm.",
+    "coverage": "GAP",
+    "evidence": "grep for test/preview alarm across lib/ returns nothing. lib/screens/ringtones_screen.dart _togglePreview() only calls _audioPlayer.play() \u2014 audio-only preview, no vibration preview, no full end-to-end wake-cue test.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "A TalkBack user toggles between 'stops/distance' and 'time' alarm modes using the mode switch on the home screen while arming.",
+    "failure_mode": "The Switch has no semantic label saying what it controls; the reader announces only 'switch, on/off' between two loose Text labels ('Time' \u2026 'Stops'/'Distance'), so the user cannot tell which position means which mode and can silently arm the wrong mode \u2014 e.g. '2' interpreted as 2 minutes instead of 2 stops \u2014 changing when the alarm fires.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/screens/homescreen.dart lines 1177-1188: Row([Text('Time'), Switch(value:_useDistanceMode...), Text(_metroMode?'Stops':'Distance')]) with no Semantics label or grouping; the switch value drives alarmValue/alarmMode computed at lines 630-641.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "An elderly or low-vision rider tries to delete a wrong entry from their recent-destinations autocomplete list, or a motor-impaired rider tries to tap it.",
+    "failure_mode": "The delete affordance is a ~24px circular GestureDetector (icon 16 + padding 4) \u2014 below the 48dp minimum touch target \u2014 with no semantic label, so it is invisible to TalkBack and easy to mis-tap for anyone with reduced vision or dexterity; they cannot manage their saved locations and may repeatedly re-select a wrong destination.",
+    "coverage": "GAP",
+    "evidence": "lib/screens/homescreen.dart lines 1126-1145: trailing GestureDetector(onTap:_removeRecentLocation) -> Container(padding: EdgeInsets.all(4)) with Icon(size:16), no Semantics/tooltip, no InkWell/IconButton min-target sizing.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "A low-vision rider (not fully blind, no screen reader) reads the arming screen and the fired-alarm screen in bright daylight on a cheap phone with a dim/low-quality display.",
+    "failure_mode": "Core text relies on low-contrast greys (white70/black54 hints, grey[200]-on-grey containers, grey.shade600-on-grey.shade300 disabled states) that fall below WCAG AA contrast, so the destination field hint, threshold text, and disabled 'Stop Alarm' state are hard to perceive; the rider may misread or fail to notice the control state.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/screens/homescreen.dart hintStyle Colors.white70/black54 (1099-1101), stepper container grey[200]/grey[700] (1228); maptracking.dart disabledBackgroundColor Colors.grey.shade300 / disabledForegroundColor grey.shade600 (1154-1157). No high-contrast mode and no MediaQuery.highContrast handling anywhere in lib/.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "dimension": "Legal / liability / rider-safety of a failed or mistimed wake \u2014 the human and legal consequences (stranding, wrong-place alighting, disorientation, safety incidents) of a silent miss or a spuriously-confident wrong-place alarm, plus the absence of any disclaimer, reliability caveat, or safety framing anywhere in the product.",
+  "cases": [
+   {
+    "scenario": "The app makes an implicit 'we will wake you' reliability promise with zero legal or safety caveat anywhere. A rider treats WakePoint as their sole alarm for an overnight/late-night ride, it fails (any cause below), and they are stranded \u2014 then look for who is responsible.",
+    "failure_mode": "No disclaimer, no Terms of Service/consent, no 'do not rely on this as your only alarm', no reliability caveat, and no in-app safety framing exist. A harmed rider (stranded alone at a terminus late at night, safety incident) has an unqualified reliability promise to point at, creating direct liability exposure; nothing ever told them to set a backup.",
+    "coverage": "GAP",
+    "evidence": "Full grep of lib/ for disclaimer|liabilit|not rely|backup alarm|do not rely|terms of|consent returns ZERO user-facing hits (only a code comment in lib/services/alarm_evaluator.dart:47 'It does not rely on events lists' and reliability comments about notifications). User-facing copy is purely confident: 'Time to Wake Up!' (lib/services/notification_service.dart:858), 'Arriving at Destination' (lib/services/alarm_evaluator.dart:90,112). Permission rationale even over-promises: 'we need to send you a notification to wake you up!' (lib/services/permission_service.dart:83).",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Cheap Indian phone (Xiaomi/MIUI, Realme/Oppo/ColorOS, Vivo/FuntouchOS) with aggressive battery management. Rider starts tracking, pockets the phone, and sleeps. The OS kills the idle foreground service well before the target stop.",
+    "failure_mode": "Foreground service is silently killed by OEM battery optimization; tracking dies, no alarm ever fires, rider sleeps past the stop and is stranded. The app never requests a battery-optimization exemption, never requests autostart, and shows no OEM-specific guidance \u2014 the single largest reliability killer on the India-first target hardware is entirely unmitigated.",
+    "coverage": "GAP",
+    "evidence": "grep of lib/ for ignoreBatteryOpt|batteryOptim|autostart|autoStart|Xiaomi|MIUI|OEM|manufacturer finds nothing except an audio-attribute comment in lib/services/alarm_player.dart:80. Permission flow (lib/services/permission_service.dart requestEssentialPermissions) requests only location, notification, activityRecognition \u2014 no REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, no autostart deep-link. Service is autoStart:false (lib/services/trackingservice.dart:212,220) with no keep-alive re-arm.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Rider sleeps and their intended-stop alarm fails to wake them (dismissed while groggy, DND, or a late GPS fix). The train continues along the SAME correct line to the terminus and then into a depot siding \u2014 an unfamiliar, unsafe place late at night.",
+    "failure_mode": "Riding to the end of the correct line is ON-route, not a deviation, so the termination safety net never engages; and even if it did, it only runs during a reroute/deviation check. There is no 'you have reached the end of the line / final station' backstop alarm independent of the target-stop alarm. The rider is carried into a terminus/depot with no second wake, the worst-case stranding scenario.",
+    "coverage": "GAP",
+    "evidence": "TrackingTerminationPolicy.shouldTerminate only fires on deviation from route (RULE 1/2/3 all require deviationDistanceKm from route, lib/services/tracking_termination_policy.dart:151-217) and is only invoked inside the reroute/deviation path (lib/services/trackingservice.dart:1348-1364). AlarmEventType has finalStation defined (lib/services/alarm_evaluator.dart:12) but no evaluator branch fires an unconditional end-of-line safety wake; alarms are strictly one-per-leg keyed to the target (RULE 1, alarm_evaluator.dart:159).",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Tunnel section (e.g. Bangalore Metro underground stretch) where the target stop is inside or immediately after the tunnel. GPS drops for the tunnel duration.",
+    "failure_mode": "The EKF dead-reckoning that is supposed to carry progress through tunnels is built but NOT wired into the production alarm path, so progressMeters stalls at the last pre-tunnel GPS fix. The stops-before / distance-before threshold is never crossed until GPS returns \u2014 by which point the train is past the stop. This is the exact 'silent miss' the product's core value prop claims to solve, and it silently does not exist in production.",
+    "coverage": "GAP",
+    "evidence": "grep for ekf_orchestrator|EkfOrchestrator|EkfPipeline|degraded_mode|deadReckon across lib/services and lib/screens finds NO reference in the tracking/alarm path (only lib/services/sensor_fusion.dart exists in isolation). Production alarm evaluation (lib/services/alarm_evaluator.dart) is driven purely by progressMeters from GPS; EKF modules in lib/core/ekf/ are validated only in simulation calibrated to one Bangalore ride, per project brief.",
+    "severity": "CRITICAL"
+   },
+   {
+    "scenario": "Degraded route context: route metadata/transitLegs is empty or lost (cold restart mid-journey, cache miss, or a fixture-like partial route), while the rider is somewhere along the corridor.",
+    "failure_mode": "The evaluator's fallback path fires a confident 'Arriving at Destination' alarm on a bare geometric rule (<200m OR 40% into the final leg) with no leg/topology validation. A groggy rider is actively directed to alight, potentially at the wrong place, with the same authoritative wording used for a genuine, validated arrival \u2014 a spuriously-confident wrong-place wake.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/services/alarm_evaluator.dart:73-118 \u2014 when transitLegs.isEmpty it fires eventType finalDestination message 'Arriving at Destination' via 'Direct Fire: destination < 200m' (line 86-92) or 'Destination (60% remaining rule)' at progressMeters >= start + 40% (line 106-114), with no branch/parallel-track verification and identical copy to the validated path.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Groggy rider is woken by the alarm one or two stops early, silences the looping sound, and falls back asleep before their actual stop.",
+    "failure_mode": "The strict one-alarm-per-leg rule marks the leg fired and suppresses every subsequent evaluation for that leg, so there is NO second/escalating wake before the stop and no snooze-then-re-alarm. A single missed acknowledgment converts into a full missed stop \u2014 a very common failure mode for a genuinely sleepy user, with no safety re-arm.",
+    "coverage": "GAP",
+    "evidence": "lib/services/alarm_evaluator.dart:159-168 \u2014 RULE 1 returns null once firedLegIds contains the leg id ('Leg already fired, skipping'). No snooze/re-arm/escalation logic exists (grep for snooze|rearm|re-arm in trackingservice/alarm_evaluator finds none). Alarm persistence is only ongoing:true/loop for the FIRST firing (notification_service.dart:733-734), not a re-trigger after user dismissal.",
+    "severity": "HIGH"
+   },
+   {
+    "scenario": "Rider grants notifications at start, then the phone enters night-time Do Not Disturb / silent, or the rider revokes notification permission after tracking has begun.",
+    "failure_mode": "Permission and DND state are validated only once at journey start; there is no runtime re-check or 'you are no longer protected' warning. If the wake-up channel is suppressed by a scheduled DND profile the rider may not be woken. Mitigations exist (alarm audio usage + category=alarm + fullScreenIntent) but there is no explicit channel DND-bypass flag and no runtime verification, so the outcome is device/OEM-dependent rather than guaranteed.",
+    "coverage": "PARTIAL",
+    "evidence": "Permissions checked once at start only (lib/screens/homescreen.dart:482-483, gate at 491); no re-check during tracking. Mitigations: lib/services/alarm_player.dart:13-24 sets AndroidUsageType.alarm, and lib/services/notification_service.dart:726-731 sets Importance.max, category alarm, fullScreenIntent:true \u2014 but grep for setBypassDnd|bypassDnd returns no explicit channel DND-bypass, and no runtime DND/permission monitor exists.",
+    "severity": "MEDIUM"
+   },
+   {
+    "scenario": "Deviation-triggered termination fires while the rider is asleep \u2014 e.g. carried well past the route and stopped 5km+ away. The app wakes them with the termination notification.",
+    "failure_mode": "The rider is woken in an unfamiliar and possibly unsafe location by a bare status message ('Tracking ended: You appear to have stopped X km from your route') that offers no orientation, no 'you may have missed your stop \u2014 check your surroundings / next return service' guidance, and no safety framing for a disoriented late-night rider. The wake is technically delivered but human-unsafe, and it doubles as the moment the product silently gives up.",
+    "coverage": "PARTIAL",
+    "evidence": "lib/services/trackingservice.dart:1476-1494 shows title 'Tracking Ended' with body = raw termination userMessage; those messages (lib/services/tracking_termination_policy.dart:157-159, 172-174, 208-210) are diagnostic ('You appear to have stopped Xkm from your route' / 'heading away from your destination') with no actionable safety guidance, and allowContinueTracking:false ends tracking outright.",
+    "severity": "MEDIUM"
+   }
+  ]
+ },
+ {
+  "scenario": "Metro rider asleep; train enters a long tunnel with full GPS blackout and reaches the target stop while still underground before GPS returns. Claimed failure: no new Position events arrive, so the alarm is never re-evaluated and fires only after GPS returns past the stop (product death).",
+  "final_coverage": "CONFIRMED_GAP",
+  "evidence": "Alarm evaluation in production has exactly ONE trigger path, and it is edge-driven by real Position events. Chain: LocationManager.positionStream -> LocationStreamHandler._handlePositionUpdate (location_stream_handler.dart:209-213, 220-273) -> onCheckAlarm (wired at trackingservice.dart:2169-2173) -> _checkAndTriggerAlarm (trackingservice.dart:1213) -> AlarmController.checkAndTriggerAlarm (trackingservice.dart:1291). The only other caller of _checkAndTriggerAlarm is checkAlarmForTest, marked @visibleForTesting (trackingservice.dart:2436-2441). LocationManager.positionStream is fed only by real GPS (_onRealPosition) or simulation/injected positions (location_manager.dart:95,106,160,280); Geolocator emits nothing during a blackout, so no synthetic ticks occur. The EKF does NOT rescue this: onEkfUpdate merely stores _lastEkfState = state (trackingservice.dart:2165-2167), and _lastEkfState is consumed ONLY inside _resolveAlarmRouteState/_checkAndTriggerAlarm (trackingservice.dart:1176-1184), which is never invoked without a Position event. SensorFusionManager's own fused-position controller (sensor_fusion.dart:220) has no subscriber that re-injects into the alarm path. The periodic timers do not re-evaluate: _gpsCheckTimer/_handleGpsCheckTick only start fusion, re-post notifications, broadcast state, and set time-alarm eligibility (location_stream_handler.dart:418-452) with no onCheckAlarm call; HeartbeatMonitor only detects foreground death (heartbeat_monitor.dart:45); AlarmController._alarmStopPollTimer polls for user stop AFTER firing (alarm_controller.dart:1301-1400). Therefore, with GPS silent, evaluation is frozen until the first post-tunnel Position event \u2014 after the stop. This matches the stated fact that the EKF is built but not wired into production alarm logic.",
+  "fix_direction": "Add a clock-driven evaluation tick during GPS dropout: from onEkfUpdate (or _gpsCheckTimer when silentFor >= gpsDropoutBuffer), synthesize a Position from the latest dead-reckoned EKF state (s/lat/lng) and call onCheckAlarm/_checkAndTriggerAlarm, so the alarm re-evaluates against EKF route progress while underground instead of only on real GPS events."
+ },
+ {
+  "scenario": "Very noisy cheap accelerometer (poor MEMS part) during a GPS dropout / tunnel segment: the sensor's stationary noise floor exceeds the fixed variance gates, so static-bias estimation and ZUPT never trigger, bias is never removed, 1-D DR position drifts unbounded, and station snaps are rejected.",
+  "final_coverage": "CONFIRMED_GAP",
+  "evidence": "Every IMU-quality gate is a hard-coded absolute constant with no per-device noise-floor calibration or adaptive scaling (grep for noise-floor/adaptive/calibration in lib/core/ekf and lib/services returns nothing but the unrelated sigmaS margin). A cheap MEMS whose stationary accel-variance floor is > ~0.5 m^2/s^4 defeats the entire chain:\n\n1. Static bias init is gated at accelVar<0.5 && gyroVar<0.1 (ekf_orchestrator.dart:713). If never satisfied, _biasInitialized stays false and _estimatedInitialBias stays null, so the DR path at ekf_orchestrator.dart:748-750 returns raw aFwd with NO bias subtraction -> the constant bias integrates into unbounded position drift.\n\n2. All three ZUPT paths die (zupt_detector.dart:51,58,71-75): imuQuiet needs accelVar<1.0 (line 8/51), imuUltraQuiet needs accelVar<0.15 && gyroVar<0.05 (line 58), and every path also needs either velocityLow (which is drifting garbage during DR) or motionHint. \n\n3. motionHint is never true because the motion classifier's stationary test is accelVar<0.5 && gyroVar<0.10 (motion_classifier.dart:135-136), which a noisy part never meets -> never MotionState.stationary.\n\n4. Station association hard-requires zuptConfirmed as a precondition (station_association.dart:135, early-return 199) -> permanent ZUPT_NOT_CONFIRMED, so DR position is never snapped/corrected. Numeric clamps (velocity +/-25 m/s ekf_pipeline.dart:211, sigmaS cap) only prevent NaN; they do NOT bound meaningful drift (25 m/s of wrong-direction drift is catastrophic for a wake alarm). DegradedMode (degraded_mode.dart) only flips a boolean on high sigma / ZUPT gap; it has no conservative fail-safe alarm. The failure mode is exactly as claimed. Note this is currently latent because the EKF is not yet wired into production alarm logic, but the DR subsystem itself is genuinely broken for high-noise sensors.",
+  "fix_direction": "Replace the fixed absolute variance gates with a per-device stationary noise-floor estimated at session start (e.g. baseline accel/gyro variance while the phone is known-still), then set ZUPT / bias-init / motion-classifier thresholds as a multiple of that measured floor (adaptive) instead of hard-coded 0.5/0.15/0.05; alternatively gate ZUPT on a relative-quiet detector (variance below k*rolling-baseline) so a noisy MEMS can still register a stop."
+ },
+ {
+  "scenario": "Device master Location Services toggled OFF at OS level while app location permission stays granted \u2014 at journey start, or mid-journey. Claim: start shows a recoverable error dialog; mid-journey the position stream silently stops with no user-facing warning, so no alarm fires and the rider is never told tracking is dead.",
+  "final_coverage": "ACTUALLY_PARTIAL",
+  "evidence": "START (handled): homescreen.dart:920-926 `_getCurrentLocation()` wraps `Geolocator.getCurrentPosition()` in try/catch returning null; the tracking-start path at homescreen.dart:538-548 checks null and shows a recoverable dialog \"Could not get your current location. Please enable location services.\" then aborts start. So the start half matches the claim and is covered (though it never opens location settings and doesn't distinguish service-off from other failures).\n\nMID-JOURNEY (genuine open gap \u2014 confirmed): The production GPS stream has NO service-status monitoring and swallows the disable signal:\n- location_manager.dart:95-100 `_startRealGps()` subscribes to `Geolocator.getPositionStream(...)` with `onError: (e) => _log.severe(...)`. When OS location is turned off, geolocator terminates/errors the stream (LocationServiceDisabledException); this handler only logs it, does NOT forward an error to `_positionController`, does NOT re-check service state, and does NOT attempt restart. The broadcast `positionStream` simply goes silent.\n- location_stream_handler.dart:209-213 (the production background alarm path) does `LocationManager().positionStream.listen(...)` with NO onError at all, so downstream never learns tracking died.\n- The only silence-detector, `_checkGpsDropout` (location_stream_handler.dart:521-531), treats the silence identically to a tunnel and just spins up sensor fusion / EKF dead-reckoning. But per project state the EKF is not wired into alarm logic: `onEkfUpdate` only stores `_lastEkfState` for snapshots (lines 585-590, 402-404), and `onCheckAlarm` is invoked ONLY inside `_handlePositionUpdate` when a real Position arrives (line 268-273). The periodic `_handleGpsCheckTick` (428-452) never calls onCheckAlarm. So with GPS silent, zero alarm evaluation runs.\n- grep over lib/ confirms `getServiceStatusStream()` and `isLocationServiceEnabled()` exist ONLY in test/process_death_recovery_test.dart's MockGeolocatorPlatform, never in production. No watchdog escalates prolonged GPS silence to a user-facing warning.\nNet mid-journey outcome: tracking dies silently, EKF (unwired) never fires, no alarm, no notification that tracking is dead \u2014 the fire-late = product-death case.",
+  "fix_direction": "In LocationManager (or the background tracking start), subscribe to `Geolocator.getServiceStatusStream()` and add a \"GPS silent longer than N seconds\" watchdog escalation: on service-disabled or prolonged silence, raise a high-priority user-facing notification telling the rider tracking has stopped and location must be re-enabled \u2014 rather than silently entering dead-reckoning that never fires an alarm. Also forward the geolocator onError downstream instead of only logging it."
+ },
+ {
+  "scenario": "WRONG DIRECTION: rider boards the correct metro line at the wrong platform and travels away from the destination, underground (no GPS). EKF arc-length 's' is used as alarm progress with no signed direction-along-route check, so the app \"advances\" toward the modeled destination and fires a spurious arrival alarm while the true stop is never reached.",
+  "final_coverage": "CONFIRMED_GAP",
+  "evidence": "Every link in the claimed failure chain is present in production code, and no guard catches it:\n\n1) Deviation/soft-lock IS skipped on metro legs. lib/services/trackingservice.dart:1120-1122 comment: \"Metro legs use 'Ground Truth' GPS speed logic and effectively ignore position deviation (tunnels).\" The entire soft-lock block is gated by `if (!isMetroStep)` at line 1143. So on a metro leg no lateral/position sanity check runs.\n\n2) Metro-leg alarm progress = EKF s. lib/services/trackingservice.dart:1176-1184: when `isMetroStep` (or EKF degraded/metro mode), `progressMeters = ekfState.s`. This EKF value overrides the GPS snap progress.\n\n3) s is a magnitude-integrated, monotonic-forward quantity with NO signed route-direction check. lib/core/ekf/ekf_pipeline.dart:201 `_s = _s + _v * dt + 0.5*aBias*dt2` integrates forward velocity derived from the accelerometer's along-track axis (aFwd), which is positive whenever the train accelerates in its own direction of travel \u2014 independent of whether that direction points toward or away from the route destination. Underground there is no GPS (`onGpsFix`/`projectLatLng` at ekf_orchestrator.dart:237,264 never runs) to supply the sign of motion relative to the polyline. Worse, on metro legs reverse is explicitly forbidden: ekf_orchestrator.dart:288 `_pipeline.setAllowReverse(!isMetroLeg)`, and ekf_pipeline.dart:204-208 clamps `if(_v<0)_v=0; if(_s<sOld)_s=sOld;`. ekf_types.dart:8 documents s as \"monotonic public\". So s can ONLY increase.\n\n4) Increasing s trips the stops-based metro alarm. lib/services/alarm_evaluator.dart:776-797 counts `passedIntermediate` purely as `progressMeters >= stopMeters` and fires when `remainingStopsToTarget <= thresholdN`. A monotonically rising s therefore \"passes\" modeled stops and fires an Arriving/Transfer alarm even though the rider is physically receding from the true stop.\n\n5) No wrong-direction/wrong-platform guard exists anywhere. grep for wrong-direction/opposite/reverse-direction/heading-mismatch found nothing applicable. The only \"moving away\" logic (lib/services/tracking_termination_policy.dart:177-217) is inert here: it early-returns unless a `_deviationState` is already set (line 132), i.e. it requires the rider to be OFF-route laterally \u2014 but a wrong-platform rider is ON the correct polyline (lateral offset ~0), so no deviation state is ever created. It is also pure GPS straight-line distance and never runs underground.\n\nThe reverse case (elevated/GPS section) is consistent: SnapToRouteEngine projects onto the one-directional polyline, so opposite travel yields non-increasing progress; the stops-based counter at alarm_evaluator.dart:776 never advances and no alarm fires. Either way the rider misses.",
+  "fix_direction": "On metro legs, add a signed along-route direction gate before letting EKF s advance the alarm: seed/validate travel direction from any available signal at boarding or intermittent GPS (sign of sGps delta, or device heading vs route tangent from route_geometry.tangentAt), and when the confirmed direction is anti-parallel to the route (or GPS progress is decreasing on elevated sections) suppress \"advance\", raise a wrong-direction/wrong-platform warning, and do NOT fire the arrival alarm."
+ },
+ {
+  "scenario": "Low max sensor sample rate / aggressive IMU batching: power-saving SoCs deliver accelerometer samples in bursts rather than steadily at ~100Hz.",
+  "final_coverage": "ACTUALLY_PARTIAL",
+  "evidence": "Production IMU wiring (SensorFusionManager, the only path feeding real sensors into the EKF) timestamps each ImuSample from a Stopwatch read at PROCESSING time, not the true sample time: lib/services/sensor_fusion.dart:224-228 uses _imuClock.elapsedMicroseconds inside the accelerometer listener. It ignores the hardware per-sample timestamp that sensors_plus already provides (AccelerometerEvent.timestamp \u2014 sensors_plus_platform_interface-2.0.1/lib/src/accelerometer_event.dart:39). So batched samples processed back-to-back DO get near-identical timestamps \u2192 dt\u22480, confirming the scenario's mechanism. HOWEVER the specific corruption claims are largely mitigated: (1) velocity integration is NOT corrupted \u2014 ekf_pipeline.dart:112-133 guards dt: dt<=0 skip, dt>1s reset velocity/bias, and dt<minDt(0.001) or dt>maxDt(0.2) \u2192 inflate covariance and return WITHOUT integrating, so dt\u22480 burst samples are dropped, not integrated as garbage; (2) sampleRateHz (ekf_orchestrator.dart:588, (n-1)/duration over a 2.56s trim window) stays roughly correct because the Stopwatch is a real monotonic clock and bursts arrive at real intervals, so window-average rate \u2248 true rate; (3) time-based ZUPT/motion gating (zupt_detector.dart:83-88 dwell=800ms; variance window 0.75s) is measured on the same monotonic clock and remains approximately real-time-correct across bursts. The residual OPEN failure: those very guards turn batching into a DR-stall. Under batch report latency > maxDt=0.2s (plausible on aggressive power-save/Doze on cheap phones), every burst-boundary sample hits the marginal-dt branch (ekf_pipeline.dart:127-133) and is skipped \u2014 or if >1s, zeroes velocity (line 118-126) \u2014 so dead reckoning freezes during the exact GPS dropout it exists to cover. Even under sub-0.2s batching only one boundary sample per burst integrates, over a whole-burst dt with a single stale acceleration, discarding intra-burst dynamics. There is no batch-aware handling and no sensor-interval/batching configuration on the stream (uses default accelerometerEvents at sensor_fusion.dart:184).",
+  "fix_direction": "Timestamp ImuSample from the hardware sample clock (AccelerometerEvent.timestamp, already exposed by sensors_plus 7.0) instead of the processing-time Stopwatch, so each batched sample integrates with its true ~10ms dt regardless of burst delivery; and when a large boundary dt does occur, sub-step the Kalman predict (split into ~50-100Hz increments) rather than skipping via the maxDt guard, so DR keeps advancing through batched delivery."
+ },
+ {
+  "scenario": "Budget Android phone with no gyroscope enters a metro tunnel; GPS drops and EKF dead-reckoning must carry progress. Claim: gyroscopeEvents never emits so gyro is treated as identically zero, degrading TiltFilter/MotionClassifier and causing ZUPT/station-association gates to rarely pass, so DR drifts and station snaps are rejected.",
+  "final_coverage": "ACTUALLY_PARTIAL",
+  "evidence": "Premise TRUE but consequence BACKWARDS. (1) Gyro IS silently zeroed: lib/services/sensor_fusion.dart:229-231 defaults gx/gy/gz to 0.0 when _lastGyro is null (init null at line 179), and the gyro subscription at lines 255-267 swallows errors/absence (handleError plus onError cancel plus cancelOnError true), leaving _lastGyro null forever. Grep for hasGyro/gyroAvailable/isSupported/capability across lib/ returns nothing: no gyroscope-availability detection exists. (2) The claimed failure DIRECTION is wrong. Every gyro-dependent gate has the form gyroVariance less-than threshold: zupt_detector.dart:51 (thresh 0.40) and line 58 (thresh 0.05), motion_classifier.dart:136 (thresh 0.10). With gyroVariance identically 0 these terms are ALWAYS satisfied, so gates pass MORE readily, not rarely. Station association (station_association.dart:106-210) has NO gyroVariance dependency: it gates on isMetroLeg/zuptConfirmed/dwell/candidate-window/sigmaS, so snaps are not rejected because of gyro; easier ZUPT makes them more likely. The real risk is the opposite: false-positive ZUPT/stationary during cruise, partly mitigated by accel-variance gates and the degraded forward-accel override at motion_classifier.dart:127. (3) TiltFilter does not collapse: with zero gyro, _integrateGyro returns orientation unchanged and it falls back to accel-LPF gravity blending (tilt_filter.dart:88-91 and 149-162), an accel-only complementary filter, degraded but functional; its gravitySample substitute path is never fed in production because SensorFusionManager subscribes only to accelerometerEvents and gyroscopeEvents. (4) The entire DR path is behind enableEkf (default false, sensor_fusion.dart:90; enabled only when routeGeometry is non-null at location_stream_handler.dart:573) and per project context not wired into alarm logic yet.",
+  "fix_direction": "Add explicit gyroscope-availability detection at fusion start; when absent, source orientation from Android's fused gravity/rotation-vector sensor into TiltFilter's already-supported gravitySample path, and mark gyro features invalid so the gyroVariance gates in zupt_detector/motion_classifier are deliberately neutralized (tighten accel-variance and velocity gates to prevent false-positive stationary/ZUPT during cruise) rather than silently reading a constant zero as quiet."
+ },
+ {
+  "fix_direction": "Gate the alarm pipeline on position.accuracy: reject or hold fixes coarser than ~150-200m so they never advance progress or fire an alarm (fall back to EKF/last-good-progress), and at tracking start detect a coarse-only permission grant to warn the user before they sleep.",
+  "scenario": "Android 12+ Approximate location only grant returns 1-3km-accuracy fixes despite requesting LocationAccuracy.high; distance/stop alarms compute against a fix km off, firing kilometres early or reporting not-yet-near so the alarm fires late or never.",
+  "final_coverage": "CONFIRMED_GAP",
+  "evidence": "Alarm pipeline never inspects position.accuracy nor detects coarse-only grant. Flow: location_stream_handler.dart:270 -> trackingservice.dart:1213 _checkAndTriggerAlarm -> _resolveAlarmRouteState:1059 -> SnapToRouteEngine.snap:1088 -> AlarmEvaluator.evaluateCoinciding. SnapToRouteEngine.snap (snap_to_route.dart:43) takes no accuracy arg and full-route-searches when offset>500m (snap_to_route.dart:84), so a 1-3km-off fix snaps to a wrong point -> wrong progressMeters. AlarmEvaluator.evaluateCoinciding (alarm_evaluator.dart:48) fires purely on progressMeters vs stop boundaries with no uncertainty input; metro stops ~1km apart so km error crosses boundaries, firing early or missing. Accuracy-aware code is unwired or unprotective: GpsHealthMonitor accuracy>50m degraded (gps_health_monitor.dart:25,113) has no production caller (only its own file+test); SoftLockManager only WIDENS corridor to 200m when accuracy>20m (soft_lock_manager.dart:39-42), non-metro only, merely logs deviation (trackingservice.dart:1164-1171) without gating alarm progress; eta_engine gpsAccuracyThreshold=30 (line 15,484) only weights ETA blending, never rejects a fix. No coarse-vs-precise detection: permission_service.dart requests location/locationAlways only, never checks precision. EKF inflates R by accuracyMeters (ekf_pipeline.dart:302) but is not wired into production alarm logic."
+ },
+ {
+  "scenario": "Rider clears the app from recents (or another app evicts it) before dozing, trusting the persistent tracking notification. Claim: swiping the UI away stops heartbeats, the service flips to paused, shows \"Resume to continue\", self-suspends alarm checking, and the wake-up never fires.",
+  "final_coverage": "ACTUALLY_PARTIAL",
+  "evidence": "The claimed core mechanism \u2014 pausing self-suspends alarm checking \u2014 does not exist. HeartbeatMonitor's timeout action (lib/services/tracking/heartbeat_monitor.dart:83-91) only sets the paused flag, swaps notifications, and stops its OWN timer (stop() at 101-105 cancels just _timer); it never stops the location stream, position subscription, or AlarmController. The background isolate owns an independent GPS subscription (startLocationStream(service) in _onStart, trackingservice.dart:1686), so it keeps receiving positions after the UI isolate dies. Crucially, NO alarm-firing code gates on isPaused: the only production reads of isPaused are snapshot_route_restorer.dart:30 (service-start route restore) and trackingservice.dart:1762 (resume handler). Neither location_stream_handler.dart nor alarm_controller.dart reads isPaused in the processing/firing path (grep-confirmed). Therefore, in the exact case described (service alive, paused notification visible), the alarm still fires. Restart also recovers: _onStart sets paused=false (trackingservice.dart:1598) before restoring route + restarting the stream. Residual gaps keeping this PARTIAL rather than fully COVERED: (1) misleading \"Resume to continue\" notification text implies tracking halted when it hasn't; (2) a concurrency race \u2014 setPaused(false) at trackingservice.dart:1598 is not awaited while SnapshotRouteRestorer reads isPaused at 1613 inside a concurrent unawaited block (1610), so on an aggressive-OEM kill-then-restart where paused was already persisted true, restoreFromStoreIfActiveAndNotPaused (snapshot_route_restorer.dart:30-31) can skip rebuilding the route.",
+  "fix_direction": "Reword the paused notification so it does not imply tracking stopped (tracking genuinely continues in the surviving-service case), and harden the restart path by awaiting setPaused(false) before the restorer runs \u2014 or restore the route whenever active==true regardless of paused \u2014 so a kill-then-restart while paused==true cannot skip route rebuild."
+ }
+]

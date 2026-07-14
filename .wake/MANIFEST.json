@@ -1,12 +1,12 @@
 {
   "schemaVersion": "wakepoint-manifest-v1",
   "repo": "WakePoint",
-  "gitCommit": "4b0f5915e61a5818100124112fae647d7d3d915d",
-  "gitTree": "dc11b7347a5ee89fb563926475376e4511618291",
-  "generatedAt": "2026-07-10T06:06:24+05:30",
-  "sourceDigest": "ffe165773fe665e07e5460acdf1b998d625c7a3ec4e260415093f8dcec4e33fc",
+  "gitCommit": "ee20326195f0fd49c5b1a3981bac0bd6ffa69419",
+  "gitTree": "529249d26d832fa79a08994252096027f9b7924e",
+  "generatedAt": "2026-07-10T06:07:02+05:30",
+  "sourceDigest": "4301ea777a63695b9b68ed6c676f4da13bc70be6ae14793f125adde6f593665c",
   "artifactCount": 19,
-  "rootDigest": "4a1f87da6c242d1c672341d00f2f894f91de7162e7727bbc6e344bcac311a312",
+  "rootDigest": "fc05534bab5e7f7cfe49d29805aa72419112b3437f255efdb3f0e0020c74f3a6",
   "artifacts": [
     {
       "path": ".wake/AGENT_CONTEXT.md",
@@ -48,19 +48,19 @@
       "path": ".wake/intent/intent-graph.dot",
       "bytes": 3850,
       "layer": "semantic",
-      "sha256": "7deb1c6619ac4b0a5c585f38c36da359b496aeccba7cd023c97cce415d7c9d5d"
+      "sha256": "a4860ccb99e3a0e38189afefe9571209582de154564d0eee2962202611639b69"
     },
     {
       "path": ".wake/intent/intent-graph.json",
-      "bytes": 582710,
+      "bytes": 600782,
       "layer": "semantic",
-      "sha256": "bf695ebdde04460101d662ef148776b9daf0f209e5797419218279c48024e0c0"
+      "sha256": "ac8dc2e6d6c20e7c447284fd9b3e07a5eb7d9890a6d4634b5e556d6dfdd0d6e7"
     },
     {
       "path": ".wake/intent/intent-graph.svg",
-      "bytes": 25309,
+      "bytes": 25308,
       "layer": "semantic",
-      "sha256": "e431ca7bdcd4cf1db7e135c71106f514d3b1b41dfda9f839a810968762a60634"
+      "sha256": "f92596200f33b0d2b0dd4729d44e48707987c2fa4a528481eddec196d720a99d"
     },
     {
       "path": ".wake/intent/subsystems.json",
@@ -70,9 +70,9 @@
     },
     {
       "path": ".wake/map/change-impact.json",
-      "bytes": 25988,
+      "bytes": 26842,
       "layer": "deterministic",
-      "sha256": "bf087a6a7aeb6a01c28b01a1107c4d5abdaecda3c659ddee8124c7783f8454de"
+      "sha256": "4ae938e45fba544267e362548beb8d0536e256658163b98d139aae3c20fc816a"
     },
     {
       "path": ".wake/map/entry-points.json",
@@ -82,33 +82,33 @@
     },
     {
       "path": ".wake/map/knowledge-graph.json",
-      "bytes": 490814,
+      "bytes": 514795,
       "layer": "deterministic",
-      "sha256": "001142701773b3a3cd00224529e4f100e72ff7a2ba4c2688ecab1edaa9c382e2"
+      "sha256": "9be01874f9bb1030618ecc8cf9eae15d14d8929d25dffb1222887962317ee114"
     },
     {
       "path": ".wake/map/LLM_NAVIGATION_GUIDE.md",
-      "bytes": 1509,
+      "bytes": 1529,
       "layer": "deterministic",
-      "sha256": "a905d37e6c4b6926bcdd321ed43934010038f23824042c8ae8a23316adc4c067"
+      "sha256": "17247d7cffb50f2800906598c55083a45e4f306db129bf7450b4dcb1d0e0407c"
     },
     {
       "path": ".wake/map/module-interfaces.jsonl",
-      "bytes": 189188,
+      "bytes": 198780,
       "layer": "deterministic",
-      "sha256": "182e21a05109b9dbfb9d9fdfcbfdab179c09d278aebe47f3c162926648a6eaae"
+      "sha256": "06810ff3e73b62f76bfe037ab167e689de466d589447f6112b2ad720093b0e74"
     },
     {
       "path": ".wake/map/public-api-surface.json",
-      "bytes": 25434,
+      "bytes": 25675,
       "layer": "deterministic",
-      "sha256": "c99de6916057a7b6c936fcb5e35d8a8ddf3a430ae627fab729cb79e6c98236ca"
+      "sha256": "ee273bb6f6ac139a729ad4dd9811bd7fc1ce1653d269b0e86b3749b1d250b899"
     },
     {
       "path": ".wake/map/type-signatures.jsonl",
-      "bytes": 25386,
+      "bytes": 27646,
       "layer": "deterministic",
-      "sha256": "e19d0ead3d613aefdfd94aea0490dea56890a374af29de8c7dfb93539f20aafc"
+      "sha256": "ffb0a8412ccfe4ac7d5ee14610054fa56b58a95191a66eec873400db1b7d341f"
     },
     {
       "path": ".wake/rag/codebase-index.json",
@@ -120,7 +120,7 @@
       "path": ".wake/surface/coverage-ledger.json",
       "bytes": 3346,
       "layer": "deterministic",
-      "sha256": "a30ddc729c92d5e91f992edda542ff114b66980bdde4413e08881b46f325cb3a"
+      "sha256": "bbd8de0b34efa7c3827f92235bd2b7def6855f6318f41b485336550a312812fd"
     }
   ]
 }

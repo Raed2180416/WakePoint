@@ -1,3 +1,4 @@
+{"file":"claudesciencesession/code/ekf_js.js","name":"huber","signature":"(norm,d)"}
 {"file":"geowake-server/src/controllers/authController.js","name":"generateToken","signature":"(req, res) =>"}
 {"file":"geowake-server/src/controllers/mapsController.js","name":"googleApiProxy","signature":"(req, res, { url, params, type }) =>"}
 {"file":"geowake-server/src/controllers/mapsController.js","name":"getDirections","signature":"(req, res) =>"}
@@ -28,6 +29,7 @@
 {"file":"lib/services/polyline_decoder.dart","name":"pointAlongPolyline","signature":"(List<LatLng> points, double targetDistance)"}
 {"file":"lib/services/polyline_decoder.dart","name":"estimateStopPositions","signature":"(List<LatLng> polyline, int numStops)"}
 {"file":"lib/services/polyline_decoder.dart","name":"stopDistancesAlongPolyline","signature":"(List<LatLng> polyline,\n  List<LatLng> stopPositions,)"}
+{"file":"lib/services/position/gps_position_provider.dart","name":"_defaultLocationSettings","signature":"()"}
 {"file":"lib/services/tracking_state_store.dart","name":"_encodeSnapshotInBackground","signature":"(Map<String, dynamic> json)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_minimizeDirectionsForSnapshot","signature":"(Map<String, dynamic>? directions,)"}
 {"file":"lib/services/trackingservice.dart","name":"onIosBackground","signature":"(ServiceInstance service)"}
@@ -42,7 +44,6 @@
 {"file":"lib/services/trackingservice.dart","name":"_onStop","signature":"()"}
 {"file":"lib/services/trackingservice.dart","name":"_resetAlarmState","signature":"()"}
 {"file":"lib/services/trackingservice.dart","name":"_handleDashboardRouteSwitch","signature":"(String routeKey)"}
-{"file":"lib/services/trackingservice.dart","name":"_resolveAlarmRouteState","signature":"(Position currentPosition)"}
 {"file":"lib/services/trackingservice.dart","name":"_checkAndTriggerAlarm","signature":"(Position currentPosition,\n  ServiceInstance service,)"}
 {"file":"lib/services/trackingservice.dart","name":"_handleRerouteDecision","signature":"(RerouteDecision decision)"}
 {"file":"lib/services/trackingservice.dart","name":"_terminateTrackingWithMessage","signature":"(String message)"}
@@ -106,11 +107,24 @@
 {"file":"test/direction_service_behavior_test.dart","name":"main","signature":"()"}
 {"file":"test/direction_service_caching_test.dart","name":"main","signature":"()"}
 {"file":"test/driving_coalesce_test.dart","name":"main","signature":"()"}
+{"file":"test/ekf/replay_harness_test.dart","name":"discoverFixtures","signature":"()"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_readHeader","signature":"(String basename)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"pickScenarioFixture","signature":"(List<String> basenames)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_loadFixture","signature":"(String basename)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_inBlindWindow","signature":"(double t, List<List<double>> windows)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_locationReplicaProcess","signature":"(_GpsRow r, _GpsRow? prev)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_haversine","signature":"(double lat1, double lon1, double lat2, double lon2)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_dur","signature":"(double tSeconds)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_f","signature":"(double v, [int d = 1])"}
+{"file":"test/ekf/replay_harness_test.dart","name":"printScorecard","signature":"(RunResult r)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"printCombinedTable","signature":"(List<RunResult> results, List<String> errors)"}
+{"file":"test/ekf/replay_harness_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_engine_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_utils_test.dart","name":"main","signature":"()"}
 {"file":"test/event_alarm_overlap_test.dart","name":"main","signature":"()"}
 {"file":"test/event_alarm_progress_source_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
 {"file":"test/event_alarm_progress_source_test.dart","name":"main","signature":"()"}
+{"file":"test/fire_decision_fractile_test.dart","name":"main","signature":"()"}
 {"file":"test/flutter_test_config.dart","name":"testExecutable","signature":"(FutureOr<void> Function() testMain)"}
 {"file":"test/gps_health_monitor_test.dart","name":"main","signature":"()"}
 {"file":"test/helpers/ekf_test_helpers.dart","name":"linspace","signature":"(double start, double end, int n)"}
@@ -127,10 +141,17 @@
 {"file":"test/maptracking_eta_distance_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_alarm_reliability_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_final_station_alarm_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_ordered_sequence_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/metro_ordered_sequence_test.dart","name":"_enc","signature":"(int v, StringBuffer s)"}
+{"file":"test/metro_ordered_sequence_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_stops_prior_test.dart","name":"syntheticMetroDirections","signature":"()"}
 {"file":"test/metro_stops_prior_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/metro_stops_prior_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/metro_stops_prior_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_wrong_snap_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/metro_wrong_snap_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
+{"file":"test/metro_wrong_snap_test.dart","name":"_directionsWithBluePolyline","signature":"(String lineShortName)"}
+{"file":"test/metro_wrong_snap_test.dart","name":"main","signature":"()"}
 {"file":"test/minimal_test.dart","name":"main","signature":"()"}
 {"file":"test/mixed_mode_alarm_test.dart","name":"mixedModeDirections","signature":"()"}
 {"file":"test/mixed_mode_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
@@ -188,10 +209,12 @@
 {"file":"test/route_cache_policy_test.dart","name":"main","signature":"()"}
 {"file":"test/route_cache_transit_variant_test.dart","name":"main","signature":"()"}
 {"file":"test/route_events_test.dart","name":"main","signature":"()"}
+{"file":"test/route_journey_fixes_test.dart","name":"main","signature":"()"}
 {"file":"test/route_metadata_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_lru_eviction_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}
+{"file":"test/saved_routes_service_test.dart","name":"main","signature":"()"}
 {"file":"test/segment_builder_test.dart","name":"main","signature":"()"}
 {"file":"test/sensor_fusion_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/ambiguous_station_stop_test.dart","name":"main","signature":"()"}

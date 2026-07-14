@@ -260,16 +260,17 @@ void main() {
       final sigmaVAfter = ekf.publicState.sigmaV;
       final vAfter = ekf.publicState.v;
 
-      // Post-ZUPT:
-      // - σs should be capped at 10m
-      // - σv should be capped at 0.5 m/s
-      // - v should be near zero
-      expect(sigmaSAfter, lessThanOrEqualTo(10.0));
+      // Post-ZUPT (A1/G20 — a ZUPT is a VELOCITY measurement, not a position one):
+      // - σv capped at 0.5 m/s and shrunk (ZUPT legitimately tightens velocity)
+      // - v near zero
+      // - σs is NOT artificially tightened: a confirmed stop says v≈0, it does
+      //   NOT say WHICH station we are at, so ZUPT must not fabricate position
+      //   confidence. Position certainty comes only from a real station snap.
       expect(sigmaVAfter, lessThanOrEqualTo(0.5));
       expect(vAfter.abs(), lessThan(1.0)); // Near zero after ZUPT
-
-      // Covariance should have shrunk
-      expect(sigmaVAfter, lessThan(sigmaVBefore));
+      expect(sigmaVAfter, lessThan(sigmaVBefore)); // velocity covariance shrank
+      // σs must not be force-capped to the old dishonest 10m platform value.
+      expect(sigmaSAfter, greaterThan(10.0));
     });
 
     test('negative dt is rejected gracefully', () {
@@ -378,11 +379,16 @@ void main() {
       expect(vEnd, greaterThanOrEqualTo(-25.0));
       expect(vEnd, lessThanOrEqualTo(25.0));
 
-      // - Uncertainty grew but bounded reasonably
-      // The cap ensures σs stays manageable for station association
-      // Allow up to 250m since small inflation can occur after capping
+      // - Uncertainty grew HONESTLY (A1/G20). Capping σs at 250m (the old
+      //   behavior) fabricated confidence and made the critical-fractile safety
+      //   margin far too small (~43s vs ~500s), firing close to late. Over a
+      //   388s blackout σs must reflect real DR uncertainty growth, bounded only
+      //   by the honest 3km cap. Association falls back to nearest-ahead /
+      //   dwell-ordinal underground, which does not widen with σs.
       expect(sigmaEnd, greaterThan(sigmaStart));
-      expect(sigmaEnd, lessThanOrEqualTo(250.0));
+      expect(sigmaEnd, greaterThan(250.0)); // honest growth beyond the old cap
+      // Reaches ~the honest 3km cap (small post-clamp numerical overshoot ok).
+      expect(sigmaEnd, lessThanOrEqualTo(3100.0));
 
       // - All values finite
       expect(sEnd, isFiniteNumber);

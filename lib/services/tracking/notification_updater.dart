@@ -159,6 +159,66 @@ class NotificationUpdater {
       destinationAlarmFired: context.destinationAlarmFired,
       lastAlarmFiredAt: context.lastAlarmFiredAt,
     );
+
+    // G5: keep the OS exact-alarm backstop aligned with the live ETA prediction.
+    // Fire-and-forget; never block the broadcast loop.
+    if (!isTestMode) {
+      // ignore: discarded_futures
+      _maybeRearmEtaBackstop(context, alarmFired);
+    }
+  }
+
+  /// G5: (re)arm or cancel the exact-alarm ETA backstop based on current ETA and
+  /// the configured lead. Called on every state broadcast (~1 Hz).
+  Future<void> _maybeRearmEtaBackstop(
+    BroadcastContext context,
+    bool alarmFired,
+  ) async {
+    try {
+      // Once the real alarm has fired, drop the backstop so it can't double-fire.
+      if (alarmFired || context.destinationAlarmFired) {
+        await NotificationService().cancelEtaBackstop();
+        return;
+      }
+
+      final etaSeconds = context.smoothedETA ?? context.apiEtaSeconds;
+      if (etaSeconds == null || etaSeconds <= 0) return;
+
+      // Lead time before predicted arrival, derived from the alarm config.
+      // time/minutes-before -> value is minutes; distance-before -> handled by the
+      // primary alarm, backstop just uses a conservative floor; stops-before ->
+      // approximate with a fixed floor (tune on-device).
+      final mode = (context.alarmMode ?? '').toLowerCase();
+      final value = context.alarmValue ?? 0.0;
+      double leadSeconds;
+      if (mode.contains('minute') || mode.contains('time')) {
+        leadSeconds = value * 60.0;
+      } else {
+        // distance-before / stops-before: fire the backstop a safe 60s before the
+        // raw ETA so it never precedes the real alarm but still guarantees a wake.
+        leadSeconds = 60.0;
+      }
+
+      final fireInSeconds = (etaSeconds - leadSeconds);
+      if (fireInSeconds <= 0) {
+        // Predicted arrival already within the lead window — arm ~immediately so
+        // a dying process still wakes the rider.
+        await NotificationService().scheduleEtaBackstop(
+          fireAt: DateTime.now().add(const Duration(seconds: 2)),
+          title: 'Approaching ${context.destinationName ?? 'your stop'}',
+          body: 'Wake up — you are almost there.',
+        );
+        return;
+      }
+
+      await NotificationService().scheduleEtaBackstop(
+        fireAt: DateTime.now().add(Duration(seconds: fireInSeconds.round())),
+        title: 'Approaching ${context.destinationName ?? 'your stop'}',
+        body: 'Wake up — you are almost there.',
+      );
+    } catch (_) {
+      // best-effort; the primary alarm path is unaffected
+    }
   }
 
   /// Build list of inactive routes for dashboard visualization.
@@ -246,13 +306,28 @@ class NotificationUpdater {
   }
 
   /// Update the journey progress notification based on current state.
+  ///
+  /// When [gpsEstimating] is true the engine has lost GPS (e.g. in a tunnel)
+  /// and is dead-reckoning from motion sensors. In that case the subtitle
+  /// reassures the rider that the countdown continues instead of showing a
+  /// stale-looking "Remaining" line as if nothing were happening.
   void updateNotification({
     required RouteRegistry registry,
     required bool allowRouteProgressFromRoutes,
     required LatLng? destination,
     required String? destinationName,
     required LatLng? lastProcessedPosition,
+    bool gpsEstimating = false,
   }) {
+    // Builds the subtitle line, prefixing a reassuring "No GPS" note when the
+    // engine is estimating position from motion.
+    String subtitleFor(String remainingKm) {
+      if (gpsEstimating) {
+        return 'No GPS (tunnel) — estimating from motion. $remainingKm km to go';
+      }
+      return 'Remaining: $remainingKm km';
+    }
+
     try {
       if (isTestMode || destination == null) return;
 
@@ -279,7 +354,7 @@ class NotificationUpdater {
                 destinationName != null
                     ? 'Journey to $destinationName'
                     : 'GeoWake journey',
-            subtitle: 'Remaining: $remainingKm km',
+            subtitle: subtitleFor(remainingKm),
             progress0to1: 0.0,
           );
         }
@@ -330,7 +405,7 @@ class NotificationUpdater {
                 destinationName != null
                     ? 'Journey to $destinationName'
                     : 'GeoWake journey',
-            subtitle: 'Remaining: $remainingKm km',
+            subtitle: subtitleFor(remainingKm),
             progress0to1: progress,
           );
 
@@ -358,7 +433,7 @@ class NotificationUpdater {
               destinationName != null
                   ? 'Journey to $destinationName'
                   : 'GeoWake journey',
-          subtitle: 'Remaining: $remainingKm km',
+          subtitle: subtitleFor(remainingKm),
           progress0to1: 0.0,
         );
       }

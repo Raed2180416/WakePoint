@@ -17,6 +17,12 @@
       "name": "DeviationConfig"
     }
   ],
+  "lib/config/fire_decision_config.dart": [
+    {
+      "kind": "class",
+      "name": "FireDecisionConfig"
+    }
+  ],
   "lib/config/platform_test_flag_io.dart": [
     {
       "kind": "function",
@@ -81,6 +87,12 @@
       "name": "ekfLogger"
     }
   ],
+  "lib/core/ekf/ekf_metrics.dart": [
+    {
+      "kind": "class",
+      "name": "EkfMetrics"
+    }
+  ],
   "lib/core/ekf/ekf_orchestrator.dart": [
     {
       "kind": "class",
@@ -113,6 +125,10 @@
     {
       "kind": "class",
       "name": "EkfTestLogEntry"
+    },
+    {
+      "kind": "class",
+      "name": "EkfAlarmResult"
     },
     {
       "kind": "class",
@@ -173,36 +189,6 @@
     {
       "kind": "class",
       "name": "GpsDegradationDetector"
-    }
-  ],
-  "lib/core/ekf/imu_replay_engine.dart": [
-    {
-      "kind": "class",
-      "name": "TimestampedSample"
-    },
-    {
-      "kind": "class",
-      "name": "RecordedGpsSample"
-    },
-    {
-      "kind": "class",
-      "name": "RecordedStationAnnotation"
-    },
-    {
-      "kind": "class",
-      "name": "ReplayTickResult"
-    },
-    {
-      "kind": "class",
-      "name": "RecordedRoute"
-    },
-    {
-      "kind": "class",
-      "name": "ImuReplayEngine"
-    },
-    {
-      "kind": "enum",
-      "name": "ReplayState"
     }
   ],
   "lib/core/ekf/imu_replay_engine_v2.dart": [
@@ -479,20 +465,6 @@
       "name": "DeviationSimulationController"
     }
   ],
-  "lib/dashboard/ekf_replay_panel.dart": [
-    {
-      "kind": "class",
-      "name": "EkfReplayVisualization"
-    },
-    {
-      "kind": "class",
-      "name": "EkfReplayPanel"
-    },
-    {
-      "kind": "enum",
-      "name": "EkfReplayMode"
-    }
-  ],
   "lib/dashboard/ekf_test_panel.dart": [
     {
       "kind": "class",
@@ -553,6 +525,16 @@
     {
       "kind": "function",
       "name": "main"
+    }
+  ],
+  "lib/data/metro_line_sequences.dart": [
+    {
+      "kind": "class",
+      "name": "MetroLineStop"
+    },
+    {
+      "kind": "const",
+      "name": "kMetroLineSequences"
     }
   ],
   "lib/debug/demo_tools.dart": [
@@ -661,6 +643,10 @@
     {
       "kind": "class",
       "name": "RouteSwitchEvent"
+    },
+    {
+      "kind": "class",
+      "name": "WrongDirectionAlert"
     },
     {
       "kind": "class",
@@ -813,6 +799,12 @@
     {
       "kind": "function",
       "name": "notificationTapBackground"
+    }
+  ],
+  "lib/services/oem_autostart_service.dart": [
+    {
+      "kind": "class",
+      "name": "OemAutostartService"
     }
   ],
   "lib/services/offline_coordinator.dart": [
@@ -981,6 +973,18 @@
     {
       "kind": "class",
       "name": "RouteSessionManager"
+    }
+  ],
+  "lib/services/saved_route.dart": [
+    {
+      "kind": "class",
+      "name": "RouteMemory"
+    }
+  ],
+  "lib/services/saved_routes_service.dart": [
+    {
+      "kind": "class",
+      "name": "RouteMemoryService"
     }
   ],
   "lib/services/sensor_fusion.dart": [
@@ -1247,6 +1251,12 @@
     {
       "kind": "class",
       "name": "PulsingDots"
+    }
+  ],
+  "packages/wakepoint_native/lib/wakepoint_native.dart": [
+    {
+      "kind": "class",
+      "name": "WakepointNative"
     }
   ],
   "test/alarm_repro.dart": [

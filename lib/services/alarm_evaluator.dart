@@ -1,7 +1,8 @@
-import 'dart:io';
+import 'dart:math';
+import 'package:flutter/foundation.dart';
+import 'package:geowake2/config/fire_decision_config.dart';
 import 'package:geowake2/core/logging/app_logger.dart';
 import 'package:geowake2/services/transfer_utils.dart';
-import 'package:path_provider/path_provider.dart';
 
 enum AlarmMode { stops, time, distance }
 
@@ -62,6 +63,11 @@ class AlarmEvaluator {
     List<int> stepDurationsSeconds = const [],
     double? currentSpeedMps,
     double legStartMeters = 0.0,
+    // G12/G13: EKF uncertainty for critical-fractile firing. Defaults keep all
+    // existing callers/tests on median behavior (cushion == 0).
+    double? positionSigmaMeters,
+    double? velocitySigmaMps,
+    double fractileK = FireDecisionConfig.fractileK,
   }) {
     // ----------------------------------------------------------------------
     // FALLBACK: NO TRANSIT LEG CONTEXT
@@ -240,7 +246,14 @@ class AlarmEvaluator {
             currentSpeedMps: currentSpeedMps,
           );
 
-          final shouldFire = etaSeconds <= thresholdSeconds;
+          final double etaSigma = etaSigmaSeconds(
+            etaSeconds: etaSeconds,
+            speedMps: currentSpeedMps,
+            sigmaSMeters: positionSigmaMeters,
+            sigmaVMps: velocitySigmaMps,
+          );
+          final shouldFire =
+              (etaSeconds - fractileK * etaSigma) <= thresholdSeconds;
           print(
             'TIME_ETA_DEBUG: legIdx=$evalLegIndex, isMetro=${leg.isMetro}, lineName=${leg.lineName}, '
             'target=nextMetroStart(idx=$nextMetroIndex, meters=${targetMeters.toStringAsFixed(0)}), '
@@ -348,7 +361,14 @@ class AlarmEvaluator {
         stepDurationsSeconds: stepDurationsSeconds,
         currentSpeedMps: currentSpeedMps,
       );
-      final shouldFire = etaSeconds <= thresholdSeconds;
+      final double etaSigmaMain = etaSigmaSeconds(
+        etaSeconds: etaSeconds,
+        speedMps: currentSpeedMps,
+        sigmaSMeters: positionSigmaMeters,
+        sigmaVMps: velocitySigmaMps,
+      );
+      final shouldFire =
+          (etaSeconds - fractileK * etaSigmaMain) <= thresholdSeconds;
 
       // DEBUG: Log ETA calculation details
       print(
@@ -771,10 +791,25 @@ class AlarmEvaluator {
         return null;
       }
 
+      // G12/G13: Inflate effective arc-progress by k*sigma_s so a stop is
+      // counted as reached as soon as the UPPER confidence bound of our
+      // position passes it. Underground sigma_s grows, so this counts stops
+      // slightly early — the only safe direction (never fire late).
+      // σ is clamped to maxFractileSigmaMeters: A1 lets honest σs reach ~3km on
+      // a long fully-underground segment, which would inflate the cushion by
+      // kilometres and fire many stops early. Bounding it keeps the alarm safe
+      // (early, never late) AND tight (~1-2 stops early at most).
+      final double sigmaCushionMeters = (fractileK *
+              ((positionSigmaMeters ?? 0.0)
+                  .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)))
+          .toDouble();
+      final double effectiveProgressForStops =
+          progressMeters + sigmaCushionMeters;
+
       // Count how many intermediate stop boundaries have been reached/passed.
       int passedIntermediate = 0;
       for (final sm in dedupedStopMeters) {
-        if (progressMeters >= sm) {
+        if (effectiveProgressForStops >= sm) {
           passedIntermediate++;
         } else {
           break;
@@ -822,18 +857,10 @@ ${stopNamesDebug.map((s) => '║   $s').join('\n')}
 ║ Should Fire: $shouldFire (threshold $thresholdN, remainingIntermediate $remainingIntermediate)
 ╚═══════════════════════════════════════════════════════════════════╝
 ''';
-      print(debugOutput);
-
-      // Write to file for reliable capture
-      try {
-        getApplicationDocumentsDirectory().then((dir) {
-          final file = File('${dir.path}/mumbai_alarm_debug.txt');
-          file.writeAsStringSync(
-            '${DateTime.now()}\n$debugOutput\n',
-            mode: FileMode.append,
-          );
-        });
-      } catch (_) {}
+      // G26: no per-tick file I/O (was appending mumbai_alarm_debug.txt on
+      // every metro eval — battery/latency drain + crashed in headless tests).
+      // Route through the app logger, dev builds only.
+      if (kDebugMode) alarmLog.debug(debugOutput);
 
       alarmLog.debug('''
 ╔══════════════════════════════════════════════════════════════
@@ -1453,5 +1480,31 @@ ${stopNamesDebug.map((s) => '║   $s').join('\n')}
       'ETA_CALC: fallback (no steps/speed). remaining=$remainingMeters, eta=$fallbackEta',
     );
     return fallbackEta;
+  }
+
+  /// First-order ETA std-dev (s): sigmaEta^2 = (sigmaS/v)^2 + (ETA*sigmaV/v)^2.
+  /// Returns 0 when speed/sigmas are unusable (degrades to median firing).
+  static double etaSigmaSeconds({
+    required double etaSeconds,
+    required double? speedMps,
+    required double? sigmaSMeters,
+    required double? sigmaVMps,
+  }) {
+    if (!etaSeconds.isFinite) return 0.0;
+    final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
+        ? speedMps
+        : 0.0;
+    if (v <= 0.0) return 0.0;
+    final sS =
+        (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
+            ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)
+            : 0.0;
+    final sV = (sigmaVMps != null && sigmaVMps.isFinite && sigmaVMps > 0)
+        ? sigmaVMps
+        : 0.0;
+    final termS = sS / v;
+    final termV = etaSeconds * sV / v;
+    final varc = termS * termS + termV * termV;
+    return varc > 0 ? sqrt(varc) : 0.0;
   }
 }

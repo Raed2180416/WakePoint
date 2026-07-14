@@ -1,8 +1,9 @@
 [
   {
     "file": "lib/services/transfer_utils.dart",
-    "importers": 49,
+    "importers": 55,
     "directDependents": [
+      "lib/core/ekf/ekf_test_controller.dart",
       "lib/screens/homescreen.dart",
       "lib/screens/maptracking.dart",
       "lib/services/alarm_evaluator.dart",
@@ -31,10 +32,14 @@
       "test/debug_alarm_mismatch.dart",
       "test/debug_route2.dart",
       "test/driving_coalesce_test.dart",
+      "test/ekf/replay_harness_test.dart",
       "test/event_alarm_overlap_test.dart",
+      "test/fire_decision_fractile_test.dart",
       "test/hybrid_eta_time_test.dart",
       "test/maptracking_eta_distance_test.dart",
       "test/metro_final_station_alarm_test.dart",
+      "test/metro_ordered_sequence_test.dart",
+      "test/metro_wrong_snap_test.dart",
       "test/mixed_mode_regression_test.dart",
       "test/persistence_repro.dart",
       "test/preboarding_semantics_test.dart",
@@ -45,6 +50,7 @@
       "test/reproduce_stop_alarm.dart",
       "test/reproduce_stop_logic.dart",
       "test/route_events_test.dart",
+      "test/route_journey_fixes_test.dart",
       "test/stop_logic_engine_test.dart",
       "test/stops_mode_validation_test.dart",
       "test/stops_prior_semantics_test.dart",
@@ -120,10 +126,12 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 34,
+    "importers": 36,
     "directDependents": [
       "integration_test/device_alarm_integration_test.dart",
       "lib/debug/demo_tools.dart",
+      "lib/screens/maptracking.dart",
+      "lib/screens/ringtones_screen.dart",
       "lib/screens/splash_screen.dart",
       "lib/services/alarm_player.dart",
       "lib/services/tracking/alarm_controller.dart",
@@ -166,7 +174,7 @@
   },
   {
     "file": "lib/core/ekf/ekf_types.dart",
-    "importers": 25,
+    "importers": 26,
     "directDependents": [
       "lib/core/ekf/ekf_logger.dart",
       "lib/core/ekf/ekf_orchestrator.dart",
@@ -187,6 +195,7 @@
       "test/core/ekf/motion_classifier_test.dart",
       "test/core/ekf/tilt_filter_test.dart",
       "test/core/ekf/zupt_detector_test.dart",
+      "test/ekf/replay_harness_test.dart",
       "test/integration/ekf_logged_data_test.dart",
       "test/performance/ekf_performance_test.dart",
       "test/services/ekf_integration/ambiguous_station_stop_test.dart",
@@ -243,7 +252,7 @@
   },
   {
     "file": "lib/core/ekf/route_geometry.dart",
-    "importers": 15,
+    "importers": 16,
     "directDependents": [
       "lib/core/ekf/ekf_orchestrator.dart",
       "lib/core/ekf/ekf_pipeline.dart",
@@ -254,6 +263,7 @@
       "test/core/ekf/ekf_pipeline_test.dart",
       "test/core/ekf/ekf_test_controller_wiring_test.dart",
       "test/core/ekf/route_geometry_test.dart",
+      "test/ekf/replay_harness_test.dart",
       "test/integration/ekf_logged_data_test.dart",
       "test/performance/ekf_performance_test.dart",
       "test/services/ekf_integration/ambiguous_station_stop_test.dart",
@@ -263,6 +273,35 @@
     ],
     "exportedSymbols": [
       "RouteGeometry"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/alarm_evaluator.dart",
+    "importers": 16,
+    "directDependents": [
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "test/alarm_leg_id_stability_test.dart",
+      "test/alarm_logic_rewrite_test.dart",
+      "test/alarm_repro.dart",
+      "test/bug_repro_test.dart",
+      "test/complex_failure_repro.dart",
+      "test/debug_alarm_diagnostic.dart",
+      "test/debug_alarm_mismatch.dart",
+      "test/destination_only_metro_time_test.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/fire_decision_fractile_test.dart",
+      "test/preboarding_semantics_test.dart",
+      "test/preboarding_toggle_test.dart",
+      "test/repro_mumbai_transfer_test.dart",
+      "test/time_mode_switch_targeting_universal_test.dart"
+    ],
+    "exportedSymbols": [
+      "AlarmEventType",
+      "AlarmTrigger",
+      "AlarmEvaluator",
+      "AlarmMode"
     ],
     "riskLevel": "critical"
   },
@@ -291,34 +330,8 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/services/alarm_evaluator.dart",
-    "importers": 13,
-    "directDependents": [
-      "lib/services/tracking/alarm_controller.dart",
-      "test/alarm_leg_id_stability_test.dart",
-      "test/alarm_logic_rewrite_test.dart",
-      "test/alarm_repro.dart",
-      "test/bug_repro_test.dart",
-      "test/complex_failure_repro.dart",
-      "test/debug_alarm_diagnostic.dart",
-      "test/debug_alarm_mismatch.dart",
-      "test/destination_only_metro_time_test.dart",
-      "test/preboarding_semantics_test.dart",
-      "test/preboarding_toggle_test.dart",
-      "test/repro_mumbai_transfer_test.dart",
-      "test/time_mode_switch_targeting_universal_test.dart"
-    ],
-    "exportedSymbols": [
-      "AlarmEventType",
-      "AlarmTrigger",
-      "AlarmEvaluator",
-      "AlarmMode"
-    ],
-    "riskLevel": "critical"
-  },
-  {
     "file": "lib/services/route_registry.dart",
-    "importers": 13,
+    "importers": 14,
     "directDependents": [
       "lib/services/active_route_manager.dart",
       "lib/services/route_session_manager.dart",
@@ -330,6 +343,7 @@
       "test/active_route_manager_complex_test.dart",
       "test/active_route_manager_test.dart",
       "test/reproduce_distance_alarm_failure.dart",
+      "test/route_journey_fixes_test.dart",
       "test/route_registry_lru_eviction_test.dart",
       "test/route_registry_test.dart",
       "test/route_registry_upsert_replace_test.dart"
@@ -364,6 +378,28 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/core/ekf/ekf_orchestrator.dart",
+    "importers": 11,
+    "directDependents": [
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/services/sensor_fusion.dart",
+      "test/core/ekf/ekf_orchestrator_test.dart",
+      "test/core/ekf/ekf_test_controller_wiring_test.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/integration/ekf_logged_data_test.dart",
+      "test/performance/ekf_performance_test.dart",
+      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
+      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
+      "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
+      "test/services/ekf_integration/smooth_acceleration_test.dart"
+    ],
+    "exportedSymbols": [
+      "EkfOrchestrator",
+      "EkfOrchestratorLogCallback"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/direction_service.dart",
     "importers": 11,
     "directDependents": [
@@ -386,23 +422,35 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/core/ekf/ekf_orchestrator.dart",
+    "file": "lib/core/logging/app_logger.dart",
     "importers": 10,
     "directDependents": [
-      "lib/core/ekf/ekf_test_controller.dart",
-      "lib/services/sensor_fusion.dart",
-      "test/core/ekf/ekf_orchestrator_test.dart",
-      "test/core/ekf/ekf_test_controller_wiring_test.dart",
-      "test/integration/ekf_logged_data_test.dart",
-      "test/performance/ekf_performance_test.dart",
-      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
-      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
-      "test/services/ekf_integration/long_tunnel_no_stops_test.dart",
-      "test/services/ekf_integration/smooth_acceleration_test.dart"
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/position/gps_position_provider.dart",
+      "lib/services/soft_lock_manager.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/background_handlers.dart",
+      "lib/services/tracking/foreground_bridge.dart",
+      "lib/services/tracking/heartbeat_monitor.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart",
+      "test/ekf/replay_harness_test.dart"
     ],
     "exportedSymbols": [
-      "EkfOrchestrator",
-      "EkfOrchestratorLogCallback"
+      "AppLogger",
+      "LogLevel",
+      "gpsLog",
+      "trackingLog",
+      "alarmLog",
+      "etaLog",
+      "stopLog",
+      "routeLog",
+      "networkLog",
+      "navigationLog",
+      "notificationLog",
+      "ipcLog",
+      "sensorLog",
+      "stateLog"
     ],
     "riskLevel": "high"
   },
@@ -429,40 +477,8 @@
     "riskLevel": "high"
   },
   {
-    "file": "lib/core/logging/app_logger.dart",
-    "importers": 9,
-    "directDependents": [
-      "lib/services/alarm_evaluator.dart",
-      "lib/services/position/gps_position_provider.dart",
-      "lib/services/soft_lock_manager.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/background_handlers.dart",
-      "lib/services/tracking/foreground_bridge.dart",
-      "lib/services/tracking/heartbeat_monitor.dart",
-      "lib/services/tracking/notification_updater.dart",
-      "lib/services/trackingservice.dart"
-    ],
-    "exportedSymbols": [
-      "AppLogger",
-      "LogLevel",
-      "gpsLog",
-      "trackingLog",
-      "alarmLog",
-      "etaLog",
-      "stopLog",
-      "routeLog",
-      "networkLog",
-      "navigationLog",
-      "notificationLog",
-      "ipcLog",
-      "sensorLog",
-      "stateLog"
-    ],
-    "riskLevel": "high"
-  },
-  {
     "file": "lib/services/active_route_manager.dart",
-    "importers": 8,
+    "importers": 9,
     "directDependents": [
       "lib/screens/maptracking.dart",
       "lib/services/route_session_manager.dart",
@@ -471,10 +487,12 @@
       "lib/services/tracking/location_stream_handler.dart",
       "lib/services/trackingservice.dart",
       "test/active_route_manager_complex_test.dart",
-      "test/active_route_manager_test.dart"
+      "test/active_route_manager_test.dart",
+      "test/route_journey_fixes_test.dart"
     ],
     "exportedSymbols": [
       "RouteSwitchEvent",
+      "WrongDirectionAlert",
       "ActiveRouteState",
       "ActiveRouteManager"
     ],
@@ -606,6 +624,22 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/config/fire_decision_config.dart",
+    "importers": 6,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/location_manager.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/fire_decision_fractile_test.dart"
+    ],
+    "exportedSymbols": [
+      "FireDecisionConfig"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/polyline_decoder.dart",
     "importers": 6,
     "directDependents": [
@@ -727,21 +761,6 @@
       "DeviationState",
       "SpeedThresholdModel",
       "DeviationMonitor"
-    ],
-    "riskLevel": "medium"
-  },
-  {
-    "file": "lib/services/eta_engine.dart",
-    "importers": 5,
-    "directDependents": [
-      "lib/services/tracking/location_stream_handler.dart",
-      "lib/services/trackingservice.dart",
-      "test/comprehensive_real_world_scenarios_test.dart",
-      "test/eta_engine_test.dart",
-      "test/hybrid_eta_test.dart"
-    ],
-    "exportedSymbols": [
-      "EtaEngine"
     ],
     "riskLevel": "medium"
   }

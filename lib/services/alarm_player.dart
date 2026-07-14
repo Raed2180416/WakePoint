@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +11,23 @@ class AlarmPlayer {
   static bool _initialized = false;
   static bool _audioAvailable = true; // set false if plugin missing
   static final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
+
+  // G8: native hook that fires when a routed BT/wired headset disconnects
+  // (Android AudioManager.ACTION_AUDIO_BECOMING_NOISY). See MainActivity.kt.
+  static const MethodChannel _audioRouteChannel = MethodChannel(
+    'geowake/alarm_audio',
+  );
+
+  // G9b: gentle volume escalation. The alarm starts quiet and ramps to full so
+  // a deep sleeper is reliably woken without a jarring full-volume blast.
+  static const double _rampStartVolume = 0.25;
+  static const double _rampEndVolume = 1.0;
+  static const int _rampSteps = 12;
+  static const Duration _rampStepInterval = Duration(milliseconds: 400);
+  static Timer? _rampTimer;
+  // Tracks the current ramp volume so route re-assertion (G8) restores the
+  // correct level instead of jumping to full.
+  static double _currentVolume = _rampEndVolume;
 
   static final AudioContext _alarmAudioContext = AudioContext(
     android: AudioContextAndroid(
@@ -41,6 +60,12 @@ class AlarmPlayer {
   static Future<void> _ensureInit() async {
     if (_initialized) return;
     _initialized = true;
+    // G8: listen for the native audio-becoming-noisy signal so we can force the
+    // alarm back onto the loudspeaker when a headset disconnects mid-alarm.
+    try {
+      _audioRouteChannel.setMethodCallHandler(_handleNativeAudioRouteCall);
+    } catch (_) {}
+
     try {
       _player = AudioPlayer();
       // Prefer MediaPlayer-style playback for alarm-like looping reliability.
@@ -81,10 +106,15 @@ class AlarmPlayer {
         // when isolates restart, when app is backgrounded, etc.).
         await _configureAlarmAudioRoute();
         await _player!.stop();
+        // G9b: start quiet, then ramp up (see _startVolumeRamp). Audible
+        // escalation itself can only be judged on real hardware.
+        // DEVICE-VERIFY: volume ramp loudness/audibility on a physical device.
+        _stopVolumeRamp();
         try {
-          await _player!.setVolume(1.0);
+          await _player!.setVolume(_rampStartVolume);
         } catch (_) {}
         await _player!.play(AssetSource(assetPath.replaceFirst('assets/', '')));
+        _startVolumeRamp();
       } on MissingPluginException {
         _audioAvailable = false;
       } on PlatformException {
@@ -105,8 +135,70 @@ class AlarmPlayer {
     isPlaying.value = true;
   }
 
+  // G9b: drive the gentle volume escalation from [_rampStartVolume] up to
+  // [_rampEndVolume] over ~[_rampSteps] * [_rampStepInterval].
+  static void _startVolumeRamp() {
+    _rampTimer?.cancel();
+    _currentVolume = _rampStartVolume;
+    _setVolumeSafe(_currentVolume);
+    var step = 0;
+    _rampTimer = Timer.periodic(_rampStepInterval, (t) {
+      step++;
+      final v = (_rampStartVolume +
+              (_rampEndVolume - _rampStartVolume) * (step / _rampSteps))
+          .clamp(_rampStartVolume, _rampEndVolume);
+      _currentVolume = v;
+      _setVolumeSafe(v);
+      if (step >= _rampSteps) {
+        t.cancel();
+        _rampTimer = null;
+      }
+    });
+  }
+
+  static void _stopVolumeRamp() {
+    _rampTimer?.cancel();
+    _rampTimer = null;
+    _currentVolume = _rampEndVolume;
+  }
+
+  static void _setVolumeSafe(double v) {
+    final p = _player;
+    if (!_audioAvailable || p == null) return;
+    // Fire-and-forget: volume changes must not stall the ramp cadence.
+    p.setVolume(v).catchError((_) {});
+  }
+
+  static Future<dynamic> _handleNativeAudioRouteCall(MethodCall call) async {
+    if (call.method == 'audioBecomingNoisy') {
+      await _onAudioBecomingNoisy();
+    }
+    return null;
+  }
+
+  /// G8: a routed BT/wired headset just disconnected. Android auto-reroutes the
+  /// alarm stream to the loudspeaker, but some OEM audio stacks leave the player
+  /// pinned to the now-dead route, so the rider hears nothing. Re-assert the
+  /// alarm audio attributes (forces the alarm/loudspeaker output) and re-apply
+  /// the current ramp volume. The vibration loop keeps running independently as
+  /// the tactile fallback, so a rider is still alerted even if audio is lost.
+  // DEVICE-VERIFY: headset/BT disconnect rerouting to loudspeaker can only be
+  // proven on a physical device with real audio hardware.
+  static Future<void> _onAudioBecomingNoisy() async {
+    if (!_audioAvailable || _player == null) return;
+    if (!isPlaying.value) return;
+    try {
+      await _configureAlarmAudioRoute();
+      await _player!.setVolume(_currentVolume);
+    } catch (_) {
+      // Best-effort: vibration fallback still alerts the rider.
+    }
+  }
+
   static Future<void> stop() async {
     await _ensureInit();
+
+    _stopVolumeRamp();
 
     if (_audioAvailable && _player != null) {
       try {

@@ -1,0 +1,25 @@
+BASELINE (branch android-reliability-hardening, before any fix): +551 passed / -22 failed
+distinct failing (file :: test): 22
+
+- alarm_leg_id_stability_test.dart :: AlarmEvaluator Stability: Reject Duplicate Leg ID under Drift
+- alarm_logic_rewrite_test.dart :: AlarmEvaluator Rewrite (State Machine) Scenario 1: Walk -> Metro -> Walk
+- alarm_reliability_test.dart :: Ghost Event Suppression: Events < 300m should NOT trigger alarm
+- alarm_reliability_test.dart :: Mixed Mode: Metro -> Driving -> Home
+- bug_repro_test.dart :: AlarmEvaluator Bug Repro Metro Leg 1 transfer alarm timing
+- complex_route_alarm_test.dart :: Complex Route Alarm Logic: Switch vs Destination Conflict
+- comprehensive_real_world_scenarios_test.dart :: Edge Cases and Race Conditions Handles position exactly at destination
+- comprehensive_real_world_scenarios_test.dart :: Real-World Scenario Simulations Complete metro journey with walk-transit-walk
+- comprehensive_real_world_scenarios_test.dart :: Time-Based Alarm Eligibility Time alarm triggers after hard eligibility met
+- comprehensive_real_world_scenarios_test.dart :: Transit Transfer Detection Detects and alerts for upcoming transfer
+- event_alarm_progress_source_test.dart :: Event alarm uses manager progress (transfer within distance threshold)
+- metro_alarm_reliability_test.dart :: 60% rule confirmation: only applies to walking legs in transit routes
+- metro_alarm_reliability_test.dart :: Metro alarm reliability: n=1 stop threshold with mock transit route
+- metro_final_station_alarm_test.dart :: Metro stops-mode: stop alarm at final station, then destination alarm on final walk leg
+- metro_stops_prior_test.dart :: Metro: pre-boarding 1km alert then stops-prior transfer alert
+- multiple_switch_point_alarm_test.dart :: Multiple switch points: each transfer fires alarm independently
+- notification_tap_navigation_widget_test.dart :: Tapping paused notification routes to /mapTracking
+- repro_mumbai_transfer_test.dart :: Mumbai Transfer - Trace alarm trigger point
+- reproduce_stop_alarm_overshoot_test.dart :: Reproduce Overshoot: Alarm skipped when arriving at switch point
+- simulated_route_integration_test.dart :: Simulated fast route with deviations triggers alarm and notifications
+- tracking_alarm_test.dart :: Alarm should trigger when mock location enters the distance threshold
+- tracking_alarm_test.dart :: Distance-mode fires via straight-line fallback when no route metadata

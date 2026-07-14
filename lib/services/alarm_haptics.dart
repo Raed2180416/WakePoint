@@ -49,8 +49,11 @@ class AlarmHaptics {
         await Future.delayed(const Duration(milliseconds: 20));
       } catch (_) {}
 
+      // G25: escalating (increasing on-duration) fallback pattern, looped from
+      // index 0 so a deaf / hard-of-hearing rider gets a progressively stronger,
+      // repeating buzz. The native path uses an amplitude-escalating waveform.
       await Vibration.vibrate(
-        pattern: pattern ?? const [0, 500, 250, 500, 250, 1000, 500],
+        pattern: pattern ?? const [0, 400, 200, 700, 200, 1000, 300, 1400, 400],
         repeat: 0,
       );
     } catch (_) {

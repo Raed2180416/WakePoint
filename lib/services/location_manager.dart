@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:geolocator/geolocator.dart';
+import 'package:geowake2/config/fire_decision_config.dart';
 import 'package:geowake2/services/simulation_client.dart';
 import 'package:logging/logging.dart';
 import 'dart:developer' as dev;
@@ -41,6 +42,22 @@ class LocationManager {
   /// Returns the current smoothed speed in m/s, or 0.0 if unknown.
   double get currentSpeedMps => _speedEmaMps ?? 0.0;
 
+  // G27: accuracy gate (meters). Real GPS fixes worse than this are dropped so
+  // the dropout tick + EKF dead-reckoning take over. Null uses the config
+  // fallback. Set by TrackingService from the active alarm threshold.
+  double? accuracyGateMeters;
+
+  /// G27: invoked when a real GPS fix is rejected by the accuracy gate.
+  /// [accuracy] is the reported accuracy (meters); [approximate] is true when it
+  /// looks like coarse-only ('approximate') Android location.
+  void Function(double accuracy, bool approximate)? onGpsAccuracyRejected;
+
+  // G28: OS location-service status watchdog.
+  StreamSubscription<ServiceStatus>? _serviceStatusSub;
+
+  /// G28: invoked when the OS location service is enabled/disabled mid-journey.
+  void Function(bool enabled)? onServiceStatusChanged;
+
   // Configuration
   final LocationSettings _locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.high,
@@ -59,7 +76,26 @@ class LocationManager {
     // 1. Start Real GPS (Default)
     _startRealGps();
 
-    // 2. Connect Simulation Client for seamless failover/override
+    // 2. G28: Watch OS location-service status so we can warn/handle when the
+    // user disables Location mid-journey (real GPS then goes permanently
+    // silent). Skipped in test mode to avoid platform-channel calls.
+    if (!isTestMode) {
+      try {
+        _serviceStatusSub?.cancel();
+        _serviceStatusSub =
+            Geolocator.getServiceStatusStream().listen((status) {
+          final enabled = status == ServiceStatus.enabled;
+          _log.warning('Location service status changed: $status');
+          onServiceStatusChanged?.call(enabled);
+        }, onError: (e) {
+          _log.warning('ServiceStatus stream error', e);
+        });
+      } catch (e) {
+        _log.warning('getServiceStatusStream unavailable', e);
+      }
+    }
+
+    // 3. Connect Simulation Client for seamless failover/override
     _connectSimulation();
   }
 
@@ -70,6 +106,10 @@ class LocationManager {
 
     await _simSubscription?.cancel();
     _simSubscription = null;
+
+    // G28: stop watching OS location-service status.
+    await _serviceStatusSub?.cancel();
+    _serviceStatusSub = null;
 
     _simulationClient.disconnect();
 
@@ -262,7 +302,31 @@ class LocationManager {
       }
     }
 
-    // 3) Emit a Position with the normalized speed so ETA/alarm logic sees
+    // 3) G27: accuracy gate. Real GPS fixes worse than the gate (coarse-only
+    // 'approximate' Android location, or bad urban multipath) must NOT drive
+    // snap/deviation/alarm — a 1-3km 'approximate' fix would place the rider
+    // wildly off-route. Hold (drop) such fixes so the dropout tick + EKF
+    // dead-reckoning take over, and surface a status callback. Simulated
+    // positions bypass the gate.
+    if (!isSimulated) {
+      final acc = pos.accuracy;
+      final bool approximate =
+          acc.isFinite && acc > FireDecisionConfig.approximateLocationAccuracyMeters;
+      final double gate =
+          (accuracyGateMeters != null && accuracyGateMeters!.isFinite && accuracyGateMeters! > 0)
+              ? accuracyGateMeters!
+              : FireDecisionConfig.defaultAccuracyGateMeters;
+      if (!acc.isFinite || acc > gate) {
+        _log.warning(
+          'GPS fix rejected by accuracy gate: acc=${acc.toStringAsFixed(0)}m '
+          'gate=${gate.toStringAsFixed(0)}m approximate=$approximate',
+        );
+        onGpsAccuracyRejected?.call(acc, approximate);
+        return; // do not emit; treated as a GPS gap
+      }
+    }
+
+    // 4) Emit a Position with the normalized speed so ETA/alarm logic sees
     // the same type of speed signal in both simulation and real GPS runs.
     final out = Position(
       latitude: pos.latitude,

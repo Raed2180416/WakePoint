@@ -588,6 +588,7 @@ class ImuReplayEngineV2 {
   TestRoute? _route;
   double _elapsedSeconds = 0.0;
   bool _isPlaying = false;
+  bool _finished = false;
   Timer? _playbackTimer;
   DateTime? _lastTickTime;
   final math.Random _random = math.Random(42); // Seeded for reproducibility
@@ -647,6 +648,15 @@ class ImuReplayEngineV2 {
 
   TestRoute? get route => _route;
   bool get isPlaying => _isPlaying;
+
+  /// True once playback has auto-paused at the end of the route/log.
+  /// Distinguishes a natural end-of-run pause from a user pause/stop so the
+  /// dashboard can surface a FINISHED state instead of RUNNING/STOP.
+  bool get isFinished => _finished;
+
+  /// Invoked once when playback reaches the natural end and auto-pauses.
+  void Function()? onFinished;
+
   double get elapsedSeconds => _elapsedSeconds;
   double get progress =>
       _route == null
@@ -1557,6 +1567,7 @@ class ImuReplayEngineV2 {
     if (_route == null || _isPlaying) return;
 
     _isPlaying = true;
+    _finished = false;
     if (!deterministicReplay) {
       _lastTickTime = DateTime.now();
     } else {
@@ -1583,7 +1594,18 @@ class ImuReplayEngineV2 {
   void stop() {
     pause();
     _reset();
+    _finished = false;
     _log('CTRL', 'EVENT', 'Playback stopped');
+  }
+
+  /// Mark playback as naturally finished (end of route/log reached) and
+  /// auto-pause. Idempotent: only fires the [onFinished] callback once.
+  void _finish() {
+    if (_finished) return;
+    _finished = true;
+    pause();
+    _log('CTRL', 'EVENT', 'Playback completed');
+    onFinished?.call();
   }
 
   void seekTo(double seconds) {
@@ -1681,8 +1703,7 @@ class ImuReplayEngineV2 {
     // Check for end
     if (_elapsedSeconds >= route.totalDurationSeconds) {
       _elapsedSeconds = route.totalDurationSeconds;
-      pause();
-      _log('CTRL', 'EVENT', 'Playback completed');
+      _finish();
       return;
     }
 
@@ -2230,6 +2251,14 @@ class ImuReplayEngineV2 {
     // Current replay time in log time domain
     final logTime = _logStartTimeSeconds + _elapsedSeconds;
 
+    // End detection: once we've advanced past the last logged location sample
+    // there is nothing left to replay, so auto-finish (mirrors route/unified).
+    if (_logLocations.isNotEmpty &&
+        logTime > _logLocations.last.secondsElapsed) {
+      _finish();
+      return;
+    }
+
     // 1. Process IMU Events up to current time
     // Accelerometer
     while (_logAccelIndex < _logAccels.length &&
@@ -2685,7 +2714,7 @@ extension ImuReplayEngineExt on ImuReplayEngineV2 {
 
     // End
     if (_elapsedSeconds >= (_route?.totalDurationSeconds ?? 0)) {
-      pause();
+      _finish();
     }
   }
 }

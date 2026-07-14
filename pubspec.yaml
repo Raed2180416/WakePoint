@@ -54,13 +54,24 @@ dependencies:
   package_info_plus: ^9.0.0
 
   # Fonts
-  google_fonts: ^6.2.1
+  # Bumped from ^6.2.1: google_fonts 6.3.1 fails to compile on the installed
+  # Flutter 3.44.6 / Dart 3.12 toolchain (const Map<FontWeight,String> now
+  # rejected — FontWeight lacks primitive equality). 8.x fixes this; the
+  # GoogleFonts.* API used by the app is unchanged.
+  google_fonts: ^8.1.0
 
   # HTTP API calls
   http: ^1.4.0
   sensors_plus: ^7.0.0
   web_socket_channel: ^3.0.0
   crypto: ^3.0.3
+
+  # Native bridge (partial wake lock + full-screen-intent capability check)
+  wakepoint_native:
+    path: packages/wakepoint_native
+  # G5 backstop: schedule exact alarms at an absolute instant. Already a
+  # transitive dep of flutter_local_notifications; pin it directly for the import.
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

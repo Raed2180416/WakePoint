@@ -11,6 +11,9 @@ import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:vibration/vibration.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:wakepoint_native/wakepoint_native.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:developer' as dev;
@@ -398,6 +401,11 @@ class NotificationService {
   static const int _alarmNotificationId = 0;
   static const int _progressNotificationId = 888;
   static const int _pausedNotificationId = 889;
+  // Wrong-direction heads-up alert. Distinct id so it never collides with the
+  // alarm (0), progress (888), paused (889) or ETA backstop (991).
+  static const int _wrongDirectionNotificationId = 890;
+  // Throttle timestamp so wrong-direction alerts don't spam the rider.
+  static DateTime? _lastWrongDirectionAlertAt;
 
   // Flag to prevent duplicate alarm overlays
   bool _alarmCurrentlyShowing = false;
@@ -405,19 +413,26 @@ class NotificationService {
   bool _alarmVibrationLoopActive = false;
   Timer? _alarmVibrationResyncTimer;
 
+  // G25: escalating (increasing on-duration) waveform for the vibration-plugin
+  // FALLBACK path. The native path (AlarmHaptics -> MainActivity) drives its own
+  // amplitude-escalating alarm waveform; this list only shapes the fallback used
+  // when the native channel is unavailable. Timings only (no amplitudes) here.
   static const List<int> _alarmVibrationPattern = <int>[
     0,
-    500,
-    250,
-    500,
-    250,
+    400,
+    200,
+    700,
+    200,
     1000,
-    500,
+    300,
+    1400,
+    400,
   ];
 
-  // Pattern duration = 3.0s (excluding the leading 0 delay).
+  // Pattern duration = 4.6s (excluding the leading 0 delay). Keep in sync with
+  // the pattern above so the fallback resync timer re-arms on each cycle.
   static const Duration _alarmVibrationPatternPeriod = Duration(
-    milliseconds: 3000,
+    milliseconds: 4600,
   );
 
   Future<void> _clearPendingAlarmPrefs() async {
@@ -555,6 +570,15 @@ class NotificationService {
       'NotificationService.initialize() start',
       name: 'NotificationService',
     );
+    // G5: initialise the timezone database so zonedSchedule() can compute the
+    // absolute firing instant for the exact-alarm ETA backstop. We only ever
+    // build TZDateTime values from tz.UTC + a Duration, so we do not need the
+    // device's local zone name (avoids a flutter_timezone dependency).
+    try {
+      tzdata.initializeTimeZones();
+    } catch (e) {
+      dev.log('tz.initializeTimeZones failed: $e', name: 'NotificationService');
+    }
     // Settings for Android initialization
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -589,6 +613,15 @@ class NotificationService {
                 AndroidFlutterLocalNotificationsPlugin
               >();
       await androidImpl?.requestNotificationsPermission();
+      // G5: exact-alarm permission (Android 12+). Auto-granted when USE_EXACT_ALARM
+      // is declared; on 12/12L it may need the user, so request best-effort.
+      try {
+        await androidImpl?.requestExactAlarmsPermission();
+      } catch (_) {}
+      // G7: full-screen-intent permission (Android 14+).
+      try {
+        await androidImpl?.requestFullScreenIntentPermission();
+      } catch (_) {}
     } catch (e) {
       dev.log(
         'Android notification permission request failed: $e',
@@ -726,7 +759,11 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.max,
       playSound: false, // Use AlarmPlayer for the custom sound
-      fullScreenIntent: true, // This is critical for lockscreen appearance
+      // G7: only request a full-screen intent when the OS will actually honor it
+      // (Android 14+ auto-grants USE_FULL_SCREEN_INTENT only to alarm/calendar
+      // apps). When it won't, we keep max importance + insistent flag so the
+      // alarm still surfaces as a heads-up banner instead of being suppressed.
+      fullScreenIntent: await WakepointNative.canUseFullScreenIntent(),
       visibility: NotificationVisibility.public,
       category: AndroidNotificationCategory.alarm,
       audioAttributesUsage: AudioAttributesUsage.alarm,
@@ -835,6 +872,156 @@ class NotificationService {
     }
   }
 
+  // G5: distinct id for the OS-scheduled exact-alarm ETA backstop so it never
+  // collides with the in-process alarm (0), progress (888) or paused (889).
+  static const int _etaBackstopNotificationId = 991;
+
+  /// G5: schedule (or replace) an OS-owned exact alarm that fires at [fireAt] as
+  /// a safety net for TOTAL process death. Uses AlarmManager.setAlarmClock via
+  /// flutter_local_notifications (AndroidScheduleMode.alarmClock) so it survives
+  /// Doze. Cancelled by [cancelEtaBackstop] once the real alarm fires. Idempotent
+  /// per id — re-scheduling the same id replaces the pending alarm.
+  Future<void> scheduleEtaBackstop({
+    required DateTime fireAt,
+    required String title,
+    required String body,
+  }) async {
+    if (isTestMode) return;
+    if (!Platform.isAndroid) return;
+    try {
+      // Build the absolute firing instant in UTC (no local-zone lookup needed).
+      final tz.TZDateTime scheduled = tz.TZDateTime.from(fireAt.toUtc(), tz.UTC);
+      final bool fsi = await WakepointNative.canUseFullScreenIntent();
+      // Post on the dedicated BACKSTOP channel, which carries the system alarm
+      // tone + vibration at the OS level. The live alarm channel is silent (the
+      // AlarmPlayer isolate drives its audio) — useless for TOTAL process death,
+      // which is exactly when this backstop must sound. playSound:true so the OS
+      // sounds it even with no live isolate. See MainActivity.createNotificationChannel.
+      final AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'geowake_backstop_channel_v1',
+            'GeoWake Backstop Alarm',
+            channelDescription:
+                'Last-resort wake alarm that sounds even if the app was killed',
+            importance: Importance.max,
+            priority: Priority.max,
+            playSound: true,
+            fullScreenIntent: fsi,
+            visibility: NotificationVisibility.public,
+            category: AndroidNotificationCategory.alarm,
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+          );
+      final NotificationDetails details = NotificationDetails(
+        android: androidDetails,
+      );
+      await _notificationsPlugin.zonedSchedule(
+        _etaBackstopNotificationId,
+        title,
+        body,
+        scheduled,
+        details,
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
+        payload: 'open_alarm:1',
+      );
+    } catch (e) {
+      dev.log('scheduleEtaBackstop failed: $e', name: 'NotificationService');
+    }
+  }
+
+  /// G5: cancel the pending OS exact-alarm ETA backstop (if any). Called once the
+  /// real alarm has fired so the backstop cannot double-fire.
+  Future<void> cancelEtaBackstop() async {
+    if (isTestMode) return;
+    try {
+      await _notificationsPlugin.cancel(_etaBackstopNotificationId);
+    } catch (e) {
+      dev.log('cancelEtaBackstop failed: $e', name: 'NotificationService');
+    }
+  }
+
+  /// Post a high-importance heads-up alert warning the rider they may be
+  /// travelling AWAY from their destination (e.g. boarded the opposite-direction
+  /// train). This protects the half-asleep rider — highest value, small effort.
+  ///
+  /// Uses the high-priority alarm channel so it surfaces as a heads-up banner,
+  /// but with no alarm sound/vibration (this is a nudge, not the wake alarm).
+  /// Throttled by [minInterval] so a sustained wrong-direction episode does not
+  /// spam repeated banners.
+  Future<void> showWrongDirectionAlert({
+    String? destinationName,
+    Duration minInterval = const Duration(minutes: 2),
+  }) async {
+    final String dest =
+        (destinationName != null && destinationName.trim().isNotEmpty)
+            ? destinationName.trim()
+            : 'your destination';
+    final String title = 'Check your direction';
+    final String body = 'Wrong direction? You may be heading away from $dest.';
+
+    // Test-mode observability: record without throttling so tests can assert.
+    if (isTestMode) {
+      try {
+        testRecordedNotifications.add({
+          'id': _wrongDirectionNotificationId,
+          'title': title,
+          'body': body,
+          'payload': 'wrong_direction',
+          'ts': DateTime.now().toIso8601String(),
+        });
+      } catch (_) {}
+      if (testOnShowNotification != null) {
+        try {
+          await testOnShowNotification!(
+            _wrongDirectionNotificationId,
+            title,
+            body,
+            'wrong_direction',
+          );
+        } catch (_) {}
+      }
+      return;
+    }
+
+    // Throttle real notifications.
+    final now = DateTime.now();
+    final last = _lastWrongDirectionAlertAt;
+    if (last != null && now.difference(last) < minInterval) {
+      return;
+    }
+    _lastWrongDirectionAlertAt = now;
+
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'geowake_alarm_channel_v4',
+        'GeoWake Alarms (High Priority)',
+        channelDescription: 'Wrong-direction heads-up alerts',
+        importance: Importance.high,
+        priority: Priority.high,
+        // Not the wake alarm: no custom sound and no insistent/ongoing flags.
+        playSound: false,
+        enableVibration: false,
+        autoCancel: true,
+        onlyAlertOnce: false,
+        visibility: NotificationVisibility.public,
+        category: AndroidNotificationCategory.reminder,
+        ticker: title,
+      );
+      final details = NotificationDetails(android: androidDetails);
+      await _notificationsPlugin.show(
+        _wrongDirectionNotificationId,
+        title,
+        body,
+        details,
+        payload: 'wrong_direction',
+      );
+    } catch (e) {
+      dev.log(
+        'showWrongDirectionAlert failed: $e',
+        name: 'NotificationService',
+      );
+    }
+  }
+
   /// Re-post the alarm notification without re-triggering sound/vibration/fullscreen.
   /// This is used to make the alarm effectively non-dismissible on newer Android
   /// versions that may allow dismissing ongoing notifications.
@@ -936,9 +1123,11 @@ class NotificationService {
       if (!paused) return;
 
       // Re-use the last saved payload if available.
+      // G3: fall back to the softened "running in background" copy so the
+      // resurrected notification never falsely implies tracking stopped.
       final payload = await TrackingStateStore.loadProgressPayload();
-      final title = payload?.title ?? 'Tracking paused';
-      final subtitle = payload?.subtitle ?? 'Resume to continue';
+      final title = payload?.title ?? 'Running in background';
+      final subtitle = payload?.subtitle ?? 'Still watching your trip. Tap to open.';
 
       final androidDetails = AndroidNotificationDetails(
         'geowake_tracking_channel_v2',
@@ -1132,11 +1321,17 @@ class NotificationService {
       await cancelJourneyProgress();
     } catch (_) {}
 
-    final title = 'Tracking paused';
+    // G3: the foreground process was swiped away/killed, but alarm evaluation
+    // CONTINUES in the background isolate. The old "Tracking paused — Resume to
+    // continue" copy falsely implied the wake-up alarm had stopped, which is
+    // alarming for a sleeping rider. Reword so it does NOT imply tracking
+    // stopped. NOTE: the underlying paused STATE (set below/above) is unchanged;
+    // only the user-facing message is softened.
+    final title = 'Running in background';
     final subtitle =
         destinationName != null && destinationName.trim().isNotEmpty
-            ? 'Resume to continue to $destinationName'
-            : 'Resume to continue';
+            ? 'Still watching your trip to $destinationName. Tap to open.'
+            : 'Still watching your trip. Tap to open.';
 
     // In unit tests, avoid plugin calls but still persist payload.
     if (isTestMode) {
