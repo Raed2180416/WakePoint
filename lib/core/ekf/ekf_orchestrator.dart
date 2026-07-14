@@ -77,6 +77,19 @@ class EkfOrchestrator {
   bool _ekfInitialized = false; // Track if we ever got first GPS fix
   MotionState _motionState = MotionState.vehicle;
   bool _hasGpsFix = false;
+
+  // Cold-start bootstrap (GLMT-03). True once ANY GPS fix (on- OR off-route) has
+  // been delivered to the orchestrator; while it stays false the ride has never
+  // seen GPS, so after a short IMU-only warm-up we seed dead-reckoning at the
+  // boarding origin so the destination alarm can still fire. An off-route fix
+  // still counts as "GPS present", so the GPS-present path is never bootstrapped.
+  bool _anyGpsFixSeen = false;
+  bool _coldStartBootstrapped = false;
+  Duration? _firstImuTs;
+  // Warm-up before cold-start DR seeding. Well beyond a normal first-fix latency
+  // (real rides here deliver their first fix within ~5 s), so a merely-delayed
+  // first fix is never mistaken for a GPS-denied cold start.
+  static const double _coldStartWarmupSeconds = 10.0;
   // Last accepted on-route fix, for frozen-phantom detection in onGpsFixAuto.
   double? _lastFixLat;
   double? _lastFixLng;
@@ -159,6 +172,8 @@ class EkfOrchestrator {
       gyroVariance: gyroVariance,
     );
 
+    _maybeColdStartBootstrap(sample.timestamp);
+
     if (!_predictionEnabled) {
       // Log once per second that prediction is disabled
       if (logVerbosity >= 1 && (timestampSeconds * 10).round() % 10 == 0) {
@@ -207,6 +222,7 @@ class EkfOrchestrator {
   }
 
   void onGpsFix(GpsFix fix, {required double innovationSigma}) {
+    _anyGpsFixSeen = true;
     final wasPredictionEnabled = _predictionEnabled;
     if (innovationSigma.isFinite) {
       _lastInnovationSigma = innovationSigma;
@@ -237,6 +253,10 @@ class EkfOrchestrator {
   }
 
   void onGpsFixAuto(GpsFix fix) {
+    // A real GPS fix exists this tick (coordinates present), even if it projects
+    // off-route below. This disables the cold-start bootstrap: only a ride that
+    // never receives ANY fix should DR from a seeded origin.
+    _anyGpsFixSeen = true;
     final sGps = _route.projectLatLng(fix.lat, fix.lng);
     if (sGps.isNaN) {
       // Off-route fix (includes off-route phantoms — 138 of them on the real
@@ -319,6 +339,26 @@ class EkfOrchestrator {
     }
   }
 
+  /// Cold-start bootstrap (GLMT-03): if the ride has run for a warm-up window on
+  /// IMU alone with NO GPS fix ever delivered, seed the EKF at the boarding
+  /// origin (s = 0, wide covariance) and start dead-reckoning so the destination
+  /// alarm can eventually fire. Guarded so it can NEVER run once any fix has been
+  /// seen — the GPS-present path (e.g. Nadaprabhu/Nallur, whose first fix arrives
+  /// within seconds) is byte-for-byte unchanged.
+  void _maybeColdStartBootstrap(Duration timestamp) {
+    if (_anyGpsFixSeen || _ekfInitialized || _coldStartBootstrapped) return;
+    _firstImuTs ??= timestamp;
+    final elapsed = (timestamp - _firstImuTs!).inMicroseconds / 1e6;
+    if (elapsed < _coldStartWarmupSeconds) return;
+
+    _coldStartBootstrapped = true;
+    _pipeline.bootstrapColdStart(s0: 0.0);
+    _predictionEnabled = true; // begin DR immediately on this tick
+    _log('COLD_START',
+        'No GPS after ${elapsed.toStringAsFixed(0)}s — bootstrapping DR at origin (s=0)',
+        null);
+  }
+
   void setFftEnabled(bool enabled) {
     _fftEnabled = enabled;
   }
@@ -358,6 +398,9 @@ class EkfOrchestrator {
     _pendingMotionCount = 0;
     _lastMotionDecisionAt = null;
     _hasGpsFix = false;
+    _anyGpsFixSeen = false;
+    _coldStartBootstrapped = false;
+    _firstImuTs = null;
     _lastFixLat = null;
     _lastFixLng = null;
     _lastSnappedStationIndex = -1;

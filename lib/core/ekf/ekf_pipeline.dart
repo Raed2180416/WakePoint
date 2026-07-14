@@ -298,6 +298,11 @@ class EkfPipeline {
       return;
     }
 
+    // Repair covariance consistency before any gain is computed (see
+    // _enforceCovarianceConsistency): the position/velocity cross-covariance
+    // must obey |P01| ≤ √(P00·P11) for every Kalman gain to stay bounded.
+    _enforceCovarianceConsistency();
+
     final sigmaS = _sigmaS();
     final nu = sGps - _s;
     final normalizedInnovation = sigmaS > 0 ? nu.abs() / sigmaS : 0.0;
@@ -454,6 +459,12 @@ class EkfPipeline {
   void onZuptConfirmed() {
     if (!_initialized) return;
 
+    // ROOT-CAUSE GUARD (518 km spike): repair any covariance inconsistency
+    // BEFORE deriving the gain. A ZUPT gain k0 = P01 / (P11 + r) explodes when
+    // P01 has drifted far past its Cauchy–Schwarz ceiling √(P00·P11); enforcing
+    // that ceiling here keeps k0 finite and physically meaningful.
+    _enforceCovarianceConsistency();
+
     final r = _config.zuptVar;
     final s = _p[1][1] + r;
     if (s <= 0) return;
@@ -503,6 +514,9 @@ class EkfPipeline {
     if (!_initialized) return;
     if (candidates.length != 1) return;
 
+    // Repair covariance consistency before the snap gain is computed.
+    _enforceCovarianceConsistency();
+
     final sStation = candidates.first.sStation;
     final r = _config.stationVar;
     final s = _p[0][0] + r;
@@ -551,11 +565,52 @@ class EkfPipeline {
     _updatePublicProgress();
   }
 
+  /// Cold-start bootstrap (GLMT-03). When a ride begins with NO GPS fix at all
+  /// (underground boarding, permission race, denied provider), the filter would
+  /// otherwise stay uninitialised forever — _s pinned at 0, IMU samples dropped
+  /// by onForwardAccel's `!_initialized` guard, and the destination alarm never
+  /// arming. Seed the state at the known boarding origin (s = 0) with a
+  /// deliberately WIDE covariance and let dead-reckoning carry progress forward
+  /// so the alarm can eventually fire. The caller guards this so it ONLY runs
+  /// when no real GPS fix has ever arrived — the GPS-present path is untouched.
+  /// If a real fix arrives later it flows through the normal innovation-gated
+  /// update (a large seed-vs-fix mismatch trips the >15σ hard reset and
+  /// re-anchors), so a late fix still corrects a cold-started track.
+  void bootstrapColdStart({double s0 = 0.0}) {
+    if (_initialized) return;
+    _s = s0;
+    _v = 0.0;
+    _b = 0.0;
+    // Wide seed uncertainty: we have NO position measurement, only the boarding
+    // origin. A wide σs keeps the fire fractile honest (fires earlier = safe).
+    _p = [
+      [50.0 * 50.0, 0.0, 0.0],
+      [0.0, 5.0 * 5.0, 0.0],
+      [0.0, 0.0, 0.1 * 0.1],
+    ];
+    _initialized = true;
+    _sPub = double.nan; // let published progress re-seed from this s0
+    _applyStateBounds();
+    _applyCovarianceFloors();
+    _updatePublicProgress();
+  }
+
   void _applyStateBounds() {
     // Fix NaN states
     if (_s.isNaN || _s.isInfinite) _s = 0.0;
     if (_v.isNaN || _v.isInfinite) _v = 0.0;
     if (_b.isNaN || _b.isInfinite) _b = 0.0;
+
+    // Belt-and-suspenders position bound. Progress is arc length along a finite
+    // route; it can never be negative and cannot plausibly run kilometres past
+    // the end. The root cause of the 518 km spike is fixed upstream by
+    // _enforceCovarianceConsistency, but clamping _s to the route envelope here
+    // guarantees no future covariance blow-up can ever fabricate an absurd
+    // position. Capping upward is the SAFE direction (never fires falsely early
+    // — it only removes impossible over-progress).
+    final sMax = _route.totalLengthMeters + 5000.0;
+    if (_s < 0.0) _s = 0.0;
+    if (_s > sMax) _s = sMax;
 
     // Velocity can only be a physically-possible train speed. The non-predict
     // update paths (GPS-speed fusion, station snap, ZUPT) set _v without
@@ -581,6 +636,11 @@ class EkfPipeline {
     _p[0][0] = math.max(_p[0][0], sFloor * sFloor);
     _p[1][1] = math.max(_p[1][1], _config.sigmaVFloor * _config.sigmaVFloor);
     _p[2][2] = math.max(_p[2][2], _config.sigmaBiasFloor);
+
+    // Floors just raised the diagonals; re-impose the Cauchy–Schwarz ceiling on
+    // the off-diagonals so every state leaving an update is a consistent (PSD)
+    // covariance and the NEXT update's gains start from a sane matrix.
+    _enforceCovarianceConsistency();
   }
 
   void _inflateCovariance(double factor) {
@@ -709,6 +769,37 @@ class EkfPipeline {
         final avg = (_p[i][j] + _p[j][i]) / 2.0;
         _p[i][j] = avg;
         _p[j][i] = avg;
+      }
+    }
+  }
+
+  /// Enforce covariance consistency (Cauchy–Schwarz / positive-semidefinite
+  /// necessary condition): a valid covariance obeys |P[i][j]| ≤ √(P[i][i]·P[j][j]).
+  ///
+  /// ROOT-CAUSE FIX for the 518 km single-tick spike. During a sustained
+  /// off-route / frozen-phantom stretch the filter dead-reckons with no position
+  /// measurement to tighten it, and the coarse ABSOLUTE off-diagonal caps in
+  /// _sanitizeCovariance (|P01| ≤ 1e5) let the position–velocity cross-covariance
+  /// drift to ~110000× its legal ceiling (√(P00·P11) ≈ 0.5) while P11 sat pinned
+  /// at its floor. The next ZUPT then computed k0 = P01 / (P11 + r) ≈ −4.4e6 and
+  /// detonated _s to 518 758 m in one tick. Bounding every off-diagonal to its
+  /// Cauchy–Schwarz limit keeps ALL Kalman gains (ZUPT, GPS, station snap) finite
+  /// and physically meaningful — it is a no-op on a healthy filter (which already
+  /// satisfies the bound) and only ever clamps a pathological state.
+  void _enforceCovarianceConsistency() {
+    // Diagonals are variances: must be finite and non-negative.
+    for (var i = 0; i < 3; i++) {
+      if (_p[i][i].isNaN || _p[i][i].isInfinite || _p[i][i] < 0) _p[i][i] = 0.0;
+    }
+    for (var i = 0; i < 3; i++) {
+      for (var j = i + 1; j < 3; j++) {
+        final bound = math.sqrt(_p[i][i] * _p[j][j]);
+        var v = _p[i][j];
+        if (v.isNaN || v.isInfinite) v = 0.0;
+        if (v > bound) v = bound;
+        if (v < -bound) v = -bound;
+        _p[i][j] = v;
+        _p[j][i] = v;
       }
     }
   }
