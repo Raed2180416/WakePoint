@@ -34,6 +34,9 @@
 {"file":"lib/services/polyline_decoder.dart","name":"stopDistancesAlongPolyline","signature":"(List<LatLng> polyline,\n  List<LatLng> stopPositions,)"}
 {"file":"lib/services/position/gps_position_provider.dart","name":"_defaultLocationSettings","signature":"()"}
 {"file":"lib/services/reliability/reliability_preflight_runner.dart","name":"showReliabilityPreflightDialog","signature":"(BuildContext context,\n  PreflightResult result,)"}
+{"file":"lib/services/share/journey_share_models.dart","name":"_modeFromName","signature":"(String? s) => ShareMode.values.firstWhere(\n      (m) => m.name == s,\n      orElse: ()"}
+{"file":"lib/services/share/journey_share_models.dart","name":"_statusFromName","signature":"(String? s) => ShareStatus.values.firstWhere(\n      (m) => m.name == s,\n      orElse: ()"}
+{"file":"lib/services/share/journey_share_models.dart","name":"_channelFromName","signature":"(String? s) => GuardianChannel.values.firstWhere(\n      (m) => m.name == s,\n      orElse: ()"}
 {"file":"lib/services/tracking_state_store.dart","name":"_encodeSnapshotInBackground","signature":"(Map<String, dynamic> json)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_minimizeDirectionsForSnapshot","signature":"(Map<String, dynamic>? directions,)"}
 {"file":"lib/services/trackingservice.dart","name":"onIosBackground","signature":"(ServiceInstance service)"}
@@ -287,6 +290,12 @@
 {"file":"test/services/testing/osm_graph_test.dart","name":"_createMinimalWkpFile","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"_minDistanceToRoute","signature":"(LatLng point, List<LatLng> route)"}
+{"file":"test/share/guardian_service_test.dart","name":"_pump","signature":"()"}
+{"file":"test/share/guardian_service_test.dart","name":"main","signature":"()"}
+{"file":"test/share/journey_share_models_test.dart","name":"main","signature":"()"}
+{"file":"test/share/journey_share_service_test.dart","name":"main","signature":"()"}
+{"file":"test/share/share_deep_link_test.dart","name":"main","signature":"()"}
+{"file":"test/share/share_link_builder_test.dart","name":"main","signature":"()"}
 {"file":"test/shared_prefs_reload_test.dart","name":"main","signature":"()"}
 {"file":"test/simplified_polyline_present_test.dart","name":"main","signature":"()"}
 {"file":"test/simulated_route_integration_test.dart","name":"main","signature":"()"}

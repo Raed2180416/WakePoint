@@ -16,6 +16,7 @@ import 'screens/monetization/paywall_screen.dart';
 import 'screens/stats/trip_stats_screen.dart';
 import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
+import 'screens/guardian_setup_screen.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -217,6 +218,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         if (settings.name == '/dataConsent') {
           return MaterialPageRoute(
             builder: (_) => const DataSharingConsentScreen(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/guardian') {
+          return MaterialPageRoute(
+            builder: (_) => const GuardianSetupScreen(),
             settings: settings,
           );
         }

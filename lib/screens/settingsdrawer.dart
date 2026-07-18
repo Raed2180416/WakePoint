@@ -103,6 +103,26 @@ class SettingsDrawer extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.favorite_border),
+              title: const Text('Guardian mode'),
+              trailing:
+                  (MonetizationService.instance.premiumOrNull?.isPro ?? false)
+                      ? null
+                      : const ProBadge(),
+              onTap: () {
+                Navigator.of(context).pop();
+                ProGate.run(
+                  context,
+                  allowed: MonetizationService
+                          .instance.premiumOrNull?.canUseGuardianMode ??
+                      false,
+                  source: PaywallSource.guardian,
+                  onAllowed: () =>
+                      Navigator.of(context).pushNamed('/guardian'),
+                );
+              },
+            ),
             // Separate, purpose-specific consent (NOT Pro) — default-OFF, opt-in.
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),

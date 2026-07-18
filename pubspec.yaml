@@ -52,6 +52,9 @@ dependencies:
   # viral journey share). Standard, widely-used, no native config beyond queries.
   url_launcher: ^6.3.0
   share_plus: ^10.1.4
+  # Journey-share deep links (App Links) + opaque share ids.
+  app_links: ^6.3.0
+  uuid: ^4.5.1
 
   cupertino_icons: ^1.0.8
   android_intent_plus: ^6.0.0

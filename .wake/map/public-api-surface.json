@@ -629,6 +629,12 @@
       "name": "RouteModel"
     }
   ],
+  "lib/screens/guardian_setup_screen.dart": [
+    {
+      "kind": "class",
+      "name": "GuardianSetupScreen"
+    }
+  ],
   "lib/screens/homescreen.dart": [
     {
       "kind": "class",
@@ -1401,6 +1407,82 @@
       "name": "SensorFusionManager"
     }
   ],
+  "lib/services/share/guardian_service.dart": [
+    {
+      "kind": "class",
+      "name": "GuardianDenied"
+    },
+    {
+      "kind": "class",
+      "name": "GuardianService"
+    }
+  ],
+  "lib/services/share/journey_share_models.dart": [
+    {
+      "kind": "class",
+      "name": "ShareSession"
+    },
+    {
+      "kind": "class",
+      "name": "ShareSnapshot"
+    },
+    {
+      "kind": "class",
+      "name": "GuardianContact"
+    },
+    {
+      "kind": "enum",
+      "name": "ShareMode"
+    },
+    {
+      "kind": "enum",
+      "name": "ShareStatus"
+    },
+    {
+      "kind": "enum",
+      "name": "GuardianChannel"
+    }
+  ],
+  "lib/services/share/journey_share_service.dart": [
+    {
+      "kind": "class",
+      "name": "StartedShare"
+    },
+    {
+      "kind": "class",
+      "name": "JourneyShareService"
+    }
+  ],
+  "lib/services/share/live_share_backend.dart": [
+    {
+      "kind": "class",
+      "name": "ShareBackend"
+    },
+    {
+      "kind": "class",
+      "name": "NoopShareBackend"
+    },
+    {
+      "kind": "class",
+      "name": "HttpShareBackend"
+    }
+  ],
+  "lib/services/share/share_deep_link.dart": [
+    {
+      "kind": "class",
+      "name": "ShareDeepLink"
+    },
+    {
+      "kind": "class",
+      "name": "ShareDeepLinkParser"
+    }
+  ],
+  "lib/services/share/share_link_builder.dart": [
+    {
+      "kind": "class",
+      "name": "ShareLinkBuilder"
+    }
+  ],
   "lib/services/simulation_client.dart": [
     {
       "kind": "class",
@@ -1633,6 +1715,16 @@
       "name": "NotificationUpdater"
     }
   ],
+  "lib/services/tracking/post_alarm_multicast.dart": [
+    {
+      "kind": "class",
+      "name": "PostAlarmMulticast"
+    },
+    {
+      "kind": "typedef",
+      "name": "PostAlarmListener"
+    }
+  ],
   "lib/services/tracking/snapshot_route_restorer.dart": [
     {
       "kind": "class",
@@ -1753,6 +1845,16 @@
     {
       "kind": "class",
       "name": "PulsingDots"
+    }
+  ],
+  "lib/widgets/share/guardian_settings_section.dart": [
+    {
+      "kind": "class",
+      "name": "GuardianSettingsSection"
+    },
+    {
+      "kind": "const",
+      "name": "guardianRoute"
     }
   ],
   "lib/widgets/stats/share_stat_card.dart": [
