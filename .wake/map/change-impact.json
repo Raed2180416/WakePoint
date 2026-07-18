@@ -224,7 +224,7 @@
   },
   {
     "file": "lib/services/tracking_state_store.dart",
-    "importers": 22,
+    "importers": 24,
     "directDependents": [
       "lib/screens/homescreen.dart",
       "lib/screens/maptracking.dart",
@@ -238,6 +238,8 @@
       "lib/services/tracking/location_stream_handler.dart",
       "lib/services/tracking/snapshot_route_restorer.dart",
       "lib/services/trackingservice.dart",
+      "lib/services/widget/home_widget_bridge.dart",
+      "lib/services/widget/widget_arm_handler.dart",
       "test/complex_route_alarm_test.dart",
       "test/destination_only_metro_time_test.dart",
       "test/integration/lifecycle_restore_scenario_test.dart",
@@ -425,8 +427,31 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/monetization/monetization_service.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/screens/stats/trip_stats_screen.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/widget/home_widget_bridge.dart",
+      "lib/services/widget/widget_arm_handler.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "MonetizationService"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/monetization/premium_service.dart",
-    "importers": 12,
+    "importers": 13,
     "directDependents": [
       "lib/screens/guardian_setup_screen.dart",
       "lib/screens/monetization/paywall_screen.dart",
@@ -434,6 +459,7 @@
       "lib/services/monetization/ad_service.dart",
       "lib/services/monetization/monetization_service.dart",
       "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
       "test/monetization/late_purchase_grant_test.dart",
       "test/monetization/monetization_edgecases_test.dart",
       "test/monetization/monetization_journey_test.dart",
@@ -574,26 +600,6 @@
       "ConstraintEvent",
       "ConstraintLogger",
       "ConstraintEventType"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/monetization/monetization_service.dart",
-    "importers": 10,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/screens/guardian_setup_screen.dart",
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/screens/settingsdrawer.dart",
-      "lib/screens/stats/trip_stats_screen.dart",
-      "lib/services/share/guardian_service.dart",
-      "lib/widgets/gated_banner_ad.dart",
-      "lib/widgets/share/guardian_settings_section.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart"
-    ],
-    "exportedSymbols": [
-      "MonetizationService"
     ],
     "riskLevel": "high"
   },

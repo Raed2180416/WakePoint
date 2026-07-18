@@ -55,6 +55,8 @@ dependencies:
   # Journey-share deep links (App Links) + opaque share ids.
   app_links: ^6.3.0
   uuid: ^4.5.1
+  # Home-screen widget (Pro): next-commute glance + one-tap arm.
+  home_widget: ^0.7.0
 
   cupertino_icons: ^1.0.8
   android_intent_plus: ^6.0.0

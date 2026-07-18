@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "845752a1c41dd5261b42483f0f7818b929c7dcae",
-  "generatedAt": "2026-07-19T03:20:18+05:30",
-  "structuralDigest": "40b1f90843ba6416f013f85b9d4fe81158716020",
+  "gitCommit": "adbdd821a78fa64e70a47fec23461349c23837e9",
+  "generatedAt": "2026-07-19T03:31:17+05:30",
+  "structuralDigest": "3ec004a79d16c9b085b93ae4698003ee30ccf004",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1071,
-    "edgeCount": 2081,
+    "nodeCount": 1088,
+    "edgeCount": 2109,
     "byLevel": {
       "feature": 9,
-      "file": 380,
+      "file": 384,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 647
+      "symbol": 660
     },
     "byEdgeType": {
-      "contains": 769,
-      "depends-on": 795,
+      "contains": 782,
+      "depends-on": 810,
       "references": 517
     }
   },
@@ -1417,7 +1417,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 10,
+      "importers": 13,
       "exportCount": 1
     },
     {
@@ -1439,7 +1439,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 12,
+      "importers": 13,
       "exportCount": 3
     },
     {
@@ -1472,7 +1472,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 1
     },
     {
@@ -1736,7 +1736,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -1747,7 +1747,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -2011,7 +2011,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 22,
+      "importers": 24,
       "exportCount": 3
     },
     {
@@ -2158,6 +2158,39 @@
       "exportCount": 3
     },
     {
+      "id": "file:lib/services/widget/home_widget_bridge.dart",
+      "level": "file",
+      "label": "lib/services/widget/home_widget_bridge.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 2
+    },
+    {
+      "id": "file:lib/services/widget/widget_arm_handler.dart",
+      "level": "file",
+      "label": "lib/services/widget/widget_arm_handler.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 8
+    },
+    {
+      "id": "file:lib/services/widget/widget_render_state.dart",
+      "level": "file",
+      "label": "lib/services/widget/widget_render_state.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/simulation_engine.dart",
       "level": "file",
       "label": "lib/simulation_engine.dart",
@@ -2198,7 +2231,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 7,
       "exportCount": 3
     },
     {
@@ -2255,6 +2288,17 @@
       "feature": "unassigned",
       "importers": 2,
       "exportCount": 4
+    },
+    {
+      "id": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "level": "file",
+      "label": "lib/widgets/widget/widget_settings_tile.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 2
     },
     {
       "id": "file:packages/wakepoint_native/lib/wakepoint_native.dart",
@@ -8299,6 +8343,105 @@
       "file": "lib/services/transfer_utils.dart"
     },
     {
+      "id": "symbol:lib/services/widget/home_widget_bridge.dart#HomeWidgetBridge",
+      "level": "symbol",
+      "label": "HomeWidgetBridge",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/home_widget_bridge.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/home_widget_bridge.dart#WidgetStateData",
+      "level": "symbol",
+      "label": "WidgetStateData",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/home_widget_bridge.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#kWidgetScheme",
+      "level": "symbol",
+      "label": "kWidgetScheme",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetAction",
+      "level": "symbol",
+      "label": "WidgetAction",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmDecision",
+      "level": "symbol",
+      "label": "WidgetArmDecision",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmHandler",
+      "level": "symbol",
+      "label": "WidgetArmHandler",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmMode",
+      "level": "symbol",
+      "label": "WidgetArmMode",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmRequest",
+      "level": "symbol",
+      "label": "WidgetArmRequest",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#widgetInteractivityCallback",
+      "level": "symbol",
+      "label": "widgetInteractivityCallback",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetPreflightState",
+      "level": "symbol",
+      "label": "WidgetPreflightState",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_arm_handler.dart"
+    },
+    {
+      "id": "symbol:lib/services/widget/widget_render_state.dart#WidgetRenderState",
+      "level": "symbol",
+      "label": "WidgetRenderState",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/widget/widget_render_state.dart"
+    },
+    {
       "id": "symbol:lib/simulation_engine.dart#SimulationEngine",
       "level": "symbol",
       "label": "SimulationEngine",
@@ -8423,6 +8566,24 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/widgets/stats/share_stat_card.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/widget/widget_settings_tile.dart#kWidgetEnabledPrefKey",
+      "level": "symbol",
+      "label": "kWidgetEnabledPrefKey",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/widget/widget_settings_tile.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/widget/widget_settings_tile.dart#WidgetSettingsTile",
+      "level": "symbol",
+      "label": "WidgetSettingsTile",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/widget/widget_settings_tile.dart"
     },
     {
       "id": "symbol:packages/wakepoint_native/lib/wakepoint_native.dart#WakepointNative",
@@ -18772,6 +18933,160 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/saved_route.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/saved_routes_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/tracking_state_store.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/widget/widget_arm_handler.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/widget/widget_render_state.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "file:lib/services/widget/widget_render_state.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "symbol:lib/services/widget/home_widget_bridge.dart#HomeWidgetBridge",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/home_widget_bridge.dart",
+      "to": "symbol:lib/services/widget/home_widget_bridge.dart#WidgetStateData",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "file:lib/services/navigation_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "file:lib/services/tracking_state_store.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "file:lib/widgets/monetization/pro_gate.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#kWidgetScheme",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetAction",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmDecision",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmHandler",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmMode",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetArmRequest",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#widgetInteractivityCallback",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_arm_handler.dart",
+      "to": "symbol:lib/services/widget/widget_arm_handler.dart#WidgetPreflightState",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/widget/widget_render_state.dart",
+      "to": "symbol:lib/services/widget/widget_render_state.dart#WidgetRenderState",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/simulation_engine.dart",
       "to": "symbol:lib/simulation_engine.dart#SimulationEngine",
       "type": "contains",
@@ -18928,6 +19243,48 @@
     {
       "from": "file:lib/widgets/stats/share_stat_card.dart",
       "to": "symbol:lib/widgets/stats/share_stat_card.dart#ShareStatCardData",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "file:lib/services/widget/home_widget_bridge.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "file:lib/widgets/monetization/pro_gate.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "symbol:lib/widgets/widget/widget_settings_tile.dart#kWidgetEnabledPrefKey",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/widget/widget_settings_tile.dart",
+      "to": "symbol:lib/widgets/widget/widget_settings_tile.dart#WidgetSettingsTile",
       "type": "contains",
       "deterministic": true,
       "source": "map"

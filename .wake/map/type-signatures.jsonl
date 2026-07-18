@@ -58,6 +58,7 @@
 {"file":"lib/services/trackingservice.dart","name":"_handleBackgroundStopAlarm","signature":"()"}
 {"file":"lib/services/trackingservice.dart","name":"_handleBackgroundForegroundResumed","signature":"(ServiceInstance service)"}
 {"file":"lib/services/trackingservice.dart","name":"startLocationStream","signature":"(ServiceInstance service)"}
+{"file":"lib/services/widget/widget_arm_handler.dart","name":"widgetInteractivityCallback","signature":"(Uri? uri)"}
 {"file":"test/active_route_manager_complex_test.dart","name":"main","signature":"()"}
 {"file":"test/active_route_manager_test.dart","name":"main","signature":"()"}
 {"file":"test/alarm_leg_id_stability_test.dart","name":"main","signature":"()"}

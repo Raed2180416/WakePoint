@@ -1803,6 +1803,56 @@
       "name": "TransferUtils"
     }
   ],
+  "lib/services/widget/home_widget_bridge.dart": [
+    {
+      "kind": "class",
+      "name": "WidgetStateData"
+    },
+    {
+      "kind": "class",
+      "name": "HomeWidgetBridge"
+    }
+  ],
+  "lib/services/widget/widget_arm_handler.dart": [
+    {
+      "kind": "class",
+      "name": "WidgetArmRequest"
+    },
+    {
+      "kind": "class",
+      "name": "WidgetArmDecision"
+    },
+    {
+      "kind": "class",
+      "name": "WidgetArmHandler"
+    },
+    {
+      "kind": "enum",
+      "name": "WidgetAction"
+    },
+    {
+      "kind": "enum",
+      "name": "WidgetArmMode"
+    },
+    {
+      "kind": "enum",
+      "name": "WidgetPreflightState"
+    },
+    {
+      "kind": "function",
+      "name": "widgetInteractivityCallback"
+    },
+    {
+      "kind": "const",
+      "name": "kWidgetScheme"
+    }
+  ],
+  "lib/services/widget/widget_render_state.dart": [
+    {
+      "kind": "enum",
+      "name": "WidgetRenderState"
+    }
+  ],
   "lib/simulation_engine.dart": [
     {
       "kind": "class",
@@ -1873,6 +1923,16 @@
     {
       "kind": "const",
       "name": "kShareCardLogicalHeight"
+    }
+  ],
+  "lib/widgets/widget/widget_settings_tile.dart": [
+    {
+      "kind": "class",
+      "name": "WidgetSettingsTile"
+    },
+    {
+      "kind": "const",
+      "name": "kWidgetEnabledPrefKey"
     }
   ],
   "packages/wakepoint_native/lib/wakepoint_native.dart": [

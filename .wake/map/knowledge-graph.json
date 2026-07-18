@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "845752a1c41dd5261b42483f0f7818b929c7dcae",
-    "gitTree": "40b1f90843ba6416f013f85b9d4fe81158716020",
-    "generatedAt": "2026-07-19T03:20:18+05:30",
-    "filesIndexed": 380,
-    "dependencyEdges": 795,
-    "totalExports": 647,
-    "totalImports": 1720,
+    "gitCommit": "adbdd821a78fa64e70a47fec23461349c23837e9",
+    "gitTree": "3ec004a79d16c9b085b93ae4698003ee30ccf004",
+    "generatedAt": "2026-07-19T03:31:17+05:30",
+    "filesIndexed": 384,
+    "dependencyEdges": 810,
+    "totalExports": 660,
+    "totalImports": 1744,
     "byRole": {
       "other": 2,
       "backend": 12,
       "flutter-test": 193,
-      "flutter-lib": 164,
+      "flutter-lib": 168,
       "tool": 8,
       "platform": 1
     },
@@ -9512,6 +9512,218 @@
       "contentHash": "c81179c0a0699779"
     },
     {
+      "file": "lib/services/widget/home_widget_bridge.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "WidgetStateData"
+        },
+        {
+          "kind": "class",
+          "name": "HomeWidgetBridge"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:home_widget/home_widget.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/saved_route.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/saved_routes_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking_state_store.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/widget_arm_handler.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/widget_render_state.dart"
+        },
+        {
+          "kind": "re-export",
+          "source": "package:geowake2/services/widget/widget_render_state.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "WidgetStateData",
+          "extends": null
+        },
+        {
+          "name": "HomeWidgetBridge",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "2b874184183943c5"
+    },
+    {
+      "file": "lib/services/widget/widget_arm_handler.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "WidgetArmRequest"
+        },
+        {
+          "kind": "class",
+          "name": "WidgetArmDecision"
+        },
+        {
+          "kind": "class",
+          "name": "WidgetArmHandler"
+        },
+        {
+          "kind": "enum",
+          "name": "WidgetAction"
+        },
+        {
+          "kind": "enum",
+          "name": "WidgetArmMode"
+        },
+        {
+          "kind": "enum",
+          "name": "WidgetPreflightState"
+        },
+        {
+          "kind": "function",
+          "name": "widgetInteractivityCallback"
+        },
+        {
+          "kind": "const",
+          "name": "kWidgetScheme"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/navigation_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking_state_store.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/widgets/monetization/pro_gate.dart"
+        }
+      ],
+      "types": [
+        {
+          "name": "WidgetAction",
+          "kind": "enum"
+        },
+        {
+          "name": "WidgetArmMode",
+          "kind": "enum"
+        },
+        {
+          "name": "WidgetPreflightState",
+          "kind": "enum"
+        }
+      ],
+      "functions": [
+        {
+          "name": "widgetInteractivityCallback",
+          "signature": "(Uri? uri)"
+        }
+      ],
+      "classes": [
+        {
+          "name": "WidgetArmRequest",
+          "extends": null
+        },
+        {
+          "name": "WidgetArmDecision",
+          "extends": null
+        },
+        {
+          "name": "WidgetArmHandler",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kWidgetScheme"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "342c74f7c51873e5"
+    },
+    {
+      "file": "lib/services/widget/widget_render_state.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "enum",
+          "name": "WidgetRenderState"
+        }
+      ],
+      "imports": [],
+      "types": [
+        {
+          "name": "WidgetRenderState",
+          "kind": "enum"
+        }
+      ],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "6d37a22adcd092e2"
+    },
+    {
       "file": "lib/simulation_engine.dart",
       "lang": "dart",
       "exports": [
@@ -9882,6 +10094,67 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "db069b31fa27e30b"
+    },
+    {
+      "file": "lib/widgets/widget/widget_settings_tile.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "WidgetSettingsTile"
+        },
+        {
+          "kind": "const",
+          "name": "kWidgetEnabledPrefKey"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/premium_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/home_widget_bridge.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/widgets/monetization/pro_gate.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "WidgetSettingsTile",
+          "extends": "StatefulWidget"
+        },
+        {
+          "name": "_WidgetSettingsTileState",
+          "extends": "State"
+        }
+      ],
+      "constants": [
+        {
+          "name": "kWidgetEnabledPrefKey"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "abf1754b929933a4"
     },
     {
       "file": "packages/wakepoint_native/lib/wakepoint_native.dart",
@@ -21807,6 +22080,72 @@
       "kind": "static"
     },
     {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/saved_route.dart",
+      "source": "package:geowake2/services/saved_route.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/saved_routes_service.dart",
+      "source": "package:geowake2/services/saved_routes_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/tracking_state_store.dart",
+      "source": "package:geowake2/services/tracking_state_store.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/widget/widget_arm_handler.dart",
+      "source": "package:geowake2/services/widget/widget_arm_handler.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/widget/widget_render_state.dart",
+      "source": "package:geowake2/services/widget/widget_render_state.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/home_widget_bridge.dart",
+      "to": "lib/services/widget/widget_render_state.dart",
+      "source": "package:geowake2/services/widget/widget_render_state.dart",
+      "kind": "re-export"
+    },
+    {
+      "from": "lib/services/widget/widget_arm_handler.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/widget_arm_handler.dart",
+      "to": "lib/services/navigation_service.dart",
+      "source": "package:geowake2/services/navigation_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/widget_arm_handler.dart",
+      "to": "lib/services/tracking_state_store.dart",
+      "source": "package:geowake2/services/tracking_state_store.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/widget/widget_arm_handler.dart",
+      "to": "lib/widgets/monetization/pro_gate.dart",
+      "source": "package:geowake2/widgets/monetization/pro_gate.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/widgets/gated_banner_ad.dart",
       "to": "lib/services/monetization/ad_policy.dart",
       "source": "package:geowake2/services/monetization/ad_policy.dart",
@@ -21858,6 +22197,30 @@
       "from": "lib/widgets/share/share_sheet.dart",
       "to": "lib/services/share/journey_share_service.dart",
       "source": "../../services/share/journey_share_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/widgets/widget/widget_settings_tile.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/widgets/widget/widget_settings_tile.dart",
+      "to": "lib/services/monetization/premium_service.dart",
+      "source": "package:geowake2/services/monetization/premium_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/widgets/widget/widget_settings_tile.dart",
+      "to": "lib/services/widget/home_widget_bridge.dart",
+      "source": "package:geowake2/services/widget/home_widget_bridge.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/widgets/widget/widget_settings_tile.dart",
+      "to": "lib/widgets/monetization/pro_gate.dart",
+      "source": "package:geowake2/widgets/monetization/pro_gate.dart",
       "kind": "static"
     },
     {
@@ -26096,6 +26459,56 @@
         "name": "TransferUtils"
       }
     ],
+    "lib/services/widget/home_widget_bridge.dart": [
+      {
+        "kind": "class",
+        "name": "WidgetStateData"
+      },
+      {
+        "kind": "class",
+        "name": "HomeWidgetBridge"
+      }
+    ],
+    "lib/services/widget/widget_arm_handler.dart": [
+      {
+        "kind": "class",
+        "name": "WidgetArmRequest"
+      },
+      {
+        "kind": "class",
+        "name": "WidgetArmDecision"
+      },
+      {
+        "kind": "class",
+        "name": "WidgetArmHandler"
+      },
+      {
+        "kind": "enum",
+        "name": "WidgetAction"
+      },
+      {
+        "kind": "enum",
+        "name": "WidgetArmMode"
+      },
+      {
+        "kind": "enum",
+        "name": "WidgetPreflightState"
+      },
+      {
+        "kind": "function",
+        "name": "widgetInteractivityCallback"
+      },
+      {
+        "kind": "const",
+        "name": "kWidgetScheme"
+      }
+    ],
+    "lib/services/widget/widget_render_state.dart": [
+      {
+        "kind": "enum",
+        "name": "WidgetRenderState"
+      }
+    ],
     "lib/simulation_engine.dart": [
       {
         "kind": "class",
@@ -26166,6 +26579,16 @@
       {
         "kind": "const",
         "name": "kShareCardLogicalHeight"
+      }
+    ],
+    "lib/widgets/widget/widget_settings_tile.dart": [
+      {
+        "kind": "class",
+        "name": "WidgetSettingsTile"
+      },
+      {
+        "kind": "const",
+        "name": "kWidgetEnabledPrefKey"
       }
     ],
     "packages/wakepoint_native/lib/wakepoint_native.dart": [
@@ -26376,7 +26799,7 @@
     },
     {
       "file": "lib/services/tracking_state_store.dart",
-      "importers": 22,
+      "importers": 24,
       "exports": [
         "TrackingSnapshot",
         "TrackingProgressPayload",
@@ -26438,8 +26861,15 @@
       ]
     },
     {
+      "file": "lib/services/monetization/monetization_service.dart",
+      "importers": 13,
+      "exports": [
+        "MonetizationService"
+      ]
+    },
+    {
       "file": "lib/services/monetization/premium_service.dart",
-      "importers": 12,
+      "importers": 13,
       "exports": [
         "PremiumProducts",
         "PremiumService",
@@ -26505,13 +26935,6 @@
         "ConstraintEvent",
         "ConstraintLogger",
         "ConstraintEventType"
-      ]
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 10,
-      "exports": [
-        "MonetizationService"
       ]
     },
     {
@@ -26690,6 +27113,10 @@
       "imports": 7
     },
     {
+      "file": "lib/services/widget/home_widget_bridge.dart",
+      "imports": 7
+    },
+    {
       "file": "lib/services/direction_service.dart",
       "imports": 6
     },
@@ -26739,10 +27166,6 @@
     },
     {
       "file": "test/dashboard/deviation_simulation_controller_test.dart",
-      "imports": 5
-    },
-    {
-      "file": "test/monetization/monetization_journey_test.dart",
       "imports": 5
     }
   ],
@@ -26972,7 +27395,7 @@
     },
     {
       "file": "lib/services/tracking_state_store.dart",
-      "importers": 22,
+      "importers": 24,
       "directDependents": [
         "lib/screens/homescreen.dart",
         "lib/screens/maptracking.dart",
@@ -26986,6 +27409,8 @@
         "lib/services/tracking/location_stream_handler.dart",
         "lib/services/tracking/snapshot_route_restorer.dart",
         "lib/services/trackingservice.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
         "test/complex_route_alarm_test.dart",
         "test/destination_only_metro_time_test.dart",
         "test/integration/lifecycle_restore_scenario_test.dart",
@@ -27173,8 +27598,31 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/monetization/monetization_service.dart",
+      "importers": 13,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/screens/stats/trip_stats_screen.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
+        "lib/widgets/gated_banner_ad.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "MonetizationService"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/services/monetization/premium_service.dart",
-      "importers": 12,
+      "importers": 13,
       "directDependents": [
         "lib/screens/guardian_setup_screen.dart",
         "lib/screens/monetization/paywall_screen.dart",
@@ -27182,6 +27630,7 @@
         "lib/services/monetization/ad_service.dart",
         "lib/services/monetization/monetization_service.dart",
         "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
         "test/monetization/late_purchase_grant_test.dart",
         "test/monetization/monetization_edgecases_test.dart",
         "test/monetization/monetization_journey_test.dart",
@@ -27322,26 +27771,6 @@
         "ConstraintEvent",
         "ConstraintLogger",
         "ConstraintEventType"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 10,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/screens/guardian_setup_screen.dart",
-        "lib/screens/monetization/paywall_screen.dart",
-        "lib/screens/settingsdrawer.dart",
-        "lib/screens/stats/trip_stats_screen.dart",
-        "lib/services/share/guardian_service.dart",
-        "lib/widgets/gated_banner_ad.dart",
-        "lib/widgets/share/guardian_settings_section.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart"
-      ],
-      "exportedSymbols": [
-        "MonetizationService"
       ],
       "riskLevel": "high"
     },
