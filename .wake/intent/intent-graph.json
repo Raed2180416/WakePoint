@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "f3f80d786cff554e75f676bb8f66db6504784fa1",
-  "generatedAt": "2026-07-18T20:52:39+05:30",
-  "structuralDigest": "2bdf62a415ff2edfca17568ea120377df7e72c56",
+  "gitCommit": "fac315e0ef16440132035c67e6d1892eabb0f542",
+  "generatedAt": "2026-07-19T00:10:07+05:30",
+  "structuralDigest": "e9376f80a06d008c89d7c055235ccc5a3fdb5a0b",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 923,
-    "edgeCount": 1869,
+    "nodeCount": 931,
+    "edgeCount": 1877,
     "byLevel": {
       "feature": 9,
-      "file": 331,
+      "file": 333,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 548
+      "symbol": 554
     },
     "byEdgeType": {
-      "contains": 670,
-      "depends-on": 682,
+      "contains": 676,
+      "depends-on": 684,
       "references": 517
     }
   },
@@ -746,8 +746,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 15,
-      "exportCount": 7
+      "importers": 17,
+      "exportCount": 8
     },
     {
       "id": "file:lib/dashboard/alarm_debouncer.dart",
@@ -3115,6 +3115,28 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/reachability/tightening_guards_test.dart",
+      "level": "file",
+      "label": "test/reachability/tightening_guards_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 2
+    },
+    {
+      "id": "file:test/reachability/tightening_never_late_test.dart",
+      "level": "file",
+      "label": "test/reachability/tightening_never_late_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 3
+    },
+    {
       "id": "file:test/regression_prod_data_test.dart",
       "level": "file",
       "label": "test/regression_prod_data_test.dart",
@@ -5243,6 +5265,15 @@
       "id": "symbol:lib/core/reachability/reachability.dart#ReachabilityTracker",
       "level": "symbol",
       "label": "ReachabilityTracker",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#RouteProfile",
+      "level": "symbol",
+      "label": "RouteProfile",
       "kind": "class",
       "deterministic": true,
       "source": "map",
@@ -8570,6 +8601,51 @@
       "file": "test/reachability/reachability_test.dart"
     },
     {
+      "id": "symbol:test/reachability/tightening_guards_test.dart#kVLine",
+      "level": "symbol",
+      "label": "kVLine",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/tightening_guards_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/tightening_guards_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/tightening_guards_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/tightening_never_late_test.dart#kAsset",
+      "level": "symbol",
+      "label": "kAsset",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/tightening_never_late_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/tightening_never_late_test.dart#kVLine",
+      "level": "symbol",
+      "label": "kVLine",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/tightening_never_late_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/tightening_never_late_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/tightening_never_late_test.dart"
+    },
+    {
       "id": "symbol:test/regression_prod_data_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -11309,6 +11385,13 @@
     {
       "from": "file:lib/core/reachability/reachability.dart",
       "to": "symbol:lib/core/reachability/reachability.dart#ReachabilityTracker",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#RouteProfile",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -20546,6 +20629,55 @@
     {
       "from": "file:test/reachability/reachability_test.dart",
       "to": "symbol:test/reachability/reachability_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_guards_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_guards_test.dart",
+      "to": "symbol:test/reachability/tightening_guards_test.dart#kVLine",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_guards_test.dart",
+      "to": "symbol:test/reachability/tightening_guards_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_never_late_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_never_late_test.dart",
+      "to": "symbol:test/reachability/tightening_never_late_test.dart#kAsset",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_never_late_test.dart",
+      "to": "symbol:test/reachability/tightening_never_late_test.dart#kVLine",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/tightening_never_late_test.dart",
+      "to": "symbol:test/reachability/tightening_never_late_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

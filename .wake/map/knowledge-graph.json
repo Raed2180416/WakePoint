@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "f3f80d786cff554e75f676bb8f66db6504784fa1",
-    "gitTree": "2bdf62a415ff2edfca17568ea120377df7e72c56",
-    "generatedAt": "2026-07-18T20:52:39+05:30",
-    "filesIndexed": 331,
-    "dependencyEdges": 682,
-    "totalExports": 548,
-    "totalImports": 1516,
+    "gitCommit": "fac315e0ef16440132035c67e6d1892eabb0f542",
+    "gitTree": "e9376f80a06d008c89d7c055235ccc5a3fdb5a0b",
+    "generatedAt": "2026-07-19T00:10:07+05:30",
+    "filesIndexed": 333,
+    "dependencyEdges": 684,
+    "totalExports": 554,
+    "totalImports": 1523,
     "byRole": {
       "other": 2,
       "backend": 12,
-      "flutter-test": 177,
+      "flutter-test": 179,
       "flutter-lib": 131,
       "tool": 8,
       "platform": 1
@@ -1935,6 +1935,10 @@
         },
         {
           "kind": "class",
+          "name": "RouteProfile"
+        },
+        {
+          "kind": "class",
           "name": "ReachabilityConfig"
         },
         {
@@ -1972,11 +1976,19 @@
           "extends": null
         },
         {
+          "name": "RouteProfile",
+          "extends": null
+        },
+        {
           "name": "ReachabilityConfig",
           "extends": null
         },
         {
           "name": "ReachabilityBound",
+          "extends": null
+        },
+        {
+          "name": "_Cell",
           "extends": null
         },
         {
@@ -1992,7 +2004,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "023b7021531c9d9b"
+      "contentHash": "8a5b1729a46eee41"
     },
     {
       "file": "lib/dashboard/alarm_debouncer.dart",
@@ -13434,6 +13446,120 @@
       "contentHash": "9058636ad2a8f2ea"
     },
     {
+      "file": "test/reachability/tightening_guards_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kVLine"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:math"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [
+        {
+          "name": "kVLine"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "b7735b192e6e6339"
+    },
+    {
+      "file": "test/reachability/tightening_never_late_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kAsset"
+        },
+        {
+          "kind": "const",
+          "name": "kVLine"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_load",
+          "signature": "()"
+        },
+        {
+          "name": "_fullConfig",
+          "signature": "()"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Route",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kAsset"
+        },
+        {
+          "name": "kVLine"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "ffa8ce17ac9e309a"
+    },
+    {
       "file": "test/regression_prod_data_test.dart",
       "lang": "dart",
       "exports": [
@@ -20292,6 +20418,18 @@
       "kind": "static"
     },
     {
+      "from": "test/reachability/tightening_guards_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/reachability/tightening_never_late_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/regression_prod_data_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
@@ -21489,6 +21627,10 @@
       {
         "kind": "class",
         "name": "RouteTopology"
+      },
+      {
+        "kind": "class",
+        "name": "RouteProfile"
       },
       {
         "kind": "class",
@@ -22795,23 +22937,24 @@
       ]
     },
     {
-      "file": "lib/core/ekf/route_geometry.dart",
-      "importers": 16,
-      "exports": [
-        "RouteGeometry"
-      ]
-    },
-    {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 15,
+      "importers": 17,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
         "RouteTopology",
+        "RouteProfile",
         "ReachabilityConfig",
         "ReachabilityBound",
         "Reachability",
         "ReachabilityTracker"
+      ]
+    },
+    {
+      "file": "lib/core/ekf/route_geometry.dart",
+      "importers": 16,
+      "exports": [
+        "RouteGeometry"
       ]
     },
     {
@@ -23435,6 +23578,40 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 17,
+      "directDependents": [
+        "lib/core/ekf/ekf_test_controller.dart",
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/ios/ios_backstop_planner.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "test/core/clock/monotonic_clock_test.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/integration/reachability_ride_scenario_test.dart",
+        "test/integration/reachability_scenarios_test.dart",
+        "test/ios/ios_backstop_edgecases_test.dart",
+        "test/ios/ios_backstop_planner_test.dart",
+        "test/notification_backstop_lead_test.dart",
+        "test/reachability/reachability_edgecases_test.dart",
+        "test/reachability/reachability_test.dart",
+        "test/reachability/tightening_guards_test.dart",
+        "test/reachability/tightening_never_late_test.dart",
+        "test/scale/reachability_scale_test.dart"
+      ],
+      "exportedSymbols": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "RouteProfile",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/ekf/route_geometry.dart",
       "importers": 16,
       "directDependents": [
@@ -23457,37 +23634,6 @@
       ],
       "exportedSymbols": [
         "RouteGeometry"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 15,
-      "directDependents": [
-        "lib/core/ekf/ekf_test_controller.dart",
-        "lib/services/alarm_evaluator.dart",
-        "lib/services/ios/ios_backstop_planner.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/notification_updater.dart",
-        "test/core/clock/monotonic_clock_test.dart",
-        "test/ekf/replay_harness_test.dart",
-        "test/integration/reachability_ride_scenario_test.dart",
-        "test/integration/reachability_scenarios_test.dart",
-        "test/ios/ios_backstop_edgecases_test.dart",
-        "test/ios/ios_backstop_planner_test.dart",
-        "test/notification_backstop_lead_test.dart",
-        "test/reachability/reachability_edgecases_test.dart",
-        "test/reachability/reachability_test.dart",
-        "test/scale/reachability_scale_test.dart"
-      ],
-      "exportedSymbols": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
       ],
       "riskLevel": "critical"
     },

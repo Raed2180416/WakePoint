@@ -430,6 +430,10 @@
     },
     {
       "kind": "class",
+      "name": "RouteProfile"
+    },
+    {
+      "kind": "class",
       "name": "ReachabilityConfig"
     },
     {

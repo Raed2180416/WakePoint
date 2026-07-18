@@ -177,14 +177,159 @@ class RouteTopology {
   final List<double> stationMeters;
   final double dwellMinSeconds;
 
+  /// Optional precomputed fastest-feasible velocity profile for the dynamic
+  /// (accel + terminal-braking + curve) levers. When present AND
+  /// [ReachabilityConfig.dynamicLeversEnabled] is set, [Reachability.bound] uses
+  /// the profile sweep instead of the flat dwell cap. Null ⇒ Phase 0a behaviour.
+  final RouteProfile? profile;
+
   RouteTopology({
     required List<double> stationMeters,
     this.dwellMinSeconds = 0.0,
+    this.profile,
   }) : stationMeters = List<double>.unmodifiable(
           [...stationMeters]..sort(),
         );
 
   bool get isEmpty => stationMeters.isEmpty;
+}
+
+/// Precomputed, route-static velocity profile for the fastest-feasible-train
+/// bound (TIGHTENING_IMPL.md §1). Built once per leg; the per-tick forward march
+/// reads it in O(cells traversed). Every stored quantity is an UPPER bound on
+/// the true train's speed at that arc position, so the resulting time is a LOWER
+/// bound and the inverted position is an UPPER bound on true progress.
+///
+/// This class is pure arc-length math (no maps dependency): it takes the route
+/// polyline as parallel lat/lng arrays and its own cumulative arc-lengths.
+class RouteProfile {
+  /// Strictly-increasing arc-length samples (m from anchorable origin).
+  final List<double> s;
+
+  /// Curve speed ceiling at each sample (m/s). = vLine where geometry untrusted
+  /// or straight; ≤ vLine only inside a validated curve.
+  final List<double> vCeil;
+
+  /// Backward terminal-braking envelope at each sample (m/s): the fastest a
+  /// train can pass sample i and still decelerate to 0 at the next served stop.
+  final List<double> vBrake;
+
+  /// Whether each sample coincides (within snap tolerance) with a SERVED station
+  /// the train must stop and dwell at (this trip's stops ∪ target).
+  final List<bool> served;
+
+  /// The line speed ceiling (m/s) used for coasting past the last sample.
+  final double vLine;
+
+  const RouteProfile._(
+      this.s, this.vCeil, this.vBrake, this.served, this.vLine);
+
+  /// Build the profile from the route polyline (parallel [lats]/[lngs]), its
+  /// [cumulativeMeters] (parallel, strictly increasing), the SERVED station
+  /// arc-positions [servedStations] (this trip's stops ∪ target), and [config].
+  ///
+  /// The curve ceiling is only computed when [config.curveTrusted]; otherwise it
+  /// stays at [vLine] everywhere (inert). Curvature uses a moving Menger
+  /// circumradius over a ~[config.curveChordMeters] chord with a k·σ noise floor
+  /// so vertex noise cannot fabricate a low ceiling (never-late guard R4/R5).
+  factory RouteProfile.precompute({
+    required List<double> lats,
+    required List<double> lngs,
+    required List<double> cumulativeMeters,
+    required List<double> servedStations,
+    required ReachabilityConfig config,
+    required double vLine,
+    double snapTolMeters = 40.0,
+  }) {
+    final n = cumulativeMeters.length;
+    final s = List<double>.from(cumulativeMeters);
+
+    // ── Curve ceiling ────────────────────────────────────────────────────
+    final vCeil = List<double>.filled(n, vLine);
+    if (config.curveTrusted && n >= 3 && lats.length == n && lngs.length == n) {
+      final sigmaKappa =
+          9.76 * config.curveSigmaPosMeters / (config.curveChordMeters *
+              config.curveChordMeters);
+      final floor = config.curveNoiseK * sigmaKappa;
+      for (var i = 1; i < n - 1; i++) {
+        final kappa = _mengerCurvature(
+            lats, lngs, s, i, config.curveChordMeters);
+        final kappaSafe = math.max(0.0, kappa - floor);
+        if (kappaSafe > 0) {
+          final vc = math.sqrt(config.aLatEffMps2 / kappaSafe);
+          if (vc.isFinite && vc < vCeil[i]) vCeil[i] = vc;
+        }
+        if (!vCeil[i].isFinite) vCeil[i] = vLine;
+      }
+    }
+
+    // ── Served stations → mark nearest sample within tolerance ───────────
+    final served = List<bool>.filled(n, false);
+    for (final st in servedStations) {
+      if (!st.isFinite) continue;
+      var best = -1;
+      var bestD = snapTolMeters;
+      for (var i = 0; i < n; i++) {
+        final d = (s[i] - st).abs();
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      if (best >= 0) served[best] = true;
+    }
+
+    // ── Backward terminal-braking pass ───────────────────────────────────
+    final vBrake = List<double>.filled(n, vLine);
+    vBrake[n - 1] = served[n - 1] ? 0.0 : math.min(vLine, vCeil[n - 1]);
+    for (var i = n - 2; i >= 0; i--) {
+      if (served[i]) {
+        vBrake[i] = 0.0;
+      } else {
+        final ds = math.max(0.0, s[i + 1] - s[i]);
+        final vb = math.sqrt(
+            vBrake[i + 1] * vBrake[i + 1] + 2 * config.dMaxMps2 * ds);
+        vBrake[i] = math.min(vCeil[i], vb);
+      }
+    }
+
+    return RouteProfile._(s, vCeil, vBrake, served, vLine);
+  }
+
+  /// Menger curvature (1/R) at sample [i] over a chord of ~[chordM] metres,
+  /// picking the samples ~chordM/2 before and after. Smoothing over the chord
+  /// (rather than adjacent vertices) suppresses per-vertex GPS noise. Returns 0
+  /// (straight ⇒ no cap) near the ends or when the three points are collinear.
+  static double _mengerCurvature(List<double> lats, List<double> lngs,
+      List<double> s, int i, double chordM) {
+    final half = chordM / 2;
+    var lo = i;
+    while (lo > 0 && s[i] - s[lo] < half) {
+      lo--;
+    }
+    var hi = i;
+    while (hi < s.length - 1 && s[hi] - s[i] < half) {
+      hi++;
+    }
+    if (lo == i || hi == i) return 0.0;
+    // Local equirectangular projection (metres) about sample i.
+    const mPerDegLat = 111320.0;
+    final cosLat = math.cos(lats[i] * math.pi / 180.0);
+    double px(int j) => (lngs[j] - lngs[i]) * mPerDegLat * cosLat;
+    double py(int j) => (lats[j] - lats[i]) * mPerDegLat;
+    final ax = px(lo), ay = py(lo);
+    final bx = px(i), by = py(i);
+    final cx = px(hi), cy = py(hi);
+    final ab = math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay));
+    final bc = math.sqrt((cx - bx) * (cx - bx) + (cy - by) * (cy - by));
+    final ca = math.sqrt((ax - cx) * (ax - cx) + (ay - cy) * (ay - cy));
+    // Twice the signed triangle area.
+    final area2 = ((bx - ax) * (cy - ay) - (by - ay) * (cx - ax)).abs();
+    if (area2 < 1e-6 || ab < 1e-6 || bc < 1e-6 || ca < 1e-6) return 0.0;
+    // Menger curvature = 4·area / (|AB|·|BC|·|CA|) = 1/R.
+    final kappa = (2 * area2) / (ab * bc * ca);
+    return kappa.isFinite ? kappa : 0.0;
+  }
 }
 
 /// Tunables for the Protection Level.
@@ -202,10 +347,85 @@ class ReachabilityConfig {
   /// Null disables the hard watchdog (reachability-reaching-target still fires).
   final double? hardTMaxSeconds;
 
+  // ── Fastest-feasible-train tightening (physics-only, see TIGHTENING_IMPL.md).
+  // Every constant below is set to the REACH-MAXIMIZING (largest-plausible)
+  // input so the bound can only over-estimate the fastest admissible train —
+  // never under-bound (which would fire late). dwellMinSeconds is the sole
+  // exception (must lower-bound). All levers default to the INERT state so the
+  // cone is bit-identical to the free-run bound until a line is explicitly
+  // validated and enabled.
+
+  /// Launch acceleration ceiling (m/s²). Set to the wheel-rail ADHESION ceiling
+  /// (~0.25 g) so it dominates any traction+grade combination — a downhill
+  /// departure cannot out-accelerate it (red-team R1). NOT service/comfort accel.
+  final double aMaxMps2;
+
+  /// Terminal-braking deceleration ceiling (m/s²). Adhesion ceiling + upgrade
+  /// assist + track brake, so an upgrade approach cannot out-brake it (R2).
+  final double dMaxMps2;
+
+  /// Effective lateral acceleration budget for the curve ceiling (m/s²).
+  /// Empty-car overturning + max cant (NOT comfort/tilt). Larger only loosens
+  /// v_curve = sqrt(aLatEff/kappa), so this is a safe UPPER input (R7).
+  final double aLatEffMps2;
+
+  /// Master switch for the dynamic (accel + terminal-braking + curve) levers.
+  /// Default false ⇒ Phase 0a dwell-only path; the profile sweep is skipped and
+  /// the cone equals free-run (or the proven dwell cap when dwellMinSeconds>0).
+  final bool dynamicLeversEnabled;
+
+  /// Whether the route geometry's curvature has passed the §3 validation
+  /// (measured sigma_pos, repaired self-approaches). Until true, the curve
+  /// ceiling is forced to V_LINE everywhere (inert) so noisy vertices can never
+  /// fabricate a low ceiling that fires late (R4/R5).
+  final bool curveTrusted;
+
+  /// Assumed GPS horizontal-position sigma (m) feeding the curvature noise floor
+  /// kappa_safe = max(0, |kappa| − k·9.76·sigmaPos/L²). Must be MEASURED per
+  /// relation before curveTrusted is flipped (R5).
+  final double curveSigmaPosMeters;
+
+  /// Curvature smoothing chord length (m) and noise-floor multiplier (k≥3).
+  final double curveChordMeters;
+  final double curveNoiseK;
+
   const ReachabilityConfig({
     this.dwellMinSeconds = 0.0,
     this.hardTMaxSeconds,
+    this.aMaxMps2 = 2.5,
+    this.dMaxMps2 = 3.5,
+    this.aLatEffMps2 = 7.0,
+    this.dynamicLeversEnabled = false,
+    this.curveTrusted = false,
+    this.curveSigmaPosMeters = 5.0,
+    this.curveChordMeters = 160.0,
+    this.curveNoiseK = 3.0,
   });
+
+  ReachabilityConfig copyWith({
+    double? dwellMinSeconds,
+    double? hardTMaxSeconds,
+    double? aMaxMps2,
+    double? dMaxMps2,
+    double? aLatEffMps2,
+    bool? dynamicLeversEnabled,
+    bool? curveTrusted,
+    double? curveSigmaPosMeters,
+    double? curveChordMeters,
+    double? curveNoiseK,
+  }) =>
+      ReachabilityConfig(
+        dwellMinSeconds: dwellMinSeconds ?? this.dwellMinSeconds,
+        hardTMaxSeconds: hardTMaxSeconds ?? this.hardTMaxSeconds,
+        aMaxMps2: aMaxMps2 ?? this.aMaxMps2,
+        dMaxMps2: dMaxMps2 ?? this.dMaxMps2,
+        aLatEffMps2: aLatEffMps2 ?? this.aLatEffMps2,
+        dynamicLeversEnabled: dynamicLeversEnabled ?? this.dynamicLeversEnabled,
+        curveTrusted: curveTrusted ?? this.curveTrusted,
+        curveSigmaPosMeters: curveSigmaPosMeters ?? this.curveSigmaPosMeters,
+        curveChordMeters: curveChordMeters ?? this.curveChordMeters,
+        curveNoiseK: curveNoiseK ?? this.curveNoiseK,
+      );
 
   static const ReachabilityConfig defaults = ReachabilityConfig();
 }
@@ -231,6 +451,13 @@ class ReachabilityBound {
     required this.dtSeconds,
     this.watchdogTripped = false,
   });
+}
+
+/// Closed-form cell traversal result (time + exit speed) for the profile sweep.
+class _Cell {
+  final double time;
+  final double vExit;
+  const _Cell(this.time, this.vExit);
 }
 
 /// Pure reachability mathematics.
@@ -289,9 +516,26 @@ class Reachability {
     }
 
     double sMax = freeRun;
-    if (topology != null &&
+    if (topology?.profile != null && config.dynamicLeversEnabled) {
+      // Phase 0b/0c: the fastest-feasible-train sweep (accel + terminal braking
+      // + curve ceiling + dwell). Seed the departure speed at V_LINE — the safe
+      // fallback until GPS speedAccuracy is threaded onto the anchor (R6). The
+      // sweep can only REDUCE the free-run bound.
+      final sFast = _fastestFeasibleProgress(
+        sHi: anchor.sHi,
+        dt: dtClamped,
+        v0: v,
+        aMax: config.aMaxMps2,
+        dMax: config.dMaxMps2,
+        wMin: config.dwellMinSeconds,
+        profile: topology!.profile!,
+      );
+      sMax = math.min(freeRun, sFast);
+    } else if (topology != null &&
         !topology.isEmpty &&
         config.dwellMinSeconds > 0.0) {
+      // Phase 0a: proven flat dwell cap (teleport at V_LINE between served
+      // stops, pay the dwell floor at each). Unconditionally safe.
       final capped = _topologyCappedProgress(
         sHi: anchor.sHi,
         dtSeconds: dtClamped,
@@ -353,6 +597,129 @@ class Reachability {
       position += vLineMps * timeLeft;
     }
     return position;
+  }
+
+  /// Fastest-feasible-train forward march over a precomputed [RouteProfile]
+  /// (TIGHTENING_IMPL.md §1.2). Marches from [sHi] at the cell-max feasible speed
+  /// (min of accel envelope from [v0], curve ceiling, terminal-braking envelope),
+  /// paying [wMin] dwell at every served stop, until the time budget [dt] is
+  /// exhausted. The returned position is an UPPER bound on true progress iff the
+  /// constants over-bound the fastest admissible train (proof §1.5).
+  static double _fastestFeasibleProgress({
+    required double sHi,
+    required double dt,
+    required double v0,
+    required double aMax,
+    required double dMax,
+    required double wMin,
+    required RouteProfile profile,
+  }) {
+    final s = profile.s;
+    final vCeil = profile.vCeil;
+    final vBrake = profile.vBrake;
+    final served = profile.served;
+    final vLine = profile.vLine;
+    final n = s.length;
+    if (n == 0) return sHi + vLine * dt;
+
+    double pos = sHi;
+    double timeLeft = dt;
+    double v = v0.isFinite ? v0.clamp(0.0, vLine) : vLine;
+
+    var i = _firstIndexAfter(s, pos);
+    while (i < n && timeLeft > 0) {
+      final ds = s[i] - pos;
+      if (ds <= 0) {
+        i++;
+        continue;
+      }
+      final prev = i - 1 < 0 ? 0 : i - 1;
+      // Cell-MAX ceiling and cell-MAX brake envelope — both UPPER bounds on true
+      // speed in the cell (a monotone envelope's max sits at a cell endpoint),
+      // so marching at them over-bounds. Using the cell-MAX (not the entry) of
+      // vBrake is essential: at a served-stop DEPARTURE the stop's own vBrake is
+      // 0 (must be stopped there), which would otherwise freeze the march — the
+      // departing sample's high vBrake unfreezes it while the APPROACH cells stay
+      // capped by the braking parabola.
+      final vCeilMax = math.max(vCeil[prev], vCeil[i]);
+      final vBrakeMax = math.max(vBrake[prev], vBrake[i]);
+      final vCap = math.min(vCeilMax, vBrakeMax);
+      final cell = _cellTime(v: v, ds: ds, aMax: aMax, vCap: vCap);
+      if (cell.time >= timeLeft) {
+        pos += _cellAdvance(v: v, aMax: aMax, vCap: vCap, dt: timeLeft);
+        timeLeft = 0.0;
+        break;
+      }
+      pos = s[i];
+      timeLeft -= cell.time;
+      v = math.min(vCap, cell.vExit);
+      if (served[i]) {
+        v = 0.0; // must stop
+        if (timeLeft <= wMin) {
+          timeLeft = 0.0;
+          break;
+        }
+        timeLeft -= wMin; // mandatory dwell plateau
+      }
+      i++;
+    }
+    if (timeLeft > 0) pos += vLine * timeLeft; // past last sample: coast at cap
+    return pos;
+  }
+
+  /// Closed-form cell traversal time + exit speed under an accel cap [aMax] and
+  /// an in-cell speed cap [vCap] (TIGHTENING_IMPL.md §1.3). Never divides by a
+  /// near-zero speed (root-cause R3): the average-speed / triangular forms have
+  /// no v→0 singularity.
+  static _Cell _cellTime({
+    required double v,
+    required double ds,
+    required double aMax,
+    required double vCap,
+  }) {
+    final cap = math.max(vCap, 1e-3);
+    if (v >= cap) {
+      return _Cell(ds / cap, cap); // already at/above cap → cruise at cap
+    }
+    final vFree = math.sqrt(v * v + 2 * aMax * ds);
+    if (vFree <= cap) {
+      // Accel-limited over the whole cell: time = ds / ((v+vExit)/2), v+vExit>0.
+      return _Cell((vFree - v) / aMax, vFree);
+    }
+    // Accelerate to the cap, then cruise at the cap.
+    final dsAccel = (cap * cap - v * v) / (2 * aMax);
+    final time = (cap - v) / aMax + (ds - dsAccel) / cap;
+    return _Cell(time, cap);
+  }
+
+  /// Max distance advanced in the remaining budget [dt] within a cell, marching
+  /// at the fastest feasible in-cell speed (over-estimates position ⇒ safe).
+  static double _cellAdvance({
+    required double v,
+    required double aMax,
+    required double vCap,
+    required double dt,
+  }) {
+    final cap = math.max(vCap, 1e-3);
+    final tToCap = (cap - v) / aMax;
+    if (tToCap <= 0) return cap * dt; // already at/above cap → cruise
+    if (dt <= tToCap) return v * dt + 0.5 * aMax * dt * dt; // pure accel
+    final dAccel = v * tToCap + 0.5 * aMax * tToCap * tToCap;
+    return dAccel + cap * (dt - tToCap);
+  }
+
+  /// First index `i` with `s[i] > pos` (binary search; `s` strictly increasing).
+  static int _firstIndexAfter(List<double> s, double pos) {
+    var lo = 0, hi = s.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (s[mid] > pos) {
+        hi = mid;
+      } else {
+        lo = mid + 1;
+      }
+    }
+    return lo;
   }
 
   /// True when the worst-case reachable progress has reached the fire target.

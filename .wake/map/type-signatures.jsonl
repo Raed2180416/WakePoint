@@ -218,6 +218,10 @@
 {"file":"test/rapid_deviations_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/reachability/reachability_edgecases_test.dart","name":"main","signature":"()"}
 {"file":"test/reachability/reachability_test.dart","name":"main","signature":"()"}
+{"file":"test/reachability/tightening_guards_test.dart","name":"main","signature":"()"}
+{"file":"test/reachability/tightening_never_late_test.dart","name":"_load","signature":"()"}
+{"file":"test/reachability/tightening_never_late_test.dart","name":"_fullConfig","signature":"()"}
+{"file":"test/reachability/tightening_never_late_test.dart","name":"main","signature":"()"}
 {"file":"test/regression_prod_data_test.dart","name":"main","signature":"()"}
 {"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_allFlagCombos","signature":"()"}
 {"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_run","signature":"(_Flags f, String oem)"}
