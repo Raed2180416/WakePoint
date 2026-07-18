@@ -601,6 +601,12 @@
       "name": "main"
     }
   ],
+  "lib/main_playground.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
   "lib/main_unified_dashboard.dart": [
     {
       "kind": "function",

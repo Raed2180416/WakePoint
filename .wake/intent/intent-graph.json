@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "a687594e5642203ba9d8b8835c92733194ca6212",
-  "generatedAt": "2026-07-19T00:31:20+05:30",
-  "structuralDigest": "e2d28054cf031d70fa4597f7e798b5e73084e840",
+  "gitCommit": "b386c49877d4f10d22570cc50434a908d4396eff",
+  "generatedAt": "2026-07-19T00:37:42+05:30",
+  "structuralDigest": "cbe00f05672abe32fe5a7c3e9d769d32212ed9c9",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 931,
-    "edgeCount": 1878,
+    "nodeCount": 933,
+    "edgeCount": 1880,
     "byLevel": {
       "feature": 9,
-      "file": 333,
+      "file": 334,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 554
+      "symbol": 555
     },
     "byEdgeType": {
-      "contains": 676,
-      "depends-on": 685,
+      "contains": 677,
+      "depends-on": 686,
       "references": 517
     }
   },
@@ -812,7 +812,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "quality-simulation-testing",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 2
     },
     {
@@ -907,6 +907,17 @@
       "id": "file:lib/debug/dev_server.dart",
       "level": "file",
       "label": "lib/debug/dev_server.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/main_playground.dart",
+      "level": "file",
+      "label": "lib/main_playground.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-lib",
@@ -5539,6 +5550,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/debug/dev_server.dart"
+    },
+    {
+      "id": "symbol:lib/main_playground.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/main_playground.dart"
     },
     {
       "id": "symbol:lib/main_unified_dashboard.dart#main",
@@ -12256,6 +12276,20 @@
     {
       "from": "file:lib/debug/dev_server.dart",
       "to": "symbol:lib/debug/dev_server.dart#DevServer",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main_playground.dart",
+      "to": "file:lib/dashboard/ekf_test_panel.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main_playground.dart",
+      "to": "symbol:lib/main_playground.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

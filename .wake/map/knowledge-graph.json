@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "a687594e5642203ba9d8b8835c92733194ca6212",
-    "gitTree": "e2d28054cf031d70fa4597f7e798b5e73084e840",
-    "generatedAt": "2026-07-19T00:31:20+05:30",
-    "filesIndexed": 333,
-    "dependencyEdges": 685,
-    "totalExports": 554,
-    "totalImports": 1524,
+    "gitCommit": "b386c49877d4f10d22570cc50434a908d4396eff",
+    "gitTree": "cbe00f05672abe32fe5a7c3e9d769d32212ed9c9",
+    "generatedAt": "2026-07-19T00:37:42+05:30",
+    "filesIndexed": 334,
+    "dependencyEdges": 686,
+    "totalExports": 555,
+    "totalImports": 1526,
     "byRole": {
       "other": 2,
       "backend": 12,
       "flutter-test": 179,
-      "flutter-lib": 131,
+      "flutter-lib": 132,
       "tool": 8,
       "platform": 1
     },
@@ -2974,6 +2974,44 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "c3391ebebea72dbe"
+    },
+    {
+      "file": "lib/main_playground.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "dashboard/ekf_test_panel.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_PlaygroundApp",
+          "extends": "StatelessWidget"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "98a2226a39f0b07f"
     },
     {
       "file": "lib/main_unified_dashboard.dart",
@@ -17700,6 +17738,12 @@
       "kind": "static"
     },
     {
+      "from": "lib/main_playground.dart",
+      "to": "lib/dashboard/ekf_test_panel.dart",
+      "source": "dashboard/ekf_test_panel.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/main_unified_dashboard.dart",
       "to": "lib/dashboard/unified_dashboard.dart",
       "source": "dashboard/unified_dashboard.dart",
@@ -21802,6 +21846,12 @@
         "kind": "class",
         "name": "MyAppState"
       },
+      {
+        "kind": "function",
+        "name": "main"
+      }
+    ],
+    "lib/main_playground.dart": [
       {
         "kind": "function",
         "name": "main"

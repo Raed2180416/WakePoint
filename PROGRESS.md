@@ -142,3 +142,22 @@ User asked to make everything usable, deeply simulate all routes, use the sim en
 **Mutation testing (docs/research/underground/scripts/mutation_test.sh): 8/8 injected never-late bugs CAUGHT, 0 survived** — the reachability tests have teeth.
 
 **Honest converged verdict:** the underground early-firing tail is real but the safe fix (stop-anchoring) is DISPLAY-only + sensor-gated (needs on-device baro/mag for precision); the ALARM must fire on the provable free-run cone. Simulation is now near-exhaustive on the never-late LOGIC (0 violations across ~30k+391+1144 trials + real Dart + 8/8 mutations); remaining unknowns are hardware-only (OEM kill, Doze, FSI/DND, elapsedRealtime under Doze, real detector precision). Residual: express/airport tier (Delhi Orange "Orange Line" -> defaultMps 28 under-bounds ~135km/h Airport Express) needs the dataset (keyword collides with Nagpur metro Orange).
+
+---
+
+## Session 2026-07-19 — physics-only tightening + playground wiring + security
+
+**Reachability TIGHTENING (fastest-feasible-train, NO crowd data — docs/research/underground/TIGHTENING.md + TIGHTENING_IMPL.md, 2 design workflows + adversarial red-team):**
+- Replaced the flat free-run cone with a forward-backward velocity-profile sweep: `sMax = min(freeRun, s_fast)` where s_fast obeys accel ramp + terminal-braking envelope + curve ceiling V(s) + mandatory dwell. Implemented in `lib/core/reachability/reachability.dart` (RouteProfile.precompute, _fastestFeasibleProgress, closed-form _cellTime/_cellAdvance).
+- Constants set to the REACH-MAXIMIZING (largest-plausible) inputs so they can only over-bound: aMax=2.5, dMax=3.5 (wheel-rail ADHESION ceilings — dominate any grade, closing the red-team's downhill/upgrade LATE paths), aLatEff=7.0 (empty-car overturning + cant). dwell=lower-bound door floor (7s). v0 seeded at V_LINE (drops the binary at-rest bit → structurally avoids the R1/R6 late paths).
+- **INERT BY DEFAULT**: dynamicLeversEnabled=false, curveTrusted=false, dwellMin=0 → the cone is bit-identical to free-run until a line is validated + enabled. Cannot regress never-late.
+- Validated never-late on REAL Bengaluru Purple Line curved geometry (test/reachability/tightening_never_late_test.dart): 318 anchor→station pairs, **0 violations**; full-blackout early-fire reduction 83–168s (pure math), 146–192s through the real playground engine — all still at/before true arrival.
+- Guards proven load-bearing (test/reachability/tightening_guards_test.dart): a phantom served stop (R10) and a comfort aLatEff (R7) each FAIL the pointwise s_max≥s_true assertion when the guard is removed; inert-default == free-run.
+- Honest magnitude: the reduction is real but bounded — most of the 14-min early-firing is the irreducible below-fastest-feasible gap (the safe dwell floor is 7s not the real ~20s). Design projects 14min → ~9.6min physics-only; achieved 2–3min on these routes (route-dependent, scales with intermediate stops).
+- **What still needs doing to ENABLE in production (all NO crowd data): real per-line rail geometry + measured sigma_pos + per-line all_stops_service flags + curveTrusted validation per line + GPS speedAccuracy threaded to the anchor.** bengaluru.wkp is a ROAD graph (no rail) — curvature must come from OSM rail relations. See TIGHTENING_IMPL.md §7.
+
+**Playground / simulation web engine:**
+- Wired the never-late ReachabilityTracker into the REAL playground engine (EkfTestController) — previously it ran only the EKF + AlarmEvaluator; the cone was never exercised there. E2E (test/dashboard/playground_reachability_e2e_test.dart, CI-gated) drives the real engine over the real metro routes: never-late holds; complete-blackout early-firing 21–28min (the case the tightening targets); tightening delays the fire 146–192s while staying never-late.
+- Repaired the stripped playground metro assets: rebuilt assets/ekf_test_routes/bengaluru_metro_routes.json (89KB) from REAL Purple Line ride ground truth (real curved polylines, verified ~3.8°/vertex; station arc-lengths; timing); registered in pubspec; fixed a dead placeholder so nallur→vijayanagar loads.
+
+**Security:** removed both committed Google Maps keys from the working tree (web/index.html JS key → out-of-band gitignored web/maps_key.js; second scraping key in scripts/ + .wake index redacted). Web build verified working after the change. ROTATION in Google Cloud is still required (git history retains the keys) — user action.

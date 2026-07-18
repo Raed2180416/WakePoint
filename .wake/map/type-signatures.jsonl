@@ -18,6 +18,7 @@
 {"file":"lib/config/platform_test_flag_stub.dart","name":"detectFlutterTest","signature":"()"}
 {"file":"lib/dashboard/unified_dashboard.dart","name":"main","signature":"()"}
 {"file":"lib/main.dart","name":"main","signature":"()"}
+{"file":"lib/main_playground.dart","name":"main","signature":"()"}
 {"file":"lib/main_unified_dashboard.dart","name":"main","signature":"()"}
 {"file":"lib/services/deviation_detection.dart","name":"calculateDistance","signature":"(LatLng a, LatLng b)"}
 {"file":"lib/services/deviation_detection.dart","name":"findClosestPointOnRoute","signature":"(LatLng currentLocation, RouteModel route)"}
