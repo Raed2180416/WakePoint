@@ -3,9 +3,9 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "6d93d0fd0bb3724cced359e82ef8ccb3c7779dab",
-    "gitTree": "195af3e24e6dffef307141a15c2bef648a2feadb",
-    "generatedAt": "2026-07-18T16:11:51+05:30",
+    "gitCommit": "df34ebce25488fa81e874e7fb8118607290b5857",
+    "gitTree": "c621bcaa716b4de95416a4097efe89d85d3834b4",
+    "generatedAt": "2026-07-18T19:31:51+05:30",
     "filesIndexed": 329,
     "dependencyEdges": 679,
     "totalExports": 545,
@@ -6916,7 +6916,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b56ac5a9e6134688"
+      "contentHash": "38e769c661e63f81"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",

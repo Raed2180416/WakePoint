@@ -1391,19 +1391,26 @@ class AlarmController {
     // (the anchor is fresh, so the bound ~= current progress).
     double? reachBoundMeters;
     {
-      String? reachLineName;
-      String? reachCity;
       RouteTopology? reachTopo;
+      // P1 multi-leg mode-max (validation-gaps): during a blackout the rider may
+      // have progressed from the current leg into a FASTER forward leg — e.g. a
+      // walk -> metro boarding as GPS drops at the tunnel mouth. Using only the
+      // current leg's V_LINE would UNDER-bound (walk 2 m/s while the train does
+      // 28) and fire LATE. Use the MAX V_LINE over the legs the rider could
+      // plausibly be on now (current leg forward, incl. GAP #9 city keys for
+      // RRTS) — a valid over-bound whichever leg they are really on. For a
+      // single-leg metro journey this equals that leg's V_LINE (no change).
+      double vMaxFwd = VLineTable.defaultMps;
       if (currentLegIndex >= 0 &&
           currentLegIndex < context.transitLegs.length) {
+        for (var i = currentLegIndex; i < context.transitLegs.length; i++) {
+          final l = context.transitLegs[i];
+          final v = _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName);
+          if (v.isFinite && v > vMaxFwd) vMaxFwd = v;
+        }
+        // Stations the train must pass on the CURRENT leg tighten the early-firing
+        // via the stop-count cap.
         final leg = context.transitLegs[currentLegIndex];
-        reachLineName = leg.lineName;
-        // GAP #9: pass the geocoded city so a fast regional service (RRTS /
-        // Namo Bharat, city key "delhimeerutrrts") resolves its higher V_LINE
-        // ceiling even when the line name alone doesn't keyword-match.
-        reachCity = leg.cityKey;
-        // Stations the train must pass on this leg (intermediate stops + the
-        // alighting station) tighten the early-firing via the stop-count cap.
         final stops = <double>[
           ...leg.stopMeters.where((m) => m.isFinite),
           if (leg.legEndMeters.isFinite) leg.legEndMeters,
@@ -1413,12 +1420,16 @@ class AlarmController {
               RouteTopology(stationMeters: stops, dwellMinSeconds: 0.0);
         }
       }
-      final b = _reach.boundNow(
-        nowSeconds: _nowSeconds(),
-        city: reachCity,
-        lineName: reachLineName,
-        topology: reachTopo,
-      );
+      final anchor = _reach.anchor;
+      final b = anchor == null
+          ? null
+          : Reachability.bound(
+              anchor: anchor,
+              nowSeconds: _nowSeconds(),
+              vLineMps: vMaxFwd,
+              topology: reachTopo,
+              config: _reach.config,
+            );
       // Pass the bound through unless it is NaN. A +infinity bound is the
       // fire-FORCING signal (T_max watchdog or a corrupt-input fail-safe) and
       // MUST reach the evaluator — filtering on isFinite here would silently drop
