@@ -69,3 +69,25 @@ The ONE honesty rule: never claim real-world/device proof from a simulation. Eve
 **Commits on sim-validation:** faf539c (Phase A foundation + CI gate), 3ff862a (cold-start core #1/#2), 873313e (#3 + #21), 6660d10 (7-package integration + #9 + deliverables), + doc reconciliation.
 
 **Honest bottom line (VALIDATION_REPORT §6):** never-late promise is now real, wired into every fire mode, gated in CI (can't silently regress), proven deterministically in sim for underground/cold-start/blackout. App is honest at the door + has a persisted place to measure itself. What remains genuinely device-unproven (labeled, not papered over): OEM force-kill survival, boot resume, full-screen/DND delivery — code-complete + doc-grounded, but only a real phone fleet settles them.
+
+---
+
+## Phase D telemetry emits + Phase E R8 + final CI (2026-07-18, wave 3)
+
+- **Telemetry emit sites (#8/#15)** wired + proven (commit 64a6790): alarmArmed at arm; gpsLost/gpsReacquired on blackout entry/exit; alarmOutcome at every fire (reach/mode inferred from reason). test/telemetry/emit_sites_test.dart (3) proves the alarmOutcome site. All fail-open. Residual: on-time/late/missed classification (needs post-arrival detection) + reliability{osKilled} (#14, restart-flag state machine) = STILL-OPEN, documented.
+- **CI hardened**: added metro-data integrity gate + full `flutter test` step (whole suite gates every push/PR, not just the never-late gate). Full suite = 1174 green; analyze lib/ 0 err/0 warn.
+- **R8 keep-rules (#57, Phase E)** commit dd5e54d: keep com.geowake.wakepoint_native.** (reflective wake-lock/FSI native plugin) + io.flutter.plugins/embedding registrants, so a release R8 pass can't strip the wake path (release-only bug class). Code-fixed; release-mode on-device smoke test still required to PROVE.
+- **USE_EXACT_ALARM**: grounding recommends dropping it (Play-restricted; setAlarmClock + only SCHEDULE_EXACT_ALARM is the safe path) — documented in VALIDATION_REPORT §4, NOT changed tonight (would alter the Android-14+ exact-alarm grant flow the never-late backstop relies on; needs device verification first — honest never-late-caution).
+
+- **Adversarial self-verification** of the never-late core (cold-start backstop, #3, #9, #21) launched — a skeptical reviewer hunting for any late/never/wrong/crash path the tests miss. Findings to be processed.
+
+### Definition-of-done status (brief §10)
+1. Green tree + never-late scenario harness in CI (fail-on-empty, never-early/wrong-place) — DONE.
+2. Phase A + B closed + proven (promise real for every mode; arm-time honest; backstop mode-accurate) — DONE (sim-proven; device axis labeled).
+3. Data correctness (Phase C) fixed + gated; 9 flagged lines researched (grounding_notes §16) — sequences researched, shipping-into-data = follow-up; integrity gate live.
+4. Telemetry emitting to a persisted sink — DONE (sink + emits); osKilled + classification = documented residual.
+5. Android hardening (Phase E) code-complete + labeled PROVEN-in-sim / CODE-FIXED-HARDWARE-UNPROVEN — DONE.
+6. ECONOMICS.md, ad strategy (analyzed), DATA_STRATEGY.md — DONE (ad wiring = follow-up; economics shows ads aren't the lever).
+7. VALIDATION_REPORT.md — DONE.
+8. PROGRESS.md appended continuously — DONE (this file).
+9. Every canon doc reconciled; platform claims grounded in current official docs (grounding_notes.md, 160 sources) — DONE.
