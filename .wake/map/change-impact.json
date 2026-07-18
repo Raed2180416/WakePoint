@@ -290,7 +290,7 @@
   },
   {
     "file": "lib/core/reachability/reachability.dart",
-    "importers": 17,
+    "importers": 18,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/services/alarm_evaluator.dart",
@@ -298,6 +298,7 @@
       "lib/services/tracking/alarm_controller.dart",
       "lib/services/tracking/notification_updater.dart",
       "test/core/clock/monotonic_clock_test.dart",
+      "test/dashboard/playground_reachability_e2e_test.dart",
       "test/ekf/replay_harness_test.dart",
       "test/integration/reachability_ride_scenario_test.dart",
       "test/integration/reachability_scenarios_test.dart",

@@ -352,11 +352,18 @@ class EkfTestController {
   EkfReachResult? _reachResult;
   double _reachTargetMeters = 0.0;
   double? _reachTrueTargetArrivalSeconds;
+  RouteTopology? _reachTopology;
 
   /// Wake this many stops before the destination (0 = fire at the destination
   /// arc-length itself). A real wake alarm fires a few stops early, so the cone
   /// reaches the target comfortably before arrival rather than exactly at it.
   int reachWakeStopsBeforeDestination = 0;
+
+  /// Reachability tuning. Defaults to the INERT free-run config; set
+  /// dynamicLeversEnabled/curveTrusted/dwellMinSeconds to exercise the
+  /// fastest-feasible-train tightening through the playground engine on the
+  /// real curved metro geometry.
+  ReachabilityConfig reachConfig = const ReachabilityConfig();
 
   /// Called when the playback engine auto-finishes (end of route/log).
   void Function()? onFinished;
@@ -702,10 +709,11 @@ class EkfTestController {
   /// (the same destination the in-sim [AlarmEvaluator] fires on), so the two
   /// paths are directly comparable.
   void _initReachability(TestRoute route) {
-    _reach = ReachabilityTracker();
+    _reach = ReachabilityTracker(config: reachConfig);
     _reachFired = false;
     _reachResult = null;
     _reachTrueTargetArrivalSeconds = null;
+    _reachTopology = null;
 
     // Target = the wake point N stops before the destination (falls back to the
     // destination arc-length if the route has too few stations).
@@ -719,6 +727,35 @@ class EkfTestController {
       const leadMeters = 400.0;
       _reachTargetMeters = (route.totalMeters - leadMeters)
           .clamp(route.totalMeters * 0.5, route.totalMeters);
+    }
+
+    // Build the fastest-feasible velocity profile so the dynamic levers (accel +
+    // terminal braking + curve + dwell) tighten the cone. Only when enabled —
+    // otherwise the tracker stays on the inert free-run path. Served stations =
+    // this route's stops ∪ target (correct-by-construction, no express trap).
+    final poly = route.fullPolyline;
+    final cum = route.fullCumulativeMeters;
+    if (reachConfig.dynamicLeversEnabled &&
+        poly.length >= 3 &&
+        poly.length == cum.length) {
+      final vLine = _reach!.vLineTable.forLine(lineName: null);
+      final served = <double>[
+        ...stations.map((s) => s.cumulativeMeters),
+        route.totalMeters,
+      ];
+      final profile = RouteProfile.precompute(
+        lats: poly.map((p) => p.latitude).toList(),
+        lngs: poly.map((p) => p.longitude).toList(),
+        cumulativeMeters: cum,
+        servedStations: served,
+        config: reachConfig,
+        vLine: vLine,
+      );
+      _reachTopology = RouteTopology(
+        stationMeters: served,
+        dwellMinSeconds: reachConfig.dwellMinSeconds,
+        profile: profile,
+      );
     }
 
     _reach!.seedColdStart(tSeconds: 0.0, sMeters: 0.0);
@@ -754,7 +791,7 @@ class EkfTestController {
       );
     }
 
-    final bound = reach.boundNow(nowSeconds: now);
+    final bound = reach.boundNow(nowSeconds: now, topology: _reachTopology);
     if (bound == null || bound.sMaxMeters < _reachTargetMeters) return;
 
     _reachFired = true;

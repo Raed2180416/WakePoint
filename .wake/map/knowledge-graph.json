@@ -3,13 +3,13 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "fac315e0ef16440132035c67e6d1892eabb0f542",
-    "gitTree": "e9376f80a06d008c89d7c055235ccc5a3fdb5a0b",
-    "generatedAt": "2026-07-19T00:10:07+05:30",
+    "gitCommit": "a687594e5642203ba9d8b8835c92733194ca6212",
+    "gitTree": "e2d28054cf031d70fa4597f7e798b5e73084e840",
+    "generatedAt": "2026-07-19T00:31:20+05:30",
     "filesIndexed": 333,
-    "dependencyEdges": 684,
+    "dependencyEdges": 685,
     "totalExports": 554,
-    "totalImports": 1523,
+    "totalImports": 1524,
     "byRole": {
       "other": 2,
       "backend": 12,
@@ -1172,7 +1172,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ea0f3e853da836b1"
+      "contentHash": "21e412f363e51df7"
     },
     {
       "file": "lib/core/ekf/ekf_types.dart",
@@ -9616,14 +9616,14 @@
         {
           "kind": "static",
           "source": "package:geowake2/core/ekf/imu_replay_engine_v2.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
         }
       ],
       "types": [],
       "functions": [
-        {
-          "name": "_drive",
-          "signature": "(TestRouteId route, GpsDropoutMode dropout)"
-        },
         {
           "name": "main",
           "signature": "()"
@@ -9639,7 +9639,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "bc7f58056e45956a"
+      "contentHash": "39428b42210b9f67"
     },
     {
       "file": "test/dashboard/simulation_state_test.dart",
@@ -19482,6 +19482,12 @@
       "kind": "static"
     },
     {
+      "from": "test/dashboard/playground_reachability_e2e_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/dashboard/simulation_state_test.dart",
       "to": "lib/dashboard/simulation_state.dart",
       "source": "package:geowake2/dashboard/simulation_state.dart",
@@ -22938,7 +22944,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 17,
+      "importers": 18,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -23579,7 +23585,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 17,
+      "importers": 18,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/services/alarm_evaluator.dart",
@@ -23587,6 +23593,7 @@
         "lib/services/tracking/alarm_controller.dart",
         "lib/services/tracking/notification_updater.dart",
         "test/core/clock/monotonic_clock_test.dart",
+        "test/dashboard/playground_reachability_e2e_test.dart",
         "test/ekf/replay_harness_test.dart",
         "test/integration/reachability_ride_scenario_test.dart",
         "test/integration/reachability_scenarios_test.dart",

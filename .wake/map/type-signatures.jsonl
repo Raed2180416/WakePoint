@@ -91,7 +91,6 @@
 {"file":"test/dashboard/deviation_dashboard_integration_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard/deviation_simulation_controller_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard/osm_overlay_manager_test.dart","name":"main","signature":"()"}
-{"file":"test/dashboard/playground_reachability_e2e_test.dart","name":"_drive","signature":"(TestRouteId route, GpsDropoutMode dropout)"}
 {"file":"test/dashboard/playground_reachability_e2e_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard/simulation_state_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard_alarm_test.dart","name":"main","signature":"()"}

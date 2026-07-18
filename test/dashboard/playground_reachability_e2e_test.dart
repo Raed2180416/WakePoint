@@ -26,6 +26,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/core/ekf/ekf_test_controller.dart';
 import 'package:geowake2/core/ekf/imu_replay_engine_v2.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
 
 class _Run {
   final TestRouteId route;
@@ -52,7 +53,8 @@ class _Run {
   }
 }
 
-Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout) async {
+Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout,
+    {ReachabilityConfig? reachConfig}) async {
   final c = EkfTestController();
   c.logVerbosity = 0; // keep the test output clean
   c.injectImu = false; // no external TrackingService listener in this harness
@@ -60,6 +62,7 @@ Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout) async {
   c.gpsDropoutMode = dropout;
   c.warpFactor = 200.0; // applied to the engine inside loadRoute
   c.reachWakeStopsBeforeDestination = 2; // wake before the stop (as the app does)
+  if (reachConfig != null) c.reachConfig = reachConfig;
 
   EkfReachResult? reach;
   EkfAlarmResult? alarm;
@@ -169,6 +172,55 @@ void main() {
         // The bound must be a real, finite target crossing (sMax >= target).
         expect(r.reach!.sMaxMeters, greaterThanOrEqualTo(r.reach!.targetMeters),
             reason: 'cone fired below target for $label');
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 12)),
+  );
+
+  test(
+    'TIGHTENING through the playground engine — inert vs fastest-feasible (real geometry)',
+    () async {
+      // Full blackout is the worst case (cone runs from the cold-start anchor).
+      // Compare the inert free-run cone against the fastest-feasible tightening
+      // (dwell + accel + terminal braking + curve) on the SAME real routes,
+      // driven end-to-end through the real playground engine.
+      const tight = ReachabilityConfig(
+        dynamicLeversEnabled: true,
+        curveTrusted: true,
+        dwellMinSeconds: 7.0,
+        aMaxMps2: 2.5,
+        dMaxMps2: 3.5,
+        aLatEffMps2: 7.0,
+      );
+      stdout.writeln('\nPLAYGROUND tightening (complete blackout, real engine):');
+      stdout.writeln('route                          | inertFire | tightFire | '
+          'laterBy | trueTargetArr | both never-late');
+      for (final route in routes) {
+        final inert = await _drive(route, GpsDropoutMode.completeDropout);
+        final on = await _drive(route, GpsDropoutMode.completeDropout,
+            reachConfig: tight);
+        final ti = inert.reach?.fireElapsedSeconds;
+        final tt = on.reach?.fireElapsedSeconds;
+        final arr = on.trueTargetArrivalSeconds ?? inert.trueTargetArrivalSeconds;
+        final laterBy = (ti != null && tt != null) ? tt - ti : 0.0;
+        final okI = (inert.earlySecondsVsTarget ?? 0) >= -2.0;
+        final okT = (on.earlySecondsVsTarget ?? 0) >= -2.0;
+        stdout.writeln('${route.name.padRight(30)} '
+            '| ${(ti ?? -1).toStringAsFixed(0).padLeft(8)}s '
+            '| ${(tt ?? -1).toStringAsFixed(0).padLeft(8)}s '
+            '| ${laterBy.toStringAsFixed(0).padLeft(6)}s '
+            '| ${(arr ?? -1).toStringAsFixed(0).padLeft(12)}s '
+            '| ${okI && okT ? "OK" : "LATE!"}');
+
+        // Both configs must stay never-late; the tightened cone must fire no
+        // earlier than the inert cone (it can only tighten).
+        expect(inert.reach, isNotNull);
+        expect(on.reach, isNotNull);
+        expect(on.earlySecondsVsTarget!, greaterThanOrEqualTo(-2.0),
+            reason: '${route.name}: tightened cone fired LATE');
+        expect(tt!, greaterThanOrEqualTo(ti! - 2.0),
+            reason: '${route.name}: tightening fired EARLIER than inert '
+                '(should only delay/tighten)');
       }
     },
     timeout: const Timeout(Duration(minutes: 12)),
