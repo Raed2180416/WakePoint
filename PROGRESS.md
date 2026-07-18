@@ -91,3 +91,17 @@ The ONE honesty rule: never claim real-world/device proof from a simulation. Eve
 7. VALIDATION_REPORT.md — DONE.
 8. PROGRESS.md appended continuously — DONE (this file).
 9. Every canon doc reconciled; platform claims grounded in current official docs (grounding_notes.md, 160 sources) — DONE.
+
+---
+
+## Adversarial verification of the never-late core (2026-07-18, wave 4 — FINAL)
+
+Launched a skeptical reviewer to try to BREAK the never-late guarantee in the crown-jewel changes (cold-start backstop, #3 distance/time, #9 V_LINE, #21 sigma floor). It confirmed the core math + lower bounds + sigma floor are SOUND, and found real issues — all now fixed (commit 013b62f), full suite 1175 green, GATE PASS, analyze 0/0:
+
+- **FINDING 1 (HIGH, real never-late hole):** OS-kill resume seeded the anchor at s=0/now → bound climbed from zero → zero blackout protection post-resume until it re-passed true progress → late/never. FIXED: resume seeds the anchor from the snapshot's restored progress (ekfS) at the snapshot timestamp (createdAt) — bound correctly over-bounds the kill-duration movement; eliminates the first-tick race.
+- **FINDING 3 (healthy-GPS early bias):** reach bound now only overrides dead-reckoned progress once the anchor is stale (>= FireDecisionConfig.reachBlackoutMinSeconds = 8s) — inert on healthy GPS, active only in a real blackout. (+inf watchdog always applies.)
+- **FINDING 4 (sparse-line under-warn):** cold-start stops target derives per-stop spacing from legLen/numStops when the count is known (RRTS ~5-10km/stop warns N stops ahead, not a flat 1.2km).
+- **FINDING 6:** defense-in-depth try/catch around the cold-start telemetry.
+- **FINDING 2 (V_LINE under-bound on mis-named fast line):** mitigated with suburban/local + city keywords; blanket ceiling default REJECTED (fires every metro ~2x early on blackout + inverts metro<express<RRTS ordering). Narrow residual (Airport Express as "Orange Line", Mumbai suburban as "Western Line") documented honestly in forLine + VALIDATION_REPORT §1.15/§3 as a dataset/vehicle-type follow-up — keyword matching fundamentally can't distinguish it. RRTS stays reliably branded/caught.
+
+**FINAL STATE:** 10 commits on sim-validation (faf539c → 013b62f). Full `flutter test` = 1175 green; `flutter analyze lib/` = 0 errors/0 warnings; never-late GATE = PASS (0 late). All 8 brief phases addressed to the definition-of-done: every gap is fixed-and-proven (with repro) OR honestly documented with the exact reason it needs hardware/a human. The core never-late promise is real for every alarm mode, gated in CI, and the crown-jewel core has been adversarially verified. Deliverables complete: VALIDATION_REPORT.md, ECONOMICS.md, DATA_STRATEGY.md, docs/research/grounding_notes.md (+raw/), docs/BACKLOG_CURRENT.md, docs/IMPL_PACKAGES.md, PROGRESS.md, canon reconciled.
