@@ -1,5 +1,30 @@
 # GeoWake — Consolidated Gap Analysis vs the Core Promise
 
+> **RECONCILIATION — 2026-07-18 session (READ THIS FIRST).** Many `file:line`
+> references below have DRIFTED (code moved since this was written) and several
+> items are now FIXED. The current, re-verified backlog with correct file:line is
+> **[`docs/BACKLOG_CURRENT.md`](docs/BACKLOG_CURRENT.md)**; the honest proven/unproven
+> ledger is **[`VALIDATION_REPORT.md`](VALIDATION_REPORT.md)**.
+>
+> **Fixed + proven this session** (see VALIDATION_REPORT §1): never-late runs during
+> cold-start-underground (BLOCK, #1/#2) with a whole-route reachability backstop + arm-time
+> anchor; reach bound wired into distance + non-metro-time paths (BLOCK, #3); never-late gate
+> committed + in CI with never-early/wrong-place assertions (BLOCK); preflight `block`
+> enforced — refuses to arm on notifications-off (BLOCK, #4); interstate sleeper unblocked
+> (BLOCK, #5); versionCode from pubspec (#6); ETA sigma floor (#21); persisted telemetry sink
+> (#7/#16); backstop lead + 991 cancel (#10/#11); RouteCache pin (#23); server error-body
+> cache (#24); reroute vehicle whitelist (#13); cos(lat) snapping (#27); metro-data integrity
+> gate (#12); DND/FSI/fix-routing preflight (#17/#18/#19); V_LINE city plumbing (#9 partial).
+>
+> **Still open / hardware-unproven** (see VALIDATION_REPORT §2/§3): telemetry EMIT sites
+> (#8/#14/#15); Android 14+ boot/FGS split (#25, device-only); OEM force-kill survival
+> (#19/#20, device-only, #20 held at WARN pending founder sign-off); full-screen/DND
+> delivery (device-only); Mumbai-suburban V_LINE residual (#9); metro scheduled-ETA wiring
+> (#22); restore-from-snapshot anchor seed; hardTMax watchdog (#26); ad wiring; iOS.
+>
+> The original verdict/table below is preserved as the session-start baseline.
+
+
 _Merges five verification lenses (never-late chain, GPS-loss underground, Android kill/Doze/OEM, metro-data correctness, real-ride scenarios) and the 18 subsystem maps into one deduplicated, ranked report. Core promise: **wake a transit rider before their stop — never late, never at the wrong place — even when GPS dies underground, on a cheap Android phone, in India.** File:line references were verified against source by the lenses this session._
 
 ---

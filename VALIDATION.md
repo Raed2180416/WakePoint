@@ -1,5 +1,23 @@
 # GeoWake — Deterministic Validation Record
 
+> **RECONCILIATION UPDATE — 2026-07-18 session.** The current honest ledger is now
+> **[`VALIDATION_REPORT.md`](VALIDATION_REPORT.md)** (PROVEN / CODE-FIXED-HARDWARE-UNPROVEN /
+> STILL-OPEN) and the current ranked backlog with re-verified file:line is
+> **[`docs/BACKLOG_CURRENT.md`](docs/BACKLOG_CURRENT.md)** (supersedes the drifted
+> `GAP_ANALYSIS.md` references). Since this file was written, the never-late net was made
+> to **run in production during cold-start-underground** (the flagship silent-no-wake case),
+> wired into **distance + non-metro-time** fire paths, and **gated in CI** (committed
+> fixtures, fail-on-empty, never-early/wrong-place assertions in
+> `.github/workflows/ci.yml`). Whole-suite is now **`flutter test` → 1171/1171 green**;
+> `flutter analyze lib/` = 0 errors/0 warnings. New committed proofs:
+> `test/tracking/cold_start_reach_backstop_test.dart`, `test/eta_sigma_floor_test.dart`,
+> `test/metro_data_integrity_test.dart`, `test/route_cache_pin_test.dart`,
+> `test/notification_backstop_lead_test.dart`, `test/services/projection_correction_test.dart`,
+> `test/reliability/reliability_preflight_delivery_channel_test.dart`,
+> `geowake-server/test/maps_error_body.test.js`. Platform claims are grounded in
+> `docs/research/grounding_notes.md` (17 topics, 160 cited sources). The sections below
+> remain accurate for the reachability core but predate the production wiring above.
+
 _Generated 2026-07-15 on branch `sim-validation`. Every claim below is backed by
 a test you can re-run. This documents the P0 correctness core (the reachability
 Protection Level) being **built and proven**, plus breadth validation of the
