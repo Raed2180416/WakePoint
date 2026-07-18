@@ -75,6 +75,8 @@ class PreflightIssueCode {
   static const String exactAlarm = 'exact_alarm';
   static const String batteryOptimization = 'battery_optimization';
   static const String preciseLocation = 'precise_location';
+  static const String dnd = 'dnd';
+  static const String fullScreenIntent = 'full_screen_intent';
 }
 
 /// Stable action keys the UI maps to the correct settings deep-link. The core
@@ -86,6 +88,9 @@ class PreflightFixAction {
   static const String openBatteryOptimizationSettings =
       'openBatteryOptimizationSettings';
   static const String openLocationSettings = 'openLocationSettings';
+  static const String openDndAccessSettings = 'openDndAccessSettings';
+  static const String openFullScreenIntentSettings =
+      'openFullScreenIntentSettings';
 }
 
 /// One thing wrong (or worth improving) about this phone's ability to wake the
@@ -171,6 +176,20 @@ abstract class ReliabilityProbe {
   /// Is precise (fine) location granted, as opposed to approximate-only?
   Future<bool> get preciseLocation;
 
+  /// #17 isNotificationPolicyAccessGranted(): does the app hold DND policy
+  /// access, so the alarm channel's setBypassDnd(true) actually takes effect?
+  /// Without it the bypass silently no-ops and Do Not Disturb can mute the wake.
+  /// `true` on platforms/versions where DND does not gate the alarm.
+  Future<bool> get dndBypassGranted;
+
+  /// #17 Is Do Not Disturb currently filtering interruptions on this device?
+  /// When off, DND cannot mute the alarm regardless of the bypass grant.
+  Future<bool> get dndActive;
+
+  /// #18 canUseFullScreenIntent(): may the app launch its full-screen wake
+  /// activity over the lock screen? `true` where the OS does not restrict it.
+  Future<bool> get fullScreenIntentAllowed;
+
   /// Lower-cased device manufacturer (e.g. `xiaomi`), or `''` when unknown/off
   /// Android.
   Future<String> get manufacturer;
@@ -184,6 +203,9 @@ class FakeReliabilityProbe implements ReliabilityProbe {
   bool batteryExempt;
   bool notifications;
   bool precise;
+  bool dndBypass;
+  bool dnd;
+  bool fsiAllowed;
   String oem;
 
   FakeReliabilityProbe({
@@ -191,6 +213,9 @@ class FakeReliabilityProbe implements ReliabilityProbe {
     this.batteryExempt = true,
     this.notifications = true,
     this.precise = true,
+    this.dndBypass = true,
+    this.dnd = false,
+    this.fsiAllowed = true,
     this.oem = 'google',
   });
 
@@ -205,6 +230,15 @@ class FakeReliabilityProbe implements ReliabilityProbe {
 
   @override
   Future<bool> get preciseLocation async => precise;
+
+  @override
+  Future<bool> get dndBypassGranted async => dndBypass;
+
+  @override
+  Future<bool> get dndActive async => dnd;
+
+  @override
+  Future<bool> get fullScreenIntentAllowed async => fsiAllowed;
 
   @override
   Future<String> get manufacturer async => oem;
@@ -266,6 +300,9 @@ class ReliabilityPreflightService {
     final bool exactAlarm = await probe.exactAlarmAllowed;
     final bool batteryExempt = await probe.batteryOptExempt;
     final bool precise = await probe.preciseLocation;
+    final bool dndBypass = await probe.dndBypassGranted;
+    final bool dndActive = await probe.dndActive;
+    final bool fsiAllowed = await probe.fullScreenIntentAllowed;
     final String manufacturer = await probe.manufacturer;
     final bool aggressive = isAggressiveOem(manufacturer);
 
@@ -304,11 +341,21 @@ class ReliabilityPreflightService {
 
     // Battery restriction: on an aggressive OEM this is the #1 cause of a missed
     // wake-up, so it is a strong warning there and a gentle advisory elsewhere.
+    //
+    // BACKLOG #20 proposes ELEVATING the aggressive-OEM case to
+    // PreflightSeverity.block (refuse to arm). We deliberately KEEP IT AT WARN:
+    // refusing to arm on every India-mix phone (Xiaomi/Oppo/Vivo/Samsung/
+    // Transsion) that lacks a battery exemption would gate the core never-late
+    // alarm on a probabilistic setup step, which needs founder sign-off. The
+    // block-elevation is intentionally a one-line FOUNDER TOGGLE: swap the
+    // `PreflightSeverity.warn` below for `PreflightSeverity.block` to enforce
+    // #20 (and reconcile the #20 test expectations back to block).
     if (!batteryExempt) {
       issues.add(PreflightIssue(
         code: PreflightIssueCode.batteryOptimization,
         severity:
             aggressive ? PreflightSeverity.warn : PreflightSeverity.advisory,
+        // FOUNDER TOGGLE (#20): aggressive ? PreflightSeverity.block : PreflightSeverity.advisory,
         title: 'Keep GeoWake running',
         message: aggressive
             ? "Your phone's battery saver can close GeoWake while it's in your "
@@ -331,6 +378,39 @@ class ReliabilityPreflightService {
             'you reach your stop, so the alarm may be off. Turn on precise '
             'location for an accurate alarm.',
         fixAction: PreflightFixAction.openLocationSettings,
+      ));
+    }
+
+    // #17 Do Not Disturb: with DND active and NO policy-access grant, the alarm
+    // channel's DND-bypass silently no-ops, so DND can mute the wake. We cannot
+    // confirm the channel truly breaks through, so this is a WARN (not a block).
+    // When DND is off, or bypass IS granted, there is nothing to warn about.
+    if (dndActive && !dndBypass) {
+      issues.add(const PreflightIssue(
+        code: PreflightIssueCode.dnd,
+        severity: PreflightSeverity.warn,
+        title: 'Let the alarm through Do Not Disturb',
+        message:
+            "Do Not Disturb is on, and GeoWake isn't allowed to break through "
+            'it yet, so the alarm could be silenced. Allow GeoWake to alert you '
+            'even during Do Not Disturb.',
+        fixAction: PreflightFixAction.openDndAccessSettings,
+      ));
+    }
+
+    // #18 Full-screen intent: without it, the wake can't take over the lock
+    // screen and degrades to a quiet notice a sleeping rider may miss. WARN and
+    // offer the grant.
+    if (!fsiAllowed) {
+      issues.add(const PreflightIssue(
+        code: PreflightIssueCode.fullScreenIntent,
+        severity: PreflightSeverity.warn,
+        title: 'Allow the full-screen alarm',
+        message:
+            'GeoWake may not be able to show its full alarm on your locked '
+            'screen, so you might only get a quiet alert. Allow the full-screen '
+            'alarm so it can wake you.',
+        fixAction: PreflightFixAction.openFullScreenIntentSettings,
       ));
     }
 

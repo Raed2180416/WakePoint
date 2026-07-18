@@ -7,10 +7,12 @@
 
 import 'dart:developer' as dev;
 
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:geowake2/core/logging/app_logger.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
 import 'package:geowake2/services/location_manager.dart';
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/services/route_registry.dart';
@@ -168,6 +170,47 @@ class NotificationUpdater {
     }
   }
 
+  /// Metro inter-stop time (seconds) — travel + dwell — used to convert a
+  /// "stops-before" alarm value into a time lead for the OS backstop. Chosen to
+  /// overbound a typical metro inter-stop so the backstop fires EARLY, never late.
+  @visibleForTesting
+  static const double kBackstopInterStopSeconds = 90.0;
+
+  /// V_LINE (m/s) used to convert a "distance-before" alarm value into a time
+  /// lead. Uses the standard-metro ceiling ([VLineTable.defaultMps]); dividing by
+  /// the lowest V_LINE ceiling yields the LARGEST lead among the ceilings — i.e.
+  /// the earliest, never-late backstop fire. (Using the absolute ceiling would
+  /// shrink the lead and risk firing late.)
+  @visibleForTesting
+  static const double kBackstopDistanceVLineMps = VLineTable.defaultMps;
+
+  /// Derive the OS-backstop lead — seconds before predicted arrival to fire —
+  /// from the alarm config. Pure and deterministic so the never-late lead is
+  /// unit-testable.
+  ///
+  /// - minutes / time  -> value * 60
+  /// - stops-before    -> value * [kBackstopInterStopSeconds]
+  /// - distance-before -> value(km) * 1000 / [kBackstopDistanceVLineMps]
+  ///
+  /// NEVER-LATE: every branch returns a lead >= the real lead so the backstop
+  /// fires early, never late. A missing/invalid value falls back to a 60 s floor.
+  @visibleForTesting
+  static double backstopLeadSeconds(String alarmMode, double value) {
+    final mode = alarmMode.toLowerCase();
+    if (value <= 0) return 60.0;
+    if (mode.contains('minute') || mode.contains('time')) {
+      return value * 60.0;
+    }
+    if (mode.contains('stop')) {
+      return value * kBackstopInterStopSeconds;
+    }
+    if (mode.contains('distance') || mode.contains('km')) {
+      return (value * 1000.0) / kBackstopDistanceVLineMps;
+    }
+    // Unknown mode: conservative fixed floor (fire early, never late).
+    return 60.0;
+  }
+
   /// G5: (re)arm or cancel the exact-alarm ETA backstop based on current ETA and
   /// the configured lead. Called on every state broadcast (~1 Hz).
   Future<void> _maybeRearmEtaBackstop(
@@ -184,20 +227,12 @@ class NotificationUpdater {
       final etaSeconds = context.smoothedETA ?? context.apiEtaSeconds;
       if (etaSeconds == null || etaSeconds <= 0) return;
 
-      // Lead time before predicted arrival, derived from the alarm config.
-      // time/minutes-before -> value is minutes; distance-before -> handled by the
-      // primary alarm, backstop just uses a conservative floor; stops-before ->
-      // approximate with a fixed floor (tune on-device).
-      final mode = (context.alarmMode ?? '').toLowerCase();
-      final value = context.alarmValue ?? 0.0;
-      double leadSeconds;
-      if (mode.contains('minute') || mode.contains('time')) {
-        leadSeconds = value * 60.0;
-      } else {
-        // distance-before / stops-before: fire the backstop a safe 60s before the
-        // raw ETA so it never precedes the real alarm but still guarantees a wake.
-        leadSeconds = 60.0;
-      }
+      // Lead time before predicted arrival, derived per-mode from the alarm
+      // config (never a stale hardcoded floor). See [backstopLeadSeconds].
+      final leadSeconds = backstopLeadSeconds(
+        context.alarmMode ?? '',
+        context.alarmValue ?? 0.0,
+      );
 
       final fireInSeconds = (etaSeconds - leadSeconds);
       if (fireInSeconds <= 0) {

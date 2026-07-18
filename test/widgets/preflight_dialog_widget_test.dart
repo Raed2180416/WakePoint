@@ -1,6 +1,7 @@
 // Widget test for the arm-time reliability preflight DIALOG (the integrated
-// UI surface). Verifies it renders the issues + per-issue Fix actions and is
-// fail-open (the user can always proceed, even on a BLOCK).
+// UI surface). Verifies it renders the issues + per-issue Fix actions, and that
+// a BLOCK verdict honestly refuses to arm (offers "Cancel", not a dismissible
+// "Proceed anyway"), while a WARN verdict is advisory ("Got it").
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,7 +26,7 @@ Future<void> _open(WidgetTester t, PreflightResult result) async {
 }
 
 void main() {
-  testWidgets('BLOCK (notifications off) shows issues + a Fix + "Proceed anyway"',
+  testWidgets('BLOCK (notifications off) shows issues + a Fix + "Cancel"',
       (t) async {
     final result = await ReliabilityPreflightService(
       FakeReliabilityProbe(notifications: false, oem: 'xiaomi'),
@@ -39,8 +40,10 @@ void main() {
     expect(find.textContaining('wake'), findsWidgets);
     // Per-issue Fix action(s) are offered.
     expect(find.widgetWithText(TextButton, 'Fix'), findsWidgets);
-    // Fail-open: even a BLOCK lets the user proceed (reliability is never gated).
-    expect(find.text('Proceed anyway'), findsOneWidget);
+    // Honest refusal: a BLOCK offers "Cancel" (no silent arming of a channel the
+    // OS won't let us deliver), not a dismissible "Proceed anyway".
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Proceed anyway'), findsNothing);
   });
 
   testWidgets('WARN (aggressive OEM, no exact-alarm/battery) shows "Got it"',

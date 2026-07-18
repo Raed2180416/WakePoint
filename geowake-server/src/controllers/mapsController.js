@@ -21,10 +21,28 @@ const googleApiProxy = async (req, res, { url, params, type }) => {
       }
     });
 
-    // Cache the successful response under type+params (TTL by type)
-    cache.set(type, params, response.data);
+    // Google returns HTTP 200 even when the request failed, signalling the real
+    // outcome via response.data.status (e.g. OVER_QUERY_LIMIT, REQUEST_DENIED,
+    // INVALID_REQUEST). axios does not throw on these, so we must inspect the
+    // body: only OK / ZERO_RESULTS are genuine results that are safe to cache and
+    // serve. Anything else must NOT be cached — otherwise the error body would be
+    // served to every caller for the whole TTL, leaving riders with no route —
+    // and must surface as a non-2xx so the client knows to retry.
+    const apiStatus = response.data && response.data.status;
+    if (apiStatus === 'OK' || apiStatus === 'ZERO_RESULTS') {
+      // Cache the successful response under type+params (TTL by type)
+      cache.set(type, params, response.data);
+      return res.json(response.data);
+    }
 
-    res.json(response.data);
+    const httpStatus = apiStatus === 'OVER_QUERY_LIMIT' ? 429 : 502;
+    console.error(`❌ Google Maps API returned non-success status at ${url}: ${apiStatus}`);
+    return res.status(httpStatus).json({
+      success: false,
+      error: 'An error occurred while fetching data from Google Maps API.',
+      status: apiStatus || 'UNKNOWN_ERROR',
+      details: response.data?.error_message || 'Upstream Google Maps API returned a non-success status.'
+    });
   } catch (error) {
     console.error(`❌ Google Maps API Error at ${url}:`, error.response ? error.response.data : error.message);
     res.status(error.response?.status || 500).json({

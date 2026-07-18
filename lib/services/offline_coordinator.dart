@@ -64,6 +64,9 @@ abstract class RouteCachePort {
     required String mode,
     String? transitVariant,
     int? departureTime,
+    // #23 active-route pin: when true the read bypasses TTL/schema/planned-window
+    // staleness and is non-destructive (used by the offline restore/reroute path).
+    bool pinned,
   });
 }
 
@@ -75,6 +78,7 @@ class DefaultRouteCachePort implements RouteCachePort {
     required String mode,
     String? transitVariant,
     int? departureTime,
+    bool pinned = false,
   }) {
     return RouteCache.get(
       origin: origin,
@@ -82,6 +86,7 @@ class DefaultRouteCachePort implements RouteCachePort {
       mode: mode,
       transitVariant: transitVariant,
       departureTime: departureTime,
+      pinned: pinned,
     );
   }
 }
@@ -163,11 +168,15 @@ class OfflineCoordinator {
     final variant = transitMode ? 'rail' : null;
 
     if (_isOffline) {
+      // #23: pin the active-route read so a route cached before we went offline
+      // survives past its TTL and is returned non-destructively — offline
+      // reroute/restore after 5 min must not be impossible.
       final cached = await _cache.get(
         origin: origin,
         destination: destination,
         mode: mode,
         transitVariant: variant,
+        pinned: true,
       );
       if (cached == null) {
         throw StateError('Offline and no cached route available');

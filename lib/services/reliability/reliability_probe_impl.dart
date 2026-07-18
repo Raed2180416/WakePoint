@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:wakepoint_native/wakepoint_native.dart';
 
 import 'reliability_preflight_service.dart';
 
@@ -62,6 +63,28 @@ class PlatformReliabilityProbe implements ReliabilityProbe {
     } catch (_) {
       return true; // unknown => don't nag; the accuracy gate still protects us
     }
+  }
+
+  @override
+  Future<bool> get dndBypassGranted async {
+    // isNotificationPolicyAccessGranted(): without it the alarm channel's
+    // setBypassDnd(true) silently no-ops. Unknown => assume granted (don't nag).
+    if (!Platform.isAndroid) return true;
+    return WakepointNative.isNotificationPolicyAccessGranted();
+  }
+
+  @override
+  Future<bool> get dndActive async {
+    // currentInterruptionFilter != ALL. Unknown => false (DND off => nothing to
+    // warn about), matching the conservative "don't nag on unknown" stance.
+    if (!Platform.isAndroid) return false;
+    return WakepointNative.isDndActive();
+  }
+
+  @override
+  Future<bool> get fullScreenIntentAllowed async {
+    // canUseFullScreenIntent() (API 34+). Unknown/older => true.
+    return WakepointNative.canUseFullScreenIntent();
   }
 
   @override

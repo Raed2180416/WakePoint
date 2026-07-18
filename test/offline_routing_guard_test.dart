@@ -13,6 +13,7 @@ class _FakeCache implements RouteCachePort {
     required String mode,
     String? transitVariant,
     int? departureTime,
+    bool pinned = false,
   }) async {
     return entry;
   }

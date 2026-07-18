@@ -1,7 +1,7 @@
 [
   {
     "file": "lib/services/transfer_utils.dart",
-    "importers": 58,
+    "importers": 59,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/screens/homescreen.dart",
@@ -41,6 +41,7 @@
       "test/maptracking_eta_distance_test.dart",
       "test/metro_final_station_alarm_test.dart",
       "test/metro_ordered_sequence_test.dart",
+      "test/metro_vehicle_types_test.dart",
       "test/metro_wrong_snap_test.dart",
       "test/mixed_mode_regression_test.dart",
       "test/persistence_repro.dart",
@@ -129,7 +130,7 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 36,
+    "importers": 37,
     "directDependents": [
       "integration_test/device_alarm_integration_test.dart",
       "lib/debug/demo_tools.dart",
@@ -155,6 +156,7 @@
       "test/mixed_mode_regression_test.dart",
       "test/multiple_switch_point_alarm_test.dart",
       "test/notification_action_classification_test.dart",
+      "test/notification_backstop_lead_test.dart",
       "test/notification_behavior_spec_test.dart",
       "test/notification_service_test.dart",
       "test/notification_tap_navigation_widget_test.dart",
@@ -386,6 +388,34 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/core/reachability/reachability.dart",
+    "importers": 12,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/ios/ios_backstop_planner.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/integration/reachability_ride_scenario_test.dart",
+      "test/integration/reachability_scenarios_test.dart",
+      "test/ios/ios_backstop_edgecases_test.dart",
+      "test/ios/ios_backstop_planner_test.dart",
+      "test/notification_backstop_lead_test.dart",
+      "test/reachability/reachability_edgecases_test.dart",
+      "test/reachability/reachability_test.dart"
+    ],
+    "exportedSymbols": [
+      "VLineTable",
+      "ReachabilityAnchor",
+      "RouteTopology",
+      "ReachabilityConfig",
+      "ReachabilityBound",
+      "Reachability",
+      "ReachabilityTracker"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/core/ekf/ekf_orchestrator.dart",
     "importers": 11,
     "directDependents": [
@@ -459,32 +489,6 @@
       "ipcLog",
       "sensorLog",
       "stateLog"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/core/reachability/reachability.dart",
-    "importers": 10,
-    "directDependents": [
-      "lib/services/alarm_evaluator.dart",
-      "lib/services/ios/ios_backstop_planner.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "test/ekf/replay_harness_test.dart",
-      "test/integration/reachability_ride_scenario_test.dart",
-      "test/integration/reachability_scenarios_test.dart",
-      "test/ios/ios_backstop_edgecases_test.dart",
-      "test/ios/ios_backstop_planner_test.dart",
-      "test/reachability/reachability_edgecases_test.dart",
-      "test/reachability/reachability_test.dart"
-    ],
-    "exportedSymbols": [
-      "VLineTable",
-      "ReachabilityAnchor",
-      "RouteTopology",
-      "ReachabilityConfig",
-      "ReachabilityBound",
-      "Reachability",
-      "ReachabilityTracker"
     ],
     "riskLevel": "high"
   },
@@ -606,6 +610,25 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/route_cache.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/services/direction_service.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/route_session_manager.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/integration/offline_scenario_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/offline_routing_guard_test.dart",
+      "test/route_cache_pin_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteCacheEntry",
+      "RouteCache"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/snap_to_route.dart",
     "importers": 8,
     "directDependents": [
@@ -680,6 +703,51 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/offline_coordinator.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/trackingservice.dart",
+      "test/integration/offline_scenario_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/offline_routing_guard_test.dart",
+      "test/route_cache_pin_test.dart"
+    ],
+    "exportedSymbols": [
+      "OfflineRouteResult",
+      "DirectionsProvider",
+      "DefaultDirectionsProvider",
+      "RouteCachePort",
+      "DefaultRouteCachePort",
+      "OfflineCoordinator",
+      "RouteSource"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/polyline_decoder.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/screens/maptracking.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/stop_matcher.dart",
+      "lib/services/transfer_utils.dart",
+      "test/services/projection_correction_test.dart",
+      "test/transit_leg_stops_test.dart"
+    ],
+    "exportedSymbols": [
+      "decodePolyline",
+      "haversineDistance",
+      "polylineLength",
+      "pointAlongPolyline",
+      "estimateStopPositions",
+      "stopDistancesAlongPolyline"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/polyline_simplifier.dart",
     "importers": 7,
     "directDependents": [
@@ -697,98 +765,49 @@
     "riskLevel": "high"
   },
   {
-    "file": "lib/services/route_cache.dart",
+    "file": "lib/services/reliability/reliability_preflight_service.dart",
     "importers": 7,
     "directDependents": [
-      "lib/services/direction_service.dart",
-      "lib/services/offline_coordinator.dart",
-      "lib/services/route_session_manager.dart",
-      "test/direction_service_behavior_test.dart",
-      "test/integration/offline_scenario_test.dart",
-      "test/offline_coordinator_test.dart",
-      "test/offline_routing_guard_test.dart"
+      "lib/services/reliability/reliability_preflight_runner.dart",
+      "lib/services/reliability/reliability_probe_impl.dart",
+      "test/integration/preflight_arm_scenario_test.dart",
+      "test/reliability/reliability_preflight_combinatorial_test.dart",
+      "test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "test/reliability/reliability_preflight_test.dart",
+      "test/widgets/preflight_dialog_widget_test.dart"
     ],
     "exportedSymbols": [
-      "RouteCacheEntry",
-      "RouteCache"
+      "PreflightIssueCode",
+      "PreflightFixAction",
+      "PreflightIssue",
+      "PreflightResult",
+      "ReliabilityProbe",
+      "FakeReliabilityProbe",
+      "ReliabilityPreflightService",
+      "PreflightLevel",
+      "PreflightSeverity"
     ],
     "riskLevel": "high"
   },
   {
-    "file": "lib/services/testing/osm_graph.dart",
+    "file": "lib/services/telemetry/telemetry_service.dart",
     "importers": 7,
     "directDependents": [
-      "lib/dashboard/deviation_dashboard.dart",
-      "lib/dashboard/deviation_simulation_controller.dart",
-      "lib/services/testing/osm_loader.dart",
-      "lib/services/testing/pathfinder.dart",
-      "test/dashboard/deviation_dashboard_integration_test.dart",
-      "test/services/testing/osm_graph_test.dart",
-      "test/services/testing/pathfinder_test.dart"
+      "lib/main.dart",
+      "lib/services/telemetry/file_telemetry_sink.dart",
+      "lib/services/telemetry/telemetry_session.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "test/telemetry/file_telemetry_sink_test.dart",
+      "test/telemetry/telemetry_edgecases_test.dart",
+      "test/telemetry/telemetry_service_test.dart"
     ],
     "exportedSymbols": [
-      "OsmNode",
-      "OsmEdge",
-      "OsmGraph",
-      "RoadType",
-      "LatLngDistance"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "geowake-server/src/config/config.js",
-    "importers": 6,
-    "directDependents": [
-      "geowake-server/src/controllers/authController.js",
-      "geowake-server/src/controllers/mapsController.js",
-      "geowake-server/src/middleware/auth.js",
-      "geowake-server/src/middleware/security.js",
-      "geowake-server/src/server.js",
-      "geowake-server/src/utils/cache.js"
-    ],
-    "exportedSymbols": [],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/offline_coordinator.dart",
-    "importers": 6,
-    "directDependents": [
-      "lib/screens/homescreen.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/trackingservice.dart",
-      "test/integration/offline_scenario_test.dart",
-      "test/offline_coordinator_test.dart",
-      "test/offline_routing_guard_test.dart"
-    ],
-    "exportedSymbols": [
-      "OfflineRouteResult",
-      "DirectionsProvider",
-      "DefaultDirectionsProvider",
-      "RouteCachePort",
-      "DefaultRouteCachePort",
-      "OfflineCoordinator",
-      "RouteSource"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/polyline_decoder.dart",
-    "importers": 6,
-    "directDependents": [
-      "lib/screens/maptracking.dart",
-      "lib/services/direction_service.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/stop_matcher.dart",
-      "lib/services/transfer_utils.dart",
-      "test/transit_leg_stops_test.dart"
-    ],
-    "exportedSymbols": [
-      "decodePolyline",
-      "haversineDistance",
-      "polylineLength",
-      "pointAlongPolyline",
-      "estimateStopPositions",
-      "stopDistancesAlongPolyline"
+      "TelemetryEventType",
+      "TelemetryEvent",
+      "TelemetrySink",
+      "InMemoryTelemetrySink",
+      "TelemetryService",
+      "AlarmOutcome"
     ],
     "riskLevel": "high"
   }

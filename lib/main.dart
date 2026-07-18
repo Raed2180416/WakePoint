@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/telemetry/telemetry_service.dart';
 import 'package:geowake2/services/monetization/monetization_service.dart';
+import 'package:path_provider/path_provider.dart';
 import 'services/navigation_service.dart';
 import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
@@ -48,6 +49,18 @@ Future<void> main() async {
     ));
     // Ensure Flutter binding is initialized before any Flutter-specific code.
     await Hive.initFlutter();
+
+    // Persist telemetry to a durable JSONL sink so events survive process death
+    // (BACKLOG #7 + #16). path_provider stays OUT of TelemetryService — resolve
+    // the dir here and inject it. Fire-and-forget so a slow disk can't delay
+    // startup; the in-memory sink keeps working until the file sink is wired.
+    unawaited(() async {
+      try {
+        final supportDir = await getApplicationSupportDirectory();
+        TelemetryService.instance.configureDefaultSinks(dir: supportDir.path);
+      } catch (_) {/* telemetry is best-effort; never block or crash startup */}
+    }());
+
     // Service initialization moved to SplashScreen to improve startup time.
 
     // Assemble monetization (entitlement + store + ads) off the critical path —

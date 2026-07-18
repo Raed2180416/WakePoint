@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "3ff862ab644b8253a01688319e0fa8505ca00799",
-    "gitTree": "2bed31386873fa4cf7e8c3f3cdc18a668efbd359",
-    "generatedAt": "2026-07-18T09:41:15+05:30",
-    "filesIndexed": 316,
-    "dependencyEdges": 646,
-    "totalExports": 530,
-    "totalImports": 1448,
+    "gitCommit": "873313e796f246d69246ddc5cc866439566a042d",
+    "gitTree": "6741d4d29a0a392e41e3d67a106b01ff1eff2526",
+    "generatedAt": "2026-07-18T09:49:37+05:30",
+    "filesIndexed": 326,
+    "dependencyEdges": 670,
+    "totalExports": 541,
+    "totalImports": 1496,
     "byRole": {
       "other": 2,
-      "backend": 11,
-      "flutter-test": 166,
-      "flutter-lib": 129,
+      "backend": 12,
+      "flutter-test": 173,
+      "flutter-lib": 131,
       "tool": 8
     },
     "entryPoints": [
@@ -144,7 +144,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "afb29d8213a3cfe9"
+      "contentHash": "1c149e0300e86f20"
     },
     {
       "file": "geowake-server/src/middleware/auth.js",
@@ -404,6 +404,42 @@
       "hasSideEffects": false,
       "role": "backend",
       "contentHash": "5ed423d5604e445c"
+    },
+    {
+      "file": "geowake-server/test/maps_error_body.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "axios"
+        },
+        {
+          "kind": "require",
+          "source": "../src/utils/cache"
+        },
+        {
+          "kind": "require",
+          "source": "../src/controllers/mapsController"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "makeReqRes",
+          "signature": "(body)"
+        },
+        {
+          "name": "callDirections",
+          "signature": "(body)"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "ccac0d1f1f8067ec"
     },
     {
       "file": "integration_test/device_alarm_integration_test.dart",
@@ -2852,6 +2888,10 @@
         },
         {
           "kind": "static",
+          "source": "package:path_provider/path_provider.dart"
+        },
+        {
+          "kind": "static",
           "source": "services/navigation_service.dart"
         },
         {
@@ -2908,7 +2948,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a74adc575b8b55f7"
+      "contentHash": "c3391ebebea72dbe"
     },
     {
       "file": "lib/main_unified_dashboard.dart",
@@ -4352,6 +4392,29 @@
       "contentHash": "7491aeb5c4b06398"
     },
     {
+      "file": "lib/services/metro_vehicle_types.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "const",
+          "name": "kMetroVehicleTypes"
+        }
+      ],
+      "imports": [],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [
+        {
+          "name": "kMetroVehicleTypes"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "68bc8b75d9661972"
+    },
+    {
       "file": "lib/services/monetization/ad_policy.dart",
       "lang": "dart",
       "exports": [
@@ -4816,7 +4879,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a904ba4758d02133"
+      "contentHash": "a75cc8f7a5f92eac"
     },
     {
       "file": "lib/services/oem_autostart_service.dart",
@@ -4955,7 +5018,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "638156a216cef5a0"
+      "contentHash": "c4d67a75de571e1a"
     },
     {
       "file": "lib/services/pending_ack_manager.dart",
@@ -5159,7 +5222,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "7ba73e93cd92dae1"
+      "contentHash": "260dc9427e4cdd55"
     },
     {
       "file": "lib/services/polyline_simplifier.dart",
@@ -5326,6 +5389,14 @@
           "name": "ReliabilityPreflightRunner"
         },
         {
+          "kind": "class",
+          "name": "PreflightFixLauncher"
+        },
+        {
+          "kind": "class",
+          "name": "PlatformPreflightFixLauncher"
+        },
+        {
           "kind": "function",
           "name": "showReliabilityPreflightDialog"
         }
@@ -5333,11 +5404,35 @@
       "imports": [
         {
           "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:android_intent_plus/android_intent.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:android_intent_plus/flag.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:app_settings/app_settings.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:flutter/material.dart"
         },
         {
           "kind": "static",
+          "source": "package:package_info_plus/package_info_plus.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:permission_handler/permission_handler.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../oem_autostart_service.dart"
         },
         {
           "kind": "static",
@@ -5353,23 +5448,27 @@
         {
           "name": "showReliabilityPreflightDialog",
           "signature": "(BuildContext context,\n  PreflightResult result,)"
-        },
-        {
-          "name": "_applyFix",
-          "signature": "(String fixAction)"
         }
       ],
       "classes": [
         {
           "name": "ReliabilityPreflightRunner",
           "extends": null
+        },
+        {
+          "name": "PreflightFixLauncher",
+          "extends": null
+        },
+        {
+          "name": "PlatformPreflightFixLauncher",
+          "extends": "PreflightFixLauncher"
         }
       ],
       "constants": [],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "95279817625c34af"
+      "contentHash": "193af4a2df65d77e"
     },
     {
       "file": "lib/services/reliability/reliability_preflight_service.dart",
@@ -5458,7 +5557,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "090e056ed43f7e85"
+      "contentHash": "1e65b0c43212e22b"
     },
     {
       "file": "lib/services/reliability/reliability_probe_impl.dart",
@@ -5488,6 +5587,10 @@
         },
         {
           "kind": "static",
+          "source": "package:wakepoint_native/wakepoint_native.dart"
+        },
+        {
+          "kind": "static",
           "source": "reliability_preflight_service.dart"
         }
       ],
@@ -5503,7 +5606,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c0c0062df8bcec72"
+      "contentHash": "ba2102fdded7b5e5"
     },
     {
       "file": "lib/services/reroute_constraints.dart",
@@ -5638,7 +5741,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "6b7324a141a6f420"
+      "contentHash": "a7940a1008fccc5f"
     },
     {
       "file": "lib/services/route_logger.dart",
@@ -6279,7 +6382,44 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f5dac8c007451fee"
+      "contentHash": "b29fafb48a0fad51"
+    },
+    {
+      "file": "lib/services/telemetry/file_telemetry_sink.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "FileTelemetrySink"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "telemetry_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "FileTelemetrySink",
+          "extends": "TelemetrySink"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "724e54e598662803"
     },
     {
       "file": "lib/services/telemetry/telemetry_service.dart",
@@ -6318,6 +6458,10 @@
         {
           "kind": "static",
           "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "file_telemetry_sink.dart"
         }
       ],
       "types": [
@@ -6342,7 +6486,7 @@
         },
         {
           "name": "InMemoryTelemetrySink",
-          "extends": null
+          "extends": "TelemetrySink"
         },
         {
           "name": "TelemetryService",
@@ -6353,7 +6497,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "80ddf22b108b316c"
+      "contentHash": "f8d0b538c629b9fb"
     },
     {
       "file": "lib/services/telemetry/telemetry_session.dart",
@@ -6772,7 +6916,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "df8f45bb232d098e"
+      "contentHash": "7efe046b38d42654"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -7086,6 +7230,10 @@
         },
         {
           "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:google_maps_flutter/google_maps_flutter.dart"
         },
         {
@@ -7095,6 +7243,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/core/logging/app_logger.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
         },
         {
           "kind": "static",
@@ -7133,7 +7285,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "bd7c1c726771fbe1"
+      "contentHash": "47e11c91d79f0091"
     },
     {
       "file": "lib/services/tracking/snapshot_route_restorer.dart",
@@ -7954,7 +8106,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "other",
-      "contentHash": "6b5437a185e35e1d"
+      "contentHash": "52081dfc7b5b022f"
     },
     {
       "file": "test/active_route_manager_complex_test.dart",
@@ -10431,7 +10583,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "5cdd1f3e64c6dff7"
+      "contentHash": "7eb1356bc6c630da"
     },
     {
       "file": "test/flutter_test_config.dart",
@@ -10825,7 +10977,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "eed66a87afa9edd7"
+      "contentHash": "fa661e240523ec3e"
     },
     {
       "file": "test/integration/preflight_arm_scenario_test.dart",
@@ -10878,7 +11030,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "3a1a6d181c3f67bd"
+      "contentHash": "8709da0effaae0df"
     },
     {
       "file": "test/integration/reachability_ride_scenario_test.dart",
@@ -11270,6 +11422,81 @@
       "contentHash": "2790addcd895ecfe"
     },
     {
+      "file": "test/metro_data_integrity_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:math"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/data/metro_line_sequences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/all_india_stops.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_haversineMeters",
+          "signature": "(double lat1, double lng1, double lat2, double lng2)"
+        },
+        {
+          "name": "_deg2rad",
+          "signature": "(double d)"
+        },
+        {
+          "name": "_inIndiaBbox",
+          "signature": "(double lat, double lng)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [
+        {
+          "name": "_minLat"
+        },
+        {
+          "name": "_maxLat"
+        },
+        {
+          "name": "_minLng"
+        },
+        {
+          "name": "_maxLng"
+        },
+        {
+          "name": "_minConsecutiveMeters"
+        },
+        {
+          "name": "_denseHopCeilingMeters"
+        },
+        {
+          "name": "_grossHopCeilingMeters"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "4f18d60fd1a6dde9"
+    },
+    {
       "file": "test/metro_final_station_alarm_test.dart",
       "lang": "dart",
       "exports": [
@@ -11455,6 +11682,63 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "53836c9b2f278c83"
+    },
+    {
+      "file": "test/metro_vehicle_types_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/metro_vehicle_types.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/reroute_constraints.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/transfer_utils.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_encodePolyline",
+          "signature": "(List<LatLng> points)"
+        },
+        {
+          "name": "_enc",
+          "signature": "(int v, StringBuffer str)"
+        },
+        {
+          "name": "_directionsForVehicle",
+          "signature": "(String vehicleType)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "c45dd567cee3e7d6"
     },
     {
       "file": "test/metro_wrong_snap_test.dart",
@@ -12122,6 +12406,51 @@
       "contentHash": "495e4e27454eebf3"
     },
     {
+      "file": "test/notification_backstop_lead_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/notification_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/notification_updater.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "84bf4edd07eaa305"
+    },
+    {
       "file": "test/notification_behavior_spec_test.dart",
       "lang": "dart",
       "exports": [
@@ -12312,7 +12641,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "fd32cefc367aa726"
+      "contentHash": "378d794c3038c524"
     },
     {
       "file": "test/offline_routing_guard_test.dart",
@@ -12366,7 +12695,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "de08d0226ce3ee18"
+      "contentHash": "69bd9122925534cb"
     },
     {
       "file": "test/pending_ack_manager_test.dart",
@@ -13114,6 +13443,52 @@
       "contentHash": "9ed8fe9a167facc9"
     },
     {
+      "file": "test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/reliability/reliability_preflight_runner.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/reliability/reliability_preflight_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_SpyLauncher",
+          "extends": "PreflightFixLauncher"
+        }
+      ],
+      "constants": [
+        {
+          "name": "_jargon"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "b463e5b55fc27b44"
+    },
+    {
       "file": "test/reliability/reliability_preflight_test.dart",
       "lang": "dart",
       "exports": [
@@ -13689,6 +14064,62 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "72e6d0057b8de711"
+    },
+    {
+      "file": "test/route_cache_pin_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/offline_coordinator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/route_cache.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_ThrowingProvider",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "_origin"
+        },
+        {
+          "name": "_dest"
+        },
+        {
+          "name": "_mode"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "2484c28b41296390"
     },
     {
       "file": "test/route_cache_policy_test.dart",
@@ -14315,6 +14746,55 @@
       "contentHash": "bf78ece626f3d137"
     },
     {
+      "file": "test/services/projection_correction_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:math"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/polyline_decoder.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/stop_matcher.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_toRad",
+          "signature": "(double deg)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "205aa55188a39184"
+    },
+    {
       "file": "test/services/testing/osm_graph_test.dart",
       "lang": "dart",
       "exports": [
@@ -14873,6 +15353,51 @@
       "contentHash": "3eb4c78f20243ab1"
     },
     {
+      "file": "test/telemetry/file_telemetry_sink_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/telemetry/telemetry_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/telemetry/file_telemetry_sink.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "b37ca59fca5c0d38"
+    },
+    {
       "file": "test/telemetry/telemetry_edgecases_test.dart",
       "lang": "dart",
       "exports": [
@@ -14905,14 +15430,14 @@
       "classes": [
         {
           "name": "_AlwaysThrowsSink",
-          "extends": null
+          "extends": "TelemetrySink"
         }
       ],
       "constants": [],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "285936b424652ac0"
+      "contentHash": "ecca61566efa8d45"
     },
     {
       "file": "test/telemetry/telemetry_service_test.dart",
@@ -14947,14 +15472,14 @@
       "classes": [
         {
           "name": "_ThrowingSink",
-          "extends": null
+          "extends": "TelemetrySink"
         }
       ],
       "constants": [],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "4e3d896b55b057aa"
+      "contentHash": "5314feb64b5c8280"
     },
     {
       "file": "test/test_routes.dart",
@@ -15728,7 +16253,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "bc26234c13abd1bb"
+      "contentHash": "6ec420011e7a0061"
     },
     {
       "file": "test_driver/integration_test.dart",
@@ -16302,6 +16827,18 @@
       "from": "geowake-server/test/maps.test.js",
       "to": "geowake-server/src/server.js",
       "source": "../src/server",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/maps_error_body.test.js",
+      "to": "geowake-server/src/utils/cache.js",
+      "source": "../src/utils/cache",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/maps_error_body.test.js",
+      "to": "geowake-server/src/controllers/mapsController.js",
+      "source": "../src/controllers/mapsController",
       "kind": "require"
     },
     {
@@ -17302,6 +17839,12 @@
     },
     {
       "from": "lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "lib/services/oem_autostart_service.dart",
+      "source": "../oem_autostart_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/reliability/reliability_preflight_runner.dart",
       "to": "lib/services/reliability/reliability_preflight_service.dart",
       "source": "reliability_preflight_service.dart",
       "kind": "static"
@@ -17316,6 +17859,12 @@
       "from": "lib/services/reliability/reliability_probe_impl.dart",
       "to": "lib/services/reliability/reliability_preflight_service.dart",
       "source": "reliability_preflight_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/reroute_constraints.dart",
+      "to": "lib/services/metro_vehicle_types.dart",
+      "source": "package:geowake2/services/metro_vehicle_types.dart",
       "kind": "static"
     },
     {
@@ -17484,6 +18033,18 @@
       "from": "lib/services/stop_matcher.dart",
       "to": "lib/services/polyline_decoder.dart",
       "source": "package:geowake2/services/polyline_decoder.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/telemetry/file_telemetry_sink.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/telemetry/telemetry_service.dart",
+      "to": "lib/services/telemetry/file_telemetry_sink.dart",
+      "source": "file_telemetry_sink.dart",
       "kind": "static"
     },
     {
@@ -17758,6 +18319,12 @@
     },
     {
       "from": "lib/services/tracking/notification_updater.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/tracking/notification_updater.dart",
       "to": "lib/services/location_manager.dart",
       "source": "package:geowake2/services/location_manager.dart",
       "kind": "static"
@@ -18012,6 +18579,12 @@
       "from": "lib/services/transfer_utils.dart",
       "to": "lib/data/metro_line_sequences.dart",
       "source": "package:geowake2/data/metro_line_sequences.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/transfer_utils.dart",
+      "to": "lib/services/metro_vehicle_types.dart",
+      "source": "package:geowake2/services/metro_vehicle_types.dart",
       "kind": "static"
     },
     {
@@ -18957,6 +19530,18 @@
       "kind": "static"
     },
     {
+      "from": "test/metro_data_integrity_test.dart",
+      "to": "lib/data/metro_line_sequences.dart",
+      "source": "package:geowake2/data/metro_line_sequences.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/metro_data_integrity_test.dart",
+      "to": "lib/all_india_stops.dart",
+      "source": "package:geowake2/all_india_stops.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/metro_final_station_alarm_test.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
@@ -18996,6 +19581,24 @@
       "from": "test/metro_stops_prior_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/metro_vehicle_types_test.dart",
+      "to": "lib/services/metro_vehicle_types.dart",
+      "source": "package:geowake2/services/metro_vehicle_types.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/metro_vehicle_types_test.dart",
+      "to": "lib/services/reroute_constraints.dart",
+      "source": "package:geowake2/services/reroute_constraints.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/metro_vehicle_types_test.dart",
+      "to": "lib/services/transfer_utils.dart",
+      "source": "package:geowake2/services/transfer_utils.dart",
       "kind": "static"
     },
     {
@@ -19164,6 +19767,24 @@
       "from": "test/notification_action_classification_test.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/notification_backstop_lead_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/notification_backstop_lead_test.dart",
+      "to": "lib/services/notification_service.dart",
+      "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/notification_backstop_lead_test.dart",
+      "to": "lib/services/tracking/notification_updater.dart",
+      "source": "package:geowake2/services/tracking/notification_updater.dart",
       "kind": "static"
     },
     {
@@ -19401,6 +20022,18 @@
       "kind": "static"
     },
     {
+      "from": "test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "to": "lib/services/reliability/reliability_preflight_runner.dart",
+      "source": "package:geowake2/services/reliability/reliability_preflight_runner.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "to": "lib/services/reliability/reliability_preflight_service.dart",
+      "source": "package:geowake2/services/reliability/reliability_preflight_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/reliability/reliability_preflight_test.dart",
       "to": "lib/services/reliability/reliability_preflight_service.dart",
       "source": "package:geowake2/services/reliability/reliability_preflight_service.dart",
@@ -19542,6 +20175,18 @@
       "from": "test/route_cache_integration_test.dart",
       "to": "lib/services/direction_service.dart",
       "source": "package:geowake2/services/direction_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/route_cache_pin_test.dart",
+      "to": "lib/services/offline_coordinator.dart",
+      "source": "package:geowake2/services/offline_coordinator.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/route_cache_pin_test.dart",
+      "to": "lib/services/route_cache.dart",
+      "source": "package:geowake2/services/route_cache.dart",
       "kind": "static"
     },
     {
@@ -19731,6 +20376,18 @@
       "kind": "static"
     },
     {
+      "from": "test/services/projection_correction_test.dart",
+      "to": "lib/services/polyline_decoder.dart",
+      "source": "package:geowake2/services/polyline_decoder.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/projection_correction_test.dart",
+      "to": "lib/services/stop_matcher.dart",
+      "source": "package:geowake2/services/stop_matcher.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/services/testing/osm_graph_test.dart",
       "to": "lib/services/testing/osm_graph.dart",
       "source": "package:geowake2/services/testing/osm_graph.dart",
@@ -19884,6 +20541,18 @@
       "from": "test/switch_point_logic_test.dart",
       "to": "lib/services/transfer_utils.dart",
       "source": "package:geowake2/services/transfer_utils.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/telemetry/file_telemetry_sink_test.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "package:geowake2/services/telemetry/telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/telemetry/file_telemetry_sink_test.dart",
+      "to": "lib/services/telemetry/file_telemetry_sink.dart",
+      "source": "package:geowake2/services/telemetry/file_telemetry_sink.dart",
       "kind": "static"
     },
     {
@@ -20922,6 +21591,12 @@
         "name": "DestinationValidationResult"
       }
     ],
+    "lib/services/metro_vehicle_types.dart": [
+      {
+        "kind": "const",
+        "name": "kMetroVehicleTypes"
+      }
+    ],
     "lib/services/monetization/ad_policy.dart": [
       {
         "kind": "class",
@@ -21132,6 +21807,14 @@
         "name": "ReliabilityPreflightRunner"
       },
       {
+        "kind": "class",
+        "name": "PreflightFixLauncher"
+      },
+      {
+        "kind": "class",
+        "name": "PlatformPreflightFixLauncher"
+      },
+      {
         "kind": "function",
         "name": "showReliabilityPreflightDialog"
       }
@@ -21314,6 +21997,12 @@
       {
         "kind": "class",
         "name": "StopMatcher"
+      }
+    ],
+    "lib/services/telemetry/file_telemetry_sink.dart": [
+      {
+        "kind": "class",
+        "name": "FileTelemetrySink"
       }
     ],
     "lib/services/telemetry/telemetry_service.dart": [
@@ -21726,7 +22415,7 @@
   "topFanIn": [
     {
       "file": "lib/services/transfer_utils.dart",
-      "importers": 58,
+      "importers": 59,
       "exports": [
         "TransitLegStops",
         "RouteEventBoundary",
@@ -21747,7 +22436,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 36,
+      "importers": 37,
       "exports": [
         "NotificationService",
         "NotificationActionOutcome",
@@ -21820,6 +22509,19 @@
       ]
     },
     {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 12,
+      "exports": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
+      ]
+    },
+    {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
       "importers": 11,
       "exports": [
@@ -21853,19 +22555,6 @@
         "ipcLog",
         "sensorLog",
         "stateLog"
-      ]
-    },
-    {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 10,
-      "exports": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
       ]
     },
     {
@@ -21917,6 +22606,14 @@
       ]
     },
     {
+      "file": "lib/services/route_cache.dart",
+      "importers": 8,
+      "exports": [
+        "RouteCacheEntry",
+        "RouteCache"
+      ]
+    },
+    {
       "file": "lib/services/snap_to_route.dart",
       "importers": 8,
       "exports": [
@@ -21950,39 +22647,8 @@
       ]
     },
     {
-      "file": "lib/services/polyline_simplifier.dart",
-      "importers": 7,
-      "exports": [
-        "PolylineSimplifier"
-      ]
-    },
-    {
-      "file": "lib/services/route_cache.dart",
-      "importers": 7,
-      "exports": [
-        "RouteCacheEntry",
-        "RouteCache"
-      ]
-    },
-    {
-      "file": "lib/services/testing/osm_graph.dart",
-      "importers": 7,
-      "exports": [
-        "OsmNode",
-        "OsmEdge",
-        "OsmGraph",
-        "RoadType",
-        "LatLngDistance"
-      ]
-    },
-    {
-      "file": "geowake-server/src/config/config.js",
-      "importers": 6,
-      "exports": []
-    },
-    {
       "file": "lib/services/offline_coordinator.dart",
-      "importers": 6,
+      "importers": 7,
       "exports": [
         "OfflineRouteResult",
         "DirectionsProvider",
@@ -21995,7 +22661,7 @@
     },
     {
       "file": "lib/services/polyline_decoder.dart",
-      "importers": 6,
+      "importers": 7,
       "exports": [
         "decodePolyline",
         "haversineDistance",
@@ -22003,6 +22669,40 @@
         "pointAlongPolyline",
         "estimateStopPositions",
         "stopDistancesAlongPolyline"
+      ]
+    },
+    {
+      "file": "lib/services/polyline_simplifier.dart",
+      "importers": 7,
+      "exports": [
+        "PolylineSimplifier"
+      ]
+    },
+    {
+      "file": "lib/services/reliability/reliability_preflight_service.dart",
+      "importers": 7,
+      "exports": [
+        "PreflightIssueCode",
+        "PreflightFixAction",
+        "PreflightIssue",
+        "PreflightResult",
+        "ReliabilityProbe",
+        "FakeReliabilityProbe",
+        "ReliabilityPreflightService",
+        "PreflightLevel",
+        "PreflightSeverity"
+      ]
+    },
+    {
+      "file": "lib/services/telemetry/telemetry_service.dart",
+      "importers": 7,
+      "exports": [
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
       ]
     }
   ],
@@ -22064,6 +22764,10 @@
       "imports": 6
     },
     {
+      "file": "lib/services/tracking/notification_updater.dart",
+      "imports": 6
+    },
+    {
       "file": "test/dashboard/deviation_dashboard_integration_test.dart",
       "imports": 6
     },
@@ -22084,7 +22788,7 @@
       "imports": 5
     },
     {
-      "file": "lib/services/tracking/notification_updater.dart",
+      "file": "lib/services/transfer_utils.dart",
       "imports": 5
     },
     {
@@ -22122,16 +22826,12 @@
     {
       "file": "lib/services/tracking/alarm_context_builder.dart",
       "imports": 4
-    },
-    {
-      "file": "lib/services/tracking/foreground_bridge.dart",
-      "imports": 4
     }
   ],
   "changeImpact": [
     {
       "file": "lib/services/transfer_utils.dart",
-      "importers": 58,
+      "importers": 59,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/screens/homescreen.dart",
@@ -22171,6 +22871,7 @@
         "test/maptracking_eta_distance_test.dart",
         "test/metro_final_station_alarm_test.dart",
         "test/metro_ordered_sequence_test.dart",
+        "test/metro_vehicle_types_test.dart",
         "test/metro_wrong_snap_test.dart",
         "test/mixed_mode_regression_test.dart",
         "test/persistence_repro.dart",
@@ -22259,7 +22960,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 36,
+      "importers": 37,
       "directDependents": [
         "integration_test/device_alarm_integration_test.dart",
         "lib/debug/demo_tools.dart",
@@ -22285,6 +22986,7 @@
         "test/mixed_mode_regression_test.dart",
         "test/multiple_switch_point_alarm_test.dart",
         "test/notification_action_classification_test.dart",
+        "test/notification_backstop_lead_test.dart",
         "test/notification_behavior_spec_test.dart",
         "test/notification_service_test.dart",
         "test/notification_tap_navigation_widget_test.dart",
@@ -22516,6 +23218,34 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 12,
+      "directDependents": [
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/ios/ios_backstop_planner.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/integration/reachability_ride_scenario_test.dart",
+        "test/integration/reachability_scenarios_test.dart",
+        "test/ios/ios_backstop_edgecases_test.dart",
+        "test/ios/ios_backstop_planner_test.dart",
+        "test/notification_backstop_lead_test.dart",
+        "test/reachability/reachability_edgecases_test.dart",
+        "test/reachability/reachability_test.dart"
+      ],
+      "exportedSymbols": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
       "importers": 11,
       "directDependents": [
@@ -22589,32 +23319,6 @@
         "ipcLog",
         "sensorLog",
         "stateLog"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 10,
-      "directDependents": [
-        "lib/services/alarm_evaluator.dart",
-        "lib/services/ios/ios_backstop_planner.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "test/ekf/replay_harness_test.dart",
-        "test/integration/reachability_ride_scenario_test.dart",
-        "test/integration/reachability_scenarios_test.dart",
-        "test/ios/ios_backstop_edgecases_test.dart",
-        "test/ios/ios_backstop_planner_test.dart",
-        "test/reachability/reachability_edgecases_test.dart",
-        "test/reachability/reachability_test.dart"
-      ],
-      "exportedSymbols": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
       ],
       "riskLevel": "high"
     },
@@ -22736,6 +23440,25 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/route_cache.dart",
+      "importers": 8,
+      "directDependents": [
+        "lib/services/direction_service.dart",
+        "lib/services/offline_coordinator.dart",
+        "lib/services/route_session_manager.dart",
+        "test/direction_service_behavior_test.dart",
+        "test/integration/offline_scenario_test.dart",
+        "test/offline_coordinator_test.dart",
+        "test/offline_routing_guard_test.dart",
+        "test/route_cache_pin_test.dart"
+      ],
+      "exportedSymbols": [
+        "RouteCacheEntry",
+        "RouteCache"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/snap_to_route.dart",
       "importers": 8,
       "directDependents": [
@@ -22810,6 +23533,51 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/offline_coordinator.dart",
+      "importers": 7,
+      "directDependents": [
+        "lib/screens/homescreen.dart",
+        "lib/services/route_session_manager.dart",
+        "lib/services/trackingservice.dart",
+        "test/integration/offline_scenario_test.dart",
+        "test/offline_coordinator_test.dart",
+        "test/offline_routing_guard_test.dart",
+        "test/route_cache_pin_test.dart"
+      ],
+      "exportedSymbols": [
+        "OfflineRouteResult",
+        "DirectionsProvider",
+        "DefaultDirectionsProvider",
+        "RouteCachePort",
+        "DefaultRouteCachePort",
+        "OfflineCoordinator",
+        "RouteSource"
+      ],
+      "riskLevel": "high"
+    },
+    {
+      "file": "lib/services/polyline_decoder.dart",
+      "importers": 7,
+      "directDependents": [
+        "lib/screens/maptracking.dart",
+        "lib/services/direction_service.dart",
+        "lib/services/route_session_manager.dart",
+        "lib/services/stop_matcher.dart",
+        "lib/services/transfer_utils.dart",
+        "test/services/projection_correction_test.dart",
+        "test/transit_leg_stops_test.dart"
+      ],
+      "exportedSymbols": [
+        "decodePolyline",
+        "haversineDistance",
+        "polylineLength",
+        "pointAlongPolyline",
+        "estimateStopPositions",
+        "stopDistancesAlongPolyline"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/polyline_simplifier.dart",
       "importers": 7,
       "directDependents": [
@@ -22827,98 +23595,49 @@
       "riskLevel": "high"
     },
     {
-      "file": "lib/services/route_cache.dart",
+      "file": "lib/services/reliability/reliability_preflight_service.dart",
       "importers": 7,
       "directDependents": [
-        "lib/services/direction_service.dart",
-        "lib/services/offline_coordinator.dart",
-        "lib/services/route_session_manager.dart",
-        "test/direction_service_behavior_test.dart",
-        "test/integration/offline_scenario_test.dart",
-        "test/offline_coordinator_test.dart",
-        "test/offline_routing_guard_test.dart"
+        "lib/services/reliability/reliability_preflight_runner.dart",
+        "lib/services/reliability/reliability_probe_impl.dart",
+        "test/integration/preflight_arm_scenario_test.dart",
+        "test/reliability/reliability_preflight_combinatorial_test.dart",
+        "test/reliability/reliability_preflight_delivery_channel_test.dart",
+        "test/reliability/reliability_preflight_test.dart",
+        "test/widgets/preflight_dialog_widget_test.dart"
       ],
       "exportedSymbols": [
-        "RouteCacheEntry",
-        "RouteCache"
+        "PreflightIssueCode",
+        "PreflightFixAction",
+        "PreflightIssue",
+        "PreflightResult",
+        "ReliabilityProbe",
+        "FakeReliabilityProbe",
+        "ReliabilityPreflightService",
+        "PreflightLevel",
+        "PreflightSeverity"
       ],
       "riskLevel": "high"
     },
     {
-      "file": "lib/services/testing/osm_graph.dart",
+      "file": "lib/services/telemetry/telemetry_service.dart",
       "importers": 7,
       "directDependents": [
-        "lib/dashboard/deviation_dashboard.dart",
-        "lib/dashboard/deviation_simulation_controller.dart",
-        "lib/services/testing/osm_loader.dart",
-        "lib/services/testing/pathfinder.dart",
-        "test/dashboard/deviation_dashboard_integration_test.dart",
-        "test/services/testing/osm_graph_test.dart",
-        "test/services/testing/pathfinder_test.dart"
+        "lib/main.dart",
+        "lib/services/telemetry/file_telemetry_sink.dart",
+        "lib/services/telemetry/telemetry_session.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "test/telemetry/file_telemetry_sink_test.dart",
+        "test/telemetry/telemetry_edgecases_test.dart",
+        "test/telemetry/telemetry_service_test.dart"
       ],
       "exportedSymbols": [
-        "OsmNode",
-        "OsmEdge",
-        "OsmGraph",
-        "RoadType",
-        "LatLngDistance"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "geowake-server/src/config/config.js",
-      "importers": 6,
-      "directDependents": [
-        "geowake-server/src/controllers/authController.js",
-        "geowake-server/src/controllers/mapsController.js",
-        "geowake-server/src/middleware/auth.js",
-        "geowake-server/src/middleware/security.js",
-        "geowake-server/src/server.js",
-        "geowake-server/src/utils/cache.js"
-      ],
-      "exportedSymbols": [],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/offline_coordinator.dart",
-      "importers": 6,
-      "directDependents": [
-        "lib/screens/homescreen.dart",
-        "lib/services/route_session_manager.dart",
-        "lib/services/trackingservice.dart",
-        "test/integration/offline_scenario_test.dart",
-        "test/offline_coordinator_test.dart",
-        "test/offline_routing_guard_test.dart"
-      ],
-      "exportedSymbols": [
-        "OfflineRouteResult",
-        "DirectionsProvider",
-        "DefaultDirectionsProvider",
-        "RouteCachePort",
-        "DefaultRouteCachePort",
-        "OfflineCoordinator",
-        "RouteSource"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/polyline_decoder.dart",
-      "importers": 6,
-      "directDependents": [
-        "lib/screens/maptracking.dart",
-        "lib/services/direction_service.dart",
-        "lib/services/route_session_manager.dart",
-        "lib/services/stop_matcher.dart",
-        "lib/services/transfer_utils.dart",
-        "test/transit_leg_stops_test.dart"
-      ],
-      "exportedSymbols": [
-        "decodePolyline",
-        "haversineDistance",
-        "polylineLength",
-        "pointAlongPolyline",
-        "estimateStopPositions",
-        "stopDistancesAlongPolyline"
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
       ],
       "riskLevel": "high"
     }

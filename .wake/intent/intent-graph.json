@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "3ff862ab644b8253a01688319e0fa8505ca00799",
-  "generatedAt": "2026-07-18T09:41:15+05:30",
-  "structuralDigest": "2bed31386873fa4cf7e8c3f3cdc18a668efbd359",
+  "gitCommit": "873313e796f246d69246ddc5cc866439566a042d",
+  "generatedAt": "2026-07-18T09:49:37+05:30",
+  "structuralDigest": "6741d4d29a0a392e41e3d67a106b01ff1eff2526",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 890,
-    "edgeCount": 1815,
+    "nodeCount": 911,
+    "edgeCount": 1850,
     "byLevel": {
       "feature": 9,
-      "file": 316,
+      "file": 326,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 530
+      "symbol": 541
     },
     "byEdgeType": {
-      "contains": 652,
-      "depends-on": 646,
+      "contains": 663,
+      "depends-on": 670,
       "references": 517
     }
   },
@@ -339,7 +339,7 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 0
     },
     {
@@ -405,13 +405,24 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 0
     },
     {
       "id": "file:geowake-server/test/auth.test.js",
       "level": "file",
       "label": "geowake-server/test/auth.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/test/maps_error_body.test.js",
+      "level": "file",
+      "label": "geowake-server/test/maps_error_body.test.js",
       "deterministic": true,
       "source": "map",
       "role": "backend",
@@ -449,7 +460,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -735,7 +746,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 10,
+      "importers": 12,
       "exportCount": 7
     },
     {
@@ -878,7 +889,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 2
     },
     {
@@ -1179,6 +1190,17 @@
       "exportCount": 3
     },
     {
+      "id": "file:lib/services/metro_vehicle_types.dart",
+      "level": "file",
+      "label": "lib/services/metro_vehicle_types.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 3,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/services/monetization/ad_policy.dart",
       "level": "file",
       "label": "lib/services/monetization/ad_policy.dart",
@@ -1274,7 +1296,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 36,
+      "importers": 37,
       "exportCount": 3
     },
     {
@@ -1285,7 +1307,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -1296,7 +1318,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 7
     },
     {
@@ -1340,7 +1362,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 6
     },
     {
@@ -1395,8 +1417,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
-      "exportCount": 2
+      "importers": 4,
+      "exportCount": 4
     },
     {
       "id": "file:lib/services/reliability/reliability_preflight_service.dart",
@@ -1406,7 +1428,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 9
     },
     {
@@ -1428,7 +1450,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 6,
       "exportCount": 2
     },
     {
@@ -1450,7 +1472,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 7,
+      "importers": 8,
       "exportCount": 2
     },
     {
@@ -1593,8 +1615,19 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 3
+    },
+    {
+      "id": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "level": "file",
+      "label": "lib/services/telemetry/file_telemetry_sink.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
     },
     {
       "id": "file:lib/services/telemetry/telemetry_service.dart",
@@ -1604,7 +1637,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 7,
       "exportCount": 6
     },
     {
@@ -1758,7 +1791,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 3
     },
     {
@@ -1802,7 +1835,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 58,
+      "importers": 59,
       "exportCount": 3
     },
     {
@@ -2642,6 +2675,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/metro_data_integrity_test.dart",
+      "level": "file",
+      "label": "test/metro_data_integrity_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/metro_final_station_alarm_test.dart",
       "level": "file",
       "label": "test/metro_final_station_alarm_test.dart",
@@ -2673,6 +2717,17 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 3
+    },
+    {
+      "id": "file:test/metro_vehicle_types_test.dart",
+      "level": "file",
+      "label": "test/metro_vehicle_types_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
     },
     {
       "id": "file:test/metro_wrong_snap_test.dart",
@@ -2810,6 +2865,17 @@
       "id": "file:test/notification_action_classification_test.dart",
       "level": "file",
       "label": "test/notification_action_classification_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/notification_backstop_lead_test.dart",
+      "level": "file",
+      "label": "test/notification_backstop_lead_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -3049,6 +3115,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "level": "file",
+      "label": "test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/reliability/reliability_preflight_test.dart",
       "level": "file",
       "label": "test/reliability/reliability_preflight_test.dart",
@@ -3173,6 +3250,17 @@
       "id": "file:test/route_cache_integration_test.dart",
       "level": "file",
       "label": "test/route_cache_integration_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/route_cache_pin_test.dart",
+      "level": "file",
+      "label": "test/route_cache_pin_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -3346,6 +3434,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/services/projection_correction_test.dart",
+      "level": "file",
+      "label": "test/services/projection_correction_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/services/testing/osm_graph_test.dart",
       "level": "file",
       "label": "test/services/testing/osm_graph_test.dart",
@@ -3481,6 +3580,17 @@
       "id": "file:test/switch_point_logic_test.dart",
       "level": "file",
       "label": "test/switch_point_logic_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/telemetry/file_telemetry_sink_test.dart",
+      "level": "file",
+      "label": "test/telemetry/file_telemetry_sink_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -5813,6 +5923,15 @@
       "file": "lib/services/metro_stop_service.dart"
     },
     {
+      "id": "symbol:lib/services/metro_vehicle_types.dart#kMetroVehicleTypes",
+      "level": "symbol",
+      "label": "kMetroVehicleTypes",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/metro_vehicle_types.dart"
+    },
+    {
       "id": "symbol:lib/services/monetization/ad_policy.dart#AdPlacement",
       "level": "symbol",
       "label": "AdPlacement",
@@ -6191,6 +6310,24 @@
       "file": "lib/services/position/position_provider.dart"
     },
     {
+      "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#PlatformPreflightFixLauncher",
+      "level": "symbol",
+      "label": "PlatformPreflightFixLauncher",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_runner.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#PreflightFixLauncher",
+      "level": "symbol",
+      "label": "PreflightFixLauncher",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_runner.dart"
+    },
+    {
       "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#ReliabilityPreflightRunner",
       "level": "symbol",
       "label": "ReliabilityPreflightRunner",
@@ -6531,6 +6668,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/stop_matcher.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/file_telemetry_sink.dart#FileTelemetrySink",
+      "level": "symbol",
+      "label": "FileTelemetrySink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/file_telemetry_sink.dart"
     },
     {
       "id": "symbol:lib/services/telemetry/telemetry_service.dart#AlarmOutcome",
@@ -7874,6 +8020,15 @@
       "file": "test/metro_alarm_reliability_test.dart"
     },
     {
+      "id": "symbol:test/metro_data_integrity_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/metro_data_integrity_test.dart"
+    },
+    {
       "id": "symbol:test/metro_final_station_alarm_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -7926,6 +8081,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/metro_stops_prior_test.dart"
+    },
+    {
+      "id": "symbol:test/metro_vehicle_types_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/metro_vehicle_types_test.dart"
     },
     {
       "id": "symbol:test/metro_wrong_snap_test.dart#encodePolyline",
@@ -8106,6 +8270,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/notification_action_classification_test.dart"
+    },
+    {
+      "id": "symbol:test/notification_backstop_lead_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/notification_backstop_lead_test.dart"
     },
     {
       "id": "symbol:test/notification_behavior_spec_test.dart#main",
@@ -8333,6 +8506,15 @@
       "file": "test/reliability/reliability_preflight_combinatorial_test.dart"
     },
     {
+      "id": "symbol:test/reliability/reliability_preflight_delivery_channel_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reliability/reliability_preflight_delivery_channel_test.dart"
+    },
+    {
       "id": "symbol:test/reliability/reliability_preflight_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -8475,6 +8657,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/route_cache_integration_test.dart"
+    },
+    {
+      "id": "symbol:test/route_cache_pin_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/route_cache_pin_test.dart"
     },
     {
       "id": "symbol:test/route_cache_policy_test.dart#main",
@@ -8621,6 +8812,15 @@
       "file": "test/services/ekf_integration/smooth_acceleration_test.dart"
     },
     {
+      "id": "symbol:test/services/projection_correction_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/projection_correction_test.dart"
+    },
+    {
       "id": "symbol:test/services/testing/osm_graph_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -8736,6 +8936,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/switch_point_logic_test.dart"
+    },
+    {
+      "id": "symbol:test/telemetry/file_telemetry_sink_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/file_telemetry_sink_test.dart"
     },
     {
       "id": "symbol:test/telemetry/telemetry_edgecases_test.dart#main",
@@ -9872,6 +10081,20 @@
     {
       "from": "file:geowake-server/test/auth.test.js",
       "to": "file:geowake-server/src/server.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/maps_error_body.test.js",
+      "to": "file:geowake-server/src/controllers/mapsController.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/maps_error_body.test.js",
+      "to": "file:geowake-server/src/utils/cache.js",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -13184,6 +13407,13 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/metro_vehicle_types.dart",
+      "to": "symbol:lib/services/metro_vehicle_types.dart#kMetroVehicleTypes",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/monetization/ad_policy.dart",
       "to": "symbol:lib/services/monetization/ad_policy.dart#AdPlacement",
       "type": "contains",
@@ -13706,6 +13936,13 @@
     },
     {
       "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "file:lib/services/oem_autostart_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
       "to": "file:lib/services/reliability/reliability_preflight_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -13715,6 +13952,20 @@
       "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
       "to": "file:lib/services/reliability/reliability_probe_impl.dart",
       "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_runner.dart#PlatformPreflightFixLauncher",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_runner.dart#PreflightFixLauncher",
+      "type": "contains",
       "deterministic": true,
       "source": "map"
     },
@@ -13806,6 +14057,13 @@
       "from": "file:lib/services/reliability/reliability_probe_impl.dart",
       "to": "symbol:lib/services/reliability/reliability_probe_impl.dart#PlatformReliabilityProbe",
       "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reroute_constraints.dart",
+      "to": "file:lib/services/metro_vehicle_types.dart",
+      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },
@@ -14392,6 +14650,27 @@
       "from": "file:lib/services/stop_matcher.dart",
       "to": "symbol:lib/services/stop_matcher.dart#StopMatcher",
       "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "to": "symbol:lib/services/telemetry/file_telemetry_sink.dart#FileTelemetrySink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },
@@ -15285,6 +15564,13 @@
     },
     {
       "from": "file:lib/services/tracking/notification_updater.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/notification_updater.dart",
       "to": "file:lib/services/location_manager.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -15902,6 +16188,13 @@
     {
       "from": "file:lib/services/transfer_utils.dart",
       "to": "file:lib/data/metro_line_sequences.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/transfer_utils.dart",
+      "to": "file:lib/services/metro_vehicle_types.dart",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -18762,6 +19055,27 @@
       "source": "map"
     },
     {
+      "from": "file:test/metro_data_integrity_test.dart",
+      "to": "file:lib/all_india_stops.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_data_integrity_test.dart",
+      "to": "file:lib/data/metro_line_sequences.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_data_integrity_test.dart",
+      "to": "symbol:test/metro_data_integrity_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/metro_final_station_alarm_test.dart",
       "to": "file:lib/services/notification_service.dart",
       "type": "depends-on",
@@ -18888,6 +19202,34 @@
     {
       "from": "file:test/metro_stops_prior_test.dart",
       "to": "symbol:test/metro_stops_prior_test.dart#syntheticMetroDirections",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_vehicle_types_test.dart",
+      "to": "file:lib/services/metro_vehicle_types.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_vehicle_types_test.dart",
+      "to": "file:lib/services/reroute_constraints.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_vehicle_types_test.dart",
+      "to": "file:lib/services/transfer_utils.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/metro_vehicle_types_test.dart",
+      "to": "symbol:test/metro_vehicle_types_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -19296,6 +19638,34 @@
     {
       "from": "file:test/notification_action_classification_test.dart",
       "to": "symbol:test/notification_action_classification_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/notification_backstop_lead_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/notification_backstop_lead_test.dart",
+      "to": "file:lib/services/notification_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/notification_backstop_lead_test.dart",
+      "to": "file:lib/services/tracking/notification_updater.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/notification_backstop_lead_test.dart",
+      "to": "symbol:test/notification_backstop_lead_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -20045,6 +20415,27 @@
       "source": "map"
     },
     {
+      "from": "file:test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_delivery_channel_test.dart",
+      "to": "symbol:test/reliability/reliability_preflight_delivery_channel_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/reliability/reliability_preflight_test.dart",
       "to": "file:lib/services/reliability/reliability_preflight_service.dart",
       "type": "depends-on",
@@ -20496,6 +20887,27 @@
     {
       "from": "file:test/route_cache_integration_test.dart",
       "to": "symbol:test/route_cache_integration_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/route_cache_pin_test.dart",
+      "to": "file:lib/services/offline_coordinator.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/route_cache_pin_test.dart",
+      "to": "file:lib/services/route_cache.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/route_cache_pin_test.dart",
+      "to": "symbol:test/route_cache_pin_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -21038,6 +21450,27 @@
       "source": "map"
     },
     {
+      "from": "file:test/services/projection_correction_test.dart",
+      "to": "file:lib/services/polyline_decoder.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/projection_correction_test.dart",
+      "to": "file:lib/services/stop_matcher.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/projection_correction_test.dart",
+      "to": "symbol:test/services/projection_correction_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/services/testing/osm_graph_test.dart",
       "to": "file:lib/services/testing/osm_graph.dart",
       "type": "depends-on",
@@ -21514,6 +21947,27 @@
     {
       "from": "file:test/switch_point_logic_test.dart",
       "to": "symbol:test/switch_point_logic_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/file_telemetry_sink_test.dart",
+      "to": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/file_telemetry_sink_test.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/file_telemetry_sink_test.dart",
+      "to": "symbol:test/telemetry/file_telemetry_sink_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

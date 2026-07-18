@@ -23,6 +23,8 @@
 import 'dart:collection';
 import 'dart:convert';
 
+import 'file_telemetry_sink.dart';
+
 /// Outcome of a fired (or missed) alarm — the north-star metric.
 enum AlarmOutcome { onTime, early, late, missed, dismissed, snoozed }
 
@@ -67,13 +69,23 @@ class TelemetryEvent {
 }
 
 /// Sink interface — where events go. Implementations must not throw.
+///
+/// NOTE: implementers should `extends TelemetrySink` (not `implements`) so they
+/// inherit the no-op [flush] for free; under Dart's `implements` semantics a
+/// concrete interface method must still be re-declared.
 abstract class TelemetrySink {
   void add(TelemetryEvent event);
+
+  /// Flush any buffered events to durable storage. No-op by default so RAM-only
+  /// sinks (and tests) need not implement it. Called by [TelemetryService.flush]
+  /// before an anticipated process kill (backgrounded, low-memory, FGS stop,
+  /// Doze). Must never throw into the caller.
+  Future<void> flush() async {}
 }
 
 /// In-memory ring buffer sink (default; also used by tests). Bounded so a long
 /// session can never exhaust memory.
-class InMemoryTelemetrySink implements TelemetrySink {
+class InMemoryTelemetrySink extends TelemetrySink {
   final int capacity;
   final Queue<TelemetryEvent> _buf = Queue<TelemetryEvent>();
 
@@ -122,6 +134,34 @@ class TelemetryService {
     if (sinks != null) {
       if (replace) _sinks.clear();
       _sinks.addAll(sinks);
+    }
+  }
+
+  /// Register the production sink set: the in-memory ring buffer (for the debug
+  /// UI / tests) plus a durable [FileTelemetrySink] that survives process death
+  /// (BACKLOG #7 + #16). [dir] is injected by the caller (e.g. main.dart resolves
+  /// path_provider's getApplicationSupportDirectory) so this service keeps ZERO
+  /// dependency on path_provider and stays unit-testable against a temp dir.
+  /// Replaces any previously-registered sinks so it is idempotent.
+  void configureDefaultSinks({required String dir}) {
+    configure(
+      sinks: <TelemetrySink>[
+        InMemoryTelemetrySink(),
+        FileTelemetrySink(dir: dir),
+      ],
+      replace: true,
+    );
+  }
+
+  /// Flush every sink's buffer to durable storage. Fail-open: a throwing sink is
+  /// isolated and never propagates. Await this from AppLifecycleState.paused/
+  /// detached and the FGS stop/onDestroy path so buffered events survive the
+  /// kill the funnel exists to measure.
+  Future<void> flush() async {
+    for (final s in _sinks) {
+      try {
+        await s.flush();
+      } catch (_) {/* a bad sink must not break others or the caller */}
     }
   }
 

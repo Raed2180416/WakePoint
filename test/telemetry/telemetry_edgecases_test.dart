@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/services/telemetry/telemetry_service.dart';
 
 /// A sink that violates its contract by throwing on EVERY add.
-class _AlwaysThrowsSink implements TelemetrySink {
+class _AlwaysThrowsSink extends TelemetrySink {
   int calls = 0;
   @override
   void add(TelemetryEvent event) {

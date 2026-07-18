@@ -139,6 +139,13 @@ class RouteCache {
     int? departureTime,
     Duration ttl = defaultTtl,
     double originDeviationMeters = defaultOriginDeviationMeters,
+    // #23 active-route pin: a pinned read is the offline restore/reroute path.
+    // It bypasses the TTL / schema / planned-window staleness guards and is
+    // NON-destructive, so the last-good active route survives past its TTL and
+    // an offline trip longer than [ttl] can still be served its own route.
+    bool pinned = false,
+    // Optional per-call TTL override for unpinned reads (ignored when pinned).
+    Duration? ttlOverride,
   }) async {
     await _ensureOpen();
     final key = makeKey(
@@ -154,15 +161,19 @@ class RouteCache {
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
       final entry = RouteCacheEntry.fromJson(decoded);
 
-      // TTL check
-      if (DateTime.now().difference(entry.timestamp) > ttl) {
+      // TTL check. Skipped for pinned active-route reads, which must survive
+      // past the TTL non-destructively (offline reroute/restore relies on this).
+      final effectiveTtl = ttlOverride ?? ttl;
+      if (!pinned && DateTime.now().difference(entry.timestamp) > effectiveTtl) {
         dev.log('RouteCache stale by TTL. Key evicted.', name: 'RouteCache');
         await _box!.delete(key);
         return null;
       }
 
       // G17: schema-version guard. Entries written by an older schema are stale.
-      if (entry.schemaVersion != schemaVersion) {
+      // Pinned active-route reads bypass this so an in-flight route survives a
+      // schema bump mid-trip.
+      if (!pinned && entry.schemaVersion != schemaVersion) {
         dev.log(
           'RouteCache schema mismatch (${entry.schemaVersion} != $schemaVersion). Evicting.',
           name: 'RouteCache',
@@ -173,8 +184,10 @@ class RouteCache {
 
       // G17: planned-window guard. A route whose planned arrival is already in
       // the past is stale (esp. across a last-service boundary). Force a refresh.
+      // Pinned active-route reads bypass this: the active route is authoritative
+      // until the rider ends the trip.
       final arr = entry.plannedArrivalEpoch;
-      if (arr != null) {
+      if (!pinned && arr != null) {
         final arrivalTime = DateTime.fromMillisecondsSinceEpoch(arr * 1000);
         if (DateTime.now().isAfter(arrivalTime)) {
           dev.log(
@@ -198,7 +211,11 @@ class RouteCache {
           'RouteCache invalid by origin deviation ${devMeters.toStringAsFixed(0)}m.',
           name: 'RouteCache',
         );
-        await _box!.delete(key);
+        // Pinned active-route reads never evict; the deviation only suppresses
+        // this hit so a fresh route can be re-fetched once online again.
+        if (!pinned) {
+          await _box!.delete(key);
+        }
         return null;
       }
 

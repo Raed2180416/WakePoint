@@ -49,6 +49,9 @@ class WakepointNativePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
             }
             "isWakeLockHeld" -> result.success(wakeLock?.isHeld == true)
             "canUseFullScreenIntent" -> result.success(canUseFullScreenIntent())
+            "isNotificationPolicyAccessGranted" ->
+                result.success(isNotificationPolicyAccessGranted())
+            "isDndActive" -> result.success(isDndActive())
             else -> result.notImplemented()
         }
     }
@@ -80,5 +83,22 @@ class WakepointNativePlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
         if (Build.VERSION.SDK_INT < 34) return true
         val nm = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         return nm.canUseFullScreenIntent()
+    }
+
+    // #17: does the app hold ACCESS_NOTIFICATION_POLICY, so setBypassDnd(true) on
+    // the alarm channel actually takes effect? Without it the bypass silently
+    // no-ops and Do Not Disturb can mute the wake. (API 23+.)
+    private fun isNotificationPolicyAccessGranted(): Boolean {
+        val nm = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return nm.isNotificationPolicyAccessGranted
+    }
+
+    // #17: is Do Not Disturb currently filtering interruptions? INTERRUPTION_FILTER_ALL
+    // means DND is off; anything else (priority/alarms/none) means it is on. (API 23+.)
+    private fun isDndActive(): Boolean {
+        val nm = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val filter = nm.currentInterruptionFilter
+        return filter != NotificationManager.INTERRUPTION_FILTER_ALL &&
+            filter != NotificationManager.INTERRUPTION_FILTER_UNKNOWN
     }
 }

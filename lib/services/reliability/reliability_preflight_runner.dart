@@ -6,9 +6,16 @@
 // the UI. Everything here is fail-open — a preflight failure must never block
 // the user from arming their alarm.
 
+import 'dart:io' show Platform;
+
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../oem_autostart_service.dart';
 import 'reliability_preflight_service.dart';
 import 'reliability_probe_impl.dart';
 
@@ -82,7 +89,7 @@ Future<bool> showReliabilityPreflightDialog(
                     Expanded(child: Text(issue.message)),
                     if (issue.fixAction.isNotEmpty)
                       TextButton(
-                        onPressed: () => _applyFix(issue.fixAction),
+                        onPressed: () => applyReliabilityFix(issue.fixAction),
                         child: const Text('Fix'),
                       ),
                   ],
@@ -111,17 +118,108 @@ Future<bool> showReliabilityPreflightDialog(
   return proceed ?? !blocking;
 }
 
-/// Deep-link to the right settings screen for a fix action. Best-effort; all
-/// unknown actions fall back to the app's own settings page.
-Future<void> _applyFix(String fixAction) async {
+/// Opens the OS settings screen that resolves a given [PreflightFixAction].
+/// Split behind an interface so the routing (which action -> which screen) is
+/// unit-testable with a spy, without touching a real platform channel.
+abstract class PreflightFixLauncher {
+  const PreflightFixLauncher();
+  Future<void> openNotificationSettings();
+  Future<void> openExactAlarmSettings();
+  Future<void> openBatteryOptimizationSettings();
+  Future<void> openLocationSettings();
+  Future<void> openDndAccessSettings();
+  Future<void> openFullScreenIntentSettings();
+
+  /// Fallback for an unrecognised action: the app's own settings page.
+  Future<void> openAppSettingsFallback();
+}
+
+/// #19: route EACH fix action to its real deep-link. There is deliberately no
+/// fall-through collapsing the known actions to the app-settings page anymore —
+/// only a genuinely unknown action reaches
+/// [PreflightFixLauncher.openAppSettingsFallback].
+Future<void> applyReliabilityFix(
+  String fixAction, {
+  PreflightFixLauncher launcher = const PlatformPreflightFixLauncher(),
+}) async {
   try {
     switch (fixAction) {
-      case PreflightFixAction.openExactAlarmSettings:
-      case PreflightFixAction.openBatteryOptimizationSettings:
       case PreflightFixAction.openNotificationSettings:
+        await launcher.openNotificationSettings();
+        break;
+      case PreflightFixAction.openExactAlarmSettings:
+        await launcher.openExactAlarmSettings();
+        break;
+      case PreflightFixAction.openBatteryOptimizationSettings:
+        await launcher.openBatteryOptimizationSettings();
+        break;
       case PreflightFixAction.openLocationSettings:
+        await launcher.openLocationSettings();
+        break;
+      case PreflightFixAction.openDndAccessSettings:
+        await launcher.openDndAccessSettings();
+        break;
+      case PreflightFixAction.openFullScreenIntentSettings:
+        await launcher.openFullScreenIntentSettings();
+        break;
       default:
-        await openAppSettings();
+        await launcher.openAppSettingsFallback();
     }
-  } catch (_) {/* best effort */}
+  } catch (_) {/* best effort — opening a settings screen must never throw up */}
+}
+
+/// Real device launcher: OEM autostart deep-links for the battery/allowlist
+/// screens (the plain battery page does not cover MIUI/ColorOS/… allowlists),
+/// the framework Settings intents for DND + full-screen-intent, and the
+/// app_settings screens for the OS-standard ones. Every method is best-effort.
+class PlatformPreflightFixLauncher extends PreflightFixLauncher {
+  const PlatformPreflightFixLauncher();
+
+  @override
+  Future<void> openNotificationSettings() =>
+      AppSettings.openAppSettings(type: AppSettingsType.notification);
+
+  @override
+  Future<void> openExactAlarmSettings() =>
+      AppSettings.openAppSettings(type: AppSettingsType.alarm);
+
+  @override
+  Future<void> openBatteryOptimizationSettings() async {
+    await OemAutostartService.openAutoStartSettings();
+  }
+
+  @override
+  Future<void> openLocationSettings() =>
+      AppSettings.openAppSettings(type: AppSettingsType.location);
+
+  @override
+  Future<void> openDndAccessSettings() =>
+      _launchIntent('android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS');
+
+  @override
+  Future<void> openFullScreenIntentSettings() async {
+    if (!Platform.isAndroid) return;
+    final pkg = (await PackageInfo.fromPlatform()).packageName;
+    await _launchIntent(
+      'android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENT',
+      data: 'package:$pkg',
+    );
+  }
+
+  @override
+  Future<void> openAppSettingsFallback() => openAppSettings();
+
+  Future<void> _launchIntent(String action, {String? data}) async {
+    if (!Platform.isAndroid) return;
+    try {
+      final intent = AndroidIntent(
+        action: action,
+        data: data,
+        flags: const <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await intent.launch();
+    } catch (_) {
+      await openAppSettings();
+    }
+  }
 }

@@ -27,6 +27,7 @@ class FakeDirectionsProvider implements DirectionsProvider {
 
 class FakeCachePort implements RouteCachePort {
   RouteCacheEntry? entry;
+  bool? lastPinned;
   @override
   Future<RouteCacheEntry?> get({
     required LatLng origin,
@@ -34,7 +35,9 @@ class FakeCachePort implements RouteCachePort {
     required String mode,
     String? transitVariant,
     int? departureTime,
+    bool pinned = false,
   }) async {
+    lastPinned = pinned;
     return entry;
   }
 }

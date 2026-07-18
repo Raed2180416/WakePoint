@@ -11,6 +11,8 @@
 {"file":"geowake-server/src/middleware/security.js","name":"createRateLimit","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"createSlowDown","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"handleRateLimitError","signature":"(err, req, res, next) =>"}
+{"file":"geowake-server/test/maps_error_body.test.js","name":"makeReqRes","signature":"(body)"}
+{"file":"geowake-server/test/maps_error_body.test.js","name":"callDirections","signature":"(body)"}
 {"file":"integration_test/device_alarm_integration_test.dart","name":"main","signature":"()"}
 {"file":"lib/config/platform_test_flag_io.dart","name":"detectFlutterTest","signature":"()"}
 {"file":"lib/config/platform_test_flag_stub.dart","name":"detectFlutterTest","signature":"()"}
@@ -31,7 +33,6 @@
 {"file":"lib/services/polyline_decoder.dart","name":"stopDistancesAlongPolyline","signature":"(List<LatLng> polyline,\n  List<LatLng> stopPositions,)"}
 {"file":"lib/services/position/gps_position_provider.dart","name":"_defaultLocationSettings","signature":"()"}
 {"file":"lib/services/reliability/reliability_preflight_runner.dart","name":"showReliabilityPreflightDialog","signature":"(BuildContext context,\n  PreflightResult result,)"}
-{"file":"lib/services/reliability/reliability_preflight_runner.dart","name":"_applyFix","signature":"(String fixAction)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_encodeSnapshotInBackground","signature":"(Map<String, dynamic> json)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_minimizeDirectionsForSnapshot","signature":"(Map<String, dynamic>? directions,)"}
 {"file":"lib/services/trackingservice.dart","name":"onIosBackground","signature":"(ServiceInstance service)"}
@@ -154,6 +155,10 @@
 {"file":"test/log_helper.dart","name":"logWarn","signature":"(String message)"}
 {"file":"test/maptracking_eta_distance_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_alarm_reliability_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_data_integrity_test.dart","name":"_haversineMeters","signature":"(double lat1, double lng1, double lat2, double lng2)"}
+{"file":"test/metro_data_integrity_test.dart","name":"_deg2rad","signature":"(double d)"}
+{"file":"test/metro_data_integrity_test.dart","name":"_inIndiaBbox","signature":"(double lat, double lng)"}
+{"file":"test/metro_data_integrity_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_final_station_alarm_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_ordered_sequence_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/metro_ordered_sequence_test.dart","name":"_enc","signature":"(int v, StringBuffer s)"}
@@ -162,6 +167,10 @@
 {"file":"test/metro_stops_prior_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/metro_stops_prior_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/metro_stops_prior_test.dart","name":"main","signature":"()"}
+{"file":"test/metro_vehicle_types_test.dart","name":"_encodePolyline","signature":"(List<LatLng> points)"}
+{"file":"test/metro_vehicle_types_test.dart","name":"_enc","signature":"(int v, StringBuffer str)"}
+{"file":"test/metro_vehicle_types_test.dart","name":"_directionsForVehicle","signature":"(String vehicleType)"}
+{"file":"test/metro_vehicle_types_test.dart","name":"main","signature":"()"}
 {"file":"test/metro_wrong_snap_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/metro_wrong_snap_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/metro_wrong_snap_test.dart","name":"_directionsWithBluePolyline","signature":"(String lineShortName)"}
@@ -183,6 +192,7 @@
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"main","signature":"()"}
 {"file":"test/notification_action_classification_test.dart","name":"main","signature":"()"}
+{"file":"test/notification_backstop_lead_test.dart","name":"main","signature":"()"}
 {"file":"test/notification_behavior_spec_test.dart","name":"main","signature":"()"}
 {"file":"test/notification_service_test.dart","name":"main","signature":"()"}
 {"file":"test/notification_tap_navigation_widget_test.dart","name":"main","signature":"()"}
@@ -214,6 +224,7 @@
 {"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_expectGettersConsistent","signature":"(PreflightResult r)"}
 {"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_capitalize","signature":"(String s)"}
 {"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"main","signature":"()"}
+{"file":"test/reliability/reliability_preflight_delivery_channel_test.dart","name":"main","signature":"()"}
 {"file":"test/reliability/reliability_preflight_test.dart","name":"main","signature":"()"}
 {"file":"test/repro_mumbai_transfer_test.dart","name":"main","signature":"()"}
 {"file":"test/reproduce_distance_alarm_failure.dart","name":"main","signature":"()"}
@@ -237,6 +248,7 @@
 {"file":"test/reroute_constraints_test.dart","name":"_buildDirectionsWithMultipleTransitLegs","signature":"(int transitLegs)"}
 {"file":"test/reroute_policy_continuity_test.dart","name":"main","signature":"()"}
 {"file":"test/route_cache_integration_test.dart","name":"main","signature":"()"}
+{"file":"test/route_cache_pin_test.dart","name":"main","signature":"()"}
 {"file":"test/route_cache_policy_test.dart","name":"main","signature":"()"}
 {"file":"test/route_cache_transit_variant_test.dart","name":"main","signature":"()"}
 {"file":"test/route_events_test.dart","name":"main","signature":"()"}
@@ -253,6 +265,8 @@
 {"file":"test/services/ekf_integration/gps_recovery_large_innovation_test.dart","name":"_pointAtFraction","signature":"(RouteGeometry geom, double frac)"}
 {"file":"test/services/ekf_integration/long_tunnel_no_stops_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/smooth_acceleration_test.dart","name":"main","signature":"()"}
+{"file":"test/services/projection_correction_test.dart","name":"_toRad","signature":"(double deg)"}
+{"file":"test/services/projection_correction_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/osm_graph_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/osm_graph_test.dart","name":"_createMinimalWkpFile","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"main","signature":"()"}
@@ -268,6 +282,7 @@
 {"file":"test/stops_mode_validation_test.dart","name":"main","signature":"()"}
 {"file":"test/stops_prior_semantics_test.dart","name":"main","signature":"()"}
 {"file":"test/switch_point_logic_test.dart","name":"main","signature":"()"}
+{"file":"test/telemetry/file_telemetry_sink_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_edgecases_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_service_test.dart","name":"main","signature":"()"}
 {"file":"test/time_alarm_vm_test.dart","name":"main","signature":"()"}

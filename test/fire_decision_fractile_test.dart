@@ -44,12 +44,17 @@ void main() {
       expect(s, closeTo(sqrt(125), 1e-6));
     });
 
-    test('degrades to 0 (median firing) when speed is unusable', () {
-      expect(
-        AlarmEvaluator.etaSigmaSeconds(
-            etaSeconds: 100, speedMps: 0.3, sigmaSMeters: 50, sigmaVMps: 1),
-        0.0,
-      );
+    test('GAP #21: keeps a POSITIVE cushion when speed is unusable '
+        '(previously degraded to 0 => median firing / late-risk underground)', () {
+      final s = AlarmEvaluator.etaSigmaSeconds(
+          etaSeconds: 100, speedMps: 0.3, sigmaSMeters: 50, sigmaVMps: 1);
+      // Velocity is floored to etaSigmaSpeedFloorMps so position/velocity
+      // uncertainty still yields a real ETA cushion instead of collapsing to 0.
+      expect(s, greaterThan(0.0));
+      final vf = FireDecisionConfig.etaSigmaSpeedFloorMps;
+      final expected =
+          sqrt(pow(50 / vf, 2).toDouble() + pow(100 * 1 / vf, 2).toDouble());
+      expect(s, closeTo(expected, 1e-6));
     });
 
     test('degrades to 0 when no EKF sigma is available (back-compat)', () {

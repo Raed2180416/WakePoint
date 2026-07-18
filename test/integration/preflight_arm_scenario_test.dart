@@ -5,12 +5,12 @@
 // LEVEL UP: it drives whole India-market device situations through the arm flow
 // and proves the two things those unit tests can't:
 //
-//   1. The REAL arm-flow wiring is FAIL-OPEN. A `block` verdict (notifications
-//      off — the alarm literally cannot show) must NEVER prevent arming. We prove
-//      this through the actual production UI (showReliabilityPreflightDialog): the
-//      only path forward on a block is "Proceed anyway" — there is no cancel/deny
-//      that could gate arming — and after it, control returns to the caller which
-//      arms. Reliability is advisory, never a hard gate.
+//   1. The REAL arm-flow wiring is HONEST. A `block` verdict (notifications
+//      off — the alarm literally cannot show) refuses to arm rather than make a
+//      promise the OS won't let us keep. We prove this through the actual
+//      production UI (showReliabilityPreflightDialog): a block offers only
+//      "Cancel" (returns false → do NOT arm), while a `warn` verdict is advisory
+//      ("Got it" → proceed). A well-configured device is never interrupted.
 //
 //   2. The REAL device adapter (ReliabilityPreflightRunner.run() over the concrete
 //      PlatformReliabilityProbe) never crashes the arm path and always yields a
@@ -223,10 +223,11 @@ void main() {
   });
 
   // ===========================================================================
-  // FAIL-OPEN arm flow through the REAL production UI.
-  // A block never gates arming; a well-configured device is never interrupted.
+  // HONEST arm flow through the REAL production UI.
+  // A block refuses to arm (only "Cancel"); a warn is advisory ("Got it"); a
+  // well-configured device is never interrupted.
   // ===========================================================================
-  group('arm flow is fail-open (real showReliabilityPreflightDialog)', () {
+  group('arm flow is honest (real showReliabilityPreflightDialog)', () {
     testWidgets('well-configured device: no dialog, arming proceeds',
         (tester) async {
       final result = await _preflight(_device(manufacturer: 'Google'));
@@ -256,20 +257,20 @@ void main() {
     });
 
     testWidgets(
-        'notifications-off BLOCK: dialog offers ONLY "Proceed anyway"; arming proceeds',
+        'notifications-off BLOCK: dialog honestly refuses (offers only "Cancel")',
         (tester) async {
       final result =
           await _preflight(_device(manufacturer: 'samsung', notifications: false));
       expect(result.isBlocked, isTrue, reason: 'precondition: this is a block');
 
-      var armed = false;
+      bool? proceed;
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               onPressed: () async {
-                await showReliabilityPreflightDialog(context, result);
-                armed = true; // reached only after the dialog is dismissed.
+                // Capture the arm decision the dialog returns.
+                proceed = await showReliabilityPreflightDialog(context, result);
               },
               child: const Text('Arm'),
             ),
@@ -282,35 +283,35 @@ void main() {
 
       // The real arm-time dialog appears for a block, leading with the block copy.
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Your alarm may not be able to wake you'), findsOneWidget);
+      expect(find.text("Your alarm can't wake you yet"), findsOneWidget);
       // It is actionable (a "Fix" deep-link for the notifications issue)...
       expect(find.text('Fix'), findsOneWidget);
-      // ...and CRUCIALLY its only way forward is to proceed. There is NO
-      // cancel/deny that could gate arming — reliability is never a hard gate.
-      expect(find.text('Proceed anyway'), findsOneWidget);
-      expect(find.widgetWithText(TextButton, 'Cancel'), findsNothing);
+      // ...and CRUCIALLY its only action is "Cancel" — the block honestly refuses
+      // to arm a channel the OS won't let us deliver. No dismissible proceed path.
+      expect(find.text('Cancel'), findsOneWidget);
+      expect(find.text('Proceed anyway'), findsNothing);
       expect(find.widgetWithText(TextButton, 'Got it'), findsNothing);
-      // The arm flow is still parked on the dialog — not yet armed.
-      expect(armed, isFalse);
+      // Still parked on the dialog — no decision returned yet.
+      expect(proceed, isNull);
 
-      await tester.tap(find.text('Proceed anyway'));
+      await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
-      // Control returns to the caller, which proceeds to arm despite the block.
+      // The dialog closes and reports "do NOT arm" — a block gates arming.
       expect(find.byType(AlertDialog), findsNothing);
-      expect(armed, isTrue,
-          reason: 'a block must NEVER prevent arming (fail-open)');
+      expect(proceed, isFalse,
+          reason: 'a block must refuse to arm (honest, never-late)');
     });
   });
 
   // ===========================================================================
   // REAL device-adapter wiring: ReliabilityPreflightRunner.run() over the
   // concrete PlatformReliabilityProbe. Headless the OS plugins are unavailable;
-  // the arm path must still not crash and must stay fail-open.
+  // the arm path must not crash, and its verdict must be applied honestly.
   // ===========================================================================
-  group('real runner wiring never crashes / never gates arming', () {
+  group('real runner wiring never crashes / yields an honest verdict', () {
     testWidgets(
-        'run() yields a usable result and the arm flow proceeds whatever it says',
+        'run() yields a usable result and the dialog applies it honestly',
         (tester) async {
       // Reaching the next line at all proves run() did not throw — the arm path
       // is crash-safe even when every OS probe is unavailable. run() touches real
@@ -323,14 +324,13 @@ void main() {
           [result.isOk, result.isBlocked, result.hasWarnings].where((b) => b);
       expect(trueFlags.length, 1);
 
-      var armed = false;
+      bool? proceed;
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               onPressed: () async {
-                await showReliabilityPreflightDialog(context, result);
-                armed = true;
+                proceed = await showReliabilityPreflightDialog(context, result);
               },
               child: const Text('Arm'),
             ),
@@ -341,19 +341,28 @@ void main() {
       await tester.tap(find.text('Arm'));
       await tester.pumpAndSettle();
 
-      // Whatever the (environment-dependent) verdict, the ONLY action lets the
-      // rider proceed — never abort — so arming always goes through.
-      if (!result.isOk && result.issues.isNotEmpty) {
-        final proceedLabel = result.isBlocked ? 'Proceed anyway' : 'Got it';
-        expect(find.text(proceedLabel), findsOneWidget);
+      // Apply whatever (environment-dependent) verdict the dialog renders:
+      //  • ok / no issues → no dialog at all
+      //  • block          → only "Cancel" (honest refusal), never "Proceed anyway"
+      //  • warn           → only "Got it" (advisory)
+      if (result.isOk || result.issues.isEmpty) {
+        expect(find.byType(AlertDialog), findsNothing);
+      } else if (result.isBlocked) {
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Proceed anyway'), findsNothing);
+        expect(find.widgetWithText(TextButton, 'Got it'), findsNothing);
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+      } else {
+        expect(find.text('Got it'), findsOneWidget);
         expect(find.widgetWithText(TextButton, 'Cancel'), findsNothing);
-        await tester.tap(find.text(proceedLabel));
+        await tester.tap(find.text('Got it'));
         await tester.pumpAndSettle();
       }
 
       expect(find.byType(AlertDialog), findsNothing);
-      expect(armed, isTrue,
-          reason: 'the real arm flow must never be gated by reliability');
+      // A block refuses to arm; any other verdict proceeds. Never null/crash.
+      expect(proceed, result.isBlocked ? isFalse : isTrue);
     });
   });
 }

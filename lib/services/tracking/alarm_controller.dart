@@ -339,7 +339,7 @@ class AlarmController {
     // Fastest V_LINE across all legs => valid upper bound on any leg (safe).
     double vMax = VLineTable.defaultMps;
     for (final leg in legs) {
-      final v = _reach.vLineTable.forLine(lineName: leg.lineName);
+      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName);
       if (v.isFinite && v > vMax) vMax = v;
     }
 
@@ -888,7 +888,7 @@ class AlarmController {
     // is healthy (fresh anchor => bound ~= current progress).
     double vMaxModes = VLineTable.defaultMps;
     for (final leg in context.transitLegs) {
-      final v = _reach.vLineTable.forLine(lineName: leg.lineName);
+      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName);
       if (v.isFinite && v > vMaxModes) vMaxModes = v;
     }
     double? reachBoundModes;
@@ -1336,11 +1336,16 @@ class AlarmController {
     double? reachBoundMeters;
     {
       String? reachLineName;
+      String? reachCity;
       RouteTopology? reachTopo;
       if (currentLegIndex >= 0 &&
           currentLegIndex < context.transitLegs.length) {
         final leg = context.transitLegs[currentLegIndex];
         reachLineName = leg.lineName;
+        // GAP #9: pass the geocoded city so a fast regional service (RRTS /
+        // Namo Bharat, city key "delhimeerutrrts") resolves its higher V_LINE
+        // ceiling even when the line name alone doesn't keyword-match.
+        reachCity = leg.cityKey;
         // Stations the train must pass on this leg (intermediate stops + the
         // alighting station) tighten the early-firing via the stop-count cap.
         final stops = <double>[
@@ -1354,6 +1359,7 @@ class AlarmController {
       }
       final b = _reach.boundNow(
         nowSeconds: _nowSeconds(),
+        city: reachCity,
         lineName: reachLineName,
         topology: reachTopo,
       );

@@ -1480,6 +1480,7 @@ class NotificationService {
           _alarmNotificationId,
           _progressNotificationId,
           _pausedNotificationId,
+          _etaBackstopNotificationId,
         ]);
       } catch (_) {}
       return;
@@ -1492,10 +1493,14 @@ class NotificationService {
       await _notificationsPlugin.cancel(_alarmNotificationId);
       await _notificationsPlugin.cancel(_progressNotificationId);
       await _notificationsPlugin.cancel(_pausedNotificationId);
+      // #11: also sweep the OS-scheduled ETA backstop (id 991); otherwise it
+      // stays armed after End Tracking and fires a spurious wake once the trip
+      // is over (cancelEtaBackstop only runs on the live isolate's _onStop).
+      await _notificationsPlugin.cancel(_etaBackstopNotificationId);
       // Cancel any other potential IDs just in case
       await _notificationsPlugin.cancel(8888);
       dev.log(
-        'All notifications cancelled (ID: 0, 888, 889, 8888)',
+        'All notifications cancelled (ID: 0, 888, 889, 991, 8888)',
         name: 'NotificationService',
       );
     } catch (e) {
@@ -1677,6 +1682,10 @@ void notificationTapBackground(NotificationResponse response) async {
       await plugin.cancel(0);
       await plugin.cancel(888);
       await plugin.cancel(889);
+      // #11: the tracking isolate that would normally call cancelEtaBackstop()
+      // is dead on this background path, so cancel the OS ETA backstop (id 991)
+      // here — otherwise it stays armed and wakes the rider after the trip.
+      await plugin.cancel(NotificationService._etaBackstopNotificationId);
     } catch (_) {}
     return;
   }

@@ -149,7 +149,7 @@ List<double> stopDistancesAlongPolyline(
 
     for (int i = 0; i < polyline.length - 1; i++) {
       // Project stop onto segment [i, i+1]
-      final projected = _projectPointOnSegment(
+      final projected = projectPointOnSegment(
         polyline[i],
         polyline[i + 1],
         stop,
@@ -200,7 +200,7 @@ snapPointToPolyline(List<LatLng> polyline, LatLng point) {
   double bestMetersAlong = 0.0;
 
   for (int i = 0; i < polyline.length - 1; i++) {
-    final projected = _projectPointOnSegment(
+    final projected = projectPointOnSegment(
       polyline[i],
       polyline[i + 1],
       point,
@@ -223,13 +223,26 @@ snapPointToPolyline(List<LatLng> polyline, LatLng point) {
   );
 }
 
-/// Project a point onto a line segment, returning the closest point on the segment.
-({LatLng point, double t}) _projectPointOnSegment(
+/// Project a point onto a line segment, returning the closest point on the
+/// segment and the clamped parameter `t` in [0, 1].
+///
+/// Uses an equirectangular (cos-latitude) correction so longitude and latitude
+/// deltas are compared in a common metric, matching [SnapToRouteEngine]. Without
+/// it, projections onto east-west-leaning segments are skewed because one degree
+/// of longitude spans fewer meters than one degree of latitude away from the
+/// equator. This is the single shared projector for every stop snapper so their
+/// geometry cannot diverge. Behaviour is unchanged for purely north-south
+/// segments (where the longitude delta, and thus the correction, is zero).
+({LatLng point, double t}) projectPointOnSegment(
   LatLng a,
   LatLng b,
   LatLng p,
 ) {
-  final dx = b.longitude - a.longitude;
+  // Scale longitude deltas by cos(reference latitude) so they are metric-
+  // consistent with latitude deltas. Use the segment midpoint latitude.
+  final double cosLat = cos(_toRadians((a.latitude + b.latitude) * 0.5));
+
+  final dx = (b.longitude - a.longitude) * cosLat;
   final dy = b.latitude - a.latitude;
   final lenSq = dx * dx + dy * dy;
 
@@ -238,11 +251,16 @@ snapPointToPolyline(List<LatLng> polyline, LatLng point) {
     return (point: a, t: 0.0);
   }
 
-  // Calculate projection parameter t
+  // Calculate projection parameter t in the cos-lat-corrected space.
   double t =
-      ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
-      lenSq;
+      ((p.longitude - a.longitude) * cosLat * dx +
+              (p.latitude - a.latitude) * dy) /
+          lenSq;
   t = t.clamp(0.0, 1.0);
 
-  return (point: LatLng(a.latitude + t * dy, a.longitude + t * dx), t: t);
+  // Reconstruct the snapped coordinate. The longitude scaling cancels, so we
+  // interpolate the raw longitude delta directly (no divide-by-cos).
+  final snappedLat = a.latitude + t * dy;
+  final snappedLng = a.longitude + t * (b.longitude - a.longitude);
+  return (point: LatLng(snappedLat, snappedLng), t: t);
 }

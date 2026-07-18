@@ -459,17 +459,14 @@ void main() {
     );
   });
 
-  group('documented reliability boundary: offline cache TTL', () {
+  group('#23 offline active-route pin: cached route survives past TTL', () {
     // The offline branch reads the cache via DefaultRouteCachePort.get(), which
-    // calls RouteCache.get with the DEFAULT 5-minute TTL and no offline-aware
-    // override. A cached route older than that TTL is evicted on read, so an
-    // offline trip that lasts longer than 5 minutes can no longer be served its
-    // own previously-cached route and getRoute() throws.
-    //
-    // This test PINS the current behavior (it does not claim it is correct):
-    // see the suspectedDefects report for the reliability concern.
+    // now PINS the active-route read (RouteCache.get called with pinned:true).
+    // A cached route older than the 5-minute TTL is returned non-destructively,
+    // so an offline trip that outlasts the TTL is still served its own route
+    // instead of throwing. This makes offline reroute/restore after 5 min work.
     test(
-      'a >5min-old cached route is evicted on the offline read (throws)',
+      'a >5min-old cached route is returned (not evicted) on the offline read',
       () async {
         await _seedRealCache(
           origin: origin,
@@ -486,17 +483,25 @@ void main() {
         );
         addTearDown(oc.dispose);
 
-        await expectLater(
-          oc.getRoute(
-            origin: origin,
-            destination: dest,
-            isDistanceMode: true,
-            threshold: 1.0,
-            transitMode: false,
-          ),
-          throwsStateError,
+        final res = await oc.getRoute(
+          origin: origin,
+          destination: dest,
+          isDistanceMode: true,
+          threshold: 1.0,
+          transitMode: false,
         );
+        expect(res.source, RouteSource.cache);
         expect(provider.calls, 0);
+
+        // Non-destructive: a second offline read still returns the pinned route.
+        final res2 = await oc.getRoute(
+          origin: origin,
+          destination: dest,
+          isDistanceMode: true,
+          threshold: 1.0,
+          transitMode: false,
+        );
+        expect(res2.source, RouteSource.cache);
       },
     );
   });

@@ -99,7 +99,7 @@ void main() {
   });
 }
 
-class _ThrowingSink implements TelemetrySink {
+class _ThrowingSink extends TelemetrySink {
   @override
   void add(TelemetryEvent event) => throw StateError('sink down');
 }

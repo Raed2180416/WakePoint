@@ -5,6 +5,7 @@
 /// If constraints are violated, tracking should terminate gracefully.
 library;
 
+import 'package:geowake2/services/metro_vehicle_types.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
 /// Result of constraint validation with details about any failures.
@@ -172,11 +173,11 @@ class RerouteConstraints {
           final vehicle = line?['vehicle'] as Map<String, dynamic>?;
           final vType = (vehicle?['type'] as String?)?.toUpperCase();
           if (vType == null) continue;
-          if (vType == 'SUBWAY' ||
-              vType == 'HEAVY_RAIL' ||
-              vType == 'RAIL' ||
-              vType == 'METRO_RAIL' ||
-              vType == 'MONORAIL') {
+          // SINGLE SOURCE OF TRUTH: same kMetroVehicleTypes set as
+          // TransferUtils._isMetroTransitStep, so a TRAM / COMMUTER_TRAIN /
+          // LIGHT_RAIL alternate is no longer rejected on reroute while being
+          // accepted for tracking.
+          if (kMetroVehicleTypes.contains(vType)) {
             return true;
           }
         }

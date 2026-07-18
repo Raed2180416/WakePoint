@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/all_india_stops.dart'; // Source of Truth Fallback
 import 'package:geowake2/data/metro_line_sequences.dart'; // hardcoded ordered per-line sequences
+import 'package:geowake2/services/metro_vehicle_types.dart'; // shared metro vehicle-type set
 
 /// Represents a transit leg's stop positions along the route.
 /// Used for accurate "N stops prior" alarm tracking.
@@ -48,6 +49,20 @@ class TransitLegStops {
   /// conservative Google API fallback and downstream alarm logic should treat
   /// "N stops before" as low-confidence (prefer firing early).
   final double stopCountConfidence;
+
+  /// #28: Optional geocoded city key for this leg (e.g. "delhi", "mumbai").
+  /// When present it is the AUTHORITATIVE city for line-sequence + line-filter
+  /// resolution in [TransferUtils.enhanceTransitLegStopsWithOsm]; the
+  /// majority-vote over matched OSM stops is demoted to a fallback used only
+  /// when this is null/empty. On a border corridor / malformed polyline the
+  /// vote can select the wrong city (→ wrong sequence + wrong V_LINE); carrying
+  /// an explicit city removes that failure mode.
+  ///
+  /// Scope note: no production caller threads a geocoded city onto the leg yet,
+  /// so today this defaults to null and the vote still decides. The plumbing is
+  /// in place for a geocoding pipeline to set it without touching the
+  /// resolution logic.
+  final String? cityKey;
 
   String get legId {
     try {
@@ -109,6 +124,7 @@ class TransitLegStops {
     this.isMetro = false,
     this.stopNames = const [],
     this.stopCountConfidence = 1.0,
+    this.cityKey,
   });
 
   /// Serialize for persistence.
@@ -126,6 +142,7 @@ class TransitLegStops {
     'isMetro': isMetro,
     'stopNames': stopNames,
     'stopCountConfidence': stopCountConfidence,
+    if (cityKey != null) 'cityKey': cityKey,
   };
 
   /// Deserialize from persistence.
@@ -162,6 +179,7 @@ class TransitLegStops {
           (m['stopNames'] as List?)?.map((e) => e.toString()).toList() ?? [],
       stopCountConfidence:
           (m['stopCountConfidence'] as num?)?.toDouble() ?? 1.0,
+      cityKey: m['cityKey'] as String?,
     );
   }
 
@@ -195,6 +213,7 @@ class TransitLegStops {
     bool? isMetro,
     List<String>? stopNames,
     double? stopCountConfidence,
+    String? cityKey,
   }) {
     return TransitLegStops(
       legStartMeters: legStartMeters ?? this.legStartMeters,
@@ -207,6 +226,7 @@ class TransitLegStops {
       isMetro: isMetro ?? this.isMetro,
       stopNames: stopNames ?? this.stopNames,
       stopCountConfidence: stopCountConfidence ?? this.stopCountConfidence,
+      cityKey: cityKey ?? this.cityKey,
     );
   }
 }
@@ -270,19 +290,11 @@ class TransferUtils {
       final line = td?['line'] as Map<String, dynamic>?;
       final vehicle = line?['vehicle'] as Map<String, dynamic>?;
       final vType = (vehicle?['type'] as String?)?.toUpperCase();
-      // Include all rail-based transit types that should be treated as metro
-      // METRO_RAIL = light rail transit (used by many metro systems)
-      // SUBWAY = underground subway systems
-      // HEAVY_RAIL = heavy rail systems
-      // RAIL = general rail
-      // MONORAIL = monorail systems (treated as metro for alarm purposes)
-      return vType == 'SUBWAY' ||
-          vType == 'HEAVY_RAIL' ||
-          vType == 'RAIL' ||
-          vType == 'METRO_RAIL' ||
-          vType == 'MONORAIL' ||
-          vType == 'TRAM' ||
-          vType == 'COMMUTER_TRAIN';
+      // SINGLE SOURCE OF TRUTH: membership of kMetroVehicleTypes (shared with
+      // RerouteConstraints._routeHasMetroLeg) so the two predicates cannot
+      // diverge. Covers SUBWAY/HEAVY_RAIL/RAIL/METRO_RAIL/MONORAIL plus
+      // TRAM/COMMUTER_TRAIN/LIGHT_RAIL.
+      return kMetroVehicleTypes.contains(vType);
     } catch (_) {
       return false;
     }
@@ -1380,23 +1392,28 @@ class TransferUtils {
           // therefore leaks into this leg's stop list. Keep only stops whose
           // canonical line matches this leg's line, in the same city.
           final legLineKey = _canonLine(leg.lineName);
-          // Derive the leg's city from the majority city of the matched stops
-          // (they are all geographically on/near this polyline, so the majority
-          // is this leg's city).
-          final cityVotes = <String, int>{};
-          for (final m in matchedAll) {
-            final c = _canonCity(m.stop.city);
-            if (c.isEmpty) continue;
-            cityVotes[c] = (cityVotes[c] ?? 0) + 1;
-          }
-          String legCityKey = '';
-          int bestVotes = 0;
-          cityVotes.forEach((c, v) {
-            if (v > bestVotes) {
-              bestVotes = v;
-              legCityKey = c;
+          // #28: Prefer an explicit geocoded city carried on the leg. Only when
+          // the leg has no city do we derive it from the majority city of the
+          // matched stops (they are all on/near this polyline, so the majority
+          // is USUALLY this leg's city — but on a border corridor / malformed
+          // polyline the vote can pick the wrong city, which an explicit
+          // geocoded city overrides).
+          String legCityKey = _canonCity(leg.cityKey);
+          if (legCityKey.isEmpty) {
+            final cityVotes = <String, int>{};
+            for (final m in matchedAll) {
+              final c = _canonCity(m.stop.city);
+              if (c.isEmpty) continue;
+              cityVotes[c] = (cityVotes[c] ?? 0) + 1;
             }
-          });
+            int bestVotes = 0;
+            cityVotes.forEach((c, v) {
+              if (v > bestVotes) {
+                bestVotes = v;
+                legCityKey = c;
+              }
+            });
+          }
 
           // LINE-FIRST (ordered): if this line has a CONFIDENT hardcoded ordered
           // sequence, match THAT against the leg polyline. The 500m radius match

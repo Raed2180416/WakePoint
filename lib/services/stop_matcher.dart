@@ -1,4 +1,5 @@
-import 'package:geowake2/services/polyline_decoder.dart' show haversineDistance;
+import 'package:geowake2/services/polyline_decoder.dart'
+    show haversineDistance, projectPointOnSegment;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class Stop {
@@ -138,7 +139,7 @@ class StopMatcher {
       final a = polyline[i];
       final b = polyline[i + 1];
 
-      final proj = _projectPointOnSegment(a, b, point);
+      final proj = projectPointOnSegment(a, b, point);
       final snapped = proj.point;
       final dist = haversineDistance(point, snapped);
 
@@ -154,28 +155,6 @@ class StopMatcher {
       distanceMeters: bestDistance,
       metersAlong: bestMetersAlong,
     );
-  }
-
-  /// Projection in lat/lng space (good enough at metro scale). Clamp t to [0,1].
-  static ({LatLng point, double t}) _projectPointOnSegment(
-    LatLng a,
-    LatLng b,
-    LatLng p,
-  ) {
-    final dx = b.longitude - a.longitude;
-    final dy = b.latitude - a.latitude;
-    final lenSq = dx * dx + dy * dy;
-
-    if (lenSq < 1e-12) {
-      return (point: a, t: 0.0);
-    }
-
-    double t =
-        ((p.longitude - a.longitude) * dx + (p.latitude - a.latitude) * dy) /
-        lenSq;
-    t = t.clamp(0.0, 1.0);
-
-    return (point: LatLng(a.latitude + t * dy, a.longitude + t * dx), t: t);
   }
 }
 

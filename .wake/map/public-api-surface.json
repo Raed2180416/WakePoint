@@ -841,6 +841,12 @@
       "name": "DestinationValidationResult"
     }
   ],
+  "lib/services/metro_vehicle_types.dart": [
+    {
+      "kind": "const",
+      "name": "kMetroVehicleTypes"
+    }
+  ],
   "lib/services/monetization/ad_policy.dart": [
     {
       "kind": "class",
@@ -1051,6 +1057,14 @@
       "name": "ReliabilityPreflightRunner"
     },
     {
+      "kind": "class",
+      "name": "PreflightFixLauncher"
+    },
+    {
+      "kind": "class",
+      "name": "PlatformPreflightFixLauncher"
+    },
+    {
       "kind": "function",
       "name": "showReliabilityPreflightDialog"
     }
@@ -1233,6 +1247,12 @@
     {
       "kind": "class",
       "name": "StopMatcher"
+    }
+  ],
+  "lib/services/telemetry/file_telemetry_sink.dart": [
+    {
+      "kind": "class",
+      "name": "FileTelemetrySink"
     }
   ],
   "lib/services/telemetry/telemetry_service.dart": [
