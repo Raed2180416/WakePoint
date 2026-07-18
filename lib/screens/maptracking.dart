@@ -24,6 +24,7 @@ import 'package:flutter_background_service/flutter_background_service.dart'; // 
 import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
 import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
 import 'package:geowake2/services/notification_service.dart'; // Real alarm path for post-arrival re-alert.
+import 'package:geowake2/services/tracking/arrival_hooks.dart'; // Fire-and-forget post-arrival fan-out.
 
 class MapTrackingScreen extends StatefulWidget {
   // Displays map and live tracking details.
@@ -1332,10 +1333,17 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                               navigateHome: false,
                                             );
 
-                                        // Navigate back to home screen
+                                        // Post-arrival fan-out (trip stats, opt-in aggregate,
+                                        // Guardian "arrived", ad-cap). Synchronous, fire-and-forget,
+                                        // non-blocking — runs only AFTER the alarm fired + teardown,
+                                        // so it can never delay/reorder the never-late wake.
+                                        ArrivalHooks.fireArrived();
+
+                                        // Show the post-arrival screen (free share + last-mile +
+                                        // optional rewarded), which returns the rider home on Done.
                                         Navigator.pushReplacementNamed(
                                           context,
-                                          '/',
+                                          '/postArrival',
                                         );
                                       },
                                       icon: const Icon(

@@ -663,6 +663,16 @@
       "name": "GeoWakePaywallScreen"
     }
   ],
+  "lib/screens/monetization/post_arrival_screen.dart": [
+    {
+      "kind": "class",
+      "name": "PostArrivalDecision"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalScreen"
+    }
+  ],
   "lib/screens/otherimpservices/preload_map_screen.dart": [
     {
       "kind": "class",
@@ -1669,6 +1679,12 @@
       "name": "AlarmController"
     }
   ],
+  "lib/services/tracking/arrival_hooks.dart": [
+    {
+      "kind": "class",
+      "name": "ArrivalHooks"
+    }
+  ],
   "lib/services/tracking/background_handlers.dart": [
     {
       "kind": "class",
@@ -1905,6 +1921,12 @@
     {
       "kind": "const",
       "name": "guardianRoute"
+    }
+  ],
+  "lib/widgets/share/share_journey_action.dart": [
+    {
+      "kind": "class",
+      "name": "ShareJourneyAction"
     }
   ],
   "lib/widgets/stats/share_stat_card.dart": [

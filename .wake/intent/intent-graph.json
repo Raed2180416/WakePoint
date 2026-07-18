@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "adbdd821a78fa64e70a47fec23461349c23837e9",
-  "generatedAt": "2026-07-19T03:31:17+05:30",
-  "structuralDigest": "3ec004a79d16c9b085b93ae4698003ee30ccf004",
+  "gitCommit": "6c74bd4cee5ffa55c5a9f92620ebbe70ce736f00",
+  "generatedAt": "2026-07-19T03:32:27+05:30",
+  "structuralDigest": "2cd27ebbdae09c7139f7d1865849e609a3ea2a11",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1088,
-    "edgeCount": 2109,
+    "nodeCount": 1095,
+    "edgeCount": 2130,
     "byLevel": {
       "feature": 9,
-      "file": 384,
+      "file": 387,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 660
+      "symbol": 664
     },
     "byEdgeType": {
-      "contains": 782,
-      "depends-on": 810,
+      "contains": 786,
+      "depends-on": 827,
       "references": 517
     }
   },
@@ -1025,6 +1025,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "level": "file",
+      "label": "lib/screens/monetization/post_arrival_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 2
+    },
+    {
       "id": "file:lib/screens/otherimpservices/preload_map_screen.dart",
       "level": "file",
       "label": "lib/screens/otherimpservices/preload_map_screen.dart",
@@ -1197,7 +1208,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -1395,7 +1406,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 8,
       "exportCount": 2
     },
     {
@@ -1406,7 +1417,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 1
     },
     {
@@ -1417,7 +1428,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 13,
+      "importers": 15,
       "exportCount": 1
     },
     {
@@ -1428,7 +1439,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 6
     },
     {
@@ -1439,7 +1450,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 13,
+      "importers": 14,
       "exportCount": 3
     },
     {
@@ -1791,7 +1802,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 6,
       "exportCount": 2
     },
     {
@@ -1824,7 +1835,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -1879,7 +1890,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 6,
       "exportCount": 1
     },
     {
@@ -1890,7 +1901,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 1
     },
     {
@@ -2048,6 +2059,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:lib/services/tracking/arrival_hooks.dart",
+      "level": "file",
+      "label": "lib/services/tracking/arrival_hooks.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/services/tracking/background_handlers.dart",
       "level": "file",
       "label": "lib/services/tracking/background_handlers.dart",
@@ -2110,7 +2132,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 2
     },
     {
@@ -2242,7 +2264,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -2268,6 +2290,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:lib/widgets/share/share_journey_action.dart",
+      "level": "file",
+      "label": "lib/widgets/share/share_journey_action.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/widgets/share/share_sheet.dart",
       "level": "file",
       "label": "lib/widgets/share/share_sheet.dart",
@@ -2275,7 +2308,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 0,
+      "importers": 1,
       "exportCount": 0
     },
     {
@@ -6228,6 +6261,24 @@
       "file": "lib/screens/monetization/paywall_screen.dart"
     },
     {
+      "id": "symbol:lib/screens/monetization/post_arrival_screen.dart#PostArrivalDecision",
+      "level": "symbol",
+      "label": "PostArrivalDecision",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/monetization/post_arrival_screen.dart"
+    },
+    {
+      "id": "symbol:lib/screens/monetization/post_arrival_screen.dart#PostArrivalScreen",
+      "level": "symbol",
+      "label": "PostArrivalScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/monetization/post_arrival_screen.dart"
+    },
+    {
       "id": "symbol:lib/screens/otherimpservices/preload_map_screen.dart#PreloadMapScreen",
       "level": "symbol",
       "label": "PreloadMapScreen",
@@ -8145,6 +8196,15 @@
       "file": "lib/services/tracking/alarm_controller.dart"
     },
     {
+      "id": "symbol:lib/services/tracking/arrival_hooks.dart#ArrivalHooks",
+      "level": "symbol",
+      "label": "ArrivalHooks",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/tracking/arrival_hooks.dart"
+    },
+    {
       "id": "symbol:lib/services/tracking/background_handlers.dart#BackgroundHandlerCallbacks",
       "level": "symbol",
       "label": "BackgroundHandlerCallbacks",
@@ -8530,6 +8590,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/widgets/share/guardian_settings_section.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/share/share_journey_action.dart#ShareJourneyAction",
+      "level": "symbol",
+      "label": "ShareJourneyAction",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/share/share_journey_action.dart"
     },
     {
       "id": "symbol:lib/widgets/stats/share_stat_card.dart#kShareCardLogicalHeight",
@@ -13864,6 +13933,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/screens/otherimpservices/preload_map_screen.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14444,6 +14520,13 @@
     },
     {
       "from": "file:lib/screens/maptracking.dart",
+      "to": "file:lib/services/tracking/arrival_hooks.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/maptracking.dart",
       "to": "file:lib/services/trackingservice.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14560,6 +14643,76 @@
     {
       "from": "file:lib/screens/monetization/paywall_screen.dart",
       "to": "symbol:lib/screens/monetization/paywall_screen.dart#GeoWakePaywallScreen",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/monetization/ad_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/share/journey_share_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/services/share/share_link_builder.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "file:lib/widgets/post_arrival_card.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "symbol:lib/screens/monetization/post_arrival_screen.dart#PostArrivalDecision",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "to": "symbol:lib/screens/monetization/post_arrival_screen.dart#PostArrivalScreen",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17824,6 +17977,48 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "file:lib/services/data_asset/data_asset_pipeline.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "file:lib/services/stats/trip_stats_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "file:lib/services/tracking/post_alarm_multicast.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/arrival_hooks.dart",
+      "to": "symbol:lib/services/tracking/arrival_hooks.dart#ArrivalHooks",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/tracking/background_handlers.dart",
       "to": "file:lib/core/logging/app_logger.dart",
       "type": "depends-on",
@@ -19208,6 +19403,27 @@
     {
       "from": "file:lib/widgets/share/guardian_settings_section.dart",
       "to": "symbol:lib/widgets/share/guardian_settings_section.dart#GuardianSettingsSection",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/share/share_journey_action.dart",
+      "to": "file:lib/services/share/journey_share_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/share/share_journey_action.dart",
+      "to": "file:lib/widgets/share/share_sheet.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/share/share_journey_action.dart",
+      "to": "symbol:lib/widgets/share/share_journey_action.dart#ShareJourneyAction",
       "type": "contains",
       "deterministic": true,
       "source": "map"

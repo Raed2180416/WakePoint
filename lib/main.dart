@@ -17,6 +17,7 @@ import 'screens/stats/trip_stats_screen.dart';
 import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
 import 'screens/guardian_setup_screen.dart';
+import 'screens/monetization/post_arrival_screen.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -224,6 +225,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         if (settings.name == '/guardian') {
           return MaterialPageRoute(
             builder: (_) => const GuardianSetupScreen(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/postArrival') {
+          return MaterialPageRoute(
+            builder: (_) => const PostArrivalScreen(),
             settings: settings,
           );
         }

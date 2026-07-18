@@ -352,6 +352,31 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/monetization/monetization_service.dart",
+    "importers": 15,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/screens/stats/trip_stats_screen.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/tracking/arrival_hooks.dart",
+      "lib/services/widget/home_widget_bridge.dart",
+      "lib/services/widget/widget_arm_handler.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "MonetizationService"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/route_registry.dart",
     "importers": 15,
     "directDependents": [
@@ -427,34 +452,12 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/services/monetization/monetization_service.dart",
-    "importers": 13,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/screens/guardian_setup_screen.dart",
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/screens/settingsdrawer.dart",
-      "lib/screens/stats/trip_stats_screen.dart",
-      "lib/services/share/guardian_service.dart",
-      "lib/services/widget/home_widget_bridge.dart",
-      "lib/services/widget/widget_arm_handler.dart",
-      "lib/widgets/gated_banner_ad.dart",
-      "lib/widgets/share/guardian_settings_section.dart",
-      "lib/widgets/widget/widget_settings_tile.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart"
-    ],
-    "exportedSymbols": [
-      "MonetizationService"
-    ],
-    "riskLevel": "critical"
-  },
-  {
     "file": "lib/services/monetization/premium_service.dart",
-    "importers": 13,
+    "importers": 14,
     "directDependents": [
       "lib/screens/guardian_setup_screen.dart",
       "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
       "lib/screens/stats/trip_stats_screen.dart",
       "lib/services/monetization/ad_service.dart",
       "lib/services/monetization/monetization_service.dart",
@@ -750,6 +753,25 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/ad_policy.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/screens/maptracking.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_test.dart"
+    ],
+    "exportedSymbols": [
+      "AdPolicy",
+      "AdPlacement"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/route_cache.dart",
     "importers": 8,
     "directDependents": [
@@ -802,24 +824,6 @@
     "exportedSymbols": [
       "SimulationStateMachine",
       "SimulationState"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/monetization/ad_policy.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/screens/homescreen.dart",
-      "lib/screens/maptracking.dart",
-      "lib/services/monetization/ad_service.dart",
-      "lib/widgets/gated_banner_ad.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_test.dart"
-    ],
-    "exportedSymbols": [
-      "AdPolicy",
-      "AdPlacement"
     ],
     "riskLevel": "high"
   },
