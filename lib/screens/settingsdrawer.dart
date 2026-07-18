@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../widgets/monetization/pro_gate.dart';
+import '../services/monetization/monetization_service.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 
 // --- STEP 1: ADD THIS IMPORT ---
@@ -79,6 +80,26 @@ class SettingsDrawer extends StatelessWidget {
                 Navigator.of(context).pushNamed(
                   '/paywall',
                   arguments: PaywallSource.drawer,
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.insights),
+              title: const Text('Trip stats'),
+              trailing:
+                  (MonetizationService.instance.premiumOrNull?.isPro ?? false)
+                      ? null
+                      : const ProBadge(),
+              onTap: () {
+                Navigator.of(context).pop(); // close the drawer
+                ProGate.run(
+                  context,
+                  allowed: MonetizationService
+                          .instance.premiumOrNull?.canUseTripStatsDashboard ??
+                      false,
+                  source: PaywallSource.tripStats,
+                  onAllowed: () =>
+                      Navigator.of(context).pushNamed('/tripStats'),
                 );
               },
             ),

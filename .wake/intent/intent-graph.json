@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "52cbfdc8b9184755d4faa63b2958dd16bd38fbcc",
-  "generatedAt": "2026-07-19T01:06:06+05:30",
-  "structuralDigest": "787e4e3b3a5e33e611ce43e890b4035fed1351c3",
+  "gitCommit": "cadb7f18a8ae8d67b012afd18cebcb9242562612",
+  "generatedAt": "2026-07-19T02:08:23+05:30",
+  "structuralDigest": "4f22d2794917d787251be138f62ed97f8c7588bf",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 941,
-    "edgeCount": 1893,
+    "nodeCount": 970,
+    "edgeCount": 1932,
     "byLevel": {
       "feature": 9,
-      "file": 337,
+      "file": 348,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 560
+      "symbol": 578
     },
     "byEdgeType": {
-      "contains": 682,
-      "depends-on": 694,
+      "contains": 700,
+      "depends-on": 715,
       "references": 517
     }
   },
@@ -1058,6 +1058,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/screens/stats/trip_stats_screen.dart",
+      "level": "file",
+      "label": "lib/screens/stats/trip_stats_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/services/active_route_manager.dart",
       "level": "file",
       "label": "lib/services/active_route_manager.dart",
@@ -1252,7 +1263,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 7,
       "exportCount": 1
     },
     {
@@ -1274,7 +1285,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 9,
+      "importers": 10,
       "exportCount": 3
     },
     {
@@ -1430,6 +1441,17 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 0
+    },
+    {
+      "id": "file:lib/services/privacy/pii_guard.dart",
+      "level": "file",
+      "label": "lib/services/privacy/pii_guard.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 2
     },
     {
       "id": "file:lib/services/reliability/reliability_preflight_runner.dart",
@@ -1617,6 +1639,50 @@
       "feature": "unassigned",
       "importers": 3,
       "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/stats/stat_card_exporter.dart",
+      "level": "file",
+      "label": "lib/services/stats/stat_card_exporter.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 3
+    },
+    {
+      "id": "file:lib/services/stats/trip_record.dart",
+      "level": "file",
+      "label": "lib/services/stats/trip_record.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 5,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/stats/trip_stats_service.dart",
+      "level": "file",
+      "label": "lib/services/stats/trip_stats_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/stats/trip_stats_summary.dart",
+      "level": "file",
+      "label": "lib/services/stats/trip_stats_summary.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 3,
+      "exportCount": 2
     },
     {
       "id": "file:lib/services/stop_logic_engine.dart",
@@ -1901,7 +1967,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 3
     },
     {
@@ -1925,6 +1991,17 @@
       "feature": "app-foundation-config",
       "importers": 1,
       "exportCount": 1
+    },
+    {
+      "id": "file:lib/widgets/stats/share_stat_card.dart",
+      "level": "file",
+      "label": "lib/widgets/stats/share_stat_card.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 4
     },
     {
       "id": "file:packages/wakepoint_native/lib/wakepoint_native.dart",
@@ -3613,6 +3690,50 @@
       "id": "file:test/soft_lock_manager_test.dart",
       "level": "file",
       "label": "test/soft_lock_manager_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/stats/share_stat_card_test.dart",
+      "level": "file",
+      "label": "test/stats/share_stat_card_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/stats/trip_record_test.dart",
+      "level": "file",
+      "label": "test/stats/trip_record_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/stats/trip_stats_service_test.dart",
+      "level": "file",
+      "label": "test/stats/trip_stats_service_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/stats/trip_stats_summary_test.dart",
+      "level": "file",
+      "label": "test/stats/trip_stats_summary_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -5756,6 +5877,15 @@
       "file": "lib/screens/splash_screen.dart"
     },
     {
+      "id": "symbol:lib/screens/stats/trip_stats_screen.dart#TripStatsScreen",
+      "level": "symbol",
+      "label": "TripStatsScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/stats/trip_stats_screen.dart"
+    },
+    {
       "id": "symbol:lib/services/active_route_manager.dart#ActiveRouteManager",
       "level": "symbol",
       "label": "ActiveRouteManager",
@@ -6467,6 +6597,24 @@
       "file": "lib/services/position/position_provider.dart"
     },
     {
+      "id": "symbol:lib/services/privacy/pii_guard.dart#PiiGuard",
+      "level": "symbol",
+      "label": "PiiGuard",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/privacy/pii_guard.dart"
+    },
+    {
+      "id": "symbol:lib/services/privacy/pii_guard.dart#PiiViolation",
+      "level": "symbol",
+      "label": "PiiViolation",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/privacy/pii_guard.dart"
+    },
+    {
       "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#PlatformPreflightFixLauncher",
       "level": "symbol",
       "label": "PlatformPreflightFixLauncher",
@@ -6771,6 +6919,69 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/soft_lock_manager.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExporter",
+      "level": "symbol",
+      "label": "StatCardExporter",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/stat_card_exporter.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExportResult",
+      "level": "symbol",
+      "label": "StatCardExportResult",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/stat_card_exporter.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExportStatus",
+      "level": "symbol",
+      "label": "StatCardExportStatus",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/stat_card_exporter.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/trip_record.dart#TripRecord",
+      "level": "symbol",
+      "label": "TripRecord",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/trip_record.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/trip_stats_service.dart#TripStatsService",
+      "level": "symbol",
+      "label": "TripStatsService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/trip_stats_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/trip_stats_summary.dart#TopLine",
+      "level": "symbol",
+      "label": "TopLine",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/trip_stats_summary.dart"
+    },
+    {
+      "id": "symbol:lib/services/stats/trip_stats_summary.dart#TripStatsSummary",
+      "level": "symbol",
+      "label": "TripStatsSummary",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/stats/trip_stats_summary.dart"
     },
     {
       "id": "symbol:lib/services/stop_logic_engine.dart#PreBoardResults",
@@ -7320,6 +7531,42 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/widgets/pulsing_dots.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/stats/share_stat_card.dart#kShareCardLogicalHeight",
+      "level": "symbol",
+      "label": "kShareCardLogicalHeight",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/stats/share_stat_card.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/stats/share_stat_card.dart#kShareCardLogicalWidth",
+      "level": "symbol",
+      "label": "kShareCardLogicalWidth",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/stats/share_stat_card.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/stats/share_stat_card.dart#ShareStatCard",
+      "level": "symbol",
+      "label": "ShareStatCard",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/stats/share_stat_card.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/stats/share_stat_card.dart#ShareStatCardData",
+      "level": "symbol",
+      "label": "ShareStatCardData",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/stats/share_stat_card.dart"
     },
     {
       "id": "symbol:packages/wakepoint_native/lib/wakepoint_native.dart#WakepointNative",
@@ -9165,6 +9412,42 @@
       "deterministic": true,
       "source": "map",
       "file": "test/soft_lock_manager_test.dart"
+    },
+    {
+      "id": "symbol:test/stats/share_stat_card_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/stats/share_stat_card_test.dart"
+    },
+    {
+      "id": "symbol:test/stats/trip_record_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/stats/trip_record_test.dart"
+    },
+    {
+      "id": "symbol:test/stats/trip_stats_service_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/stats/trip_stats_service_test.dart"
+    },
+    {
+      "id": "symbol:test/stats/trip_stats_summary_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/stats/trip_stats_summary_test.dart"
     },
     {
       "id": "symbol:test/stop_end_tracking_vm_test.dart#main",
@@ -12478,6 +12761,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/screens/stats/trip_stats_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/services/monetization/monetization_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -13123,6 +13413,13 @@
     },
     {
       "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
       "to": "file:lib/services/tracking_state_store.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -13213,6 +13510,62 @@
     {
       "from": "file:lib/screens/splash_screen.dart",
       "to": "symbol:lib/screens/splash_screen.dart#SplashScreen",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/services/stats/stat_card_exporter.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/services/stats/trip_stats_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/services/stats/trip_stats_summary.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/widgets/monetization/pro_gate.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "file:lib/widgets/stats/share_stat_card.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/stats/trip_stats_screen.dart",
+      "to": "symbol:lib/screens/stats/trip_stats_screen.dart#TripStatsScreen",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -14311,6 +14664,20 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/privacy/pii_guard.dart",
+      "to": "symbol:lib/services/privacy/pii_guard.dart#PiiGuard",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/privacy/pii_guard.dart",
+      "to": "symbol:lib/services/privacy/pii_guard.dart#PiiViolation",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
       "to": "file:lib/services/oem_autostart_service.dart",
       "type": "depends-on",
@@ -14953,6 +15320,83 @@
     {
       "from": "file:lib/services/soft_lock_manager.dart",
       "to": "symbol:lib/services/soft_lock_manager.dart#SoftLockManager",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/stat_card_exporter.dart",
+      "to": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExporter",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/stat_card_exporter.dart",
+      "to": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExportResult",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/stat_card_exporter.dart",
+      "to": "symbol:lib/services/stats/stat_card_exporter.dart#StatCardExportStatus",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_record.dart",
+      "to": "file:lib/services/privacy/pii_guard.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_record.dart",
+      "to": "symbol:lib/services/stats/trip_record.dart#TripRecord",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_service.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_service.dart",
+      "to": "file:lib/services/stats/trip_stats_summary.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_service.dart",
+      "to": "symbol:lib/services/stats/trip_stats_service.dart#TripStatsService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_summary.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_summary.dart",
+      "to": "symbol:lib/services/stats/trip_stats_summary.dart#TopLine",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/stats/trip_stats_summary.dart",
+      "to": "symbol:lib/services/stats/trip_stats_summary.dart#TripStatsSummary",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -16727,6 +17171,34 @@
     {
       "from": "file:lib/widgets/pulsing_dots.dart",
       "to": "symbol:lib/widgets/pulsing_dots.dart#PulsingDots",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/stats/share_stat_card.dart",
+      "to": "symbol:lib/widgets/stats/share_stat_card.dart#kShareCardLogicalHeight",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/stats/share_stat_card.dart",
+      "to": "symbol:lib/widgets/stats/share_stat_card.dart#kShareCardLogicalWidth",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/stats/share_stat_card.dart",
+      "to": "symbol:lib/widgets/stats/share_stat_card.dart#ShareStatCard",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/stats/share_stat_card.dart",
+      "to": "symbol:lib/widgets/stats/share_stat_card.dart#ShareStatCardData",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -22305,6 +22777,90 @@
     {
       "from": "file:test/soft_lock_manager_test.dart",
       "to": "symbol:test/soft_lock_manager_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/share_stat_card_test.dart",
+      "to": "file:lib/services/stats/stat_card_exporter.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/share_stat_card_test.dart",
+      "to": "file:lib/widgets/stats/share_stat_card.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/share_stat_card_test.dart",
+      "to": "symbol:test/stats/share_stat_card_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_record_test.dart",
+      "to": "file:lib/services/privacy/pii_guard.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_record_test.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_record_test.dart",
+      "to": "symbol:test/stats/trip_record_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_service_test.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_service_test.dart",
+      "to": "file:lib/services/stats/trip_stats_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_service_test.dart",
+      "to": "symbol:test/stats/trip_stats_service_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_summary_test.dart",
+      "to": "file:lib/services/stats/trip_record.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_summary_test.dart",
+      "to": "file:lib/services/stats/trip_stats_summary.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/stats/trip_stats_summary_test.dart",
+      "to": "symbol:test/stats/trip_stats_summary_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

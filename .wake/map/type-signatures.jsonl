@@ -287,6 +287,10 @@
 {"file":"test/simulated_route_integration_test.dart","name":"main","signature":"()"}
 {"file":"test/snap_to_route_test.dart","name":"main","signature":"()"}
 {"file":"test/soft_lock_manager_test.dart","name":"main","signature":"()"}
+{"file":"test/stats/share_stat_card_test.dart","name":"main","signature":"()"}
+{"file":"test/stats/trip_record_test.dart","name":"main","signature":"()"}
+{"file":"test/stats/trip_stats_service_test.dart","name":"main","signature":"()"}
+{"file":"test/stats/trip_stats_summary_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_end_tracking_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_logic_engine_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_matcher_test.dart","name":"main","signature":"()"}

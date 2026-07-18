@@ -524,6 +524,28 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/premium_service.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/stats/trip_stats_screen.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/services/monetization/monetization_service.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart"
+    ],
+    "exportedSymbols": [
+      "PremiumProducts",
+      "PremiumService",
+      "EntitlementTier"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/telemetry/telemetry_service.dart",
     "importers": 10,
     "directDependents": [
@@ -567,27 +589,6 @@
       "WrongDirectionAlert",
       "ActiveRouteState",
       "ActiveRouteManager"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/monetization/premium_service.dart",
-    "importers": 9,
-    "directDependents": [
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/services/monetization/ad_service.dart",
-      "lib/services/monetization/monetization_service.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart",
-      "test/monetization/premium_gates_wave0_test.dart"
-    ],
-    "exportedSymbols": [
-      "PremiumProducts",
-      "PremiumService",
-      "EntitlementTier"
     ],
     "riskLevel": "high"
   },
@@ -740,6 +741,23 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/monetization_service.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/screens/stats/trip_stats_screen.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "MonetizationService"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/offline_coordinator.dart",
     "importers": 7,
     "directDependents": [
@@ -798,31 +816,6 @@
     ],
     "exportedSymbols": [
       "PolylineSimplifier"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/reliability/reliability_preflight_service.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/services/reliability/reliability_preflight_runner.dart",
-      "lib/services/reliability/reliability_probe_impl.dart",
-      "test/integration/preflight_arm_scenario_test.dart",
-      "test/reliability/reliability_preflight_combinatorial_test.dart",
-      "test/reliability/reliability_preflight_delivery_channel_test.dart",
-      "test/reliability/reliability_preflight_test.dart",
-      "test/widgets/preflight_dialog_widget_test.dart"
-    ],
-    "exportedSymbols": [
-      "PreflightIssueCode",
-      "PreflightFixAction",
-      "PreflightIssue",
-      "PreflightResult",
-      "ReliabilityProbe",
-      "FakeReliabilityProbe",
-      "ReliabilityPreflightService",
-      "PreflightLevel",
-      "PreflightSeverity"
     ],
     "riskLevel": "high"
   }
