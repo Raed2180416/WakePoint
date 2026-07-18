@@ -1,3 +1,31 @@
+{"file":"backend/share/server.js","name":"createConfigFromEnv","signature":"(env = process.env)"}
+{"file":"backend/share/server.js","name":"roundCoord","signature":"(v)"}
+{"file":"backend/share/server.js","name":"mintToken","signature":"(id, secret)"}
+{"file":"backend/share/server.js","name":"verifyToken","signature":"(id, token, secret)"}
+{"file":"backend/share/server.js","name":"constantTimeEquals","signature":"(a, b)"}
+{"file":"backend/share/server.js","name":"clientIp","signature":"(req)"}
+{"file":"backend/share/server.js","name":"sendJson","signature":"(res, status, obj, extraHeaders)"}
+{"file":"backend/share/server.js","name":"sendStatus","signature":"(res, status, extraHeaders)"}
+{"file":"backend/share/server.js","name":"sendHtml","signature":"(res, status, html, extraHeaders)"}
+{"file":"backend/share/server.js","name":"readBody","signature":"(req, maxBytes)"}
+{"file":"backend/share/server.js","name":"escapeHtml","signature":"(s)"}
+{"file":"backend/share/server.js","name":"playStoreUrl","signature":"(cfg, id)"}
+{"file":"backend/share/server.js","name":"minutesAway","signature":"(rec, now)"}
+{"file":"backend/share/server.js","name":"renderGonePage","signature":"()"}
+{"file":"backend/share/server.js","name":"renderJourneyPage","signature":"(cfg, rec, now)"}
+{"file":"backend/share/server.js","name":"pageCss","signature":"()"}
+{"file":"backend/share/server.js","name":"assetlinksJson","signature":"(cfg)"}
+{"file":"backend/share/server.js","name":"onArrived","signature":"(rec)"}
+{"file":"backend/share/server.js","name":"createServer","signature":"(configOverride = {})"}
+{"file":"backend/share/server.js","name":"applyCors","signature":"(req, res)"}
+{"file":"backend/share/server.js","name":"authOk","signature":"(req)"}
+{"file":"backend/share/server.js","name":"parseJsonBody","signature":"(req, maxBytes)"}
+{"file":"backend/share/server.js","name":"validateCreate","signature":"(body, cfg)"}
+{"file":"backend/share/server.js","name":"validatePing","signature":"(body)"}
+{"file":"backend/share/server.js","name":"finish","signature":"(fn, arg) =>"}
+{"file":"backend/share/server.test.js","name":"withServer","signature":"(run, extra = {})"}
+{"file":"backend/share/server.test.js","name":"authHeaders","signature":"(extra = {})"}
+{"file":"backend/share/server.test.js","name":"createShare","signature":"(base, overrides = {})"}
 {"file":"claudesciencesession/code/ekf_js.js","name":"huber","signature":"(norm,d)"}
 {"file":"geowake-server/src/controllers/authController.js","name":"generateToken","signature":"(req, res) =>"}
 {"file":"geowake-server/src/controllers/mapsController.js","name":"googleApiProxy","signature":"(req, res, { url, params, type }) =>"}

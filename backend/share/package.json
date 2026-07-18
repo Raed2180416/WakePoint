@@ -1,0 +1,16 @@
+{
+  "name": "geowake-share",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GeoWake journey-share backend — latest-only, TTL-hard-delete coarse-location relay + recipient page. Implements docs/share/BACKEND_CONTRACT.md.",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}

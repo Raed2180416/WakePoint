@@ -1,4 +1,5 @@
 [
+  "backend/share/server.js",
   "geowake-server/src/server.js",
   "lib/main.dart"
 ]

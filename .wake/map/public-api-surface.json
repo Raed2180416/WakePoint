@@ -1438,6 +1438,10 @@
     },
     {
       "kind": "class",
+      "name": "ShareStatusView"
+    },
+    {
+      "kind": "class",
       "name": "GuardianContact"
     },
     {
@@ -1467,6 +1471,10 @@
     {
       "kind": "class",
       "name": "ShareBackend"
+    },
+    {
+      "kind": "class",
+      "name": "ShareStatusReader"
     },
     {
       "kind": "class",

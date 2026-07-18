@@ -3,15 +3,15 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "1d4a8bc6e88bb2e1b423fd81b8e3b0d69c831180",
-    "gitTree": "577ae61be0171fa4bdf62d919bff54d7e6252a24",
-    "generatedAt": "2026-07-19T04:49:09+05:30",
-    "filesIndexed": 388,
-    "dependencyEdges": 830,
-    "totalExports": 665,
-    "totalImports": 1773,
+    "gitCommit": "10259e4709c817ca9d411351f34be7c26383ea0d",
+    "gitTree": "6d73b01c214f717efdfd1eb4de7ed695b8d584b5",
+    "generatedAt": "2026-07-19T05:00:23+05:30",
+    "filesIndexed": 390,
+    "dependencyEdges": 831,
+    "totalExports": 667,
+    "totalImports": 1779,
     "byRole": {
-      "other": 2,
+      "other": 4,
       "backend": 12,
       "flutter-test": 194,
       "flutter-lib": 171,
@@ -19,11 +19,196 @@
       "platform": 1
     },
     "entryPoints": [
+      "backend/share/server.js",
       "geowake-server/src/server.js",
       "lib/main.dart"
     ]
   },
   "interfaces": [
+    {
+      "file": "backend/share/server.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "http"
+        },
+        {
+          "kind": "require",
+          "source": "crypto"
+        }
+      ],
+      "types": [
+        {
+          "name": "html"
+        },
+        {
+          "name": "html"
+        }
+      ],
+      "functions": [
+        {
+          "name": "createConfigFromEnv",
+          "signature": "(env = process.env)"
+        },
+        {
+          "name": "roundCoord",
+          "signature": "(v)"
+        },
+        {
+          "name": "mintToken",
+          "signature": "(id, secret)"
+        },
+        {
+          "name": "verifyToken",
+          "signature": "(id, token, secret)"
+        },
+        {
+          "name": "constantTimeEquals",
+          "signature": "(a, b)"
+        },
+        {
+          "name": "clientIp",
+          "signature": "(req)"
+        },
+        {
+          "name": "sendJson",
+          "signature": "(res, status, obj, extraHeaders)"
+        },
+        {
+          "name": "sendStatus",
+          "signature": "(res, status, extraHeaders)"
+        },
+        {
+          "name": "sendHtml",
+          "signature": "(res, status, html, extraHeaders)"
+        },
+        {
+          "name": "readBody",
+          "signature": "(req, maxBytes)"
+        },
+        {
+          "name": "escapeHtml",
+          "signature": "(s)"
+        },
+        {
+          "name": "playStoreUrl",
+          "signature": "(cfg, id)"
+        },
+        {
+          "name": "minutesAway",
+          "signature": "(rec, now)"
+        },
+        {
+          "name": "renderGonePage",
+          "signature": "()"
+        },
+        {
+          "name": "renderJourneyPage",
+          "signature": "(cfg, rec, now)"
+        },
+        {
+          "name": "pageCss",
+          "signature": "()"
+        },
+        {
+          "name": "assetlinksJson",
+          "signature": "(cfg)"
+        },
+        {
+          "name": "onArrived",
+          "signature": "(rec)"
+        },
+        {
+          "name": "createServer",
+          "signature": "(configOverride = {})"
+        },
+        {
+          "name": "applyCors",
+          "signature": "(req, res)"
+        },
+        {
+          "name": "authOk",
+          "signature": "(req)"
+        },
+        {
+          "name": "parseJsonBody",
+          "signature": "(req, maxBytes)"
+        },
+        {
+          "name": "validateCreate",
+          "signature": "(body, cfg)"
+        },
+        {
+          "name": "validatePing",
+          "signature": "(body)"
+        },
+        {
+          "name": "finish",
+          "signature": "(fn, arg) =>"
+        }
+      ],
+      "classes": [
+        {
+          "name": "for",
+          "extends": null
+        },
+        {
+          "name": "Store",
+          "extends": null
+        },
+        {
+          "name": "RateLimiter",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "other",
+      "contentHash": "8fe3a17f3acc3b99"
+    },
+    {
+      "file": "backend/share/server.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "node:test"
+        },
+        {
+          "kind": "require",
+          "source": "node:assert/strict"
+        },
+        {
+          "kind": "require",
+          "source": "./server"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "withServer",
+          "signature": "(run, extra = {})"
+        },
+        {
+          "name": "authHeaders",
+          "signature": "(extra = {})"
+        },
+        {
+          "name": "createShare",
+          "signature": "(base, overrides = {})"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "other",
+      "contentHash": "51c950b0c334e5c2"
+    },
     {
       "file": "claudesciencesession/code/ekf_js.js",
       "lang": "js",
@@ -3867,6 +4052,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/screens/ringtones_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/screens/friends_rides_screen.dart"
         }
       ],
       "types": [],
@@ -3889,7 +4078,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b9eab0cb44aca4b6"
+      "contentHash": "0f9f06f150bbde88"
     },
     {
       "file": "lib/screens/splash_screen.dart",
@@ -7346,6 +7535,10 @@
         },
         {
           "kind": "class",
+          "name": "ShareStatusView"
+        },
+        {
+          "kind": "class",
           "name": "GuardianContact"
         },
         {
@@ -7405,6 +7598,10 @@
           "extends": null
         },
         {
+          "name": "ShareStatusView",
+          "extends": null
+        },
+        {
           "name": "GuardianContact",
           "extends": null
         }
@@ -7413,7 +7610,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4731164bec4d48ef"
+      "contentHash": "56d434a821e1bd25"
     },
     {
       "file": "lib/services/share/journey_share_service.dart",
@@ -7502,6 +7699,10 @@
         },
         {
           "kind": "class",
+          "name": "ShareStatusReader"
+        },
+        {
+          "kind": "class",
           "name": "NoopShareBackend"
         },
         {
@@ -7535,6 +7736,10 @@
           "extends": null
         },
         {
+          "name": "ShareStatusReader",
+          "extends": null
+        },
+        {
           "name": "NoopShareBackend",
           "extends": null
         },
@@ -7547,7 +7752,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3f4329e1f8feaab6"
+      "contentHash": "5967815dc149ebbb"
     },
     {
       "file": "lib/services/share/share_deep_link.dart",
@@ -20030,6 +20235,12 @@
   ],
   "dependencyEdges": [
     {
+      "from": "backend/share/server.test.js",
+      "to": "backend/share/server.js",
+      "source": "./server",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/controllers/authController.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
@@ -26450,6 +26661,10 @@
       },
       {
         "kind": "class",
+        "name": "ShareStatusView"
+      },
+      {
+        "kind": "class",
         "name": "GuardianContact"
       },
       {
@@ -26479,6 +26694,10 @@
       {
         "kind": "class",
         "name": "ShareBackend"
+      },
+      {
+        "kind": "class",
+        "name": "ShareStatusReader"
       },
       {
         "kind": "class",

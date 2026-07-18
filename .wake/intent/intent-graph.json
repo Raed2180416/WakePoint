@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "1d4a8bc6e88bb2e1b423fd81b8e3b0d69c831180",
-  "generatedAt": "2026-07-19T04:49:09+05:30",
-  "structuralDigest": "577ae61be0171fa4bdf62d919bff54d7e6252a24",
+  "gitCommit": "10259e4709c817ca9d411351f34be7c26383ea0d",
+  "generatedAt": "2026-07-19T05:00:23+05:30",
+  "structuralDigest": "6d73b01c214f717efdfd1eb4de7ed695b8d584b5",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1097,
-    "edgeCount": 2134,
+    "nodeCount": 1101,
+    "edgeCount": 2137,
     "byLevel": {
       "feature": 9,
-      "file": 388,
+      "file": 390,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 665
+      "symbol": 667
     },
     "byEdgeType": {
-      "contains": 787,
-      "depends-on": 830,
+      "contains": 789,
+      "depends-on": 831,
       "references": 517
     }
   },
@@ -297,6 +297,28 @@
         "NotificationActionOutcome",
         "StopLogicEngine"
       ]
+    },
+    {
+      "id": "file:backend/share/server.js",
+      "level": "file",
+      "label": "backend/share/server.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "other",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 0
+    },
+    {
+      "id": "file:backend/share/server.test.js",
+      "level": "file",
+      "label": "backend/share/server.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "other",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
     },
     {
       "id": "file:claudesciencesession/code/ekf_js.js",
@@ -1792,7 +1814,7 @@
       "role": "flutter-lib",
       "feature": "unassigned",
       "importers": 7,
-      "exportCount": 6
+      "exportCount": 7
     },
     {
       "id": "file:lib/services/share/journey_share_service.dart",
@@ -1814,7 +1836,7 @@
       "role": "flutter-lib",
       "feature": "unassigned",
       "importers": 3,
-      "exportCount": 3
+      "exportCount": 4
     },
     {
       "id": "file:lib/services/share/share_deep_link.dart",
@@ -7739,6 +7761,15 @@
       "file": "lib/services/share/journey_share_models.dart"
     },
     {
+      "id": "symbol:lib/services/share/journey_share_models.dart#ShareStatusView",
+      "level": "symbol",
+      "label": "ShareStatusView",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/journey_share_models.dart"
+    },
+    {
       "id": "symbol:lib/services/share/journey_share_service.dart#JourneyShareService",
       "level": "symbol",
       "label": "JourneyShareService",
@@ -7778,6 +7809,15 @@
       "id": "symbol:lib/services/share/live_share_backend.dart#ShareBackend",
       "level": "symbol",
       "label": "ShareBackend",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/live_share_backend.dart"
+    },
+    {
+      "id": "symbol:lib/services/share/live_share_backend.dart#ShareStatusReader",
+      "level": "symbol",
+      "label": "ShareStatusReader",
       "kind": "class",
       "deterministic": true,
       "source": "map",
@@ -11770,6 +11810,13 @@
       "type": "contains",
       "deterministic": false,
       "source": "llm"
+    },
+    {
+      "from": "file:backend/share/server.test.js",
+      "to": "file:backend/share/server.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:geowake-server/src/controllers/authController.js",
@@ -17190,6 +17237,13 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/share/journey_share_models.dart",
+      "to": "symbol:lib/services/share/journey_share_models.dart#ShareStatusView",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/share/journey_share_service.dart",
       "to": "file:lib/services/share/journey_share_models.dart",
       "type": "depends-on",
@@ -17248,6 +17302,13 @@
     {
       "from": "file:lib/services/share/live_share_backend.dart",
       "to": "symbol:lib/services/share/live_share_backend.dart#ShareBackend",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/live_share_backend.dart",
+      "to": "symbol:lib/services/share/live_share_backend.dart#ShareStatusReader",
       "type": "contains",
       "deterministic": true,
       "source": "map"
