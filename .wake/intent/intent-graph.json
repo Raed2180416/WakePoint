@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "6c1b96d66334925edbac50ce4216cd9f180bb3b5",
-  "generatedAt": "2026-07-19T04:42:43+05:30",
-  "structuralDigest": "4765378f00e9165893cd318e4697b8471746229f",
+  "gitCommit": "1d4a8bc6e88bb2e1b423fd81b8e3b0d69c831180",
+  "generatedAt": "2026-07-19T04:49:09+05:30",
+  "structuralDigest": "577ae61be0171fa4bdf62d919bff54d7e6252a24",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1095,
-    "edgeCount": 2130,
+    "nodeCount": 1097,
+    "edgeCount": 2134,
     "byLevel": {
       "feature": 9,
-      "file": 387,
+      "file": 388,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 664
+      "symbol": 665
     },
     "byEdgeType": {
-      "contains": 786,
-      "depends-on": 827,
+      "contains": 787,
+      "depends-on": 830,
       "references": 517
     }
   },
@@ -1802,7 +1802,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 2
     },
     {
@@ -2297,7 +2297,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 0,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -4053,6 +4053,17 @@
       "id": "file:test/share/share_deep_link_test.dart",
       "level": "file",
       "label": "test/share/share_deep_link_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/share/share_journey_action_widget_test.dart",
+      "level": "file",
+      "label": "test/share/share_journey_action_widget_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -10563,6 +10574,15 @@
       "file": "test/share/share_deep_link_test.dart"
     },
     {
+      "id": "symbol:test/share/share_journey_action_widget_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/share/share_journey_action_widget_test.dart"
+    },
+    {
       "id": "symbol:test/share/share_link_builder_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -14576,6 +14596,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 2
+    },
+    {
+      "from": "file:lib/screens/maptracking.dart",
+      "to": "file:lib/widgets/share/share_journey_action.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/maptracking.dart",
@@ -25167,6 +25194,27 @@
     {
       "from": "file:test/share/share_deep_link_test.dart",
       "to": "symbol:test/share/share_deep_link_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/share_journey_action_widget_test.dart",
+      "to": "file:lib/services/share/journey_share_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/share_journey_action_widget_test.dart",
+      "to": "file:lib/widgets/share/share_journey_action.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/share_journey_action_widget_test.dart",
+      "to": "symbol:test/share/share_journey_action_widget_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

@@ -296,6 +296,8 @@
 {"file":"test/share/journey_share_models_test.dart","name":"main","signature":"()"}
 {"file":"test/share/journey_share_service_test.dart","name":"main","signature":"()"}
 {"file":"test/share/share_deep_link_test.dart","name":"main","signature":"()"}
+{"file":"test/share/share_journey_action_widget_test.dart","name":"_host","signature":"()"}
+{"file":"test/share/share_journey_action_widget_test.dart","name":"main","signature":"()"}
 {"file":"test/share/share_link_builder_test.dart","name":"main","signature":"()"}
 {"file":"test/shared_prefs_reload_test.dart","name":"main","signature":"()"}
 {"file":"test/simplified_polyline_present_test.dart","name":"main","signature":"()"}

@@ -53,11 +53,14 @@ class ShareLinkBuilder {
   static String buildBasicMessage({
     required String url,
     DateTime? eta,
+    String? destLabel,
   }) {
-    if (eta == null) {
-      return 'Track my journey · GeoWake\n$url';
-    }
-    return 'Track my journey — arriving ~${formatEta(eta)} · GeoWake\n$url';
+    final dest = (destLabel != null && destLabel.trim().isNotEmpty)
+        ? ' to ${destLabel.trim()}'
+        : '';
+    final when = eta != null ? ' — arriving ~${formatEta(eta)}' : '';
+    // Reads like a status the recipient gets value from even without tapping.
+    return 'On my way$dest$when · GeoWake\n$url';
   }
 
   /// The "arrived safely" message Guardian sends to the saved contact.

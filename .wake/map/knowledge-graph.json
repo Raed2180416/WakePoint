@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "6c1b96d66334925edbac50ce4216cd9f180bb3b5",
-    "gitTree": "4765378f00e9165893cd318e4697b8471746229f",
-    "generatedAt": "2026-07-19T04:42:43+05:30",
-    "filesIndexed": 387,
-    "dependencyEdges": 827,
-    "totalExports": 664,
-    "totalImports": 1768,
+    "gitCommit": "1d4a8bc6e88bb2e1b423fd81b8e3b0d69c831180",
+    "gitTree": "577ae61be0171fa4bdf62d919bff54d7e6252a24",
+    "generatedAt": "2026-07-19T04:49:09+05:30",
+    "filesIndexed": 388,
+    "dependencyEdges": 830,
+    "totalExports": 665,
+    "totalImports": 1773,
     "byRole": {
       "other": 2,
       "backend": 12,
-      "flutter-test": 193,
+      "flutter-test": 194,
       "flutter-lib": 171,
       "tool": 8,
       "platform": 1
@@ -3446,6 +3446,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/services/tracking/arrival_hooks.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../widgets/share/share_journey_action.dart"
         }
       ],
       "types": [],
@@ -3472,7 +3476,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "25fc1bdacdd02988"
+      "contentHash": "922b696a24228e9c"
     },
     {
       "file": "lib/screens/mobility_data_consent_screen.dart",
@@ -7486,7 +7490,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4bf84732f83db166"
+      "contentHash": "6d1f620b57ece01d"
     },
     {
       "file": "lib/services/share/live_share_backend.dart",
@@ -7608,7 +7612,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "809b343e09f371f8"
+      "contentHash": "1107f7607422a770"
     },
     {
       "file": "lib/services/simulation_client.dart",
@@ -10192,7 +10196,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b624af2cc5fe15de"
+      "contentHash": "05ecddc922749cc4"
     },
     {
       "file": "lib/widgets/share/share_sheet.dart",
@@ -10228,7 +10232,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "1ecbd7bdbc95e294"
+      "contentHash": "5c5e27f80376aade"
     },
     {
       "file": "lib/widgets/stats/share_stat_card.dart",
@@ -17907,6 +17911,51 @@
       "contentHash": "108c9f3c5b6cb840"
     },
     {
+      "file": "test/share/share_journey_action_widget_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/share/journey_share_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/widgets/share/share_journey_action.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_host",
+          "signature": "()"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "4dd61ff8f720d00f"
+    },
+    {
       "file": "test/share/share_link_builder_test.dart",
       "lang": "dart",
       "exports": [
@@ -17937,7 +17986,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "73f8519bf90d67dd"
+      "contentHash": "9806ffa43b667cbe"
     },
     {
       "file": "test/shared_prefs_reload_test.dart",
@@ -20860,6 +20909,12 @@
       "from": "lib/screens/maptracking.dart",
       "to": "lib/services/tracking/arrival_hooks.dart",
       "source": "package:geowake2/services/tracking/arrival_hooks.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/maptracking.dart",
+      "to": "lib/widgets/share/share_journey_action.dart",
+      "source": "../widgets/share/share_journey_action.dart",
       "kind": "static"
     },
     {
@@ -24541,6 +24596,18 @@
       "kind": "static"
     },
     {
+      "from": "test/share/share_journey_action_widget_test.dart",
+      "to": "lib/services/share/journey_share_service.dart",
+      "source": "package:geowake2/services/share/journey_share_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/share/share_journey_action_widget_test.dart",
+      "to": "lib/widgets/share/share_journey_action.dart",
+      "source": "package:geowake2/widgets/share/share_journey_action.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/share/share_link_builder_test.dart",
       "to": "lib/services/share/share_link_builder.dart",
       "source": "package:geowake2/services/share/share_link_builder.dart",
@@ -27365,7 +27432,7 @@
     },
     {
       "file": "lib/screens/maptracking.dart",
-      "imports": 17
+      "imports": 18
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",

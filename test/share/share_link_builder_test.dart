@@ -10,9 +10,11 @@ void main() {
       final url = ShareLinkBuilder.buildShareUrl('abc123',
           domain: 'https://geo.wake');
       final eta = DateTime(2026, 7, 19, 8, 42);
-      final msg = ShareLinkBuilder.buildBasicMessage(url: url, eta: eta);
+      final msg = ShareLinkBuilder.buildBasicMessage(
+          url: url, eta: eta, destLabel: 'Nallur Halli');
 
-      expect(msg, 'Track my journey — arriving ~8:42 · GeoWake\n$url');
+      expect(msg,
+          'On my way to Nallur Halli — arriving ~8:42 · GeoWake\n$url');
       expect(msg.contains('GeoWake'), isTrue);
       // No coordinates / names leaked into the message.
       expect(RegExp(r'\d{1,3}\.\d{3,}').hasMatch(msg), isFalse);
@@ -23,7 +25,7 @@ void main() {
     test('no-ETA form still says GeoWake', () {
       final url = ShareLinkBuilder.buildShareUrl('x');
       final msg = ShareLinkBuilder.buildBasicMessage(url: url);
-      expect(msg, 'Track my journey · GeoWake\n$url');
+      expect(msg, 'On my way · GeoWake\n$url');
     });
 
     test('arrived message says GeoWake and is safe', () {

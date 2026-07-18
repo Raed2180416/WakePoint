@@ -25,6 +25,7 @@ import 'package:geowake2/services/location_manager.dart'; // For broadcasting de
 import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
 import 'package:geowake2/services/notification_service.dart'; // Real alarm path for post-arrival re-alert.
 import 'package:geowake2/services/tracking/arrival_hooks.dart'; // Fire-and-forget post-arrival fan-out.
+import '../widgets/share/share_journey_action.dart'; // Free "Share ride status" AppBar action.
 
 class MapTrackingScreen extends StatefulWidget {
   // Displays map and live tracking details.
@@ -1074,6 +1075,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               ],
             ],
           ),
+          // FREE "Share ride status" — the viral growth loop. No entitlement
+          // check; opens the OS share sheet (WhatsApp/SMS/anything). Read-only,
+          // never touches the arm → track → alarm spine.
+          actions: [
+            ShareJourneyAction(destLabel: _destinationName),
+          ],
         ),
         // Above-ground tracking banner (free users only; collapses to nothing
         // for Pro / no-fill). AdPolicy forbids ads on the alarm/wake surfaces,

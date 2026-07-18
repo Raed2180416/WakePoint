@@ -185,7 +185,8 @@ class JourneyShareService {
     final secret = await _secret();
     final token = ShareLinkBuilder.mintToken(id, secret);
     final url = ShareLinkBuilder.buildShareUrl(id, domain: domain, token: token);
-    final message = ShareLinkBuilder.buildBasicMessage(url: url, eta: eta);
+    final message = ShareLinkBuilder.buildBasicMessage(
+        url: url, eta: eta, destLabel: destLabel);
     return StartedShare(session: session, url: url, message: message);
   }
 
@@ -198,6 +199,7 @@ class JourneyShareService {
     final url = ShareLinkBuilder.buildShareUrl(id, domain: domain, token: token);
     final message = ShareLinkBuilder.buildBasicMessage(
       url: url,
+      destLabel: s.destLabel,
       eta: s.etaEpochMs != null
           ? DateTime.fromMillisecondsSinceEpoch(s.etaEpochMs!)
           : null,

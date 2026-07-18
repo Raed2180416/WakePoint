@@ -38,8 +38,9 @@ class ShareJourneyAction extends StatelessWidget {
       builder: (context, sharing, _) {
         return IconButton(
           key: const Key('share_journey_action'),
-          tooltip:
-              sharing ? "You're sharing · GeoWake" : 'Share journey · GeoWake',
+          tooltip: sharing
+              ? "You're sharing your ride status · GeoWake"
+              : 'Share ride status · GeoWake',
           icon: Icon(sharing ? Icons.podcasts : Icons.ios_share),
           onPressed: () => _onPressed(context, sharing),
         );

@@ -48,7 +48,7 @@ class _ShareSheetState extends State<_ShareSheet> {
         eta: widget.eta,
       );
       // Hand to the OS share sheet — WhatsApp / SMS / anything.
-      await Share.share(started.message, subject: 'Track my journey · GeoWake');
+      await Share.share(started.message, subject: 'My ride status · GeoWake');
       if (mounted) Navigator.of(context).maybePop();
     } catch (_) {
       if (mounted) {
@@ -59,6 +59,18 @@ class _ShareSheetState extends State<_ShareSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// The human-readable status the recipient will see (no URL) — for the
+  /// in-sheet preview. Mirrors ShareLinkBuilder.buildBasicMessage's copy.
+  String _statusPreview() {
+    final d = widget.destLabel?.trim();
+    final dest = (d != null && d.isNotEmpty) ? ' to $d' : '';
+    final e = widget.eta;
+    final when = e != null
+        ? ' — arriving ~${e.toLocal().hour}:${e.toLocal().minute.toString().padLeft(2, '0')}'
+        : '';
+    return 'On my way$dest$when';
   }
 
   @override
@@ -75,17 +87,37 @@ class _ShareSheetState extends State<_ShareSheet> {
               children: [
                 Icon(Icons.ios_share, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
-                Text('Share your journey',
-                    style: theme.textTheme.titleLarge),
+                Text('Share ride status', style: theme.textTheme.titleLarge),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Send a live link so someone can follow along and know when you '
-              'arrive. Free, for everyone.',
-              style: theme.textTheme.bodyMedium,
+            const SizedBox(height: 12),
+            // Preview: exactly what your friend sees, so sharing is a clear,
+            // one-time consent moment (it's a location share).
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(children: [
+                const Icon(Icons.directions_transit, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _statusPreview(),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ]),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
+            Text(
+              'Send via WhatsApp, SMS — anywhere. If they don\'t have GeoWake '
+              'they\'ll still see your status and can get the app. Free, for '
+              'everyone.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 18),
             FilledButton.icon(
               onPressed: _busy ? null : _share,
               icon: _busy
@@ -95,7 +127,7 @@ class _ShareSheetState extends State<_ShareSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.send),
-              label: const Text('Share with GeoWake'),
+              label: const Text('Share ride status'),
             ),
           ],
         ),
