@@ -7,6 +7,7 @@
 // or prefs fail, the user is simply a free (never a broken) user, and the core
 // alarm is never affected (PremiumService.canUseCoreAlarm is always true).
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ad_service.dart';
@@ -20,9 +21,25 @@ class MonetizationService {
 
   static const String _ridesKey = 'gw_rides_since_last_ad';
 
+  /// Hardcoded fallback price shown if the store metadata is unavailable, so the
+  /// paywall CTA never blanks. Matches the Play Console SKU list price (₹199).
+  static const String proPriceFallback = '₹199';
+
   late PremiumService premium;
   PurchaseBackend? _backend;
   bool _ready = false;
+
+  /// Reactive entitlement tier. UI wraps this in a [ValueListenableBuilder] so a
+  /// purchase / rewarded day-pass instantly hides ads + unlocks Pro with no
+  /// restart. UI MUST mutate entitlement through this facade (buyPro /
+  /// restorePurchases / grantRewardedDayPass), never PremiumService directly, so
+  /// the notifier stays in sync.
+  final ValueNotifier<EntitlementTier> tierListenable =
+      ValueNotifier<EntitlementTier>(EntitlementTier.free);
+
+  void _syncTier() {
+    tierListenable.value = _ready ? premium.tier : EntitlementTier.free;
+  }
 
   /// True once [init] has assembled the entitlement stack.
   bool get isReady => _ready;
@@ -53,13 +70,17 @@ class MonetizationService {
             (await SharedPreferences.getInstance()).setString(k, v),
       );
       // Grant Pro whenever ownership arrives asynchronously (a UPI/pending
-      // purchase that clears after buyPro timed out, or a late restore).
-      _backend!.onEntitlementChanged =
-          (owned) => premium.applyOwnedProducts(owned);
+      // purchase that clears after buyPro timed out, or a late restore). Sync
+      // the reactive tier so a late-arriving purchase instantly unlocks the UI.
+      _backend!.onEntitlementChanged = (owned) async {
+        await premium.applyOwnedProducts(owned);
+        _syncTier();
+      };
       await premium.load();
       final prefs = await SharedPreferences.getInstance();
       _ridesSinceLastAd = prefs.getInt(_ridesKey) ?? 0;
       _ready = true;
+      _syncTier();
       // Ad SDK init is slow and non-essential — never block startup on it.
       // ignore: discarded_futures
       AdService.instance.init();
@@ -68,7 +89,46 @@ class MonetizationService {
       _backend ??= FakePurchaseBackend();
       premium = PremiumService(backend: _backend!);
       _ready = true;
+      _syncTier();
     }
+  }
+
+  // ── Entitlement mutations — call THESE from UI, not PremiumService, so the
+  //    reactive [tierListenable] stays in sync. ──────────────────────────────
+
+  /// Buy the one-time Pro unlock. Returns true iff granted.
+  Future<bool> buyPro() async {
+    if (!_ready) return false;
+    final ok = await premium.buyPro();
+    _syncTier();
+    return ok;
+  }
+
+  /// Restore prior purchases (reinstall / new device). Returns owned product ids.
+  Future<Set<String>> restorePurchases() async {
+    if (!_ready) return <String>{};
+    final owned = await premium.restorePurchases();
+    _syncTier();
+    return owned;
+  }
+
+  /// Grant a rewarded "Pro for a day" pass (call after a rewarded video completes).
+  Future<void> grantRewardedDayPass({
+    Duration duration = PremiumService.rewardedDayPassDuration,
+  }) async {
+    if (!_ready) return;
+    await premium.grantRewardedDayPass(duration: duration);
+    _syncTier();
+  }
+
+  /// Localized Pro price string, falling back to [proPriceFallback] if the store
+  /// metadata is unavailable — so the paywall CTA never blanks or crashes.
+  Future<String> proPriceOrFallback() async {
+    try {
+      final p = await _backend?.queryPrice(PremiumService.proProductId);
+      if (p != null && p.trim().isNotEmpty) return p;
+    } catch (_) {/* fall through */}
+    return proPriceFallback;
   }
 
   /// Count a completed ride and persist it (drives the ad frequency cap).

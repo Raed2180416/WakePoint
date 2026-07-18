@@ -118,6 +118,22 @@ class IapPurchaseBackend implements PurchaseBackend {
     }
   }
 
+  @override
+  Future<String?> queryPrice(String productId) async {
+    if (!_available) return null;
+    try {
+      final resp = await _iap.queryProductDetails({productId});
+      if (resp.productDetails.isEmpty) return null;
+      final product = resp.productDetails.firstWhere(
+        (d) => d.id == productId,
+        orElse: () => resp.productDetails.first,
+      );
+      return product.price; // localized store string, e.g. "₹199.00"
+    } catch (_) {
+      return null; // caller falls back to the hardcoded price
+    }
+  }
+
   Future<void> dispose() async {
     await _sub?.cancel();
     _sub = null;

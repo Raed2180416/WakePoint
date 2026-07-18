@@ -48,6 +48,10 @@ dependencies:
   # Ads & In-app purchases
   google_mobile_ads: ^6.0.0
   in_app_purchase: ^3.2.1
+  # Premium/paywall + share surfaces (Terms/Privacy links, last-mile deep-links,
+  # viral journey share). Standard, widely-used, no native config beyond queries.
+  url_launcher: ^6.3.0
+  share_plus: ^10.1.4
 
   cupertino_icons: ^1.0.8
   android_intent_plus: ^6.0.0

@@ -645,6 +645,12 @@
       "name": "MapTrackingScreen"
     }
   ],
+  "lib/screens/monetization/paywall_screen.dart": [
+    {
+      "kind": "class",
+      "name": "GeoWakePaywallScreen"
+    }
+  ],
   "lib/screens/otherimpservices/preload_map_screen.dart": [
     {
       "kind": "class",
@@ -1503,6 +1509,20 @@
     {
       "kind": "class",
       "name": "GatedBannerAd"
+    }
+  ],
+  "lib/widgets/monetization/pro_gate.dart": [
+    {
+      "kind": "class",
+      "name": "ProGate"
+    },
+    {
+      "kind": "class",
+      "name": "ProBadge"
+    },
+    {
+      "kind": "enum",
+      "name": "PaywallSource"
     }
   ],
   "lib/widgets/post_arrival_card.dart": [

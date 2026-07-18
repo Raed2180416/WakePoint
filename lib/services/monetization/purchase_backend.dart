@@ -36,6 +36,11 @@ abstract class PurchaseBackend {
   /// Returns the set of owned product ids — empty if nothing is owned. Must not
   /// throw for the "nothing to restore" case.
   Future<Set<String>> restore();
+
+  /// The localized store price string for [productId] (e.g. "₹199.00"), or null
+  /// if the store metadata is unavailable. Callers MUST fall back to a hardcoded
+  /// price so a metadata failure never blanks the paywall CTA.
+  Future<String?> queryPrice(String productId);
 }
 
 /// In-memory [PurchaseBackend] for tests and headless runs. Deterministic and
@@ -56,6 +61,10 @@ class FakePurchaseBackend implements PurchaseBackend {
   /// When `true`, [restore] throws (simulates a restore error).
   bool throwOnRestore;
 
+  /// Price string [queryPrice] returns (null simulates unavailable store
+  /// metadata, exercising the caller's hardcoded fallback).
+  String? priceString;
+
   /// Call log — product ids passed to [buyOneTime], in order.
   final List<String> buyCalls = <String>[];
 
@@ -67,6 +76,7 @@ class FakePurchaseBackend implements PurchaseBackend {
     this.buyShouldSucceed = true,
     this.throwOnBuy = false,
     this.throwOnRestore = false,
+    this.priceString = '₹199.00',
   }) : _owned = <String>{...?initiallyOwned};
 
   /// Products currently owned in the fake store (read-only view).
@@ -99,4 +109,7 @@ class FakePurchaseBackend implements PurchaseBackend {
     }
     return <String>{..._owned};
   }
+
+  @override
+  Future<String?> queryPrice(String productId) async => priceString;
 }

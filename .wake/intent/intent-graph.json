@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "863c334617e11db1830275db664690ab925831e2",
-  "generatedAt": "2026-07-19T00:43:01+05:30",
-  "structuralDigest": "9062e02cae17f00941e36dc57ea3c3405038ae0b",
+  "gitCommit": "52cbfdc8b9184755d4faa63b2958dd16bd38fbcc",
+  "generatedAt": "2026-07-19T01:06:06+05:30",
+  "structuralDigest": "787e4e3b3a5e33e611ce43e890b4035fed1351c3",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 933,
-    "edgeCount": 1880,
+    "nodeCount": 941,
+    "edgeCount": 1893,
     "byLevel": {
       "feature": 9,
-      "file": 334,
+      "file": 337,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 555
+      "symbol": 560
     },
     "byEdgeType": {
-      "contains": 677,
-      "depends-on": 686,
+      "contains": 682,
+      "depends-on": 694,
       "references": 517
     }
   },
@@ -992,6 +992,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/screens/monetization/paywall_screen.dart",
+      "level": "file",
+      "label": "lib/screens/monetization/paywall_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/screens/otherimpservices/preload_map_screen.dart",
       "level": "file",
       "label": "lib/screens/otherimpservices/preload_map_screen.dart",
@@ -1230,7 +1241,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -1241,7 +1252,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 1
     },
     {
@@ -1263,7 +1274,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 9,
       "exportCount": 3
     },
     {
@@ -1285,7 +1296,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 8,
+      "importers": 9,
       "exportCount": 2
     },
     {
@@ -1881,6 +1892,17 @@
       "feature": "unassigned",
       "importers": 2,
       "exportCount": 1
+    },
+    {
+      "id": "file:lib/widgets/monetization/pro_gate.dart",
+      "level": "file",
+      "label": "lib/widgets/monetization/pro_gate.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 3
     },
     {
       "id": "file:lib/widgets/post_arrival_card.dart",
@@ -2876,6 +2898,17 @@
       "id": "file:test/monetization/post_arrival_test.dart",
       "level": "file",
       "label": "test/monetization/post_arrival_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/premium_gates_wave0_test.dart",
+      "level": "file",
+      "label": "test/monetization/premium_gates_wave0_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -5651,6 +5684,15 @@
       "file": "lib/screens/maptracking.dart"
     },
     {
+      "id": "symbol:lib/screens/monetization/paywall_screen.dart#GeoWakePaywallScreen",
+      "level": "symbol",
+      "label": "GeoWakePaywallScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/monetization/paywall_screen.dart"
+    },
+    {
       "id": "symbol:lib/screens/otherimpservices/preload_map_screen.dart#PreloadMapScreen",
       "level": "symbol",
       "label": "PreloadMapScreen",
@@ -7235,6 +7277,33 @@
       "file": "lib/widgets/gated_banner_ad.dart"
     },
     {
+      "id": "symbol:lib/widgets/monetization/pro_gate.dart#PaywallSource",
+      "level": "symbol",
+      "label": "PaywallSource",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/monetization/pro_gate.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/monetization/pro_gate.dart#ProBadge",
+      "level": "symbol",
+      "label": "ProBadge",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/monetization/pro_gate.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/monetization/pro_gate.dart#ProGate",
+      "level": "symbol",
+      "label": "ProGate",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/monetization/pro_gate.dart"
+    },
+    {
       "id": "symbol:lib/widgets/post_arrival_card.dart#PostArrivalCardWidget",
       "level": "symbol",
       "label": "PostArrivalCardWidget",
@@ -8367,6 +8436,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/monetization/post_arrival_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/premium_gates_wave0_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/premium_gates_wave0_test.dart"
     },
     {
       "id": "symbol:test/multiple_switch_point_alarm_test.dart#encodePolyline",
@@ -12348,6 +12426,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/screens/monetization/paywall_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/screens/otherimpservices/preload_map_screen.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -12930,6 +13015,41 @@
       "source": "map"
     },
     {
+      "from": "file:lib/screens/monetization/paywall_screen.dart",
+      "to": "file:lib/services/monetization/ad_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/paywall_screen.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/paywall_screen.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/paywall_screen.dart",
+      "to": "file:lib/widgets/monetization/pro_gate.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/monetization/paywall_screen.dart",
+      "to": "symbol:lib/screens/monetization/paywall_screen.dart#GeoWakePaywallScreen",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/screens/otherimpservices/preload_map_screen.dart",
       "to": "symbol:lib/screens/otherimpservices/preload_map_screen.dart#PreloadMapScreen",
       "type": "contains",
@@ -13015,6 +13135,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 5
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "file:lib/widgets/monetization/pro_gate.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/settingsdrawer.dart",
@@ -16563,6 +16690,27 @@
       "source": "map"
     },
     {
+      "from": "file:lib/widgets/monetization/pro_gate.dart",
+      "to": "symbol:lib/widgets/monetization/pro_gate.dart#PaywallSource",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/monetization/pro_gate.dart",
+      "to": "symbol:lib/widgets/monetization/pro_gate.dart#ProBadge",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/monetization/pro_gate.dart",
+      "to": "symbol:lib/widgets/monetization/pro_gate.dart#ProGate",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/widgets/post_arrival_card.dart",
       "to": "file:lib/services/monetization/post_arrival_service.dart",
       "type": "depends-on",
@@ -19884,6 +20032,27 @@
     {
       "from": "file:test/monetization/post_arrival_test.dart",
       "to": "symbol:test/monetization/post_arrival_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/premium_gates_wave0_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/premium_gates_wave0_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/premium_gates_wave0_test.dart",
+      "to": "symbol:test/monetization/premium_gates_wave0_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

@@ -190,6 +190,7 @@
 {"file":"test/monetization/monetization_service_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/premium_gates_wave0_test.dart","name":"main","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"syntheticMultiTransferDirections","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}

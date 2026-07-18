@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'services/navigation_service.dart';
 import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
+import 'screens/monetization/paywall_screen.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -193,6 +194,13 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         }
         if (settings.name == '/') {
           return MaterialPageRoute(builder: (_) => const HomeScreen());
+        }
+        if (settings.name == '/paywall') {
+          // The single upsell surface. Arg is an optional PaywallSource.
+          return MaterialPageRoute(
+            builder: (_) => const GeoWakePaywallScreen(),
+            settings: settings,
+          );
         }
         return null;
       },

@@ -571,6 +571,47 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/premium_service.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/services/monetization/monetization_service.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart"
+    ],
+    "exportedSymbols": [
+      "PremiumProducts",
+      "PremiumService",
+      "EntitlementTier"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/monetization/purchase_backend.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/services/monetization/monetization_service.dart",
+      "lib/services/monetization/premium_service.dart",
+      "lib/services/monetization/purchase_backend_impl.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart"
+    ],
+    "exportedSymbols": [
+      "PurchaseBackend",
+      "FakePurchaseBackend"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/config/fire_decision_config.dart",
     "importers": 8,
     "directDependents": [
@@ -621,25 +662,6 @@
     ],
     "exportedSymbols": [
       "LocationManager"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/monetization/purchase_backend.dart",
-    "importers": 8,
-    "directDependents": [
-      "lib/services/monetization/monetization_service.dart",
-      "lib/services/monetization/premium_service.dart",
-      "lib/services/monetization/purchase_backend_impl.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart"
-    ],
-    "exportedSymbols": [
-      "PurchaseBackend",
-      "FakePurchaseBackend"
     ],
     "riskLevel": "high"
   },
@@ -714,25 +736,6 @@
     "exportedSymbols": [
       "AdPolicy",
       "AdPlacement"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/monetization/premium_service.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/services/monetization/ad_service.dart",
-      "lib/services/monetization/monetization_service.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart"
-    ],
-    "exportedSymbols": [
-      "PremiumProducts",
-      "PremiumService",
-      "EntitlementTier"
     ],
     "riskLevel": "high"
   },

@@ -249,4 +249,19 @@ class PremiumService {
 
   /// Family / shared alarms (wake a companion).
   bool get canUseFamilyAlarms => isPro;
+
+  /// Guardian mode — auto-share every commute with a saved contact + an
+  /// "arrived safely" push. (Basic one-off share is ALWAYS free; this is the
+  /// automatic/continuous Pro variant.)
+  bool get canUseGuardianMode => isPro;
+
+  /// The trip-stats dashboard (streaks / patterns / favorite lines). Note: the
+  /// stat *recording* and the shareable stat CARD are free (growth loop); only
+  /// the rich dashboard is Pro.
+  bool get canUseTripStatsDashboard => isPro;
+
+  // NOTE: there is deliberately NO "snooze" gate. A wake-before-your-stop alarm
+  // must never be delayable — snoozing would make the rider miss their stop.
+  // The safety behaviour for that moment is escalating RE-ALERT-until-
+  // acknowledged (see canUseCustomAlarmSounds / the alarm channel), not snooze.
 }

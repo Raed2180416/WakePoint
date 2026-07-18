@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../main.dart';
+import '../widgets/monetization/pro_gate.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 
 // --- STEP 1: ADD THIS IMPORT ---
@@ -75,7 +76,10 @@ class SettingsDrawer extends StatelessWidget {
               leading: const Icon(Icons.star),
               title: const Text('Go Premium'),
               onTap: () {
-                // Implement premium purchase flow
+                Navigator.of(context).pushNamed(
+                  '/paywall',
+                  arguments: PaywallSource.drawer,
+                );
               },
             ),
             const Divider(),
