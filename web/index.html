@@ -27,8 +27,26 @@
   <meta name="apple-mobile-web-app-title" content="geowake2">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0&loading=async" async defer></script>
+  <!--
+    Google Maps JS API. The key is injected OUT-OF-BAND and is NEVER committed
+    (mirrors the Android key.properties pattern). To enable maps in a web build,
+    create web/maps_key.js (gitignored) containing:
+        window.GEOWAKE_MAPS_KEY = 'your-maps-js-key';
+    Without it the map renders blank; the rest of the app — including the
+    playground reachability/EKF logic — works unchanged.
+  -->
+  <script src="maps_key.js" onerror="void 0"></script>
+  <script>
+    (function () {
+      var k = window.GEOWAKE_MAPS_KEY;
+      if (!k) return;
+      var s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + k + '&loading=async';
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    })();
+  </script>
 </head>
 
 <body>

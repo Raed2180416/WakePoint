@@ -1,8 +1,11 @@
+import os
 import requests
 import re
 import json
 
-embed_url = "https://www.google.com/maps/embed/v1/place?key=AIzaSyBCY3GiB2MjOvzS16XfrH3OvWNAFmt9Y9c&q=Shaheed+Sthal+(New+Bus+Adda)+Metro+Station+Ghaziabad&center=28.6705,77.415882"
+# Dev-only experiment. The key is read from the environment — never hardcode it.
+_key = os.environ.get("GMAPS_KEY", "")
+embed_url = f"https://www.google.com/maps/embed/v1/place?key={_key}&q=Shaheed+Sthal+(New+Bus+Adda)+Metro+Station+Ghaziabad&center=28.6705,77.415882"
 
 print(f"Fetching: {embed_url}")
 

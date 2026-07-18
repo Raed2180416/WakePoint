@@ -683,7 +683,7 @@ class ImuReplayEngineV2 {
         await _loadMetroRoute(routeId);
         break;
       case TestRouteId.nallurHalliToVijayanagar:
-        // Placeholder for pure log replay where route is derived from log
+        await _loadMetroRoute(routeId);
         break;
       case TestRouteId.koramangalaToIndiranagar:
         await _loadNonMetroRoute(routeId);

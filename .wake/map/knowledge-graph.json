@@ -3,10 +3,10 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "b2eec7a85b115cb0088f734ccaeeb1bfc049963f",
-    "gitTree": "5b59a2288d130f34a8dcf765f7a3097f17f1f669",
-    "generatedAt": "2026-07-18T19:46:07+05:30",
-    "filesIndexed": 330,
+    "gitCommit": "f3f80d786cff554e75f676bb8f66db6504784fa1",
+    "gitTree": "2bdf62a415ff2edfca17568ea120377df7e72c56",
+    "generatedAt": "2026-07-18T20:52:39+05:30",
+    "filesIndexed": 331,
     "dependencyEdges": 682,
     "totalExports": 548,
     "totalImports": 1516,
@@ -15,7 +15,8 @@
       "backend": 12,
       "flutter-test": 177,
       "flutter-lib": 131,
-      "tool": 8
+      "tool": 8,
+      "platform": 1
     },
     "entryPoints": [
       "geowake-server/src/server.js",
@@ -1487,7 +1488,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ecdc99a37a85d4a3"
+      "contentHash": "b8793220847ada9e"
     },
     {
       "file": "lib/core/ekf/motion_classifier.dart",
@@ -9626,7 +9627,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "5e04814dfc3c5ec8"
+      "contentHash": "bc7f58056e45956a"
     },
     {
       "file": "test/dashboard/simulation_state_test.dart",
@@ -16949,6 +16950,20 @@
       "hasSideEffects": false,
       "role": "tool",
       "contentHash": "fff05e06a2c2da38"
+    },
+    {
+      "file": "web/maps_key.example.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "platform",
+      "contentHash": "418765e9737cf8cc"
     }
   ],
   "dependencyEdges": [

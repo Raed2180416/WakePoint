@@ -89,6 +89,11 @@ flutter:
     - assets/geowake.png
     - assets/ringtones/
     - assets/osm/
+    # Playground curated metro routes (~89KB): real Bengaluru Purple Line geometry
+    # (curved polylines + station arc-lengths + timing) rebuilt from ride ground
+    # truth. Small enough to bundle; the EKF test panel / replay engine needs it
+    # so the metro routes (majestic/rajajinagar/nallur) load instead of throwing.
+    - assets/ekf_test_routes/
     # NOTE: dev-only replay data (docs/Sandalsoap-whitefield/ ~274MB of raw IMU
     # CSVs + a 50MB unified log, and route_log_extracted.json) is NOT bundled —
     # it was inflating the APK ~285MB. Only the EKF test panel / replay engine

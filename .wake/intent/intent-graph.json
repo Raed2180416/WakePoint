@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "b2eec7a85b115cb0088f734ccaeeb1bfc049963f",
-  "generatedAt": "2026-07-18T19:46:07+05:30",
-  "structuralDigest": "5b59a2288d130f34a8dcf765f7a3097f17f1f669",
+  "gitCommit": "f3f80d786cff554e75f676bb8f66db6504784fa1",
+  "generatedAt": "2026-07-18T20:52:39+05:30",
+  "structuralDigest": "2bdf62a415ff2edfca17568ea120377df7e72c56",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,11 +15,11 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 922,
+    "nodeCount": 923,
     "edgeCount": 1869,
     "byLevel": {
       "feature": 9,
-      "file": 330,
+      "file": 331,
       "repo": 1,
       "subfeature": 34,
       "symbol": 548
@@ -3924,6 +3924,17 @@
       "deterministic": true,
       "source": "map",
       "role": "tool",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
+    },
+    {
+      "id": "file:web/maps_key.example.js",
+      "level": "file",
+      "label": "web/maps_key.example.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "platform",
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 0

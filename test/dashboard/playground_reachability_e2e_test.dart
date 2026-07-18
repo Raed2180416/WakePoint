@@ -92,14 +92,13 @@ Future<_Run> _drive(TestRouteId route, GpsDropoutMode dropout) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // Routes built entirely in code (no bundled assets), so this runs in CI. The
-  // curated *metro* routes (majestic/rajajinagar/nallur) load a stripped asset
-  // (assets/ekf_test_routes/bengaluru_metro_routes.json) that is absent in-repo,
-  // so they can't be driven here; the multi-modal route carries a metro leg +
-  // stations and exercises the same tunnel-dropout / reachability path.
+  // Real Bengaluru Purple Line metro routes (curved polylines + station
+  // arc-lengths + timing, rebuilt from ride ground truth into
+  // assets/ekf_test_routes/bengaluru_metro_routes.json). These are the actual
+  // GPS-dark underground scenario the never-late cone exists for.
   const routes = [
-    TestRouteId.mgRoadToAirport, // walk + metro leg + stations (hardcoded)
-    TestRouteId.koramangalaToIndiranagar, // non-metro (hardcoded)
+    TestRouteId.majesticToNallurHalli, // Purple, ~21 km, 13 stations
+    TestRouteId.nallurHalliToVijayanagar, // Purple, ~24 km, 16 stations
   ];
   // tunnelSimulation: GPS only near stations (re-anchors mid-ride).
   // completeDropout: GPS dead after the first fix (pure cold-start cone) —
@@ -123,7 +122,7 @@ void main() {
       // truth reached the WAKE target (the honest never-late margin).
       // "earlyMeters" = how far the provable cone was ahead of true progress at
       // fire (the tightness the SOTA tightening work shrinks).
-      stdout.writeln('\nPLAYGROUND reachability (real engine, in-code routes):');
+      stdout.writeln('\nPLAYGROUND reachability (real engine, real Bengaluru Purple Line):');
       stdout.writeln('route/dropout                             | reachFire '
           '| earlyVsTarget    | earlyMeters | ekfAlarmLead');
       for (final r in runs) {
