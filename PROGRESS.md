@@ -121,3 +121,24 @@ VERDICT (SYNTHESIS.md): the win is REAL + large (43-46% early-firing cut; worst 
 - V_LINE=28 confirmed valid ceiling (max true 21.6 m/s); 22.2 is NOT.
 
 Roadmap (build-off-existing): log baro+mag (sensor_fusion) + collect real rides incl. a parallel-car ride -> precision-gated HMM stop detector (active_route_manager/station_association) -> reachability-gated stop-anchor min()-term (default-OFF) -> mode-max V_LINE selection -> on-train gate (G v B) with the 2 fixes -> accel-limited cone with dwell-gated v0. Everything device-unproven at scale until on-device data.
+
+---
+
+## Deep simulation + validation + P0/P1 fixes (2026-07-18, wave 6)
+
+User asked to make everything usable, deeply simulate all routes, use the sim engine, generate real-ish data, and validate exhaustively. Launched 6 workflows (~55 agents) + hands-on validation. Findings + fixes (all committed, suite green):
+
+**Scale simulation (391 rides / 19 cities / 46 lines / 9 scenarios, generated from the shipped dataset via scale/build_scale_rides.py):**
+- Free-run reachability cone: 0/391 late (Python) AND 0/391 late through the REAL Dart code (test/scale/reachability_scale_test.dart) — closes the model-vs-code gap.
+- Gated stop-anchoring: 0/1144 late but 1085 transient sub-truth dips => NOT a provable fire bound; keep it DISPLAY-only, fire on the pure cone. (docs/research/underground/SCALE_SIMULATION.md)
+- Early-firing is 5m median to target (already tight); the km-scale tail is entirely long-blackout/cold-start.
+
+**Validation-gaps (~29,461 trials / 50.5M steps across 7 gap sims — docs/research/underground/VALIDATION_GAPS.md):**
+- Found ONE real shipped-config never-late defect: a BACKWARD WALL-CLOCK JUMP freezes the cone -> ~28-min LATE fire. FIXED (P0, commit df34ebc): reachability now on AppClock.monotonicSeconds (Stopwatch-based) + fix-age/snapshot-age mapping into the monotonic frame. Guard test/core/clock/monotonic_clock_test.dart.
+- P1: multi-leg reach bound used only the current leg's V_LINE -> walk->metro boarding straddle under-bounds (387/387). FIXED (fca0fc3): max V_LINE over forward legs. Single-leg unchanged; GATE PASS.
+- P2: 46 EARLY wrong-station wakes — inherent never-late cost (a reach-fire progress-gate would BREAK never-late underground); documented, mitigated by the deviation monitor. Wrong-train never-late axis clean (0 late).
+- Process-death restore, multi-leg mode-max, fuzzer (11k), overnight 4.2h, clock-forward: all 0 violations.
+
+**Mutation testing (docs/research/underground/scripts/mutation_test.sh): 8/8 injected never-late bugs CAUGHT, 0 survived** — the reachability tests have teeth.
+
+**Honest converged verdict:** the underground early-firing tail is real but the safe fix (stop-anchoring) is DISPLAY-only + sensor-gated (needs on-device baro/mag for precision); the ALARM must fire on the provable free-run cone. Simulation is now near-exhaustive on the never-late LOGIC (0 violations across ~30k+391+1144 trials + real Dart + 8/8 mutations); remaining unknowns are hardware-only (OEM kill, Doze, FSI/DND, elapsedRealtime under Doze, real detector precision). Residual: express/airport tier (Delhi Orange "Orange Line" -> defaultMps 28 under-bounds ~135km/h Airport Express) needs the dataset (keyword collides with Nagpur metro Orange).
