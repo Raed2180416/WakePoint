@@ -258,6 +258,9 @@
 {"file":"test/route_registry_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}
 {"file":"test/saved_routes_service_test.dart","name":"main","signature":"()"}
+{"file":"test/scale/reachability_scale_test.dart","name":"_load","signature":"(String rideId)"}
+{"file":"test/scale/reachability_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
+{"file":"test/scale/reachability_scale_test.dart","name":"main","signature":"()"}
 {"file":"test/segment_builder_test.dart","name":"main","signature":"()"}
 {"file":"test/sensor_fusion_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/ambiguous_station_stop_test.dart","name":"main","signature":"()"}

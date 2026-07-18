@@ -365,6 +365,35 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/core/reachability/reachability.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/ios/ios_backstop_planner.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/integration/reachability_ride_scenario_test.dart",
+      "test/integration/reachability_scenarios_test.dart",
+      "test/ios/ios_backstop_edgecases_test.dart",
+      "test/ios/ios_backstop_planner_test.dart",
+      "test/notification_backstop_lead_test.dart",
+      "test/reachability/reachability_edgecases_test.dart",
+      "test/reachability/reachability_test.dart",
+      "test/scale/reachability_scale_test.dart"
+    ],
+    "exportedSymbols": [
+      "VLineTable",
+      "ReachabilityAnchor",
+      "RouteTopology",
+      "ReachabilityConfig",
+      "ReachabilityBound",
+      "Reachability",
+      "ReachabilityTracker"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/core/clock/app_clock.dart",
     "importers": 12,
     "directDependents": [
@@ -384,34 +413,6 @@
     "exportedSymbols": [
       "AppClock",
       "DateTimeClockExtension"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/core/reachability/reachability.dart",
-    "importers": 12,
-    "directDependents": [
-      "lib/services/alarm_evaluator.dart",
-      "lib/services/ios/ios_backstop_planner.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/notification_updater.dart",
-      "test/ekf/replay_harness_test.dart",
-      "test/integration/reachability_ride_scenario_test.dart",
-      "test/integration/reachability_scenarios_test.dart",
-      "test/ios/ios_backstop_edgecases_test.dart",
-      "test/ios/ios_backstop_planner_test.dart",
-      "test/notification_backstop_lead_test.dart",
-      "test/reachability/reachability_edgecases_test.dart",
-      "test/reachability/reachability_test.dart"
-    ],
-    "exportedSymbols": [
-      "VLineTable",
-      "ReachabilityAnchor",
-      "RouteTopology",
-      "ReachabilityConfig",
-      "ReachabilityBound",
-      "Reachability",
-      "ReachabilityTracker"
     ],
     "riskLevel": "critical"
   },

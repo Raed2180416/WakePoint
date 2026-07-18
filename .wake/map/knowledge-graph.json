@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "2fb2ca9b5c2ea2fd15995134db86ea94464f0f71",
-    "gitTree": "65c8f37d4779190c6427e7b0ee44980ff1542ad4",
-    "generatedAt": "2026-07-18T15:39:29+05:30",
-    "filesIndexed": 327,
-    "dependencyEdges": 675,
-    "totalExports": 542,
-    "totalImports": 1502,
+    "gitCommit": "79c05ad12005ab8e38a938cf88983749bc3b90a0",
+    "gitTree": "9fd8eef19bdaaa73d3ff7fda656438a30c8922a4",
+    "generatedAt": "2026-07-18T15:40:05+05:30",
+    "filesIndexed": 328,
+    "dependencyEdges": 676,
+    "totalExports": 544,
+    "totalImports": 1506,
     "byRole": {
       "other": 2,
       "backend": 12,
-      "flutter-test": 174,
+      "flutter-test": 175,
       "flutter-lib": 131,
       "tool": 8
     },
@@ -14463,6 +14463,68 @@
       "contentHash": "1898f9c6448a8145"
     },
     {
+      "file": "test/scale/reachability_scale_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kScaleRidesDir"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_load",
+          "signature": "(String rideId)"
+        },
+        {
+          "name": "_trueS",
+          "signature": "(double t, List<double> ts, List<double> ss)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Ride",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kScaleRidesDir"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "0a1cbe02e288cf2c"
+    },
+    {
       "file": "test/segment_builder_test.dart",
       "lang": "dart",
       "exports": [
@@ -20323,6 +20385,12 @@
       "kind": "static"
     },
     {
+      "from": "test/scale/reachability_scale_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/segment_builder_test.dart",
       "to": "lib/services/direction_service.dart",
       "source": "package:geowake2/services/direction_service.dart",
@@ -22580,16 +22648,8 @@
       ]
     },
     {
-      "file": "lib/core/clock/app_clock.dart",
-      "importers": 12,
-      "exports": [
-        "AppClock",
-        "DateTimeClockExtension"
-      ]
-    },
-    {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 12,
+      "importers": 13,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -22598,6 +22658,14 @@
         "ReachabilityBound",
         "Reachability",
         "ReachabilityTracker"
+      ]
+    },
+    {
+      "file": "lib/core/clock/app_clock.dart",
+      "importers": 12,
+      "exports": [
+        "AppClock",
+        "DateTimeClockExtension"
       ]
     },
     {
@@ -23274,6 +23342,35 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 13,
+      "directDependents": [
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/ios/ios_backstop_planner.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/integration/reachability_ride_scenario_test.dart",
+        "test/integration/reachability_scenarios_test.dart",
+        "test/ios/ios_backstop_edgecases_test.dart",
+        "test/ios/ios_backstop_planner_test.dart",
+        "test/notification_backstop_lead_test.dart",
+        "test/reachability/reachability_edgecases_test.dart",
+        "test/reachability/reachability_test.dart",
+        "test/scale/reachability_scale_test.dart"
+      ],
+      "exportedSymbols": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/clock/app_clock.dart",
       "importers": 12,
       "directDependents": [
@@ -23293,34 +23390,6 @@
       "exportedSymbols": [
         "AppClock",
         "DateTimeClockExtension"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 12,
-      "directDependents": [
-        "lib/services/alarm_evaluator.dart",
-        "lib/services/ios/ios_backstop_planner.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/notification_updater.dart",
-        "test/ekf/replay_harness_test.dart",
-        "test/integration/reachability_ride_scenario_test.dart",
-        "test/integration/reachability_scenarios_test.dart",
-        "test/ios/ios_backstop_edgecases_test.dart",
-        "test/ios/ios_backstop_planner_test.dart",
-        "test/notification_backstop_lead_test.dart",
-        "test/reachability/reachability_edgecases_test.dart",
-        "test/reachability/reachability_test.dart"
-      ],
-      "exportedSymbols": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
       ],
       "riskLevel": "critical"
     },

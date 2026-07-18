@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "2fb2ca9b5c2ea2fd15995134db86ea94464f0f71",
-  "generatedAt": "2026-07-18T15:39:29+05:30",
-  "structuralDigest": "65c8f37d4779190c6427e7b0ee44980ff1542ad4",
+  "gitCommit": "79c05ad12005ab8e38a938cf88983749bc3b90a0",
+  "generatedAt": "2026-07-18T15:40:05+05:30",
+  "structuralDigest": "9fd8eef19bdaaa73d3ff7fda656438a30c8922a4",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 913,
-    "edgeCount": 1856,
+    "nodeCount": 916,
+    "edgeCount": 1859,
     "byLevel": {
       "feature": 9,
-      "file": 327,
+      "file": 328,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 542
+      "symbol": 544
     },
     "byEdgeType": {
-      "contains": 664,
-      "depends-on": 675,
+      "contains": 666,
+      "depends-on": 676,
       "references": 517
     }
   },
@@ -746,7 +746,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 12,
+      "importers": 13,
       "exportCount": 7
     },
     {
@@ -3366,6 +3366,17 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 1
+    },
+    {
+      "id": "file:test/scale/reachability_scale_test.dart",
+      "level": "file",
+      "label": "test/scale/reachability_scale_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 2
     },
     {
       "id": "file:test/segment_builder_test.dart",
@@ -8758,6 +8769,24 @@
       "deterministic": true,
       "source": "map",
       "file": "test/saved_routes_service_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/reachability_scale_test.dart#kScaleRidesDir",
+      "level": "symbol",
+      "label": "kScaleRidesDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/reachability_scale_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/reachability_scale_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/reachability_scale_test.dart"
     },
     {
       "id": "symbol:test/segment_builder_test.dart#main",
@@ -21145,6 +21174,27 @@
     {
       "from": "file:test/saved_routes_service_test.dart",
       "to": "symbol:test/saved_routes_service_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/reachability_scale_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/reachability_scale_test.dart",
+      "to": "symbol:test/scale/reachability_scale_test.dart#kScaleRidesDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/reachability_scale_test.dart",
+      "to": "symbol:test/scale/reachability_scale_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
