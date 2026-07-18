@@ -414,8 +414,10 @@ void main() {
       }
       expect(fireTime, isNotNull,
           reason: 'Cold start MUST eventually fire by reachability.');
-      // Earliest-possible arrival at V_LINE: 24071/28 ~= 860 s. Fire at/after.
-      expect(fireTime!, greaterThanOrEqualTo(targetMeters / 28.0 - 1.0));
+      // Earliest-possible arrival at the metro default V_LINE: 24071/28 ~= 860 s.
+      // Fire at/after (never earlier than the physics could allow).
+      expect(fireTime!,
+          greaterThanOrEqualTo(targetMeters / VLineTable.defaultMps - 1.0));
     });
   });
 
@@ -505,12 +507,12 @@ void main() {
       tracker.onAcceptedFix(sMeters: 2000.0, accuracyMeters: 8.0, tSeconds: 155.0);
       final b2 = tracker.boundNow(nowSeconds: 160.0)!;
       expect(b2.dtSeconds, closeTo(5.0, 1e-9));
-      expect(b2.sMaxMeters, closeTo(2008.0 + 28.0 * 5.0, 1e-6));
+      expect(b2.sMaxMeters, closeTo(2008.0 + VLineTable.defaultMps * 5.0, 1e-6));
 
       // Stale timestamp is ignored (monotonic guard).
       tracker.onAcceptedFix(sMeters: 9999.0, accuracyMeters: 8.0, tSeconds: 150.0);
       final b3 = tracker.boundNow(nowSeconds: 160.0)!;
-      expect(b3.sMaxMeters, closeTo(2008.0 + 28.0 * 5.0, 1e-6),
+      expect(b3.sMaxMeters, closeTo(2008.0 + VLineTable.defaultMps * 5.0, 1e-6),
           reason: 'Stale (earlier) fix must not move the anchor.');
     });
 
@@ -519,7 +521,14 @@ void main() {
       expect(table.forLine(city: 'Delhi', lineName: 'Blue'), 30.0);
       expect(table.forLine(lineName: 'Airport Express'),
           VLineTable.expressMps);
+      // An unmatched conventional metro line resolves to the metro default
+      // (correct over-bound for ~80-90 km/h metros); the narrow fast-line residual
+      // is documented in forLine and closed by the dataset.
       expect(table.forLine(lineName: 'Green'), VLineTable.defaultMps);
+      // FINDING 2 mitigation: Mumbai suburban ("...suburban"/"local") now resolves
+      // to the express tier so a ~120 km/h EMU doesn't fall to the metro default.
+      expect(table.forLine(lineName: 'Mumbai Suburban'), VLineTable.expressMps);
+      expect(table.forLine(lineName: 'Western Local'), VLineTable.expressMps);
       // RRTS / Namo Bharat / Delhi-Meerut must resolve to the high ceiling.
       expect(table.forLine(city: 'delhimeerutrrts', lineName: '1 2'),
           VLineTable.rrtsMps);

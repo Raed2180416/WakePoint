@@ -74,12 +74,33 @@ void main() {
       expect(t, 1000.0); // earliest stop => conservative (early), never late
     });
 
-    test('stops mode: no stop geometry -> conservative ~1.2km/stop before end',
+    test('stops mode: no count info -> flat conservative ~1.2km/stop before end',
         () {
       final legs = [_metroLeg(endMeters: total, stopMeters: const [])];
       final t = ac.coldStartFireTargetMeters(
           _ctx(mode: 'stops', value: 2, legs: legs), total, legs, vMax);
-      expect(t, 5000.0 - 2 * 1200.0); // 2600
+      expect(t, 5000.0 - 2 * 1200.0); // 2600 (numStops==0 => flat fallback)
+    });
+
+    test('FINDING 4: known stop COUNT (no positions) -> per-stop from legLen',
+        () {
+      // A leg that knows it has 5 stops over 5000m but has no stop positions:
+      // per-stop = 5000/5 = 1000m, so "2 stops before" fires 2000m before the end
+      // — not the flat 1.2km that would under-warn a sparse line.
+      final leg = TransitLegStops(
+        legStartMeters: 0.0,
+        legEndMeters: total,
+        numStops: 5,
+        stopPositions: const [],
+        stopMeters: const [],
+        lineName: 'Regional',
+        isActualPositions: false,
+        isMetro: true,
+        stopNames: const [],
+      );
+      final t = ac.coldStartFireTargetMeters(
+          _ctx(mode: 'stops', value: 2, legs: [leg]), total, [leg], vMax);
+      expect(t, 5000.0 - 2 * 1000.0); // 3000
     });
 
     test('distance mode: N km before destination', () {

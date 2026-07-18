@@ -90,26 +90,48 @@ class VLineTable {
         l.contains('meerut');
   }
 
-  /// Returns true when a line name denotes an express/airport service that can
-  /// exceed the standard metro ceiling (but is not full RRTS).
-  static bool looksExpress(String? lineName) {
-    if (lineName == null) return false;
-    final l = lineName.toLowerCase();
+  /// Returns true when a line name denotes an express/airport/suburban service
+  /// that can exceed the standard metro ceiling (but is not full RRTS). The
+  /// 'suburban'/'local' tokens catch Mumbai Suburban EMUs (~120 km/h), which run
+  /// well above the 80-90 km/h conventional-metro envelope. Grounded in
+  /// docs/research/grounding_notes.md §15 (India line speeds).
+  static bool looksExpress(String? cityOrLine) {
+    if (cityOrLine == null) return false;
+    final l = cityOrLine.toLowerCase();
     return l.contains('airport') ||
         l.contains('express') ||
-        l.contains('rapid');
+        l.contains('rapid') ||
+        l.contains('suburban') ||
+        l.contains('local'); // Mumbai suburban ("Western/Central/Harbour Line")
   }
 
   /// Resolve the V_LINE ceiling (m/s) for a given city/line.
   ///
-  /// Resolution order: explicit override -> RRTS -> express -> default. The
-  /// result is always an *upper* bound on the line's true top speed
-  /// (precondition ii of the never-late guarantee).
+  /// Resolution order: explicit override -> RRTS -> express/suburban -> metro
+  /// default. `defaultMps` (28 m/s = 100 km/h) is a real over-bound for every
+  /// conventional Indian metro (grounded: design speed ~90 km/h — see
+  /// docs/research/grounding_notes.md §15), so it is correct for the common case.
+  ///
+  /// KNOWN RESIDUAL (adversarial FINDING 2 / GAP #9, honest): a *fast* service
+  /// whose name does not keyword-match — chiefly Delhi Airport Express when
+  /// reported as "Orange Line" (design 135 km/h) or Mumbai Suburban named
+  /// "Western/Central Line" (~120 km/h) — falls to `defaultMps` and can
+  /// UNDER-bound → a late-fire risk during a GPS blackout on that leg. This is
+  /// NOT fixable by keyword matching alone (the names collide with slow metro
+  /// lines, e.g. Nagpur's "Orange Line" IS a 90 km/h metro). The robust fix is
+  /// the shipped dataset (city+line -> true top speed) or the GTFS vehicle-type
+  /// threaded onto the leg — tracked as the #9 follow-up. Two mitigations already
+  /// reduce it: RRTS/Namo Bharat is reliably branded and caught by [looksRrts];
+  /// and a known fast line can be pinned via `overrides`. Raising the blanket
+  /// default to `absoluteCeilingMps` was rejected — it makes every conventional
+  /// metro fire ~2x early on a blackout and inverts the metro < express < RRTS
+  /// tier ordering (metro would exceed RRTS), for a residual that is narrow and
+  /// better closed with real data.
   double forLine({String? city, String? lineName}) {
     final o = overrides[_key(city, lineName)];
     if (o != null && o.isFinite && o > 0) return o;
     if (looksRrts(city) || looksRrts(lineName)) return rrtsMps;
-    if (looksExpress(lineName)) return expressMps;
+    if (looksExpress(lineName) || looksExpress(city)) return expressMps;
     return defaultMps;
   }
 }

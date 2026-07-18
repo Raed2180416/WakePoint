@@ -359,12 +359,18 @@ class AlarmController {
             : null)
         ?.trim();
     onAlarmFired?.call();
-    TelemetryService.instance.reachabilityActivated(
-      dtSeconds: bound.dtSeconds,
-      boundMeters: sMax.isFinite ? sMax : totalMeters,
-      deadReckonedMeters: double.nan,
-      watchdog: bound.watchdogTripped,
-    );
+    // FINDING 6: the fired-flag is already set; a throw here would leave a
+    // permanent silent no-wake. Telemetry is fail-open by design, but wrap it
+    // for defense-in-depth so nothing between the flag and the notification can
+    // abort the wake.
+    try {
+      TelemetryService.instance.reachabilityActivated(
+        dtSeconds: bound.dtSeconds,
+        boundMeters: sMax.isFinite ? sMax : totalMeters,
+        deadReckonedMeters: double.nan,
+        watchdog: bound.watchdogTripped,
+      );
+    } catch (_) {/* never abort the wake */}
     await triggerAlarmNotification(
       service: service,
       title: 'Wake Up!',
@@ -412,8 +418,19 @@ class AlarmController {
       if (idx >= 0 && idx < stops.length) return stops[idx];
       return stops.first; // fewer intermediate stops than N => fire at the first
     }
-    // No stop geometry: a conservative ~1.2 km/stop metro gap before the end.
-    return max(0.0, totalMeters - value * 1200.0);
+    // No stop POSITIONS: when the stop COUNT is known, derive the per-stop
+    // spacing from the final leg (legLen / numStops) so a sparse/regional line
+    // with large inter-station gaps (e.g. RRTS ~5-10 km/stop) warns the requested
+    // N stops ahead instead of a flat 1.2 km (FINDING 4); clamp to [0.8, 8]
+    // km/stop. With no count info at all, fall back to the flat conservative
+    // metro gap. Larger spacing => earlier fire (safe).
+    final int nStops = finalLeg.numStops;
+    final double legLen =
+        (finalLeg.legEndMeters - finalLeg.legStartMeters).abs();
+    final double perStop = (nStops > 0 && legLen > 0)
+        ? (legLen / nStops).clamp(800.0, 8000.0)
+        : 1200.0;
+    return max(0.0, totalMeters - value * perStop);
   }
 
   /// Trigger alarm notification - handles background isolate case.
@@ -920,7 +937,16 @@ class AlarmController {
           nowSeconds: _nowSeconds(),
           vLineMps: vMaxModes,
         );
-        if (!bb.sMaxMeters.isNaN) reachBoundModes = bb.sMaxMeters;
+        // FINDING 3: stay inert while GPS is healthy — only let the physics bound
+        // override the dead-reckoned progress once the last real fix is stale
+        // enough to be a genuine blackout (else the between-fix gap would bias
+        // every distance/time fire ~V_LINE·dt early). A fire-forcing +inf bound
+        // (watchdog / corrupt anchor) always applies.
+        if (!bb.sMaxMeters.isNaN &&
+            (!bb.sMaxMeters.isFinite ||
+                bb.dtSeconds >= FireDecisionConfig.reachBlackoutMinSeconds)) {
+          reachBoundModes = bb.sMaxMeters;
+        }
       }
     }
 
@@ -1387,7 +1413,14 @@ class AlarmController {
       // fire-FORCING signal (T_max watchdog or a corrupt-input fail-safe) and
       // MUST reach the evaluator — filtering on isFinite here would silently drop
       // it and re-open the never-fire gap. Only NaN (no information) is dropped.
-      if (b != null && !b.sMaxMeters.isNaN) {
+      // FINDING 3: stay inert while GPS is healthy — only feed the bound once the
+      // anchor is stale enough to be a genuine blackout (the EKF carries the first
+      // few seconds), so the (now ceiling-level) V_LINE cannot bias a healthy-GPS
+      // metro fire early. A +inf fire-forcing bound always passes.
+      if (b != null &&
+          !b.sMaxMeters.isNaN &&
+          (!b.sMaxMeters.isFinite ||
+              b.dtSeconds >= FireDecisionConfig.reachBlackoutMinSeconds)) {
         reachBoundMeters = b.sMaxMeters;
         // Reliability funnel (HANDOFF §3): record when the physics bound is
         // materially carrying the fire decision — i.e. a GPS blackout where

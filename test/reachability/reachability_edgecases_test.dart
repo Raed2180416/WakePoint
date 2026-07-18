@@ -566,13 +566,15 @@ void main() {
       expect(t.anchor!.sMeters, 2000.0);
     });
 
-    test('an unknown/absent line resolves to the default ceiling; an RRTS line '
-        'to the higher one (tracker wiring never underestimates)', () {
+    test('an unmatched line resolves to the metro default; an RRTS line to the '
+        'higher RRTS ceiling (tier ordering: metro < express < RRTS)', () {
       final t = ReachabilityTracker();
       t.seedColdStart(tSeconds: 0.0, sMeters: 0.0);
+      // An unmatched line assumes a conventional metro (defaultMps = 28); the
+      // narrow residual (a generically-named fast line) is documented in
+      // VLineTable.forLine and closed by the dataset, not a blanket ceiling.
       final metro = t.boundNow(nowSeconds: 10.0)!; // lineName null => default
-      expect(metro.sMaxMeters,
-          closeTo(VLineTable.defaultMps * 10.0, 1e-9));
+      expect(metro.sMaxMeters, closeTo(VLineTable.defaultMps * 10.0, 1e-9));
       final rrts = t.boundNow(nowSeconds: 10.0, lineName: 'Namo Bharat')!;
       expect(rrts.sMaxMeters, closeTo(VLineTable.rrtsMps * 10.0, 1e-9));
       expect(rrts.sMaxMeters, greaterThan(metro.sMaxMeters));

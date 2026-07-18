@@ -40,6 +40,16 @@ class FireDecisionConfig {
   /// reported σ — only the value fed into the fire decision.
   static const double maxFractileSigmaMeters = 300.0;
 
+  /// Adversarial FINDING 3: the reachability bound only OVERRIDES the
+  /// dead-reckoned progress once the last real fix is at least this stale — i.e.
+  /// a genuine GPS blackout, not the normal 1-5 s gap between healthy fixes.
+  /// Below this the physics bound is inert and the statistical (EKF) progress
+  /// governs, so a healthy ride does not fire ~V_LINE·dt early. A fire-forcing
+  /// (+inf) watchdog bound always applies regardless. 8 s sits just above the
+  /// 5 s GPS-dropout buffer, so the EKF carries the first few seconds of any gap
+  /// (well within its reliable-coast window) and reachability takes over after.
+  static const double reachBlackoutMinSeconds = 8.0;
+
   /// GAP #21: velocity floor (m/s) used to convert position uncertainty into an
   /// ETA-time cushion when the measured speed is unobservable (stale <= 0.5 m/s,
   /// the normal underground state). Without a floor the ETA sigma collapses to 0

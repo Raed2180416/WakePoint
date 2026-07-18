@@ -2169,6 +2169,28 @@ Future<void> _onStart(
           _trackingSessionActive = true;
           // _activeRouteInitialized = false;
 
+          // GAP #2 (adversarial FINDING 1): seed the reachability anchor from the
+          // RESTORED progress at the snapshot's time — NOT s=0/now. On an OS-kill
+          // resume the train has kept moving during the kill; seeding s=0 would
+          // make the worst-case bound climb from zero and give ZERO blackout
+          // protection until it re-passed true progress (a real never-late hole).
+          // Seeding (s=ekfS, t=createdAt) means the bound = ekfS + V_LINE·(now −
+          // createdAt), which correctly over-bounds the distance the train could
+          // have covered during the kill. The small EKF-error residual is
+          // corrected by the first real fix on resume. If ekfS is absent, fall
+          // back to seeding at the snapshot time (bound grows from t0, still
+          // better than now).
+          {
+            final double sSeed =
+                (snapshot.ekfS != null && snapshot.ekfS!.isFinite)
+                    ? snapshot.ekfS!
+                    : 0.0;
+            final double tSeed =
+                snapshot.createdAt.millisecondsSinceEpoch / 1000.0;
+            _alarmController.seedReachabilityAnchorAtArm(
+                sMeters: sSeed, tSeconds: tSeed);
+          }
+
           // 2. Register Route (if directions available)
           await SnapshotRouteRestorer.restoreFromSnapshotIfDirectionsPresent(
             snapshot: snapshot,
