@@ -1629,6 +1629,16 @@ void _handleBackgroundStartTracking({
   _alarmValue = alarmValue;
   _trackingSessionActive = true;
 
+  // GAP #1/#2 (BLOCK): seed the reachability anchor at ARM time. The route is
+  // computed FROM the rider's current location, so route arc-progress 0 IS the
+  // rider's position at arm — a known real position. Seeding s=0 at arm time
+  // (rather than waiting for the first tick / first GPS fix) gives the physics
+  // never-late net an honest wall clock from t0, so a rider who boards and goes
+  // underground immediately — never getting a single fix — is still woken before
+  // their stop by the cold-start reachability backstop. A later real GPS fix
+  // re-anchors via onAcceptedFix; this seed is idempotent.
+  _alarmController.seedReachabilityAnchorAtArm(sMeters: 0.0);
+
   // Initialize termination policy with destination
   _terminationPolicy.reset();
   _terminationPolicy.setDestination(destination);

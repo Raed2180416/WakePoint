@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "cfe52d8e481e2a3e5e69deaf4f3b3134817a50dd",
-    "gitTree": "81a5242f90d477b5e868f0c65dbb8b4cd0cf0c9c",
-    "generatedAt": "2026-07-15T02:06:32+05:30",
-    "filesIndexed": 314,
-    "dependencyEdges": 641,
-    "totalExports": 528,
-    "totalImports": 1438,
+    "gitCommit": "faf539c3865e72e8f85e15b892aeb980a06ffded",
+    "gitTree": "a8ae30ec7827ff9fac67fce2e05058d79be812e8",
+    "generatedAt": "2026-07-18T09:24:50+05:30",
+    "filesIndexed": 315,
+    "dependencyEdges": 644,
+    "totalExports": 529,
+    "totalImports": 1445,
     "byRole": {
       "other": 2,
       "backend": 11,
-      "flutter-test": 164,
+      "flutter-test": 165,
       "flutter-lib": 129,
       "tool": 8
     },
@@ -5521,6 +5521,10 @@
       "imports": [
         {
           "kind": "static",
+          "source": "package:geowake2/services/metro_vehicle_types.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/transfer_utils.dart"
         }
       ],
@@ -5540,7 +5544,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "92743d14ad3e8e73"
+      "contentHash": "16b905a2f90a2be2"
     },
     {
       "file": "lib/services/reroute_policy.dart",
@@ -6768,7 +6772,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "69fdd13057fadc80"
+      "contentHash": "09f7d52d94731557"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -7056,7 +7060,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3133c1f906388fac"
+      "contentHash": "a3e8007954197e40"
     },
     {
       "file": "lib/services/tracking/notification_updater.dart",
@@ -7655,7 +7659,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "902066a42399517f"
+      "contentHash": "397c4bb27d37a160"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -7706,6 +7710,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/data/metro_line_sequences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/metro_vehicle_types.dart"
         }
       ],
       "types": [],
@@ -7728,7 +7736,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "6c24306413f66cba"
+      "contentHash": "c81179c0a0699779"
     },
     {
       "file": "lib/simulation_engine.dart",
@@ -15072,6 +15080,51 @@
       "contentHash": "7368ec25273df8c4"
     },
     {
+      "file": "test/tracking/cold_start_reach_backstop_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/alarm_controller.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/route_registry.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/transfer_utils.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "a63be4774757cdd4"
+    },
+    {
       "file": "test/tracking_alarm_test.dart",
       "lang": "dart",
       "exports": [
@@ -19833,6 +19886,24 @@
       "kind": "static"
     },
     {
+      "from": "test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "lib/services/tracking/alarm_controller.dart",
+      "source": "package:geowake2/services/tracking/alarm_controller.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "lib/services/route_registry.dart",
+      "source": "package:geowake2/services/route_registry.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "lib/services/transfer_utils.dart",
+      "source": "package:geowake2/services/transfer_utils.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/tracking_alarm_test.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
@@ -21606,7 +21677,7 @@
   "topFanIn": [
     {
       "file": "lib/services/transfer_utils.dart",
-      "importers": 57,
+      "importers": 58,
       "exports": [
         "TransitLegStops",
         "RouteEventBoundary",
@@ -21677,18 +21748,18 @@
       ]
     },
     {
+      "file": "lib/services/route_registry.dart",
+      "importers": 15,
+      "exports": [
+        "RouteEntry",
+        "RouteRegistry"
+      ]
+    },
+    {
       "file": "lib/services/api_client.dart",
       "importers": 14,
       "exports": [
         "ApiClient"
-      ]
-    },
-    {
-      "file": "lib/services/route_registry.dart",
-      "importers": 14,
-      "exports": [
-        "RouteEntry",
-        "RouteRegistry"
       ]
     },
     {
@@ -22011,7 +22082,7 @@
   "changeImpact": [
     {
       "file": "lib/services/transfer_utils.dart",
-      "importers": 57,
+      "importers": 58,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/screens/homescreen.dart",
@@ -22068,6 +22139,7 @@
         "test/stops_prior_semantics_test.dart",
         "test/switch_point_logic_test.dart",
         "test/time_mode_switch_targeting_universal_test.dart",
+        "test/tracking/cold_start_reach_backstop_test.dart",
         "test/transfer_utils_test.dart",
         "test/transit_leg_stops_test.dart"
       ],
@@ -22321,6 +22393,32 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/route_registry.dart",
+      "importers": 15,
+      "directDependents": [
+        "lib/services/active_route_manager.dart",
+        "lib/services/route_session_manager.dart",
+        "lib/services/tracking/alarm_context_builder.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "lib/services/trackingservice.dart",
+        "test/active_route_manager_complex_test.dart",
+        "test/active_route_manager_test.dart",
+        "test/reproduce_distance_alarm_failure.dart",
+        "test/route_journey_fixes_test.dart",
+        "test/route_registry_lru_eviction_test.dart",
+        "test/route_registry_test.dart",
+        "test/route_registry_upsert_replace_test.dart",
+        "test/tracking/cold_start_reach_backstop_test.dart"
+      ],
+      "exportedSymbols": [
+        "RouteEntry",
+        "RouteRegistry"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/services/api_client.dart",
       "importers": 14,
       "directDependents": [
@@ -22341,31 +22439,6 @@
       ],
       "exportedSymbols": [
         "ApiClient"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/route_registry.dart",
-      "importers": 14,
-      "directDependents": [
-        "lib/services/active_route_manager.dart",
-        "lib/services/route_session_manager.dart",
-        "lib/services/tracking/alarm_context_builder.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/location_stream_handler.dart",
-        "lib/services/tracking/notification_updater.dart",
-        "lib/services/trackingservice.dart",
-        "test/active_route_manager_complex_test.dart",
-        "test/active_route_manager_test.dart",
-        "test/reproduce_distance_alarm_failure.dart",
-        "test/route_journey_fixes_test.dart",
-        "test/route_registry_lru_eviction_test.dart",
-        "test/route_registry_test.dart",
-        "test/route_registry_upsert_replace_test.dart"
-      ],
-      "exportedSymbols": [
-        "RouteEntry",
-        "RouteRegistry"
       ],
       "riskLevel": "critical"
     },

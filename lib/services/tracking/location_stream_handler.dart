@@ -546,13 +546,21 @@ class LocationStreamHandler {
   /// snap/ingest it (arc-progress is taken from EKF.s downstream). lat/lng carry
   /// the last known fix only for logging/geofence fallbacks.
   void _maybeEvaluateAlarmDuringDropout(LocationStreamContext ctx) {
-    final last = _lastGpsUpdate;
-    if (last == null) return; // no fix yet — nothing to dead-reckon from
     final now = DateTime.now();
-    if (now.difference(last) < gpsDropoutBuffer) return; // GPS still live
+    final last = _lastGpsUpdate;
+    // If GPS is currently LIVE (a recent real fix), the positionStream is already
+    // driving evaluation — don't double-eval here.
+    if (last != null && now.difference(last) < gpsDropoutBuffer) return;
 
-    final ekf = _lastEkfState;
-    if (ekf == null || !ekf.s.isFinite) return; // no dead-reckon available
+    // Otherwise we are in a GPS blackout OR cold-start-underground (no fix yet).
+    // GAP #1 (BLOCK): the reachability physics net MUST run on the wall clock
+    // regardless of EKF state — this is the never-late guarantee for the rider
+    // who opens the app already underground. Previously this bailed when there
+    // was no prior fix (`last == null`) or no EKF, leaving that rider a SILENT
+    // no-wake. The synthesized position carries the sentinel accuracy so it is
+    // never snapped/ingested as a real fix; arc-progress comes from the EKF when
+    // one exists, else it is unknown (null) downstream and ONLY the reachability
+    // bound governs the fire decision (see AlarmController cold-start backstop).
 
     // Rate-limit (tick can be ~1s; ~2s re-eval avoids notification churn).
     if (_lastDropoutAlarmEvalAt != null &&
@@ -562,6 +570,7 @@ class LocationStreamHandler {
     }
     _lastDropoutAlarmEvalAt = now;
 
+    final ekf = _lastEkfState;
     final lastPos = _lastProcessedPosition;
     final synth = Position(
       latitude: lastPos?.latitude ?? 0.0,
@@ -570,7 +579,7 @@ class LocationStreamHandler {
       accuracy: FireDecisionConfig.deadReckonAccuracySentinel,
       altitude: 0.0,
       heading: 0.0,
-      speed: ekf.v.isFinite ? ekf.v : 0.0,
+      speed: (ekf != null && ekf.v.isFinite) ? ekf.v : 0.0,
       speedAccuracy: 0.0,
       altitudeAccuracy: 0.0,
       headingAccuracy: 0.0,

@@ -1,7 +1,7 @@
 [
   {
     "file": "lib/services/transfer_utils.dart",
-    "importers": 57,
+    "importers": 58,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/screens/homescreen.dart",
@@ -58,6 +58,7 @@
       "test/stops_prior_semantics_test.dart",
       "test/switch_point_logic_test.dart",
       "test/time_mode_switch_targeting_universal_test.dart",
+      "test/tracking/cold_start_reach_backstop_test.dart",
       "test/transfer_utils_test.dart",
       "test/transit_leg_stops_test.dart"
     ],
@@ -311,6 +312,32 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/route_registry.dart",
+    "importers": 15,
+    "directDependents": [
+      "lib/services/active_route_manager.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/tracking/alarm_context_builder.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/tracking/notification_updater.dart",
+      "lib/services/trackingservice.dart",
+      "test/active_route_manager_complex_test.dart",
+      "test/active_route_manager_test.dart",
+      "test/reproduce_distance_alarm_failure.dart",
+      "test/route_journey_fixes_test.dart",
+      "test/route_registry_lru_eviction_test.dart",
+      "test/route_registry_test.dart",
+      "test/route_registry_upsert_replace_test.dart",
+      "test/tracking/cold_start_reach_backstop_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteEntry",
+      "RouteRegistry"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/api_client.dart",
     "importers": 14,
     "directDependents": [
@@ -331,31 +358,6 @@
     ],
     "exportedSymbols": [
       "ApiClient"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/route_registry.dart",
-    "importers": 14,
-    "directDependents": [
-      "lib/services/active_route_manager.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/tracking/alarm_context_builder.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/location_stream_handler.dart",
-      "lib/services/tracking/notification_updater.dart",
-      "lib/services/trackingservice.dart",
-      "test/active_route_manager_complex_test.dart",
-      "test/active_route_manager_test.dart",
-      "test/reproduce_distance_alarm_failure.dart",
-      "test/route_journey_fixes_test.dart",
-      "test/route_registry_lru_eviction_test.dart",
-      "test/route_registry_test.dart",
-      "test/route_registry_upsert_replace_test.dart"
-    ],
-    "exportedSymbols": [
-      "RouteEntry",
-      "RouteRegistry"
     ],
     "riskLevel": "critical"
   },

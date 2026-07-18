@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "cfe52d8e481e2a3e5e69deaf4f3b3134817a50dd",
-  "generatedAt": "2026-07-15T02:06:32+05:30",
-  "structuralDigest": "81a5242f90d477b5e868f0c65dbb8b4cd0cf0c9c",
+  "gitCommit": "faf539c3865e72e8f85e15b892aeb980a06ffded",
+  "generatedAt": "2026-07-18T09:24:50+05:30",
+  "structuralDigest": "a8ae30ec7827ff9fac67fce2e05058d79be812e8",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 886,
-    "edgeCount": 1808,
+    "nodeCount": 888,
+    "edgeCount": 1812,
     "byLevel": {
       "feature": 9,
-      "file": 314,
+      "file": 315,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 528
+      "symbol": 529
     },
     "byEdgeType": {
-      "contains": 650,
-      "depends-on": 641,
+      "contains": 651,
+      "depends-on": 644,
       "references": 517
     }
   },
@@ -1494,7 +1494,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 14,
+      "importers": 15,
       "exportCount": 2
     },
     {
@@ -1703,7 +1703,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 2
     },
     {
@@ -1802,7 +1802,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 57,
+      "importers": 58,
       "exportCount": 3
     },
     {
@@ -3613,6 +3613,17 @@
       "id": "file:test/tracking_termination_policy_test.dart",
       "level": "file",
       "label": "test/tracking_termination_policy_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/tracking/cold_start_reach_backstop_test.dart",
+      "level": "file",
+      "label": "test/tracking/cold_start_reach_backstop_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -8876,6 +8887,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/tracking_termination_policy_test.dart"
+    },
+    {
+      "id": "symbol:test/tracking/cold_start_reach_backstop_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/tracking/cold_start_reach_backstop_test.dart"
     },
     {
       "id": "symbol:test/transfer_utils_test.dart#main",
@@ -21924,6 +21944,34 @@
     {
       "from": "file:test/tracking_termination_policy_test.dart",
       "to": "symbol:test/tracking_termination_policy_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "file:lib/services/route_registry.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "file:lib/services/tracking/alarm_controller.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "file:lib/services/transfer_utils.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/tracking/cold_start_reach_backstop_test.dart",
+      "to": "symbol:test/tracking/cold_start_reach_backstop_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

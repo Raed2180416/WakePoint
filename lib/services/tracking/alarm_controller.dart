@@ -284,6 +284,138 @@ class AlarmController {
     _alarmStopPollTimer = null;
   }
 
+  /// GAP #1/#2 (BLOCK): seed the reachability anchor at ARM time so the physics
+  /// never-late net has an honest wall-clock origin even for a rider who opens
+  /// the app already underground and never gets a single GPS fix. [sMeters] is
+  /// the rider's arc-progress at arm (0 for a fresh arm from the route origin;
+  /// the restored snapshot progress on an OS-kill restore). [tSeconds] is the
+  /// wall-clock time that position was true (arm time, or the snapshot's last
+  /// real-fix time). Idempotent — a later accepted GPS fix re-anchors via
+  /// onAcceptedFix; this only establishes t0 so the worst-case bound starts
+  /// growing from the right moment (seeding on the first tick instead can start
+  /// the clock late and shrink the bound below reality).
+  void seedReachabilityAnchorAtArm({double sMeters = 0.0, double? tSeconds}) {
+    _reach.seedColdStart(
+      tSeconds: (tSeconds != null && tSeconds.isFinite) ? tSeconds : _nowSeconds(),
+      sMeters: sMeters.isFinite ? sMeters : 0.0,
+    );
+  }
+
+  /// GAP #1 (BLOCK): whole-route reachability backstop for cold-start-underground.
+  ///
+  /// Runs only when there is NO dead-reckoned progress (the rider opened the app
+  /// already underground; no GPS fix has arrived) but the anchor was seeded at
+  /// arm. It computes the worst-case reachable arc-progress to the FINAL
+  /// destination using the FASTEST V_LINE across all legs — an overbound, so it
+  /// is a valid upper bound whichever leg the rider is really on (a higher
+  /// V_LINE only fires earlier, never late) — and fires the destination alarm the
+  /// instant that physics bound reaches the fire target. Returns true if it fired.
+  Future<bool> _maybeFireColdStartReachBackstop({
+    required AlarmContext context,
+    required String? alarmKey,
+    required ServiceInstance service,
+    void Function()? onAlarmFired,
+  }) async {
+    if (destinationAlarmFiredForKey(alarmKey)) return false;
+    final anchor = _reach.anchor;
+    if (anchor == null) return false;
+    final legs = context.transitLegs;
+    if (legs.isEmpty) return false;
+
+    // Route end to aim at (max leg end, or a destination route event).
+    double totalMeters = double.nan;
+    for (final leg in legs) {
+      if (leg.legEndMeters.isFinite) {
+        totalMeters =
+            totalMeters.isNaN ? leg.legEndMeters : max(totalMeters, leg.legEndMeters);
+      }
+    }
+    if (totalMeters.isNaN) {
+      final destEvt = context.routeEvents.where((e) => e.type == 'destination');
+      if (destEvt.isNotEmpty) totalMeters = destEvt.last.meters;
+    }
+    if (!totalMeters.isFinite || totalMeters <= 0) return false;
+
+    // Fastest V_LINE across all legs => valid upper bound on any leg (safe).
+    double vMax = VLineTable.defaultMps;
+    for (final leg in legs) {
+      final v = _reach.vLineTable.forLine(lineName: leg.lineName);
+      if (v.isFinite && v > vMax) vMax = v;
+    }
+
+    final bound = Reachability.bound(
+      anchor: anchor,
+      nowSeconds: _nowSeconds(),
+      vLineMps: vMax,
+    );
+    final double sMax = bound.sMaxMeters; // may be +inf (T_max watchdog)
+    final double target = coldStartFireTargetMeters(context, totalMeters, legs, vMax);
+    if (!(sMax >= target)) return false; // NaN-safe: false unless provably reached
+
+    setDestinationAlarmFiredForKey(alarmKey, true);
+    final key = context.activeKey;
+    final name = (key != null
+            ? context.registry.getByKey(key)?.destinationName
+            : null)
+        ?.trim();
+    onAlarmFired?.call();
+    TelemetryService.instance.reachabilityActivated(
+      dtSeconds: bound.dtSeconds,
+      boundMeters: sMax.isFinite ? sMax : totalMeters,
+      deadReckonedMeters: double.nan,
+      watchdog: bound.watchdogTripped,
+    );
+    await triggerAlarmNotification(
+      service: service,
+      title: 'Wake Up!',
+      body: (name != null && name.isNotEmpty)
+          ? 'Wake Up!: Arriving at $name'
+          : 'Wake Up!: Arriving at Destination',
+      allowContinueTracking: false,
+      isBackgroundIsolate: context.isBackgroundIsolate,
+      isTestMode: context.isTestMode,
+      debugReason:
+          'Cold-start reachability backstop (s_max=${sMax.toStringAsFixed(0)}m '
+          '>= target ${target.toStringAsFixed(0)}m, V_LINE=${vMax.toStringAsFixed(0)}m/s)',
+    );
+    startAlarmStopPollTimer(
+      trackingSessionActive: () => context.trackingSessionActive,
+    );
+    return true;
+  }
+
+  /// The arc-position (meters) at which the cold-start backstop should fire, per
+  /// alarm mode. All variants are LOWER bounds on the true fire point (fire at or
+  /// before), so the worst-case bound reaching them can never be late.
+  @visibleForTesting
+  double coldStartFireTargetMeters(
+    AlarmContext context,
+    double totalMeters,
+    List<TransitLegStops> legs,
+    double vMax,
+  ) {
+    final mode = context.alarmMode;
+    final value = (context.alarmValue ?? 0).toDouble();
+    if (mode == 'distance') {
+      return max(0.0, totalMeters - value * 1000.0);
+    }
+    if (mode == 'time') {
+      // Worst case: at vMax, `value` minutes covers value*60*vMax meters, so the
+      // train could be within N minutes of the end once it reaches this point.
+      return max(0.0, totalMeters - value * 60.0 * vMax);
+    }
+    // stops mode: N stops before the destination on the final leg.
+    final finalLeg = legs.last;
+    final stops = finalLeg.stopMeters.where((m) => m.isFinite).toList()..sort();
+    if (stops.isNotEmpty) {
+      final idx = stops.length - value.round();
+      if (idx >= 0 && idx < stops.length) return stops[idx];
+      return stops.first; // fewer intermediate stops than N => fire at the first
+    }
+    // No stop geometry: a conservative ~1.2 km/stop metro gap before the end.
+    return max(0.0, totalMeters - value * 1200.0);
+  }
+
   /// Trigger alarm notification - handles background isolate case.
   Future<void> triggerAlarmNotification({
     required ServiceInstance service,
@@ -647,6 +779,31 @@ class AlarmController {
         activeEvents: activeEvents,
         onAlarmFired: onAlarmFired,
       );
+    } else if (progressMeters == null &&
+        _reach.hasAnchor &&
+        context.transitLegs.isNotEmpty &&
+        !destinationAlarmFiredForKey(alarmKey)) {
+      // GAP #1 (BLOCK): cold-start-underground. No dead-reckoned progress yet
+      // (rider opened the app already underground; no GPS fix), so the normal
+      // route eval can't run and the geofence fallback can't fire underground.
+      // The reachability anchor (seeded at arm) lets the physics net wake the
+      // rider on the wall clock alone. Fire the whole-route worst-case backstop
+      // if the bound has reached the target; otherwise fall through.
+      final fired = await _maybeFireColdStartReachBackstop(
+        context: context,
+        alarmKey: alarmKey,
+        service: service,
+        onAlarmFired: onAlarmFired,
+      );
+      if (!fired && context.destination != null) {
+        await _evaluateGeofence(
+          currentPosition: currentPosition,
+          service: service,
+          context: context,
+          alarmKey: alarmKey,
+          onAlarmFired: onAlarmFired,
+        );
+      }
     } else if (context.destination != null &&
         !destinationAlarmFiredForKey(alarmKey)) {
       // Fallback: Simple geofence without route
