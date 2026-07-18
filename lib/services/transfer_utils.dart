@@ -1459,13 +1459,20 @@ class TransferUtils {
             // Hardcoded ordered sequence wins: exact, own-line, in order.
             effectiveMatches = orderedMatches;
           } else if (lineFiltered.isEmpty) {
-            effectiveMatches = matchedAll;
+            // CORRECTNESS (off-route stops): do NOT scoop the unfiltered corridor
+            // — `matchedAll`/`loadedStops` spans EVERY line and city, so an
+            // unknown/dirty line label would inject parallel/crossing-line
+            // stations at wrong positions. Keep the API-derived leg instead
+            // (uniform num_stops, on-route by construction). Never count a stop
+            // that isn't on this route's line.
             dev.log(
               '⚠️ TransferUtils: Line filter empty for "${leg.lineName}" '
-              '(key="$legLineKey"). Falling back to all ${matchedAll.length} '
-              'matched stops (safety net).',
+              '(key="$legLineKey"); keeping API-uniform leg instead of the '
+              'cross-line corridor (off-route safety).',
               name: 'TransferUtils',
             );
+            enhanced.add(leg);
+            continue;
           } else if (apiNumStopsForFilter > 0) {
             final farFewer =
                 lineFiltered.length < (apiNumStopsForFilter * 0.5);
@@ -1473,14 +1480,20 @@ class TransferUtils {
                 (lineFiltered.length - apiNumStopsForFilter).abs();
             final allDiff = (matchedAll.length - apiNumStopsForFilter).abs();
             if (farFewer && allDiff < filteredDiff) {
-              effectiveMatches = matchedAll;
+              // CORRECTNESS (off-route stops): own-line OSM is incomplete here,
+              // but the unfiltered corridor is cross-line contaminated —
+              // preferring it because its COUNT is closer just substitutes
+              // phantom stations of OTHER lines at wrong positions (the
+              // divergence gate only checks count, not that stops are on-line).
+              // Keep the API-uniform leg instead of scooping off-route stations.
               dev.log(
                 '⚠️ TransferUtils: Line filter kept only ${lineFiltered.length} '
-                'stops vs API num_stops=$apiNumStopsForFilter for '
-                '"${leg.lineName}"; unfiltered (${matchedAll.length}) is closer. '
-                'Falling back (safety net).',
+                'own-line stops vs API num_stops=$apiNumStopsForFilter for '
+                '"${leg.lineName}"; keeping API-uniform leg (off-route safety).',
                 name: 'TransferUtils',
               );
+              enhanced.add(leg);
+              continue;
             } else {
               effectiveMatches = lineFiltered;
               dev.log(
@@ -1540,11 +1553,20 @@ class TransferUtils {
           // Calculate leg length for stop filtering
           final legLength = leg.legEndMeters - leg.legStartMeters;
 
-          // Check if next leg is also metro (indicating a transfer with potential walk)
-          final nextLegIsMetro =
-              i + 1 < legs.length && legs[i + 1].isMetro;
+          // Check if there's a later metro leg. Scan PAST intervening non-metro
+          // (walk) legs — a transfer is usually metro → WALK → metro, so the old
+          // legs[i+1]-only check was dead for exactly that interchange case and
+          // let the next line's boarding station leak into this leg.
+          int nextMetroIdx = -1;
+          for (int j = i + 1; j < legs.length; j++) {
+            if (legs[j].isMetro) {
+              nextMetroIdx = j;
+              break;
+            }
+          }
+          final nextLegIsMetro = nextMetroIdx != -1;
           final nextLegStartMeters =
-              nextLegIsMetro ? legs[i + 1].legStartMeters : double.infinity;
+              nextLegIsMetro ? legs[nextMetroIdx].legStartMeters : double.infinity;
 
           final intermediateStops =
               uniqueOrdered

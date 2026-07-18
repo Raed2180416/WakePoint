@@ -25,7 +25,17 @@ class OemAutostartService {
       'com.miui.permcenter.autostart.AutoStartManagementActivity'],
     ['poco', 'com.miui.securitycenter',
       'com.miui.permcenter.autostart.AutoStartManagementActivity'],
-    // Oppo / Realme (ColorOS) — several package generations
+    // Oppo / Realme (ColorOS) — several package generations.
+    // Modern ColorOS 12+/HyperOS uses the com.oplus.* namespace; these MUST come
+    // first so current India-mix Oppo/Realme devices resolve the real autostart
+    // screen instead of silently falling back to the generic battery page
+    // (com.oplus.safecenter is already declared in AndroidManifest <queries>).
+    ['oppo', 'com.oplus.safecenter',
+      'com.oplus.safecenter.startup.StartupAppListActivity'],
+    ['oppo', 'com.coloros.safecenter',
+      'com.coloros.safecenter.startupapp.StartupAppListActivity'],
+    ['realme', 'com.oplus.safecenter',
+      'com.oplus.safecenter.startup.StartupAppListActivity'],
     ['oppo', 'com.coloros.safecenter',
       'com.coloros.safecenter.permission.startup.StartupAppListActivity'],
     ['oppo', 'com.oppo.safe',

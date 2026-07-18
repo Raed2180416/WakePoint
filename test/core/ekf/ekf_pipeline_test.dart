@@ -179,8 +179,16 @@ void main() {
       );
 
       final vAfter = ekf.publicState.v;
-      // After large dt gap, velocity should be reset to 0
-      expect(vAfter, equals(0.0));
+      // dt>1s handling was changed (commit cfe52d8) from a hard v=0 reset to a
+      // BOUNDED COAST: on a large gap the filter keeps coasting at its last
+      // velocity (with inflated covariance) rather than zeroing it — resetting
+      // to 0 mid-tunnel was itself a source of late fires. The invariant this
+      // test guards is numerical stability: v stays finite and bounded (does not
+      // grow), and the rest of the state stays finite.
+      expect(vAfter, isFiniteNumber);
+      expect(vAfter, lessThanOrEqualTo(vBefore + 1e-6),
+          reason: 'coast must not amplify velocity across a gap');
+      expect(vAfter, greaterThanOrEqualTo(0.0));
 
       // State should still be finite
       expect(ekf.publicState.s, isFiniteNumber);

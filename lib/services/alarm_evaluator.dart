@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:geowake2/config/fire_decision_config.dart';
 import 'package:geowake2/core/logging/app_logger.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
 enum AlarmMode { stops, time, distance }
@@ -68,6 +69,13 @@ class AlarmEvaluator {
     double? positionSigmaMeters,
     double? velocitySigmaMps,
     double fractileK = FireDecisionConfig.fractileK,
+    // P0 REACHABILITY PROTECTION LEVEL: the physics worst-case arc-progress the
+    // train could have reached during a GPS blackout (s0_hi + V_LINE*t, capped).
+    // When supplied and further along than the dead-reckoned progress + sigma
+    // cushion, the fire decision uses it — this is the late-proof-by-physics
+    // guarantee (see lib/core/reachability/reachability.dart). Null on every
+    // GPS-healthy tick and for legacy callers => behavior unchanged.
+    double? reachableProgressBoundMeters,
   }) {
     // ----------------------------------------------------------------------
     // FALLBACK: NO TRANSIT LEG CONTEXT
@@ -86,7 +94,17 @@ class AlarmEvaluator {
       if (destEvents.isEmpty) return null;
 
       final dest = destEvents.last;
-      final remainingMeters = (dest.meters - progressMeters).toDouble();
+      // P0 reachability: inflate progress by the larger of the sigma cushion and
+      // the physics reachability bound so direct-fire / 60%-rule are never late.
+      final double fallbackSigmaCushion = fractileK *
+          ((positionSigmaMeters ?? 0.0)
+              .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters));
+      final double effProgressFallback = Reachability.effectiveProgress(
+        deadReckonedProgressMeters: progressMeters,
+        sigmaCushionMeters: fallbackSigmaCushion,
+        reachableBoundMeters: reachableProgressBoundMeters,
+      );
+      final remainingMeters = (dest.meters - effProgressFallback).toDouble();
 
       // Direct-fire rule: if destination is very close, fire immediately.
       if (remainingMeters <= 200.0) {
@@ -110,7 +128,7 @@ class AlarmEvaluator {
           double.infinity,
         );
         final shouldFire =
-            progressMeters >= (finalLegStart + finalLegLen * 0.4);
+            effProgressFallback >= (finalLegStart + finalLegLen * 0.4);
         if (shouldFire) {
           return AlarmTrigger(
             eventType: AlarmEventType.finalDestination,
@@ -252,7 +270,12 @@ class AlarmEvaluator {
             sigmaSMeters: positionSigmaMeters,
             sigmaVMps: velocitySigmaMps,
           );
-          final shouldFire =
+          // P0 reachability: fire if the physics bound has reached the boarding
+          // point, independent of the drift-prone ETA.
+          final bool reachFirePre = reachableProgressBoundMeters != null &&
+              reachableProgressBoundMeters.isFinite &&
+              reachableProgressBoundMeters >= targetMeters;
+          final shouldFire = reachFirePre ||
               (etaSeconds - fractileK * etaSigma) <= thresholdSeconds;
           print(
             'TIME_ETA_DEBUG: legIdx=$evalLegIndex, isMetro=${leg.isMetro}, lineName=${leg.lineName}, '
@@ -367,7 +390,12 @@ class AlarmEvaluator {
         sigmaSMeters: positionSigmaMeters,
         sigmaVMps: velocitySigmaMps,
       );
-      final shouldFire =
+      // P0 reachability: if the physics worst-case position has already reached
+      // the switch target, fire now regardless of the (drift-prone) ETA.
+      final bool reachFireMain = reachableProgressBoundMeters != null &&
+          reachableProgressBoundMeters.isFinite &&
+          reachableProgressBoundMeters >= switchTargetMeters;
+      final shouldFire = reachFireMain ||
           (etaSeconds - fractileK * etaSigmaMain) <= thresholdSeconds;
 
       // DEBUG: Log ETA calculation details
@@ -689,9 +717,24 @@ class AlarmEvaluator {
           'ALARM_EVAL: Metro leg with ZERO intermediate stops - using 60% distance rule',
         );
 
-        // Apply 60% rule: fire when 40% of leg is completed
+        // Apply 60% rule: fire when 40% of leg is completed. CORRECTNESS: use the
+        // never-late EFFECTIVE progress (dead-reckoned inflated by the larger of
+        // the sigma cushion and the physics reachability bound), NOT raw
+        // dead-reckoned metersInLeg — otherwise an adjacent-station hop ridden
+        // through a GPS blackout fires LATE here, bypassing the guarantee the
+        // multi-stop path already has.
+        final double zeroStopSigmaCushion = fractileK *
+            ((positionSigmaMeters ?? 0.0)
+                .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters));
+        final double effectiveMetersInLeg = Reachability.effectiveProgress(
+              deadReckonedProgressMeters: progressMeters,
+              sigmaCushionMeters: zeroStopSigmaCushion,
+              reachableBoundMeters: reachableProgressBoundMeters,
+            ) -
+            leg.legStartMeters;
         final thresholdMeters = legLength * 0.4;
-        final shouldFire = thresholdN >= 1 && metersInLeg >= thresholdMeters;
+        final shouldFire =
+            thresholdN >= 1 && effectiveMetersInLeg >= thresholdMeters;
 
         alarmLog.debug('''
 ╠════════════════════════════════════════════════════════════════
@@ -803,8 +846,16 @@ class AlarmEvaluator {
               ((positionSigmaMeters ?? 0.0)
                   .clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)))
           .toDouble();
-      final double effectiveProgressForStops =
-          progressMeters + sigmaCushionMeters;
+      // P0: take the larger (more-progressed) of the statistical upper bound and
+      // the physics reachability bound. The sigma cushion is clamped (tight but
+      // can fire late on a long blackout); the reachability bound is unclamped
+      // and late-proof. max() means we count a stop reached as soon as EITHER
+      // upper bound passes it — never late, as tight as the tighter bound.
+      final double effectiveProgressForStops = Reachability.effectiveProgress(
+        deadReckonedProgressMeters: progressMeters,
+        sigmaCushionMeters: sigmaCushionMeters,
+        reachableBoundMeters: reachableProgressBoundMeters,
+      );
 
       // Count how many intermediate stop boundaries have been reached/passed.
       int passedIntermediate = 0;

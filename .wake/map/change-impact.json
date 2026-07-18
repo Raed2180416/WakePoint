@@ -1,7 +1,7 @@
 [
   {
     "file": "lib/services/transfer_utils.dart",
-    "importers": 55,
+    "importers": 57,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/screens/homescreen.dart",
@@ -36,6 +36,8 @@
       "test/event_alarm_overlap_test.dart",
       "test/fire_decision_fractile_test.dart",
       "test/hybrid_eta_time_test.dart",
+      "test/integration/reachability_ride_scenario_test.dart",
+      "test/integration/reachability_scenarios_test.dart",
       "test/maptracking_eta_distance_test.dart",
       "test/metro_final_station_alarm_test.dart",
       "test/metro_ordered_sequence_test.dart",
@@ -219,7 +221,7 @@
   },
   {
     "file": "lib/services/tracking_state_store.dart",
-    "importers": 21,
+    "importers": 22,
     "directDependents": [
       "lib/screens/homescreen.dart",
       "lib/screens/maptracking.dart",
@@ -235,6 +237,7 @@
       "lib/services/trackingservice.dart",
       "test/complex_route_alarm_test.dart",
       "test/destination_only_metro_time_test.dart",
+      "test/integration/lifecycle_restore_scenario_test.dart",
       "test/notification_behavior_spec_test.dart",
       "test/preboarding_toggle_test.dart",
       "test/process_death_recovery_test.dart",
@@ -247,6 +250,37 @@
       "TrackingSnapshot",
       "TrackingProgressPayload",
       "TrackingStateStore"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/alarm_evaluator.dart",
+    "importers": 18,
+    "directDependents": [
+      "lib/core/ekf/ekf_test_controller.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "test/alarm_leg_id_stability_test.dart",
+      "test/alarm_logic_rewrite_test.dart",
+      "test/alarm_repro.dart",
+      "test/bug_repro_test.dart",
+      "test/complex_failure_repro.dart",
+      "test/debug_alarm_diagnostic.dart",
+      "test/debug_alarm_mismatch.dart",
+      "test/destination_only_metro_time_test.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/fire_decision_fractile_test.dart",
+      "test/integration/reachability_ride_scenario_test.dart",
+      "test/integration/reachability_scenarios_test.dart",
+      "test/preboarding_semantics_test.dart",
+      "test/preboarding_toggle_test.dart",
+      "test/repro_mumbai_transfer_test.dart",
+      "test/time_mode_switch_targeting_universal_test.dart"
+    ],
+    "exportedSymbols": [
+      "AlarmEventType",
+      "AlarmTrigger",
+      "AlarmEvaluator",
+      "AlarmMode"
     ],
     "riskLevel": "critical"
   },
@@ -273,35 +307,6 @@
     ],
     "exportedSymbols": [
       "RouteGeometry"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/alarm_evaluator.dart",
-    "importers": 16,
-    "directDependents": [
-      "lib/core/ekf/ekf_test_controller.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "test/alarm_leg_id_stability_test.dart",
-      "test/alarm_logic_rewrite_test.dart",
-      "test/alarm_repro.dart",
-      "test/bug_repro_test.dart",
-      "test/complex_failure_repro.dart",
-      "test/debug_alarm_diagnostic.dart",
-      "test/debug_alarm_mismatch.dart",
-      "test/destination_only_metro_time_test.dart",
-      "test/ekf/replay_harness_test.dart",
-      "test/fire_decision_fractile_test.dart",
-      "test/preboarding_semantics_test.dart",
-      "test/preboarding_toggle_test.dart",
-      "test/repro_mumbai_transfer_test.dart",
-      "test/time_mode_switch_targeting_universal_test.dart"
-    ],
-    "exportedSymbols": [
-      "AlarmEventType",
-      "AlarmTrigger",
-      "AlarmEvaluator",
-      "AlarmMode"
     ],
     "riskLevel": "critical"
   },
@@ -455,6 +460,32 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/core/reachability/reachability.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/ios/ios_backstop_planner.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/integration/reachability_ride_scenario_test.dart",
+      "test/integration/reachability_scenarios_test.dart",
+      "test/ios/ios_backstop_edgecases_test.dart",
+      "test/ios/ios_backstop_planner_test.dart",
+      "test/reachability/reachability_edgecases_test.dart",
+      "test/reachability/reachability_test.dart"
+    ],
+    "exportedSymbols": [
+      "VLineTable",
+      "ReachabilityAnchor",
+      "RouteTopology",
+      "ReachabilityConfig",
+      "ReachabilityBound",
+      "Reachability",
+      "ReachabilityTracker"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/dashboard/constraint_logger.dart",
     "importers": 10,
     "directDependents": [
@@ -535,6 +566,25 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/purchase_backend.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/services/monetization/monetization_service.dart",
+      "lib/services/monetization/premium_service.dart",
+      "lib/services/monetization/purchase_backend_impl.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart"
+    ],
+    "exportedSymbols": [
+      "PurchaseBackend",
+      "FakePurchaseBackend"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/snap_to_route.dart",
     "importers": 8,
     "directDependents": [
@@ -550,6 +600,23 @@
     "exportedSymbols": [
       "SnapResult",
       "SnapToRouteEngine"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/config/fire_decision_config.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/location_manager.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/fire_decision_fractile_test.dart",
+      "test/integration/reachability_scenarios_test.dart"
+    ],
+    "exportedSymbols": [
+      "FireDecisionConfig"
     ],
     "riskLevel": "high"
   },
@@ -572,6 +639,43 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/ad_policy.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/screens/homescreen.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_test.dart"
+    ],
+    "exportedSymbols": [
+      "AdPolicy",
+      "AdPlacement"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/monetization/premium_service.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/services/monetization/ad_service.dart",
+      "lib/services/monetization/monetization_service.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart"
+    ],
+    "exportedSymbols": [
+      "PremiumProducts",
+      "PremiumService",
+      "EntitlementTier"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/polyline_simplifier.dart",
     "importers": 7,
     "directDependents": [
@@ -585,6 +689,24 @@
     ],
     "exportedSymbols": [
       "PolylineSimplifier"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/route_cache.dart",
+    "importers": 7,
+    "directDependents": [
+      "lib/services/direction_service.dart",
+      "lib/services/offline_coordinator.dart",
+      "lib/services/route_session_manager.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/integration/offline_scenario_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/offline_routing_guard_test.dart"
+    ],
+    "exportedSymbols": [
+      "RouteCacheEntry",
+      "RouteCache"
     ],
     "riskLevel": "high"
   },
@@ -624,18 +746,24 @@
     "riskLevel": "high"
   },
   {
-    "file": "lib/config/fire_decision_config.dart",
+    "file": "lib/services/offline_coordinator.dart",
     "importers": 6,
     "directDependents": [
-      "lib/services/alarm_evaluator.dart",
-      "lib/services/location_manager.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/location_stream_handler.dart",
-      "test/ekf/replay_harness_test.dart",
-      "test/fire_decision_fractile_test.dart"
+      "lib/screens/homescreen.dart",
+      "lib/services/route_session_manager.dart",
+      "lib/services/trackingservice.dart",
+      "test/integration/offline_scenario_test.dart",
+      "test/offline_coordinator_test.dart",
+      "test/offline_routing_guard_test.dart"
     ],
     "exportedSymbols": [
-      "FireDecisionConfig"
+      "OfflineRouteResult",
+      "DirectionsProvider",
+      "DefaultDirectionsProvider",
+      "RouteCachePort",
+      "DefaultRouteCachePort",
+      "OfflineCoordinator",
+      "RouteSource"
     ],
     "riskLevel": "high"
   },
@@ -659,109 +787,5 @@
       "stopDistancesAlongPolyline"
     ],
     "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/reroute_policy.dart",
-    "importers": 6,
-    "directDependents": [
-      "lib/services/route_session_manager.dart",
-      "lib/services/trackingservice.dart",
-      "test/core/clock/app_clock_integration_test.dart",
-      "test/dashboard/constraint_event_integration_test.dart",
-      "test/deviation_reroute_stress_test.dart",
-      "test/reroute_policy_continuity_test.dart"
-    ],
-    "exportedSymbols": [
-      "RerouteDecision",
-      "ReroutePolicy"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/route_cache.dart",
-    "importers": 6,
-    "directDependents": [
-      "lib/services/direction_service.dart",
-      "lib/services/offline_coordinator.dart",
-      "lib/services/route_session_manager.dart",
-      "test/direction_service_behavior_test.dart",
-      "test/offline_coordinator_test.dart",
-      "test/offline_routing_guard_test.dart"
-    ],
-    "exportedSymbols": [
-      "RouteCacheEntry",
-      "RouteCache"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/testing/osm_loader.dart",
-    "importers": 6,
-    "directDependents": [
-      "lib/dashboard/deviation_dashboard.dart",
-      "lib/dashboard/unified_dashboard.dart",
-      "test/dashboard/deviation_dashboard_integration_test.dart",
-      "test/dashboard/deviation_simulation_controller_test.dart",
-      "test/services/testing/osm_graph_test.dart",
-      "test/services/testing/pathfinder_test.dart"
-    ],
-    "exportedSymbols": [
-      "OsmLoader",
-      "OsmLoadException"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "test/log_helper.dart",
-    "importers": 6,
-    "directDependents": [
-      "test/active_route_manager_test.dart",
-      "test/offline_coordinator_test.dart",
-      "test/route_registry_test.dart",
-      "test/simplified_polyline_present_test.dart",
-      "test/tracking_service_connectivity_test.dart",
-      "test/tracking_service_reroute_integration_test.dart"
-    ],
-    "exportedSymbols": [
-      "logSection",
-      "logStep",
-      "logInfo",
-      "logPass",
-      "logWarn"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/core/ekf/ekf_pipeline.dart",
-    "importers": 5,
-    "directDependents": [
-      "lib/core/ekf/ekf_orchestrator.dart",
-      "test/core/ekf/ekf_pipeline_test.dart",
-      "test/services/ekf_integration/ambiguous_station_stop_test.dart",
-      "test/services/ekf_integration/gps_recovery_large_innovation_test.dart",
-      "test/services/ekf_integration/long_tunnel_no_stops_test.dart"
-    ],
-    "exportedSymbols": [
-      "EkfPipeline",
-      "EkfPipelineLogCallback"
-    ],
-    "riskLevel": "medium"
-  },
-  {
-    "file": "lib/services/deviation_monitor.dart",
-    "importers": 5,
-    "directDependents": [
-      "lib/services/route_session_manager.dart",
-      "lib/services/trackingservice.dart",
-      "test/core/clock/app_clock_integration_test.dart",
-      "test/dashboard/constraint_event_integration_test.dart",
-      "test/deviation_reroute_stress_test.dart"
-    ],
-    "exportedSymbols": [
-      "DeviationState",
-      "SpeedThresholdModel",
-      "DeviationMonitor"
-    ],
-    "riskLevel": "medium"
   }
 ]

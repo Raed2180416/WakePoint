@@ -32,6 +32,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // Centralized logging - use trackingLog, alarmLog, gpsLog for structured output
 import 'package:geowake2/core/logging/app_logger.dart';
+import 'package:geowake2/services/telemetry/telemetry_session.dart';
 
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/services/location_manager.dart'; // NEW
@@ -242,6 +243,11 @@ class TrackingService {
   }) async {
     // Ensure foreground listeners are registered to receive alarm triggers from background
     _ensureAckListenersRegistered();
+
+    // HANDOFF §3 reliability funnel: stamp device·OEM·Android-version context and
+    // record session-start + arm permission states. Fire-and-forget + fail-open —
+    // must never delay or break arming.
+    unawaited(recordSessionStart(alarmMode: alarmMode, alarmValue: alarmValue));
 
     final Map<String, dynamic> params = {
       'destinationLat': destination.latitude,
@@ -1365,6 +1371,16 @@ Future<void> _handleRerouteDecision(RerouteDecision decision) async {
     return;
   }
 
+  // CORRECTNESS: once the destination wake alarm has fired, the trip is over —
+  // a deviation-triggered reroute here only produces a spurious post-arrival
+  // alarm / resurrects a finished session. Keep the deviate→reroute pipeline
+  // quiescent after arrival.
+  if (_alarmController.anyDestinationAlarmFired) {
+    dev.log('Reroute suppressed: destination alarm already fired',
+        name: 'TrackingService');
+    return;
+  }
+
   if (_rerouteInFlight) {
     dev.log('Reroute already in flight, skipping', name: 'TrackingService');
     return;
@@ -1436,6 +1452,16 @@ Future<void> _handleRerouteDecision(RerouteDecision decision) async {
       preferMetroEvenIfClosed: _transitMode,
       forceRefresh: true, // Always get fresh route for reroute
     );
+
+    // CORRECTNESS: the route fetch above can take several seconds; the user may
+    // have ended tracking (or the alarm fired) in the meantime. Bail before
+    // registering the new route so a late reroute can't resurrect a stopped
+    // session via the managers' lazy `??=` init.
+    if (!_trackingSessionActive || _alarmController.anyDestinationAlarmFired) {
+      dev.log('Reroute aborted: session ended/alarm fired during route fetch',
+          name: 'TrackingService');
+      return;
+    }
 
     // Validate constraints
     final constraints = RerouteConstraints(

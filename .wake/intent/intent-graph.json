@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "e3875126ce201e95df6b2276a35265c49fd8ca9e",
-  "generatedAt": "2026-07-15T01:23:50+05:30",
-  "structuralDigest": "1aad685679455c98af8597b44a707b6b03af38fa",
+  "gitCommit": "cfe52d8e481e2a3e5e69deaf4f3b3134817a50dd",
+  "generatedAt": "2026-07-15T02:06:32+05:30",
+  "structuralDigest": "81a5242f90d477b5e868f0c65dbb8b4cd0cf0c9c",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 777,
-    "edgeCount": 1662,
+    "nodeCount": 886,
+    "edgeCount": 1808,
     "byLevel": {
       "feature": 9,
-      "file": 277,
+      "file": 314,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 456
+      "symbol": 528
     },
     "byEdgeType": {
-      "contains": 578,
-      "depends-on": 567,
+      "contains": 650,
+      "depends-on": 641,
       "references": 517
     }
   },
@@ -482,7 +482,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 1
     },
     {
@@ -726,6 +726,17 @@
       "feature": "unassigned",
       "importers": 10,
       "exportCount": 14
+    },
+    {
+      "id": "file:lib/core/reachability/reachability.dart",
+      "level": "file",
+      "label": "lib/core/reachability/reachability.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 10,
+      "exportCount": 7
     },
     {
       "id": "file:lib/dashboard/alarm_debouncer.dart",
@@ -1032,7 +1043,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 16,
+      "importers": 18,
       "exportCount": 4
     },
     {
@@ -1135,6 +1146,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:lib/services/ios/ios_backstop_planner.dart",
+      "level": "file",
+      "label": "lib/services/ios/ios_backstop_planner.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 7
+    },
+    {
       "id": "file:lib/services/location_manager.dart",
       "level": "file",
       "label": "lib/services/location_manager.dart",
@@ -1155,6 +1177,83 @@
       "feature": "platform-connectivity-services",
       "importers": 1,
       "exportCount": 3
+    },
+    {
+      "id": "file:lib/services/monetization/ad_policy.dart",
+      "level": "file",
+      "label": "lib/services/monetization/ad_policy.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 7,
+      "exportCount": 2
+    },
+    {
+      "id": "file:lib/services/monetization/ad_service.dart",
+      "level": "file",
+      "label": "lib/services/monetization/ad_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 3,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/monetization/monetization_service.dart",
+      "level": "file",
+      "label": "lib/services/monetization/monetization_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 4,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/monetization/post_arrival_service.dart",
+      "level": "file",
+      "label": "lib/services/monetization/post_arrival_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 4,
+      "exportCount": 6
+    },
+    {
+      "id": "file:lib/services/monetization/premium_service.dart",
+      "level": "file",
+      "label": "lib/services/monetization/premium_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 7,
+      "exportCount": 3
+    },
+    {
+      "id": "file:lib/services/monetization/purchase_backend_impl.dart",
+      "level": "file",
+      "label": "lib/services/monetization/purchase_backend_impl.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/monetization/purchase_backend.dart",
+      "level": "file",
+      "label": "lib/services/monetization/purchase_backend.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 8,
+      "exportCount": 2
     },
     {
       "id": "file:lib/services/navigation_service.dart",
@@ -1197,7 +1296,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 6,
       "exportCount": 7
     },
     {
@@ -1289,6 +1388,39 @@
       "exportCount": 0
     },
     {
+      "id": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "level": "file",
+      "label": "lib/services/reliability/reliability_preflight_runner.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 3,
+      "exportCount": 2
+    },
+    {
+      "id": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "level": "file",
+      "label": "lib/services/reliability/reliability_preflight_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 6,
+      "exportCount": 9
+    },
+    {
+      "id": "file:lib/services/reliability/reliability_probe_impl.dart",
+      "level": "file",
+      "label": "lib/services/reliability/reliability_probe_impl.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/services/reroute_constraints.dart",
       "level": "file",
       "label": "lib/services/reroute_constraints.dart",
@@ -1318,7 +1450,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 2
     },
     {
@@ -1465,6 +1597,28 @@
       "exportCount": 3
     },
     {
+      "id": "file:lib/services/telemetry/telemetry_service.dart",
+      "level": "file",
+      "label": "lib/services/telemetry/telemetry_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 5,
+      "exportCount": 6
+    },
+    {
+      "id": "file:lib/services/telemetry/telemetry_session.dart",
+      "level": "file",
+      "label": "lib/services/telemetry/telemetry_session.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 0
+    },
+    {
       "id": "file:lib/services/test_service_instance.dart",
       "level": "file",
       "label": "lib/services/test_service_instance.dart",
@@ -1516,7 +1670,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 21,
+      "importers": 22,
       "exportCount": 3
     },
     {
@@ -1648,7 +1802,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 55,
+      "importers": 57,
       "exportCount": 3
     },
     {
@@ -1670,6 +1824,28 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/widgets/gated_banner_ad.dart",
+      "level": "file",
+      "label": "lib/widgets/gated_banner_ad.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/widgets/post_arrival_card.dart",
+      "level": "file",
+      "label": "lib/widgets/post_arrival_card.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
       "importers": 1,
       "exportCount": 1
     },
@@ -2210,7 +2386,7 @@
       "role": "flutter-test",
       "feature": "unassigned",
       "importers": 0,
-      "exportCount": 9
+      "exportCount": 10
     },
     {
       "id": "file:test/eta_engine_test.dart",
@@ -2330,6 +2506,83 @@
       "source": "map",
       "role": "flutter-test",
       "feature": "quality-simulation-testing",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/integration/lifecycle_restore_scenario_test.dart",
+      "level": "file",
+      "label": "test/integration/lifecycle_restore_scenario_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/integration/offline_scenario_test.dart",
+      "level": "file",
+      "label": "test/integration/offline_scenario_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/integration/preflight_arm_scenario_test.dart",
+      "level": "file",
+      "label": "test/integration/preflight_arm_scenario_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/integration/reachability_ride_scenario_test.dart",
+      "level": "file",
+      "label": "test/integration/reachability_ride_scenario_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/integration/reachability_scenarios_test.dart",
+      "level": "file",
+      "label": "test/integration/reachability_scenarios_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/ios/ios_backstop_edgecases_test.dart",
+      "level": "file",
+      "label": "test/ios/ios_backstop_edgecases_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/ios/ios_backstop_planner_test.dart",
+      "level": "file",
+      "label": "test/ios/ios_backstop_planner_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
       "importers": 0,
       "exportCount": 1
     },
@@ -2463,6 +2716,72 @@
       "role": "flutter-test",
       "feature": "quality-simulation-testing",
       "importers": 4,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/late_purchase_grant_test.dart",
+      "level": "file",
+      "label": "test/monetization/late_purchase_grant_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/monetization_edgecases_test.dart",
+      "level": "file",
+      "label": "test/monetization/monetization_edgecases_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/monetization_journey_test.dart",
+      "level": "file",
+      "label": "test/monetization/monetization_journey_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/monetization_service_test.dart",
+      "level": "file",
+      "label": "test/monetization/monetization_service_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/monetization_test.dart",
+      "level": "file",
+      "label": "test/monetization/monetization_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/post_arrival_test.dart",
+      "level": "file",
+      "label": "test/monetization/post_arrival_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
       "exportCount": 1
     },
     {
@@ -2675,9 +2994,53 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/reachability/reachability_edgecases_test.dart",
+      "level": "file",
+      "label": "test/reachability/reachability_edgecases_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reachability/reachability_test.dart",
+      "level": "file",
+      "label": "test/reachability/reachability_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/regression_prod_data_test.dart",
       "level": "file",
       "label": "test/regression_prod_data_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reliability/reliability_preflight_combinatorial_test.dart",
+      "level": "file",
+      "label": "test/reliability/reliability_preflight_combinatorial_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reliability/reliability_preflight_test.dart",
+      "level": "file",
+      "label": "test/reliability/reliability_preflight_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -3115,6 +3478,28 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/telemetry/telemetry_edgecases_test.dart",
+      "level": "file",
+      "label": "test/telemetry/telemetry_edgecases_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/telemetry/telemetry_service_test.dart",
+      "level": "file",
+      "label": "test/telemetry/telemetry_service_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/test_routes.dart",
       "level": "file",
       "label": "test/test_routes.dart",
@@ -3256,6 +3641,28 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 2
+    },
+    {
+      "id": "file:test/widgets/post_arrival_card_widget_test.dart",
+      "level": "file",
+      "label": "test/widgets/post_arrival_card_widget_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/widgets/preflight_dialog_widget_test.dart",
+      "level": "file",
+      "label": "test/widgets/preflight_dialog_widget_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
     },
     {
       "id": "file:tools/relay_server.dart",
@@ -4601,6 +5008,69 @@
       "file": "lib/core/logging/app_logger.dart"
     },
     {
+      "id": "symbol:lib/core/reachability/reachability.dart#Reachability",
+      "level": "symbol",
+      "label": "Reachability",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#ReachabilityAnchor",
+      "level": "symbol",
+      "label": "ReachabilityAnchor",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#ReachabilityBound",
+      "level": "symbol",
+      "label": "ReachabilityBound",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#ReachabilityConfig",
+      "level": "symbol",
+      "label": "ReachabilityConfig",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#ReachabilityTracker",
+      "level": "symbol",
+      "label": "ReachabilityTracker",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#RouteTopology",
+      "level": "symbol",
+      "label": "RouteTopology",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
+      "id": "symbol:lib/core/reachability/reachability.dart#VLineTable",
+      "level": "symbol",
+      "label": "VLineTable",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
       "id": "symbol:lib/dashboard/alarm_debouncer.dart#AlarmDebouncer",
       "level": "symbol",
       "label": "AlarmDebouncer",
@@ -5222,6 +5692,69 @@
       "file": "lib/services/gps_health_monitor.dart"
     },
     {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#BackstopPlan",
+      "level": "symbol",
+      "label": "BackstopPlan",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#FakeIosScheduler",
+      "level": "symbol",
+      "label": "FakeIosScheduler",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#GeofenceRing",
+      "level": "symbol",
+      "label": "GeofenceRing",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#GeofenceRingKind",
+      "level": "symbol",
+      "label": "GeofenceRingKind",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#IosBackstopPlanner",
+      "level": "symbol",
+      "label": "IosBackstopPlanner",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#IosScheduler",
+      "level": "symbol",
+      "label": "IosScheduler",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
+      "id": "symbol:lib/services/ios/ios_backstop_planner.dart#ScheduledNotification",
+      "level": "symbol",
+      "label": "ScheduledNotification",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/ios/ios_backstop_planner.dart"
+    },
+    {
       "id": "symbol:lib/services/location_manager.dart#LocationManager",
       "level": "symbol",
       "label": "LocationManager",
@@ -5256,6 +5789,150 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/metro_stop_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/ad_policy.dart#AdPlacement",
+      "level": "symbol",
+      "label": "AdPlacement",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/ad_policy.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/ad_policy.dart#AdPolicy",
+      "level": "symbol",
+      "label": "AdPolicy",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/ad_policy.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/ad_service.dart#AdService",
+      "level": "symbol",
+      "label": "AdService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/ad_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/monetization_service.dart#MonetizationService",
+      "level": "symbol",
+      "label": "MonetizationService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/monetization_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#LastMileOption",
+      "level": "symbol",
+      "label": "LastMileOption",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalAction",
+      "level": "symbol",
+      "label": "PostArrivalAction",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalActionKind",
+      "level": "symbol",
+      "label": "PostArrivalActionKind",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalCard",
+      "level": "symbol",
+      "label": "PostArrivalCard",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalPrivacyError",
+      "level": "symbol",
+      "label": "PostArrivalPrivacyError",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalService",
+      "level": "symbol",
+      "label": "PostArrivalService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/post_arrival_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/premium_service.dart#EntitlementTier",
+      "level": "symbol",
+      "label": "EntitlementTier",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/premium_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/premium_service.dart#PremiumProducts",
+      "level": "symbol",
+      "label": "PremiumProducts",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/premium_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/premium_service.dart#PremiumService",
+      "level": "symbol",
+      "label": "PremiumService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/premium_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/purchase_backend_impl.dart#IapPurchaseBackend",
+      "level": "symbol",
+      "label": "IapPurchaseBackend",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/purchase_backend_impl.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/purchase_backend.dart#FakePurchaseBackend",
+      "level": "symbol",
+      "label": "FakePurchaseBackend",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/purchase_backend.dart"
+    },
+    {
+      "id": "symbol:lib/services/monetization/purchase_backend.dart#PurchaseBackend",
+      "level": "symbol",
+      "label": "PurchaseBackend",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/monetization/purchase_backend.dart"
     },
     {
       "id": "symbol:lib/services/navigation_service.dart#NavigationService",
@@ -5492,6 +6169,114 @@
       "file": "lib/services/position/position_provider.dart"
     },
     {
+      "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#ReliabilityPreflightRunner",
+      "level": "symbol",
+      "label": "ReliabilityPreflightRunner",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_runner.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_runner.dart#showReliabilityPreflightDialog",
+      "level": "symbol",
+      "label": "showReliabilityPreflightDialog",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_runner.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#FakeReliabilityProbe",
+      "level": "symbol",
+      "label": "FakeReliabilityProbe",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightFixAction",
+      "level": "symbol",
+      "label": "PreflightFixAction",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightIssue",
+      "level": "symbol",
+      "label": "PreflightIssue",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightIssueCode",
+      "level": "symbol",
+      "label": "PreflightIssueCode",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightLevel",
+      "level": "symbol",
+      "label": "PreflightLevel",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightResult",
+      "level": "symbol",
+      "label": "PreflightResult",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightSeverity",
+      "level": "symbol",
+      "label": "PreflightSeverity",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#ReliabilityPreflightService",
+      "level": "symbol",
+      "label": "ReliabilityPreflightService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_preflight_service.dart#ReliabilityProbe",
+      "level": "symbol",
+      "label": "ReliabilityProbe",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_preflight_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/reliability/reliability_probe_impl.dart#PlatformReliabilityProbe",
+      "level": "symbol",
+      "label": "PlatformReliabilityProbe",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/reliability/reliability_probe_impl.dart"
+    },
+    {
       "id": "symbol:lib/services/reroute_constraints.dart#RerouteConstraints",
       "level": "symbol",
       "label": "RerouteConstraints",
@@ -5724,6 +6509,60 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/stop_matcher.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#AlarmOutcome",
+      "level": "symbol",
+      "label": "AlarmOutcome",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#InMemoryTelemetrySink",
+      "level": "symbol",
+      "label": "InMemoryTelemetrySink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryEvent",
+      "level": "symbol",
+      "label": "TelemetryEvent",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryEventType",
+      "level": "symbol",
+      "label": "TelemetryEventType",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryService",
+      "level": "symbol",
+      "label": "TelemetryService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetrySink",
+      "level": "symbol",
+      "label": "TelemetrySink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_service.dart"
     },
     {
       "id": "symbol:lib/services/test_service_instance.dart#TestServiceInstance",
@@ -6102,6 +6941,24 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/themes/appthemes.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/gated_banner_ad.dart#GatedBannerAd",
+      "level": "symbol",
+      "label": "GatedBannerAd",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/gated_banner_ad.dart"
+    },
+    {
+      "id": "symbol:lib/widgets/post_arrival_card.dart#PostArrivalCardWidget",
+      "level": "symbol",
+      "label": "PostArrivalCardWidget",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/widgets/post_arrival_card.dart"
     },
     {
       "id": "symbol:lib/widgets/pulsing_dots.dart#PulsingDots",
@@ -6626,9 +7483,18 @@
       "file": "test/ekf/replay_harness_test.dart"
     },
     {
-      "id": "symbol:test/ekf/replay_harness_test.dart#kFixturesDir",
+      "id": "symbol:test/ekf/replay_harness_test.dart#kExternalFixturesDir",
       "level": "symbol",
-      "label": "kFixturesDir",
+      "label": "kExternalFixturesDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/ekf/replay_harness_test.dart"
+    },
+    {
+      "id": "symbol:test/ekf/replay_harness_test.dart#kInRepoFixturesDir",
+      "level": "symbol",
+      "label": "kInRepoFixturesDir",
       "kind": "const",
       "deterministic": true,
       "source": "map",
@@ -6840,6 +7706,69 @@
       "deterministic": true,
       "source": "map",
       "file": "test/integration/ekf_logged_data_test.dart"
+    },
+    {
+      "id": "symbol:test/integration/lifecycle_restore_scenario_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/integration/lifecycle_restore_scenario_test.dart"
+    },
+    {
+      "id": "symbol:test/integration/offline_scenario_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/integration/offline_scenario_test.dart"
+    },
+    {
+      "id": "symbol:test/integration/preflight_arm_scenario_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/integration/preflight_arm_scenario_test.dart"
+    },
+    {
+      "id": "symbol:test/integration/reachability_ride_scenario_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/integration/reachability_ride_scenario_test.dart"
+    },
+    {
+      "id": "symbol:test/integration/reachability_scenarios_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/integration/reachability_scenarios_test.dart"
+    },
+    {
+      "id": "symbol:test/ios/ios_backstop_edgecases_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/ios/ios_backstop_edgecases_test.dart"
+    },
+    {
+      "id": "symbol:test/ios/ios_backstop_planner_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/ios/ios_backstop_planner_test.dart"
     },
     {
       "id": "symbol:test/location_manager_test.dart#main",
@@ -7056,6 +7985,60 @@
       "deterministic": true,
       "source": "map",
       "file": "test/mock_location_provider.dart"
+    },
+    {
+      "id": "symbol:test/monetization/late_purchase_grant_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/late_purchase_grant_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/monetization_edgecases_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/monetization_edgecases_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/monetization_journey_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/monetization_journey_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/monetization_service_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/monetization_service_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/monetization_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/monetization_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/post_arrival_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/post_arrival_test.dart"
     },
     {
       "id": "symbol:test/multiple_switch_point_alarm_test.dart#encodePolyline",
@@ -7283,6 +8266,24 @@
       "file": "test/rapid_deviations_vm_test.dart"
     },
     {
+      "id": "symbol:test/reachability/reachability_edgecases_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/reachability_edgecases_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/reachability_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/reachability_test.dart"
+    },
+    {
       "id": "symbol:test/regression_prod_data_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -7290,6 +8291,24 @@
       "deterministic": true,
       "source": "map",
       "file": "test/regression_prod_data_test.dart"
+    },
+    {
+      "id": "symbol:test/reliability/reliability_preflight_combinatorial_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reliability/reliability_preflight_combinatorial_test.dart"
+    },
+    {
+      "id": "symbol:test/reliability/reliability_preflight_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reliability/reliability_preflight_test.dart"
     },
     {
       "id": "symbol:test/repro_mumbai_transfer_test.dart#main",
@@ -7688,6 +8707,24 @@
       "file": "test/switch_point_logic_test.dart"
     },
     {
+      "id": "symbol:test/telemetry/telemetry_edgecases_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/telemetry_edgecases_test.dart"
+    },
+    {
+      "id": "symbol:test/telemetry/telemetry_service_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/telemetry_service_test.dart"
+    },
+    {
       "id": "symbol:test/test_routes.dart#TestRoutes",
       "level": "symbol",
       "label": "TestRoutes",
@@ -7866,6 +8903,24 @@
       "deterministic": true,
       "source": "map",
       "file": "test/transit_leg_stops_test.dart"
+    },
+    {
+      "id": "symbol:test/widgets/post_arrival_card_widget_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/widgets/post_arrival_card_widget_test.dart"
+    },
+    {
+      "id": "symbol:test/widgets/preflight_dialog_widget_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/widgets/preflight_dialog_widget_test.dart"
     },
     {
       "id": "symbol:tools/relay_server.dart#main",
@@ -9829,6 +10884,55 @@
       "source": "map"
     },
     {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#Reachability",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#ReachabilityAnchor",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#ReachabilityBound",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#ReachabilityConfig",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#ReachabilityTracker",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#RouteTopology",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#VLineTable",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/dashboard/alarm_debouncer.dart",
       "to": "symbol:lib/dashboard/alarm_debouncer.dart#AlarmDebouncer",
       "type": "contains",
@@ -10777,6 +11881,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/services/navigation_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -10789,6 +11900,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 2
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/main.dart",
@@ -10924,6 +12042,13 @@
     },
     {
       "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
       "to": "file:lib/services/offline_coordinator.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -10966,6 +12091,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 6
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/homescreen.dart",
@@ -11040,6 +12172,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 17
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/widgets/gated_banner_ad.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/homescreen.dart",
@@ -11147,6 +12286,13 @@
     },
     {
       "from": "file:lib/screens/maptracking.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/maptracking.dart",
       "to": "file:lib/services/notification_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -11241,6 +12387,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 3
+    },
+    {
+      "from": "file:lib/screens/maptracking.dart",
+      "to": "file:lib/widgets/gated_banner_ad.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/maptracking.dart",
@@ -11519,6 +12672,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 4
+    },
+    {
+      "from": "file:lib/services/alarm_evaluator.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/services/alarm_evaluator.dart",
@@ -11863,6 +13023,62 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#BackstopPlan",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#FakeIosScheduler",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#GeofenceRing",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#GeofenceRingKind",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#IosBackstopPlanner",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#IosScheduler",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/ios/ios_backstop_planner.dart",
+      "to": "symbol:lib/services/ios/ios_backstop_planner.dart#ScheduledNotification",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/location_manager.dart",
       "to": "file:lib/config/fire_decision_config.dart",
       "type": "depends-on",
@@ -11923,6 +13139,174 @@
     {
       "from": "file:lib/services/metro_stop_service.dart",
       "to": "symbol:lib/services/metro_stop_service.dart#TransitStop",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/ad_policy.dart",
+      "to": "symbol:lib/services/monetization/ad_policy.dart#AdPlacement",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/ad_policy.dart",
+      "to": "symbol:lib/services/monetization/ad_policy.dart#AdPolicy",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/ad_service.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/ad_service.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/ad_service.dart",
+      "to": "symbol:lib/services/monetization/ad_service.dart#AdService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/monetization_service.dart",
+      "to": "file:lib/services/monetization/ad_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/monetization_service.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/monetization_service.dart",
+      "to": "file:lib/services/monetization/purchase_backend_impl.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/monetization_service.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/monetization_service.dart",
+      "to": "symbol:lib/services/monetization/monetization_service.dart#MonetizationService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#LastMileOption",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalAction",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalActionKind",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalCard",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalPrivacyError",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/post_arrival_service.dart",
+      "to": "symbol:lib/services/monetization/post_arrival_service.dart#PostArrivalService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/premium_service.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/premium_service.dart",
+      "to": "symbol:lib/services/monetization/premium_service.dart#EntitlementTier",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/premium_service.dart",
+      "to": "symbol:lib/services/monetization/premium_service.dart#PremiumProducts",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/premium_service.dart",
+      "to": "symbol:lib/services/monetization/premium_service.dart#PremiumService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/purchase_backend_impl.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/purchase_backend_impl.dart",
+      "to": "symbol:lib/services/monetization/purchase_backend_impl.dart#IapPurchaseBackend",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/purchase_backend.dart",
+      "to": "symbol:lib/services/monetization/purchase_backend.dart#FakePurchaseBackend",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/monetization/purchase_backend.dart",
+      "to": "symbol:lib/services/monetization/purchase_backend.dart#PurchaseBackend",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -12277,6 +13661,111 @@
       "from": "file:lib/services/position/position_providers.dart",
       "to": "file:lib/services/position/position_provider.dart",
       "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "file:lib/services/reliability/reliability_probe_impl.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_runner.dart#ReliabilityPreflightRunner",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_runner.dart#showReliabilityPreflightDialog",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#FakeReliabilityProbe",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightFixAction",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightIssue",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightIssueCode",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightLevel",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightResult",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#PreflightSeverity",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#ReliabilityPreflightService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "to": "symbol:lib/services/reliability/reliability_preflight_service.dart#ReliabilityProbe",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_probe_impl.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/reliability/reliability_probe_impl.dart",
+      "to": "symbol:lib/services/reliability/reliability_probe_impl.dart#PlatformReliabilityProbe",
+      "type": "contains",
       "deterministic": true,
       "source": "map"
     },
@@ -12867,6 +14356,62 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#AlarmOutcome",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#InMemoryTelemetrySink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryEvent",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryEventType",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetryService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_service.dart#TelemetrySink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_session.dart",
+      "to": "file:lib/services/reliability/reliability_probe_impl.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_session.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/test_service_instance.dart",
       "to": "file:lib/services/tracking_state_store.dart",
       "type": "depends-on",
@@ -13181,6 +14726,13 @@
     },
     {
       "from": "file:lib/services/tracking/alarm_controller.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/alarm_controller.dart",
       "to": "file:lib/services/alarm_evaluator.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -13253,6 +14805,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 1
+    },
+    {
+      "from": "file:lib/services/tracking/alarm_controller.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/services/tracking/alarm_controller.dart",
@@ -14122,6 +15681,13 @@
     },
     {
       "from": "file:lib/services/trackingservice.dart",
+      "to": "file:lib/services/telemetry/telemetry_session.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/trackingservice.dart",
       "to": "file:lib/services/tracking_state_store.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14361,6 +15927,48 @@
     {
       "from": "file:lib/themes/appthemes.dart",
       "to": "symbol:lib/themes/appthemes.dart#AppThemes",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/gated_banner_ad.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/gated_banner_ad.dart",
+      "to": "file:lib/services/monetization/ad_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/gated_banner_ad.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/gated_banner_ad.dart",
+      "to": "symbol:lib/widgets/gated_banner_ad.dart#GatedBannerAd",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/post_arrival_card.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/widgets/post_arrival_card.dart",
+      "to": "symbol:lib/widgets/post_arrival_card.dart#PostArrivalCardWidget",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -16293,6 +17901,13 @@
     },
     {
       "from": "file:test/ekf/replay_harness_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ekf/replay_harness_test.dart",
       "to": "file:lib/services/alarm_evaluator.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -16314,7 +17929,14 @@
     },
     {
       "from": "file:test/ekf/replay_harness_test.dart",
-      "to": "symbol:test/ekf/replay_harness_test.dart#kFixturesDir",
+      "to": "symbol:test/ekf/replay_harness_test.dart#kExternalFixturesDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ekf/replay_harness_test.dart",
+      "to": "symbol:test/ekf/replay_harness_test.dart#kInRepoFixturesDir",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -16752,6 +18374,167 @@
     {
       "from": "file:test/integration/ekf_logged_data_test.dart",
       "to": "symbol:test/integration/ekf_logged_data_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/lifecycle_restore_scenario_test.dart",
+      "to": "file:lib/services/tracking_state_store.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/lifecycle_restore_scenario_test.dart",
+      "to": "symbol:test/integration/lifecycle_restore_scenario_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/offline_scenario_test.dart",
+      "to": "file:lib/services/offline_coordinator.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/offline_scenario_test.dart",
+      "to": "file:lib/services/route_cache.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/offline_scenario_test.dart",
+      "to": "symbol:test/integration/offline_scenario_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/preflight_arm_scenario_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/preflight_arm_scenario_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/preflight_arm_scenario_test.dart",
+      "to": "symbol:test/integration/preflight_arm_scenario_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_ride_scenario_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_ride_scenario_test.dart",
+      "to": "file:lib/services/alarm_evaluator.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_ride_scenario_test.dart",
+      "to": "file:lib/services/transfer_utils.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_ride_scenario_test.dart",
+      "to": "symbol:test/integration/reachability_ride_scenario_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_scenarios_test.dart",
+      "to": "file:lib/config/fire_decision_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_scenarios_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_scenarios_test.dart",
+      "to": "file:lib/services/alarm_evaluator.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_scenarios_test.dart",
+      "to": "file:lib/services/transfer_utils.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/integration/reachability_scenarios_test.dart",
+      "to": "symbol:test/integration/reachability_scenarios_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_edgecases_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_edgecases_test.dart",
+      "to": "file:lib/services/ios/ios_backstop_planner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_edgecases_test.dart",
+      "to": "symbol:test/ios/ios_backstop_edgecases_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_planner_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_planner_test.dart",
+      "to": "file:lib/services/ios/ios_backstop_planner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ios/ios_backstop_planner_test.dart",
+      "to": "symbol:test/ios/ios_backstop_planner_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17211,6 +18994,174 @@
     {
       "from": "file:test/mock_location_provider.dart",
       "to": "symbol:test/mock_location_provider.dart#MockLocationProvider",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/late_purchase_grant_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/late_purchase_grant_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/late_purchase_grant_test.dart",
+      "to": "symbol:test/monetization/late_purchase_grant_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_edgecases_test.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_edgecases_test.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_edgecases_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_edgecases_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_edgecases_test.dart",
+      "to": "symbol:test/monetization/monetization_edgecases_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "file:lib/services/monetization/ad_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_journey_test.dart",
+      "to": "symbol:test/monetization/monetization_journey_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_service_test.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_service_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_service_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_service_test.dart",
+      "to": "symbol:test/monetization/monetization_service_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_test.dart",
+      "to": "file:lib/services/monetization/ad_policy.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/monetization_test.dart",
+      "to": "symbol:test/monetization/monetization_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_test.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_test.dart",
+      "to": "symbol:test/monetization/post_arrival_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17946,6 +19897,34 @@
       "source": "map"
     },
     {
+      "from": "file:test/reachability/reachability_edgecases_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/reachability_edgecases_test.dart",
+      "to": "symbol:test/reachability/reachability_edgecases_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/reachability_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/reachability_test.dart",
+      "to": "symbol:test/reachability/reachability_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/regression_prod_data_test.dart",
       "to": "file:lib/services/notification_service.dart",
       "type": "depends-on",
@@ -17986,6 +19965,34 @@
     {
       "from": "file:test/regression_prod_data_test.dart",
       "to": "symbol:test/regression_prod_data_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_combinatorial_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_combinatorial_test.dart",
+      "to": "symbol:test/reliability/reliability_preflight_combinatorial_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reliability/reliability_preflight_test.dart",
+      "to": "symbol:test/reliability/reliability_preflight_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -19451,6 +21458,34 @@
       "source": "map"
     },
     {
+      "from": "file:test/telemetry/telemetry_edgecases_test.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/telemetry_edgecases_test.dart",
+      "to": "symbol:test/telemetry/telemetry_edgecases_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/telemetry_service_test.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/telemetry_service_test.dart",
+      "to": "symbol:test/telemetry/telemetry_service_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/test_routes.dart",
       "to": "symbol:test/test_routes.dart#TestRoutes",
       "type": "contains",
@@ -19955,6 +21990,48 @@
     {
       "from": "file:test/transit_leg_stops_test.dart",
       "to": "symbol:test/transit_leg_stops_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/post_arrival_card_widget_test.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/post_arrival_card_widget_test.dart",
+      "to": "file:lib/widgets/post_arrival_card.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/post_arrival_card_widget_test.dart",
+      "to": "symbol:test/widgets/post_arrival_card_widget_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/preflight_dialog_widget_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_runner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/preflight_dialog_widget_test.dart",
+      "to": "file:lib/services/reliability/reliability_preflight_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widgets/preflight_dialog_widget_test.dart",
+      "to": "symbol:test/widgets/preflight_dialog_widget_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

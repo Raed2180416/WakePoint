@@ -319,7 +319,14 @@ class NotificationService {
 
   Future<void> _navigateToMapTrackingWithArgs(NavigatorState nav) async {
     try {
-      final snapshot = await TrackingStateStore.loadSnapshot();
+      // In test mode, skip the platform-channel snapshot load (path_provider /
+      // SharedPreferences) — with no mock its Future never resolves and would
+      // hang the caller (this method is awaited by handleNotificationResponse).
+      // Navigation itself is fire-and-forget (pushNamedAndRemoveUntil is not
+      // awaited), so tests still land on /mapTracking deterministically.
+      final snapshot = NotificationService.isTestMode
+          ? null
+          : await TrackingStateStore.loadSnapshot();
       if (snapshot != null) {
         nav.pushNamedAndRemoveUntil(
           '/mapTracking',

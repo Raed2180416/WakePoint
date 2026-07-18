@@ -122,7 +122,7 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
     try {
       await NotificationService().showWakeUpAlarm(
         title: 'Test alarm',
-        body: 'This is how WakePoint will wake you at your stop.',
+        body: 'This is how GeoWake will wake you at your stop.',
         allowContinueTracking: true,
         playSound: true,
       );

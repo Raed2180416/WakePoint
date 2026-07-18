@@ -1,0 +1,39 @@
+name: CI — analyze + never-late gate
+
+# The never-late replay gate is the load-bearing CI check: it drives the REAL
+# EkfOrchestrator + AlarmEvaluator + reachability over committed ride fixtures
+# and FAILS (not skips) if any ride would fire late / never-fire / at the wrong
+# place. It fails on empty fixtures, so a broken commit that drops the fixtures
+# also fails. This is what stops the core never-late promise silently regressing.
+
+on:
+  push:
+    branches: [sim-validation, stable-release-1, main]
+  pull_request:
+    branches: [sim-validation, stable-release-1, main]
+
+jobs:
+  analyze-and-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: Analyze lib/ (0 errors/warnings; infos non-fatal)
+        run: flutter analyze lib/ --no-fatal-infos
+
+      - name: NEVER-LATE replay gate (committed fixtures, fails on empty)
+        run: flutter test test/ekf/replay_harness_test.dart
+
+      - name: Reachability physics proofs
+        run: flutter test test/reachability/

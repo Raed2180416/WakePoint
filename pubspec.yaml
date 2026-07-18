@@ -89,8 +89,11 @@ flutter:
     - assets/geowake.png
     - assets/ringtones/
     - assets/osm/
-    - route_log_extracted.json
-    - docs/Sandalsoap-whitefield/
+    # NOTE: dev-only replay data (docs/Sandalsoap-whitefield/ ~274MB of raw IMU
+    # CSVs + a 50MB unified log, and route_log_extracted.json) is NOT bundled —
+    # it was inflating the APK ~285MB. Only the EKF test panel / replay engine
+    # (developer diagnostics) referenced it; those load it at runtime from device
+    # storage when present and degrade gracefully when absent.
 
 flutter_native_splash:
   color: "#FFFFFF" # Match this with your custom splash background

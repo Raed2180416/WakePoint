@@ -7,6 +7,8 @@ import 'package:flutter/material.dart'; // UI widgets.
 import 'package:google_fonts/google_fonts.dart'; // Title font.
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // Google Map, Marker, Polyline, LatLng.
 import 'package:geowake2/services/polyline_decoder.dart'; // Decode overview polylines.
+import 'package:geowake2/services/monetization/ad_policy.dart';
+import 'package:geowake2/widgets/gated_banner_ad.dart';
 import 'package:geowake2/services/direction_service.dart'; // Build segmented polylines from directions.
 import 'package:geowake2/services/polyline_simplifier.dart'; // Simplify fallback overview.
 import 'package:geolocator/geolocator.dart'; // Position stream and distances.
@@ -1072,10 +1074,11 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
             ],
           ),
         ),
-        bottomNavigationBar: Container(
-          height: 50,
-          color: Colors.grey[300],
-          child: const Center(child: Text('Ad Banner Placeholder')), // Stub ad.
+        // Above-ground tracking banner (free users only; collapses to nothing
+        // for Pro / no-fill). AdPolicy forbids ads on the alarm/wake surfaces,
+        // and the full-screen wake alarm supersedes this small banner anyway.
+        bottomNavigationBar: const SafeArea(
+          child: GatedBannerAd(placement: AdPlacement.mapTracking),
         ),
         body: SafeArea(
           child: Column(

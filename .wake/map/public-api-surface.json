@@ -411,6 +411,36 @@
       "name": "stateLog"
     }
   ],
+  "lib/core/reachability/reachability.dart": [
+    {
+      "kind": "class",
+      "name": "VLineTable"
+    },
+    {
+      "kind": "class",
+      "name": "ReachabilityAnchor"
+    },
+    {
+      "kind": "class",
+      "name": "RouteTopology"
+    },
+    {
+      "kind": "class",
+      "name": "ReachabilityConfig"
+    },
+    {
+      "kind": "class",
+      "name": "ReachabilityBound"
+    },
+    {
+      "kind": "class",
+      "name": "Reachability"
+    },
+    {
+      "kind": "class",
+      "name": "ReachabilityTracker"
+    }
+  ],
   "lib/dashboard/alarm_debouncer.dart": [
     {
       "kind": "class",
@@ -761,6 +791,36 @@
       "name": "GpsHealthState"
     }
   ],
+  "lib/services/ios/ios_backstop_planner.dart": [
+    {
+      "kind": "class",
+      "name": "GeofenceRing"
+    },
+    {
+      "kind": "class",
+      "name": "GeofenceRingKind"
+    },
+    {
+      "kind": "class",
+      "name": "BackstopPlan"
+    },
+    {
+      "kind": "class",
+      "name": "IosScheduler"
+    },
+    {
+      "kind": "class",
+      "name": "ScheduledNotification"
+    },
+    {
+      "kind": "class",
+      "name": "FakeIosScheduler"
+    },
+    {
+      "kind": "class",
+      "name": "IosBackstopPlanner"
+    }
+  ],
   "lib/services/location_manager.dart": [
     {
       "kind": "class",
@@ -779,6 +839,84 @@
     {
       "kind": "class",
       "name": "DestinationValidationResult"
+    }
+  ],
+  "lib/services/monetization/ad_policy.dart": [
+    {
+      "kind": "class",
+      "name": "AdPolicy"
+    },
+    {
+      "kind": "enum",
+      "name": "AdPlacement"
+    }
+  ],
+  "lib/services/monetization/ad_service.dart": [
+    {
+      "kind": "class",
+      "name": "AdService"
+    }
+  ],
+  "lib/services/monetization/monetization_service.dart": [
+    {
+      "kind": "class",
+      "name": "MonetizationService"
+    }
+  ],
+  "lib/services/monetization/post_arrival_service.dart": [
+    {
+      "kind": "class",
+      "name": "LastMileOption"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalActionKind"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalAction"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalPrivacyError"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalCard"
+    },
+    {
+      "kind": "class",
+      "name": "PostArrivalService"
+    }
+  ],
+  "lib/services/monetization/premium_service.dart": [
+    {
+      "kind": "class",
+      "name": "PremiumProducts"
+    },
+    {
+      "kind": "class",
+      "name": "PremiumService"
+    },
+    {
+      "kind": "enum",
+      "name": "EntitlementTier"
+    }
+  ],
+  "lib/services/monetization/purchase_backend.dart": [
+    {
+      "kind": "class",
+      "name": "PurchaseBackend"
+    },
+    {
+      "kind": "class",
+      "name": "FakePurchaseBackend"
+    }
+  ],
+  "lib/services/monetization/purchase_backend_impl.dart": [
+    {
+      "kind": "class",
+      "name": "IapPurchaseBackend"
     }
   ],
   "lib/services/navigation_service.dart": [
@@ -905,6 +1043,60 @@
     {
       "kind": "enum",
       "name": "PositionProviderType"
+    }
+  ],
+  "lib/services/reliability/reliability_preflight_runner.dart": [
+    {
+      "kind": "class",
+      "name": "ReliabilityPreflightRunner"
+    },
+    {
+      "kind": "function",
+      "name": "showReliabilityPreflightDialog"
+    }
+  ],
+  "lib/services/reliability/reliability_preflight_service.dart": [
+    {
+      "kind": "class",
+      "name": "PreflightIssueCode"
+    },
+    {
+      "kind": "class",
+      "name": "PreflightFixAction"
+    },
+    {
+      "kind": "class",
+      "name": "PreflightIssue"
+    },
+    {
+      "kind": "class",
+      "name": "PreflightResult"
+    },
+    {
+      "kind": "class",
+      "name": "ReliabilityProbe"
+    },
+    {
+      "kind": "class",
+      "name": "FakeReliabilityProbe"
+    },
+    {
+      "kind": "class",
+      "name": "ReliabilityPreflightService"
+    },
+    {
+      "kind": "enum",
+      "name": "PreflightLevel"
+    },
+    {
+      "kind": "enum",
+      "name": "PreflightSeverity"
+    }
+  ],
+  "lib/services/reliability/reliability_probe_impl.dart": [
+    {
+      "kind": "class",
+      "name": "PlatformReliabilityProbe"
     }
   ],
   "lib/services/reroute_constraints.dart": [
@@ -1041,6 +1233,32 @@
     {
       "kind": "class",
       "name": "StopMatcher"
+    }
+  ],
+  "lib/services/telemetry/telemetry_service.dart": [
+    {
+      "kind": "class",
+      "name": "TelemetryEventType"
+    },
+    {
+      "kind": "class",
+      "name": "TelemetryEvent"
+    },
+    {
+      "kind": "class",
+      "name": "TelemetrySink"
+    },
+    {
+      "kind": "class",
+      "name": "InMemoryTelemetrySink"
+    },
+    {
+      "kind": "class",
+      "name": "TelemetryService"
+    },
+    {
+      "kind": "enum",
+      "name": "AlarmOutcome"
     }
   ],
   "lib/services/test_service_instance.dart": [
@@ -1245,6 +1463,18 @@
     {
       "kind": "class",
       "name": "AppThemes"
+    }
+  ],
+  "lib/widgets/gated_banner_ad.dart": [
+    {
+      "kind": "class",
+      "name": "GatedBannerAd"
+    }
+  ],
+  "lib/widgets/post_arrival_card.dart": [
+    {
+      "kind": "class",
+      "name": "PostArrivalCardWidget"
     }
   ],
   "lib/widgets/pulsing_dots.dart": [

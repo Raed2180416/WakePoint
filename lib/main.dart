@@ -1,7 +1,13 @@
+import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:geowake2/services/trackingservice.dart';
+import 'package:geowake2/services/telemetry/telemetry_service.dart';
+import 'package:geowake2/services/monetization/monetization_service.dart';
 import 'services/navigation_service.dart';
 import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
@@ -15,12 +21,45 @@ import 'screens/otherimpservices/recent_locations_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Ensure Flutter binding is initialized before any Flutter-specific code.
-  await Hive.initFlutter();
-  // Service initialization moved to SplashScreen to improve startup time.
+  // BLOCKER FIX (HANDOFF §3): a reliability-critical app must never die silently.
+  // Route every uncaught Flutter/async error to telemetry (and the log) instead
+  // of an unrecorded crash in the tracking isolate. runZonedGuarded catches
+  // async errors; FlutterError.onError catches widget-tree/framework errors;
+  // PlatformDispatcher.onError catches otherwise-unhandled platform errors.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    TelemetryService.instance
+        .recordError(details.exception, details.stack, fatal: false);
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    TelemetryService.instance.recordError(error, stack, fatal: true);
+    return true; // handled — do not crash the isolate
+  };
 
-  runApp(const MyApp());
+  await runZonedGuarded<Future<void>>(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    // PLAY COMPLIANCE (targetSdk 35 / Android 15): edge-to-edge is enforced, so
+    // opt in explicitly and make the system bars transparent (Scaffolds already
+    // use SafeArea, so content is not occluded).
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ));
+    // Ensure Flutter binding is initialized before any Flutter-specific code.
+    await Hive.initFlutter();
+    // Service initialization moved to SplashScreen to improve startup time.
+
+    // Assemble monetization (entitlement + store + ads) off the critical path —
+    // gates safely default to "free" until it's ready; the core alarm never
+    // depends on it. Fire-and-forget so a slow store/ad SDK can't delay startup.
+    unawaited(MonetizationService.instance.init());
+
+    runApp(const MyApp());
+  }, (Object error, StackTrace stack) {
+    TelemetryService.instance.recordError(error, stack, fatal: true);
+    dev.log('Uncaught zone error: $error', name: 'main', error: error, stackTrace: stack);
+  });
 }
 
 class MyApp extends StatefulWidget {

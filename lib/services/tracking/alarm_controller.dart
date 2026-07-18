@@ -18,6 +18,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:geowake2/core/logging/app_logger.dart';
 import 'package:geowake2/core/clock/app_clock.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
+import 'package:geowake2/services/telemetry/telemetry_service.dart';
 import 'package:geowake2/services/alarm_evaluator.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/alarm_player.dart';
@@ -120,6 +122,22 @@ class AlarmController {
 
   // Last alarm time for rate limiting
   DateTime? _lastAlarmFiredAt;
+
+  // P0 REACHABILITY PROTECTION LEVEL: physics "never fire late" state. Anchored
+  // ONLY on accepted real fixes (not dead-reckoned sentinels); grows the
+  // worst-case reachable arc-progress during a GPS blackout. See
+  // lib/core/reachability/reachability.dart.
+  // dwellMinSeconds defaults to 0 => the topology cap degrades to the
+  // UNCONDITIONALLY-safe free-run bound. A positive dwell is only safe on a
+  // confirmed all-stops service; assuming dwell an express/skip-stop train never
+  // pays would push the bound below true progress and could fire late. The cap
+  // stays available for per-line opt-in once stop patterns are known.
+  final ReachabilityTracker _reach = ReachabilityTracker(
+    config: const ReachabilityConfig(dwellMinSeconds: 0.0),
+  );
+
+  double _nowSeconds() =>
+      AppClock().now().millisecondsSinceEpoch / 1000.0;
 
   // Callback for when destination alarm fires (to block route switching)
   void Function(bool fired)? onDestinationAlarmFired;
@@ -250,6 +268,8 @@ class AlarmController {
     _firedLegIdsByKey.clear();
     _cooldownSuppressed.clear();
     _cooldownSuppressedByKey.clear();
+    // Fresh session => drop the stale reachability anchor from any prior trip.
+    _reach.reset();
 
     // Stop any currently playing alarm
     AlarmPlayer.stop();
@@ -367,6 +387,43 @@ class AlarmController {
 
     final alarmKey = context.activeKey;
     final progressMeters = context.progressMeters;
+
+    // P0 REACHABILITY: maintain the physics anchor. Seed it at trip origin on
+    // the first tick (safety net from t0), then re-anchor ONLY on accepted real
+    // GPS fixes. Dead-reckoned positions carry the sentinel accuracy (9999m) and
+    // must NEVER move the anchor (precondition iii) — that is what keeps the
+    // wall-clock `t_since_last_true_fix` honest through a blackout.
+    {
+      final double nowSec = _nowSeconds();
+      // Anchor at the fix's OWN acquisition time, not wall-clock now. A GPS fix
+      // delivered late (queued behind a wake, a slow sensor bus, etc.) would
+      // otherwise reset t_since_last_true_fix too recent and shrink the reach
+      // bound below reality — a precondition-(iii) late-fire hazard. Only trust
+      // a stamp that is finite, not in the future, and not absurdly stale.
+      double fixTs = nowSec;
+      try {
+        final double ts =
+            currentPosition.timestamp.millisecondsSinceEpoch / 1000.0;
+        if (ts.isFinite && ts <= nowSec && (nowSec - ts) < 3600.0) {
+          fixTs = ts;
+        }
+      } catch (_) {/* keep nowSec */}
+      _reach.seedColdStart(
+          tSeconds: nowSec, sMeters: progressMeters ?? 0.0);
+      final double acc = currentPosition.accuracy;
+      final bool isRealFix = acc.isFinite &&
+          acc > 0 &&
+          acc < FireDecisionConfig.deadReckonAccuracySentinel;
+      if (isRealFix &&
+          progressMeters != null &&
+          progressMeters.isFinite) {
+        _reach.onAcceptedFix(
+          sMeters: progressMeters,
+          accuracyMeters: acc,
+          tSeconds: fixTs,
+        );
+      }
+    }
 
     dev.log(
       'ALARM_CHECK: mode=${context.alarmMode}, alarmKey=$alarmKey, '
@@ -1051,6 +1108,55 @@ class AlarmController {
       },
     );
 
+    // P0 REACHABILITY: compute the worst-case reachable arc-progress now and
+    // feed it to the fire decision. effectiveProgress = max(statistical, this)
+    // guarantees never-late by physics while staying inert when GPS is healthy
+    // (the anchor is fresh, so the bound ~= current progress).
+    double? reachBoundMeters;
+    {
+      String? reachLineName;
+      RouteTopology? reachTopo;
+      if (currentLegIndex >= 0 &&
+          currentLegIndex < context.transitLegs.length) {
+        final leg = context.transitLegs[currentLegIndex];
+        reachLineName = leg.lineName;
+        // Stations the train must pass on this leg (intermediate stops + the
+        // alighting station) tighten the early-firing via the stop-count cap.
+        final stops = <double>[
+          ...leg.stopMeters.where((m) => m.isFinite),
+          if (leg.legEndMeters.isFinite) leg.legEndMeters,
+        ];
+        if (stops.isNotEmpty) {
+          reachTopo =
+              RouteTopology(stationMeters: stops, dwellMinSeconds: 0.0);
+        }
+      }
+      final b = _reach.boundNow(
+        nowSeconds: _nowSeconds(),
+        lineName: reachLineName,
+        topology: reachTopo,
+      );
+      // Pass the bound through unless it is NaN. A +infinity bound is the
+      // fire-FORCING signal (T_max watchdog or a corrupt-input fail-safe) and
+      // MUST reach the evaluator — filtering on isFinite here would silently drop
+      // it and re-open the never-fire gap. Only NaN (no information) is dropped.
+      if (b != null && !b.sMaxMeters.isNaN) {
+        reachBoundMeters = b.sMaxMeters;
+        // Reliability funnel (HANDOFF §3): record when the physics bound is
+        // materially carrying the fire decision — i.e. a GPS blackout where
+        // dead-reckoning has fallen behind. Fail-open; never throws.
+        if (progressMeters.isFinite &&
+            (reachBoundMeters - progressMeters) > 50.0) {
+          TelemetryService.instance.reachabilityActivated(
+            dtSeconds: b.dtSeconds,
+            boundMeters: reachBoundMeters,
+            deadReckonedMeters: progressMeters,
+            watchdog: b.watchdogTripped,
+          );
+        }
+      }
+    }
+
     // Evaluate
     try {
       final trigger = AlarmEvaluator.evaluateCoinciding(
@@ -1073,6 +1179,7 @@ class AlarmController {
         positionSigmaMeters: context.ekfSigmaS,
         velocitySigmaMps: context.ekfSigmaV,
         fractileK: FireDecisionConfig.fractileK,
+        reachableProgressBoundMeters: reachBoundMeters,
       );
 
       trackingLog.debug(

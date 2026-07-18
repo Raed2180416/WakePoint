@@ -65,6 +65,30 @@
             android:name="id.flutter.flutter_background_service.BackgroundService"
             android:foregroundServiceType="location|mediaPlayback" />
 
+        <!-- CRITICAL RELIABILITY FIX: flutter_local_notifications v16+ no longer
+             auto-declares these receivers. Without them, zonedSchedule(
+             AndroidScheduleMode.alarmClock) — the exact-alarm ETA backstop that
+             must wake the user after TOTAL process death (notification_service
+             .dart:880) — is NEVER delivered (AlarmManager fires the intent but
+             no receiver catches it). The boot receiver re-arms scheduled
+             backstops after a reboot. See flutter_local_notifications README. -->
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+
     </application>
 
     <queries>

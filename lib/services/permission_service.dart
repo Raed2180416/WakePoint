@@ -47,7 +47,7 @@ class PermissionService {
 
     final proceed = await _showRationaleDialog(
       'Keep Alarms Reliable',
-      'To make sure WakePoint can wake you even with the screen off, please '
+      'To make sure GeoWake can wake you even with the screen off, please '
       'allow it to ignore battery optimization, and (on some phones) enable '
       'Auto-start. We will open the right settings screens next.',
     );
@@ -58,8 +58,8 @@ class PermissionService {
     if (await OemAutostartService.isAggressiveOem()) {
       final openAutostart = await _showRationaleDialog(
         'Enable Auto-start',
-        'Your phone\'s manufacturer may stop WakePoint in the background. On the '
-        'next screen, please turn ON Auto-start / background activity for WakePoint.',
+        'Your phone\'s manufacturer may stop GeoWake in the background. On the '
+        'next screen, please turn ON Auto-start / background activity for GeoWake.',
       );
       if (openAutostart) {
         await OemAutostartService.openAutoStartSettings();

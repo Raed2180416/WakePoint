@@ -29,12 +29,30 @@ import 'package:geowake2/core/ekf/ekf_types.dart';
 import 'package:geowake2/core/ekf/route_geometry.dart';
 import 'package:geowake2/core/ekf/ekf_metrics.dart';
 import 'package:geowake2/core/logging/app_logger.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
 import 'package:geowake2/config/fire_decision_config.dart';
 import 'package:geowake2/services/alarm_evaluator.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 
-// Recorded fixtures live outside the repo (they are large binaries).
-const String kFixturesDir = '/home/raed/geowake_imu_analysis/fixtures';
+// Fixture resolution: COMMITTED compact fixtures under test/fixtures/replay are
+// the CI-gated source of truth (small, deterministic, always present). The
+// founder's machine may ALSO hold the full-rate recorded rides at the external
+// path; when present those are run too for extra coverage. The gate FAILS (not
+// skips) when NEITHER yields a fixture — a never-late guarantee that can't run
+// in CI is not a guarantee.
+const String kInRepoFixturesDir = 'test/fixtures/replay';
+const String kExternalFixturesDir = '/home/raed/geowake_imu_analysis/fixtures';
+
+/// The directory that actually holds `<basename>.json`, in-repo preferred.
+String? _fixtureDirFor(String basename) {
+  if (File('$kInRepoFixturesDir/$basename.json').existsSync()) {
+    return kInRepoFixturesDir;
+  }
+  if (File('$kExternalFixturesDir/$basename.json').existsSync()) {
+    return kExternalFixturesDir;
+  }
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Scenario configuration (plan §3.4)
@@ -128,25 +146,30 @@ class _Fixture {
 // Discovery + loading
 // ---------------------------------------------------------------------------
 
-/// Glob every fixture_*.json basename in the fixtures dir (no _imu/_gps).
+/// Glob every fixture_*.json basename across BOTH fixture dirs (in-repo first,
+/// external second), deduplicated by basename (in-repo wins).
 List<String> discoverFixtures() {
-  final dir = Directory(kFixturesDir);
-  if (!dir.existsSync()) return const [];
-  final out = <String>[];
-  for (final e in dir.listSync()) {
-    if (e is! File) continue;
-    final name = e.uri.pathSegments.last;
-    if (name.startsWith('fixture_') && name.endsWith('.json')) {
-      out.add(name.substring(0, name.length - '.json'.length));
+  final seen = <String>{};
+  for (final dirPath in const [kInRepoFixturesDir, kExternalFixturesDir]) {
+    final dir = Directory(dirPath);
+    if (!dir.existsSync()) continue;
+    for (final e in dir.listSync()) {
+      if (e is! File) continue;
+      final name = e.uri.pathSegments.last;
+      if (name.startsWith('fixture_') && name.endsWith('.json')) {
+        seen.add(name.substring(0, name.length - '.json'.length));
+      }
     }
   }
-  out.sort();
+  final out = seen.toList()..sort();
   return out;
 }
 
 /// Read just the JSON header (cheap) for fixture selection.
 Map<String, dynamic>? _readHeader(String basename) {
-  final f = File('$kFixturesDir/$basename.json');
+  final dir = _fixtureDirFor(basename);
+  if (dir == null) return null;
+  final f = File('$dir/$basename.json');
   if (!f.existsSync()) return null;
   try {
     return jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
@@ -175,9 +198,10 @@ String? pickScenarioFixture(List<String> basenames) {
 }
 
 _Fixture _loadFixture(String basename) {
-  final jsonFile = File('$kFixturesDir/$basename.json');
-  final imuFile = File('$kFixturesDir/${basename}_imu.csv');
-  final gpsFile = File('$kFixturesDir/${basename}_gps.csv');
+  final dir = _fixtureDirFor(basename) ?? kInRepoFixturesDir;
+  final jsonFile = File('$dir/$basename.json');
+  final imuFile = File('$dir/${basename}_imu.csv');
+  final gpsFile = File('$dir/${basename}_gps.csv');
   if (!jsonFile.existsSync()) {
     throw StateError('Fixture JSON not found: ${jsonFile.path}');
   }
@@ -435,7 +459,11 @@ Duration _dur(double tSeconds) => Duration(microseconds: (tSeconds * 1e6).round(
 // The replay
 // ---------------------------------------------------------------------------
 
-RunResult runReplay(String basename, {ScenarioConfig? config}) {
+// When true, the driver feeds the physics reachability bound into the REAL
+// evaluator (production behavior). When false, reachability is disabled so the
+// harness can A/B prove the bound only ever fires earlier, never later.
+RunResult runReplay(String basename,
+    {ScenarioConfig? config, bool useReachability = true}) {
   final cfg = config ?? ScenarioConfig.primary();
   AppLogger.minLevel = LogLevel.error; // silence evaluator dev.log spam
 
@@ -470,8 +498,12 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
   }
   final gt = _GroundTruth(gtT, gtS);
 
-  // Single final metro leg for evaluateCoinciding.
-  final intermediate = fx.stations.sublist(1, fx.stations.length - 1);
+  // Single final metro leg for evaluateCoinciding. Guard against degenerate
+  // 0/1-station fixtures (a destination alarm needs a first + last station);
+  // sublist(1, len-1) would RangeError on len<2.
+  final intermediate = fx.stations.length >= 2
+      ? fx.stations.sublist(1, fx.stations.length - 1)
+      : <_StationAnchor>[];
   final leg = TransitLegStops(
     legStartMeters: 0.0,
     legEndMeters: fx.alarmTarget.sProj,
@@ -490,6 +522,27 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
 
   final orch = EkfOrchestrator(route: route, logVerbosity: 0);
   final metrics = EkfMetrics();
+
+  // P0 REACHABILITY PROTECTION LEVEL wiring (production-equivalent).
+  // A stop-count topology cap tightens the early-firing; dwellMin is a
+  // conservative lower bound (safe because effectiveProgress=max(stat,reach)
+  // means the cap can only reduce earliness, never cause a late fire).
+  // dwellMinSeconds=0 => unconditionally-safe free-run bound (matches the
+  // production default). The topology cap is inert here; it stays available for
+  // per-line opt-in on confirmed all-stops services.
+  final reach = ReachabilityTracker(
+    vLineTable: const VLineTable(),
+    config: const ReachabilityConfig(dwellMinSeconds: 0.0),
+  );
+  final reachTopo =
+      RouteTopology(stationMeters: stationMeters, dwellMinSeconds: 0.0);
+  // Seed the cold-start anchor at trip origin (s=0) so reachability is a safety
+  // net from t0 even if GPS never yields a single fix (closes GLMT-03).
+  final double reachT0 = fx.imu.isNotEmpty
+      ? fx.imu.first.t
+      : (fx.gps.isNotEmpty ? fx.gps.first.t : 0.0);
+  reach.seedColdStart(tSeconds: reachT0, sMeters: 0.0);
+  double reachBoundAtFire = double.nan;
 
   final recT = <double>[];
   final recS = <double>[];
@@ -568,6 +621,12 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
   void maybeEvaluateFire(double t) {
     if (fired) return;
     final st = orch.publicState;
+    double? reachBound;
+    if (useReachability) {
+      final rb =
+          reach.boundNow(nowSeconds: t, lineName: fx.line, topology: reachTopo);
+      if (rb != null && rb.sMaxMeters.isFinite) reachBound = rb.sMaxMeters;
+    }
     final trigger = AlarmEvaluator.evaluateCoinciding(
       mode: AlarmMode.stops,
       userValue: 2,
@@ -585,6 +644,7 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
       positionSigmaMeters: st.sigmaS,
       velocitySigmaMps: st.sigmaV,
       fractileK: FireDecisionConfig.fractileK,
+      reachableProgressBoundMeters: reachBound,
     );
     if (trigger != null && trigger.eventType == AlarmEventType.finalDestination) {
       fired = true;
@@ -592,6 +652,7 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
       fireS = st.s;
       fireSigma = st.sigmaS;
       fireReason = trigger.reason;
+      reachBoundAtFire = reachBound ?? double.nan;
     }
   }
 
@@ -726,6 +787,16 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
           lastFireEvalTs = r.t;
           maybeEvaluateFire(r.t);
         }
+
+        // Reachability safety-net eval: run even BEFORE EKF init (cold start),
+        // so the physics bound can fire with zero accepted GPS fixes. This is
+        // what closes GLMT-03 (EKF never inits -> never fires).
+        if (useReachability &&
+            firstInitTs == null &&
+            (r.t - lastFireEvalTs) >= 1.0) {
+          lastFireEvalTs = r.t;
+          maybeEvaluateFire(r.t);
+        }
       } else {
         // ---- GPS EVENT ----
         final r = gps[g++];
@@ -753,6 +824,19 @@ RunResult runReplay(String basename, {ScenarioConfig? config}) {
         if (pos == null) continue;
 
         acceptGps(pos, r.t);
+        // Reset the reachability anchor ONLY on a real accepted fix (precond
+        // iii). Phantom-injected fixes (other branch) must never anchor here —
+        // production protects this via the accuracy gate + EKF phantom rejection.
+        if (useReachability) {
+          final sp = route.projectLatLng(pos.lat, pos.lng);
+          if (sp.isFinite) {
+            reach.onAcceptedFix(
+              sMeters: sp,
+              accuracyMeters: pos.hacc.isFinite ? pos.hacc : 0.0,
+              tSeconds: r.t,
+            );
+          }
+        }
         final st = orch.publicState;
         recordWindow(r.t, st.s, st.v);
       }
@@ -934,7 +1018,10 @@ void main() {
   // -------------------------------------------------------------------------
   test('NEVER-LATE GATE — all fixtures (destination alarm, N=2 stops)', () {
     expect(fixtures, isNotEmpty,
-        reason: 'no fixture_*.json found in $kFixturesDir');
+        reason: 'no fixture_*.json found in $kInRepoFixturesDir '
+            '(committed CI set) or $kExternalFixturesDir (external rides). '
+            'The never-late gate MUST have fixtures — run '
+            'tools/make_replay_fixtures.py to regenerate the committed set.');
 
     final results = <RunResult>[];
     final errors = <String>[];
@@ -954,6 +1041,29 @@ void main() {
         .map((r) => '${r.ride} (${r.fired ? "${_f(r.secondsMargin)}s LATE" : "never-fired"})')
         .join('; ');
     expect(late, isEmpty, reason: 'rides fired LATE / never-fired: $names');
+
+    // Per-ride NEVER-WRONG-PLACE gate (plan §4). Complements never-late (time)
+    // with the SPATIAL guarantee: the fire must be at-or-before the target stop
+    // in arc-length, and cannot be more than a whole route early (garbage
+    // anchor). We intentionally do NOT gate a time-based "not before boarding"
+    // bound — an "N stops prior" alarm on a short leg legitimately fires at or
+    // before boarding, so that would false-fail; early-firing is the SAFE state.
+    const double kSpatialTolM = 200.0; // GPS accuracy + snap tolerance
+    for (final r in results) {
+      if (!r.fired) continue; // never-fired already gated above
+      if (r.nStations < 2) continue; // degenerate leg (no first+last pair)
+      // (a) Spatial never-late / never-wrong-place: fire at/before the target
+      // stop IN SPACE. metersEarly = target - s_true@fire; materially negative
+      // => woke the rider AFTER passing the stop.
+      expect(r.metersEarly, greaterThanOrEqualTo(-kSpatialTolM),
+          reason: '${r.ride}: fired ${_f(-r.metersEarly)}m PAST the target stop '
+              '(spatially late / wrong place)');
+      // (b) Earliness bounded by route length — firing earlier than the whole
+      // route means s_true@fire is garbage-negative (broken anchor).
+      expect(r.metersEarly, lessThanOrEqualTo(r.totalLen + kSpatialTolM),
+          reason: '${r.ride}: fired ${_f(r.metersEarly)}m early on a '
+              '${_f(r.totalLen)}m route — impossible, garbage anchor');
+    }
   }, timeout: const Timeout(Duration(minutes: 15)));
 
   // -------------------------------------------------------------------------
@@ -1054,10 +1164,64 @@ void main() {
     b.writeln('  ever fired   : ${r.fired}');
     b.writeln('  final s_est  : ${_f(r.stationScores.last.sEstAtArrival)} m '
         '(target ${_f(r.stationScores.last.sTarget)} m)');
-    b.writeln('  VERDICT: ${(!r.fired && r.firstInitTs.isNaN) ? "NEVER INIT -> NEVER FIRES (GLMT-03 confirmed)" : "initialized/fired (GLMT-03 fixed?)"}');
+    b.writeln('  VERDICT: ${(!r.fired && r.firstInitTs.isNaN) ? "NEVER INIT -> NEVER FIRES (GLMT-03 confirmed)" : "REACHABILITY FIRED with ZERO GPS (GLMT-03 CLOSED)"}');
     b.writeln('-------------------------------------');
     stdout.writeln(b.toString());
 
     expect(r.window, isNull);
+    // HARD GATE (P0): reachability closes GLMT-03 — the EKF never initialises
+    // with zero GPS, but the physics Protection Level fires from the trip-origin
+    // anchor anyway, and it fires EARLY (never late).
+    expect(r.fired, isTrue,
+        reason: 'COLD_START must fire via reachability even with zero GPS fixes '
+            '(GLMT-03). first-init=${r.firstInitTs} (NaN => EKF never inited).');
+    expect(r.isLate, isFalse,
+        reason: 'COLD_START reachability fire must be at-or-before arrival.');
+
+    // Cross-check: with reachability DISABLED the EKF-only path must NOT fire
+    // (proves the fire is genuinely the reachability layer, not the EKF).
+    final rNoReach =
+        runReplay(scenarioBase, config: ScenarioConfig.coldStart(), useReachability: false);
+    expect(rNoReach.fired, isFalse,
+        reason: 'Without reachability, cold-start must reproduce GLMT-03 '
+            '(EKF never inits => never fires). If this fires, the test no longer '
+            'isolates the reachability contribution.');
+  }, timeout: const Timeout(Duration(minutes: 15)));
+
+  // -------------------------------------------------------------------------
+  // TASK 3: MONOTONE SAFETY NET — reachability never fires LATER than the
+  // EKF-only baseline on any fixture (effectiveProgress = max(stat, reach) can
+  // only advance the fire, never delay it). This is the core safety property of
+  // the integration and it is proven empirically on the real EKF + evaluator.
+  // -------------------------------------------------------------------------
+  test('REACHABILITY IS A MONOTONE SAFETY NET — never later than baseline', () {
+    expect(fixtures, isNotEmpty);
+    final rows = <String>[];
+    var violations = 0;
+    for (final b in fixtures) {
+      RunResult on, off;
+      try {
+        on = runReplay(b, useReachability: true);
+        off = runReplay(b, useReachability: false);
+      } catch (_) {
+        continue; // skip fixtures that error to load (e.g. 1-stop edge)
+      }
+      // Both fired: reachability fire time must be <= baseline fire time.
+      // Baseline never-fired but reachability fired: strict improvement.
+      final onT = on.fired ? on.fireTs : double.infinity;
+      final offT = off.fired ? off.fireTs : double.infinity;
+      final ok = onT <= offT + 1e-6;
+      if (!ok) violations++;
+      rows.add('  ${b.padRight(34)} baseline=${off.fired ? "${_f(offT)}s" : "never"}'
+          '  reach=${on.fired ? "${_f(onT)}s" : "never"}  ${ok ? "ok" : "REGRESSION"}');
+    }
+    stdout.writeln('\n---- REACHABILITY MONOTONICITY (fire time on/off) ----');
+    for (final r in rows) {
+      stdout.writeln(r);
+    }
+    stdout.writeln('------------------------------------------------------');
+    expect(violations, 0,
+        reason: 'Reachability fired LATER than the EKF-only baseline on '
+            '$violations fixture(s) — violates the monotone-safety-net property.');
   }, timeout: const Timeout(Duration(minutes: 15)));
 }

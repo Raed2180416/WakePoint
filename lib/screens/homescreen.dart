@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geowake2/services/permission_service.dart';
+import 'package:geowake2/services/reliability/reliability_preflight_runner.dart';
+import 'package:geowake2/services/monetization/ad_policy.dart';
+import 'package:geowake2/widgets/gated_banner_ad.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
 import 'package:geowake2/services/saved_route.dart';
 import 'package:geowake2/services/saved_routes_service.dart';
@@ -617,7 +620,7 @@ class HomeScreenState extends State<HomeScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('Please keep a backup alarm'),
           content: const Text(
-            'WakePoint does its best to wake you at your stop, but no phone app '
+            'GeoWake does its best to wake you at your stop, but no phone app '
             'can guarantee it. On some phones, aggressive battery savers, Do Not '
             'Disturb, or very deep sleep can delay or silence the alarm.\n\n'
             'For any trip you truly can\'t miss, please also set a backup alarm.',
@@ -785,16 +788,18 @@ class HomeScreenState extends State<HomeScreen> {
       );
 
       if (!mounted) return;
+      // GAP #5 (BLOCK, fixed): cross-state routes were HARD-BLOCKED here,
+      // refusing the flagship overnight interstate sleeper (Delhi->Jaipur,
+      // Mumbai->Ahmedabad) — the exact "sleep through it, wake me before my
+      // stop" trip GeoWake exists for. A transit wake-alarm must NEVER refuse a
+      // long-distance journey. The reverse-geocode result is retained only as a
+      // soft signal (logged); it no longer blocks arming.
       if (!sameState) {
-        _showErrorDialog(
-          "Route Not Available",
-          "Routes that cross state boundaries are not supported. Please select a destination within your current state.",
+        dev.log(
+          'Cross-state route detected — arming anyway. Interstate journeys are '
+          'supported (flagship overnight use case); no hard block.',
+          name: 'HomeScreen',
         );
-        setState(() {
-          _isTracking = false;
-          _isLoading = false;
-        });
-        return;
       }
 
       final directions = await directionsFuture;
@@ -1026,6 +1031,33 @@ class HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         dev.log('Failed to persist tracking snapshot: $e', name: 'HomeScreen');
       }
+
+      // HANDOFF §1 P1.3 + GAP #4: pre-trip reliability preflight. Before the
+      // rider trusts the alarm for a real commute, check whether the OS could
+      // stop it from waking them. A `warn`-level issue (no exact-alarm, battery
+      // optimisation on an aggressive OEM) is advisory and arming proceeds. A
+      // `block`-level issue (notifications disabled → the wake can physically
+      // never appear) HONESTLY REFUSES to arm — GeoWake must guarantee a fireable
+      // channel or decline, never silently arm a dead one. This is not gating the
+      // core alarm behind setup (reliability is never sold); it is refusing to
+      // make a promise the OS won't let us keep. Fail-open: any *error* running
+      // the preflight proceeds (the check must never crash the arm flow).
+      try {
+        final preflight = await ReliabilityPreflightRunner.run();
+        if (!preflight.isOk && mounted) {
+          final proceed =
+              await showReliabilityPreflightDialog(context, preflight);
+          if (!proceed) {
+            if (mounted) {
+              setState(() {
+                _isTracking = false;
+                _isLoading = false;
+              });
+            }
+            return; // blocking channel issue — do not arm a dead delivery path
+          }
+        }
+      } catch (_) {/* a preflight ERROR must never crash the arm flow */}
 
       await trackingService.startTracking(
         destination: LatLng(destLat, destLng),
@@ -1408,10 +1440,10 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: screenHeight * 0.06,
-        color: Colors.grey[300],
-        child: const Center(child: Text('Ad Banner Placeholder')),
+      // Route-arming surface: a real gated banner (free users only, collapses to
+      // nothing for Pro / no-fill). Never covers the map or the Wake-Me control.
+      bottomNavigationBar: const SafeArea(
+        child: GatedBannerAd(placement: AdPlacement.routeArming),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

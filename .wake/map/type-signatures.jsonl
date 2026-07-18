@@ -30,6 +30,8 @@
 {"file":"lib/services/polyline_decoder.dart","name":"estimateStopPositions","signature":"(List<LatLng> polyline, int numStops)"}
 {"file":"lib/services/polyline_decoder.dart","name":"stopDistancesAlongPolyline","signature":"(List<LatLng> polyline,\n  List<LatLng> stopPositions,)"}
 {"file":"lib/services/position/gps_position_provider.dart","name":"_defaultLocationSettings","signature":"()"}
+{"file":"lib/services/reliability/reliability_preflight_runner.dart","name":"showReliabilityPreflightDialog","signature":"(BuildContext context,\n  PreflightResult result,)"}
+{"file":"lib/services/reliability/reliability_preflight_runner.dart","name":"_applyFix","signature":"(String fixAction)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_encodeSnapshotInBackground","signature":"(Map<String, dynamic> json)"}
 {"file":"lib/services/tracking_state_store.dart","name":"_minimizeDirectionsForSnapshot","signature":"(Map<String, dynamic>? directions,)"}
 {"file":"lib/services/trackingservice.dart","name":"onIosBackground","signature":"(ServiceInstance service)"}
@@ -107,6 +109,7 @@
 {"file":"test/direction_service_behavior_test.dart","name":"main","signature":"()"}
 {"file":"test/direction_service_caching_test.dart","name":"main","signature":"()"}
 {"file":"test/driving_coalesce_test.dart","name":"main","signature":"()"}
+{"file":"test/ekf/replay_harness_test.dart","name":"_fixtureDirFor","signature":"(String basename)"}
 {"file":"test/ekf/replay_harness_test.dart","name":"discoverFixtures","signature":"()"}
 {"file":"test/ekf/replay_harness_test.dart","name":"_readHeader","signature":"(String basename)"}
 {"file":"test/ekf/replay_harness_test.dart","name":"pickScenarioFixture","signature":"(List<String> basenames)"}
@@ -132,6 +135,16 @@
 {"file":"test/hybrid_eta_test.dart","name":"main","signature":"()"}
 {"file":"test/hybrid_eta_time_test.dart","name":"main","signature":"()"}
 {"file":"test/integration/ekf_logged_data_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/lifecycle_restore_scenario_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/offline_scenario_test.dart","name":"_okDirections","signature":"()"}
+{"file":"test/integration/offline_scenario_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/preflight_arm_scenario_test.dart","name":"_preflight","signature":"(FakeReliabilityProbe probe)"}
+{"file":"test/integration/preflight_arm_scenario_test.dart","name":"_minSeverityIndex","signature":"(List<PreflightIssue> issues) =>\n    issues.map((i) => i.severity.index).reduce((a, b)"}
+{"file":"test/integration/preflight_arm_scenario_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/reachability_ride_scenario_test.dart","name":"main","signature":"()"}
+{"file":"test/integration/reachability_scenarios_test.dart","name":"main","signature":"()"}
+{"file":"test/ios/ios_backstop_edgecases_test.dart","name":"main","signature":"()"}
+{"file":"test/ios/ios_backstop_planner_test.dart","name":"main","signature":"()"}
 {"file":"test/location_manager_test.dart","name":"main","signature":"()"}
 {"file":"test/log_helper.dart","name":"logSection","signature":"(String title)"}
 {"file":"test/log_helper.dart","name":"logStep","signature":"(String message)"}
@@ -158,6 +171,12 @@
 {"file":"test/mixed_mode_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/mixed_mode_alarm_test.dart","name":"main","signature":"()"}
 {"file":"test/mixed_mode_regression_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/late_purchase_grant_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/monetization_edgecases_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/monetization_journey_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/monetization_service_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/monetization_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/post_arrival_test.dart","name":"main","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"syntheticMultiTransferDirections","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
@@ -183,7 +202,18 @@
 {"file":"test/preboarding_toggle_test.dart","name":"main","signature":"()"}
 {"file":"test/process_death_recovery_test.dart","name":"main","signature":"()"}
 {"file":"test/rapid_deviations_vm_test.dart","name":"main","signature":"()"}
+{"file":"test/reachability/reachability_edgecases_test.dart","name":"main","signature":"()"}
+{"file":"test/reachability/reachability_test.dart","name":"main","signature":"()"}
 {"file":"test/regression_prod_data_test.dart","name":"main","signature":"()"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_allFlagCombos","signature":"()"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_run","signature":"(_Flags f, String oem)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_expectedLevel","signature":"(_Flags f)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_expectedIssueCount","signature":"(_Flags f)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_expectedActionFor","signature":"(String code)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_expectGettersConsistent","signature":"(PreflightResult r)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"_capitalize","signature":"(String s)"}
+{"file":"test/reliability/reliability_preflight_combinatorial_test.dart","name":"main","signature":"()"}
+{"file":"test/reliability/reliability_preflight_test.dart","name":"main","signature":"()"}
 {"file":"test/repro_mumbai_transfer_test.dart","name":"main","signature":"()"}
 {"file":"test/reproduce_distance_alarm_failure.dart","name":"main","signature":"()"}
 {"file":"test/reproduce_missing_bounds.dart","name":"main","signature":"()"}
@@ -237,6 +267,8 @@
 {"file":"test/stops_mode_validation_test.dart","name":"main","signature":"()"}
 {"file":"test/stops_prior_semantics_test.dart","name":"main","signature":"()"}
 {"file":"test/switch_point_logic_test.dart","name":"main","signature":"()"}
+{"file":"test/telemetry/telemetry_edgecases_test.dart","name":"main","signature":"()"}
+{"file":"test/telemetry/telemetry_service_test.dart","name":"main","signature":"()"}
 {"file":"test/time_alarm_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/time_mode_switch_targeting_universal_test.dart","name":"main","signature":"()"}
 {"file":"test/tool_fetch_route.dart","name":"main","signature":"()"}
@@ -254,6 +286,10 @@
 {"file":"test/transit_leg_stops_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/transit_leg_stops_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/transit_leg_stops_test.dart","name":"main","signature":"()"}
+{"file":"test/widgets/post_arrival_card_widget_test.dart","name":"_host","signature":"(Widget child)"}
+{"file":"test/widgets/post_arrival_card_widget_test.dart","name":"main","signature":"()"}
+{"file":"test/widgets/preflight_dialog_widget_test.dart","name":"_open","signature":"(WidgetTester t, PreflightResult result)"}
+{"file":"test/widgets/preflight_dialog_widget_test.dart","name":"main","signature":"()"}
 {"file":"test_driver/integration_test.dart","name":"main","signature":"()"}
 {"file":"tools/relay_server.dart","name":"main","signature":"()"}
 {"file":"tools/wake-manifest.mjs","name":"git","signature":"(args, fb = '')"}

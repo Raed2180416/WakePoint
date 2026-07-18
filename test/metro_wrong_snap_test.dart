@@ -197,12 +197,11 @@ void main() {
     );
 
     test(
-      'safety net: unknown line name still yields stops (falls back to all)',
+      'safety net: unknown line name keeps the API-uniform leg, NOT cross-line stops',
       () async {
         final stops = [..._blueStops, _yellowParallel];
-        // A line name that canonicalizes to something no stop carries.
-        // The line filter empties out -> fall back to all matched stops so we
-        // NEVER emit zero intermediate stops. matchedAll = 3 Blue + 1 Yellow.
+        // A line name that canonicalizes to something no stop carries, so the
+        // own-line filter empties out.
         final leg = _blueLeg(lineName: 'Nonexistent Silver Line', numStops: 4);
 
         final enhanced = await TransferUtils.enhanceTransitLegStopsWithOsm(
@@ -212,15 +211,18 @@ void main() {
         );
 
         final result = enhanced.first;
-        // Safety net kept stops rather than producing an empty list.
+        // CORRECTNESS FIX (off-route stops): the OLD behavior scooped the whole
+        // 150m corridor — including the PARALLEL line's station — into this leg.
+        // That counted a stop not on this route. Now an unknown line keeps the
+        // API-derived leg (uniform num_stops, on-route by construction) and NEVER
+        // injects a cross-line station.
         expect(
-          result.stopNames.isNotEmpty,
-          isTrue,
-          reason: 'Unknown line must fall back to unfiltered matches',
+          result.stopNames,
+          isNot(contains('Yellow Parallel')),
+          reason: 'a parallel-line station must never be counted on this leg',
         );
-        // Fallback keeps everything within the corridor (Blue + the parallel).
-        expect(result.stopNames, contains('Yellow Parallel'));
-        expect(result.stopNames.length, equals(4));
+        // The API num_stops is preserved (the leg is not emptied).
+        expect(result.numStops, equals(4));
       },
     );
   });

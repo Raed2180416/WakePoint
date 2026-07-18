@@ -19,12 +19,22 @@ android {
         applicationId "com.geowake.app"
         minSdkVersion 24
         targetSdkVersion 35
-        versionCode 1
-        versionName "1.0"
+        // versionCode/versionName flow from pubspec `version: x.y.z+build` via the
+        // Flutter Gradle plugin (flutter.versionCode / flutter.versionName).
+        // BUGFIX (GAP: build): these were hardcoded to 1 / "1.0", so the pubspec
+        // build number never reached Play and every upload after the first was
+        // rejected as a duplicate versionCode — no wake-path fix could ever ship.
+        // Bump the build number in pubspec (`+N`) to cut a new release.
+        versionCode flutter.versionCode
+        versionName flutter.versionName
         
-        // Set API key from key.properties or use development default
+        // SECURITY: the Maps key comes ONLY from android/key.properties (gitignored).
+        // The previous hardcoded fallback shipped a LIVE key in source control (and
+        // it leaked into chat transcripts) — a billing/abuse risk and a Play flag.
+        // An empty fallback fails loudly (maps blank) instead of shipping a secret.
+        // ROTATE the exposed key AIzaSyC0v...XHw0 and put the new one in key.properties.
         manifestPlaceholders = [
-            googleMapsApiKey: keystoreProperties['googleMapsApiKey'] ?: 'AIzaSyC0vrbOhat2g5qRyhrnT6ptLmjELctXHw0',
+            googleMapsApiKey: keystoreProperties['googleMapsApiKey'] ?: '',
             applicationName: 'io.flutter.app.FlutterApplication'
         ]
     }
