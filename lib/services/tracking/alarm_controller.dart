@@ -136,8 +136,12 @@ class AlarmController {
     config: const ReachabilityConfig(dwellMinSeconds: 0.0),
   );
 
-  double _nowSeconds() =>
-      AppClock().now().millisecondsSinceEpoch / 1000.0;
+  /// The clock the reachability never-late math runs on. MUST be monotonic —
+  /// `s_max = s0 + V_LINE*(t - t0)` is only never-late if `(t - t0)` is true
+  /// elapsed time. A backward wall-clock jump (NTP/DST/manual) would freeze the
+  /// cone and fire LATE (found by clock-jump simulation). See
+  /// AppClock.monotonicSeconds.
+  double _nowSeconds() => AppClock().monotonicSeconds();
 
   // Callback for when destination alarm fires (to block route switching)
   void Function(bool fired)? onDestinationAlarmFired;
@@ -563,18 +567,24 @@ class AlarmController {
     // must NEVER move the anchor (precondition iii) — that is what keeps the
     // wall-clock `t_since_last_true_fix` honest through a blackout.
     {
-      final double nowSec = _nowSeconds();
-      // Anchor at the fix's OWN acquisition time, not wall-clock now. A GPS fix
-      // delivered late (queued behind a wake, a slow sensor bus, etc.) would
-      // otherwise reset t_since_last_true_fix too recent and shrink the reach
-      // bound below reality — a precondition-(iii) late-fire hazard. Only trust
-      // a stamp that is finite, not in the future, and not absurdly stale.
+      final double nowSec = _nowSeconds(); // monotonic (see _nowSeconds)
+      // Anchor at the fix's OWN acquisition time, not "now". A GPS fix delivered
+      // late (queued behind a wake, a slow sensor bus) would otherwise reset
+      // t_since_last_true_fix too recent and shrink the reach bound below reality
+      // (a precondition-(iii) late-fire hazard). The fix timestamp is WALL-clock,
+      // so map its wall-clock AGE into the monotonic frame: fixTs = nowSec − age.
+      // Age is measured over the short (<~seconds) delivery window from the same
+      // wall clock, so it is accurate and immune to the long-term wall-clock
+      // jumps between anchors that the monotonic switch protects against.
       double fixTs = nowSec;
       try {
-        final double ts =
+        final double fixWall =
             currentPosition.timestamp.millisecondsSinceEpoch / 1000.0;
-        if (ts.isFinite && ts <= nowSec && (nowSec - ts) < 3600.0) {
-          fixTs = ts;
+        final double wallNow =
+            AppClock().now().millisecondsSinceEpoch / 1000.0;
+        final double age = wallNow - fixWall;
+        if (age.isFinite && age >= 0.0 && age < 3600.0) {
+          fixTs = nowSec - age;
         }
       } catch (_) {/* keep nowSec */}
       _reach.seedColdStart(

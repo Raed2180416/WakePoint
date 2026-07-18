@@ -37,6 +37,12 @@ class AppClock {
   DateTime? _simulationStartReal;
   DateTime? _simulationStartVirtual;
 
+  /// Monotonic elapsed-time source, started at app launch. Unlike [now]
+  /// (DateTime.now(), which the OS can move BACKWARD on an NTP correction, a
+  /// manual clock change, or a timezone/DST shift), a Stopwatch only ever moves
+  /// forward. See [monotonicSeconds].
+  final Stopwatch _monotonic = Stopwatch()..start();
+
   // ─────────────────────────────────────────────────────────────────────────
   // Warp Factor Control
   // ─────────────────────────────────────────────────────────────────────────
@@ -127,6 +133,31 @@ class AppClock {
         (realElapsed.inMicroseconds * _warpFactor).round();
     final virtualElapsed = Duration(microseconds: virtualElapsedMicros);
     return _simulationStartVirtual!.add(virtualElapsed);
+  }
+
+  /// MONOTONIC seconds — the correct clock for the never-late reachability math.
+  ///
+  /// Reachability computes the worst-case reachable progress as
+  /// `s_max = s0 + V_LINE * (t - t0)`, which is only never-late if `(t - t0)` is
+  /// the TRUE elapsed time. [now] is wall-clock and can jump BACKWARD (NTP
+  /// correction, manual clock set, DST/timezone change); a backward jump makes
+  /// `(t - t0)` clamp to 0, FREEZES the cone, and causes a LATE fire (found by
+  /// clock-jump simulation — a reproducible ~28 min late). This source is
+  /// monotonic (Stopwatch-based) and therefore immune to those jumps. In
+  /// simulation mode it warps with the sim so the accelerated dashboard replay
+  /// is still honored; reachability only ever uses DIFFERENCES of this value, so
+  /// the absolute reference frame does not matter as long as it is consistent
+  /// and non-decreasing within a session.
+  double monotonicSeconds() {
+    if (_simulationStartReal == null || _simulationStartVirtual == null) {
+      // Real mode: elapsed since app start — never moves backward.
+      return _monotonic.elapsedMicroseconds / 1e6;
+    }
+    // Simulation mode: warped virtual seconds (monotonic within the sim).
+    final realElapsed = DateTime.now().difference(_simulationStartReal!);
+    final virtualMicros = _simulationStartVirtual!.microsecondsSinceEpoch +
+        (realElapsed.inMicroseconds * _warpFactor);
+    return virtualMicros / 1e6;
   }
 
   /// Calculate elapsed duration since a past time.

@@ -74,6 +74,7 @@
 {"file":"test/comprehensive_real_world_scenarios_test.dart","name":"main","signature":"()"}
 {"file":"test/core/clock/app_clock_integration_test.dart","name":"main","signature":"()"}
 {"file":"test/core/clock/app_clock_test.dart","name":"main","signature":"()"}
+{"file":"test/core/clock/monotonic_clock_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/degraded_mode_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/ekf_logger_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/ekf_orchestrator_test.dart","name":"main","signature":"()"}

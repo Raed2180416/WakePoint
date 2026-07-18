@@ -167,8 +167,8 @@
 <!-- live&#45;tracking&#45;runtime&#45;&gt;app&#45;foundation&#45;config -->
 <g id="edge13" class="edge">
 <title>live&#45;tracking&#45;runtime&#45;&gt;app&#45;foundation&#45;config</title>
-<path fill="none" stroke="#cc7722" stroke-width="2.58" d="M1063.76,-305.46C997.41,-306.47 917.32,-306.55 854.14,-305.64"/>
-<polygon fill="#cc7722" stroke="#cc7722" stroke-width="2.58" points="854.47,-302.14 844.42,-305.49 854.36,-309.14 854.47,-302.14"/>
+<path fill="none" stroke="#cc7722" stroke-width="3" d="M1063.76,-305.46C997.69,-306.46 918,-306.55 854.93,-305.65"/>
+<polygon fill="#cc7722" stroke="#cc7722" stroke-width="3" points="855.11,-302.15 845.05,-305.5 855,-309.15 855.11,-302.15"/>
 </g>
 <!-- wakeup&#45;alarm&#45;engine&#45;&gt;live&#45;tracking&#45;runtime -->
 <g id="edge36" class="edge">

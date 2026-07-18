@@ -42,6 +42,7 @@ import 'package:geowake2/services/route_session_manager.dart';
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/services/telemetry/telemetry_service.dart';
+import 'package:geowake2/core/clock/app_clock.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/eta_engine.dart';
 import 'package:geowake2/services/reroute_policy.dart';
@@ -2185,8 +2186,23 @@ Future<void> _onStart(
                 (snapshot.ekfS != null && snapshot.ekfS!.isFinite)
                     ? snapshot.ekfS!
                     : 0.0;
-            final double tSeed =
+            // Reachability runs on a MONOTONIC clock (AppClock.monotonicSeconds,
+            // to be immune to wall-clock jumps). The snapshot timestamp is
+            // WALL-clock, so map its AGE into the monotonic frame:
+            // tSeed = monotonicNow − snapshotAge. A raw wall-clock stamp would be
+            // in the wrong frame (a huge epoch value) and make the bound freeze.
+            // (Fully-robust across a wall-clock jump DURING the kill needs
+            // SystemClock.elapsedRealtime persisted in the snapshot — device-side
+            // follow-up; this age mapping is correct for the common no-jump case.)
+            final double wallNow =
+                AppClock().now().millisecondsSinceEpoch / 1000.0;
+            final double snapWall =
                 snapshot.createdAt.millisecondsSinceEpoch / 1000.0;
+            final double age = wallNow - snapWall;
+            final double monoNow = AppClock().monotonicSeconds();
+            final double tSeed = (age.isFinite && age >= 0 && age < 86400)
+                ? monoNow - age
+                : monoNow;
             _alarmController.seedReachabilityAnchorAtArm(
                 sMeters: sSeed, tSeconds: tSeed);
           }

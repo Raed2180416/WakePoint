@@ -341,37 +341,39 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/services/api_client.dart",
+    "file": "lib/core/clock/app_clock.dart",
     "importers": 14,
     "directDependents": [
-      "lib/screens/homescreen.dart",
-      "lib/screens/splash_screen.dart",
-      "lib/services/direction_service.dart",
-      "lib/services/metro_stop_service.dart",
-      "lib/services/places_service.dart",
-      "test/app_config_url_alignment_test.dart",
-      "test/deviation_reroute_stress_test.dart",
-      "test/direction_service_behavior_test.dart",
-      "test/hybrid_eta_time_test.dart",
-      "test/places_session_token_test.dart",
-      "test/route_cache_integration_test.dart",
-      "test/simplified_polyline_present_test.dart",
-      "test/tracking_service_reroute_integration_test.dart",
-      "test/tracking_service_route_activation_test.dart"
+      "lib/dashboard/deviation_dashboard.dart",
+      "lib/dashboard/deviation_simulation_controller.dart",
+      "lib/dashboard/unified_dashboard.dart",
+      "lib/services/deviation_monitor.dart",
+      "lib/services/eta_engine.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking_termination_policy.dart",
+      "lib/services/trackingservice.dart",
+      "test/core/clock/app_clock_integration_test.dart",
+      "test/core/clock/app_clock_test.dart",
+      "test/core/clock/monotonic_clock_test.dart",
+      "test/dashboard/constraint_event_integration_test.dart",
+      "test/dashboard/deviation_dashboard_integration_test.dart",
+      "test/dashboard/deviation_simulation_controller_test.dart"
     ],
     "exportedSymbols": [
-      "ApiClient"
+      "AppClock",
+      "DateTimeClockExtension"
     ],
     "riskLevel": "critical"
   },
   {
     "file": "lib/core/reachability/reachability.dart",
-    "importers": 13,
+    "importers": 14,
     "directDependents": [
       "lib/services/alarm_evaluator.dart",
       "lib/services/ios/ios_backstop_planner.dart",
       "lib/services/tracking/alarm_controller.dart",
       "lib/services/tracking/notification_updater.dart",
+      "test/core/clock/monotonic_clock_test.dart",
       "test/ekf/replay_harness_test.dart",
       "test/integration/reachability_ride_scenario_test.dart",
       "test/integration/reachability_scenarios_test.dart",
@@ -394,25 +396,26 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/core/clock/app_clock.dart",
-    "importers": 12,
+    "file": "lib/services/api_client.dart",
+    "importers": 14,
     "directDependents": [
-      "lib/dashboard/deviation_dashboard.dart",
-      "lib/dashboard/deviation_simulation_controller.dart",
-      "lib/dashboard/unified_dashboard.dart",
-      "lib/services/deviation_monitor.dart",
-      "lib/services/eta_engine.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking_termination_policy.dart",
-      "test/core/clock/app_clock_integration_test.dart",
-      "test/core/clock/app_clock_test.dart",
-      "test/dashboard/constraint_event_integration_test.dart",
-      "test/dashboard/deviation_dashboard_integration_test.dart",
-      "test/dashboard/deviation_simulation_controller_test.dart"
+      "lib/screens/homescreen.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/metro_stop_service.dart",
+      "lib/services/places_service.dart",
+      "test/app_config_url_alignment_test.dart",
+      "test/deviation_reroute_stress_test.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/places_session_token_test.dart",
+      "test/route_cache_integration_test.dart",
+      "test/simplified_polyline_present_test.dart",
+      "test/tracking_service_reroute_integration_test.dart",
+      "test/tracking_service_route_activation_test.dart"
     ],
     "exportedSymbols": [
-      "AppClock",
-      "DateTimeClockExtension"
+      "ApiClient"
     ],
     "riskLevel": "critical"
   },

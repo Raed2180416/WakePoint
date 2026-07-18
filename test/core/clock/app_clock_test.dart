@@ -480,6 +480,9 @@ class _TestableAppClock implements AppClock {
   DateTime now() => fixedTime ?? _delegate.now();
 
   @override
+  double monotonicSeconds() => _delegate.monotonicSeconds();
+
+  @override
   bool get isSimulating => _delegate.isSimulating;
 
   @override

@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "79c05ad12005ab8e38a938cf88983749bc3b90a0",
-    "gitTree": "9fd8eef19bdaaa73d3ff7fda656438a30c8922a4",
-    "generatedAt": "2026-07-18T15:40:05+05:30",
-    "filesIndexed": 328,
-    "dependencyEdges": 676,
-    "totalExports": 544,
-    "totalImports": 1506,
+    "gitCommit": "6d93d0fd0bb3724cced359e82ef8ccb3c7779dab",
+    "gitTree": "195af3e24e6dffef307141a15c2bef648a2feadb",
+    "generatedAt": "2026-07-18T16:11:51+05:30",
+    "filesIndexed": 329,
+    "dependencyEdges": 679,
+    "totalExports": 545,
+    "totalImports": 1510,
     "byRole": {
       "other": 2,
       "backend": 12,
-      "flutter-test": 175,
+      "flutter-test": 176,
       "flutter-lib": 131,
       "tool": 8
     },
@@ -799,7 +799,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "eaeb2c2d4372632a"
+      "contentHash": "3c7772d9722e4df3"
     },
     {
       "file": "lib/core/ekf/degraded_mode.dart",
@@ -6916,7 +6916,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f4154822eb44a562"
+      "contentHash": "b56ac5a9e6134688"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -7627,6 +7627,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/core/clock/app_clock.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/alarm_player.dart"
         },
         {
@@ -7819,7 +7823,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ae2c8da6d50d3ff1"
+      "contentHash": "68a4b9d7ee88ab4a"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -8847,7 +8851,44 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "20e5838203e13281"
+      "contentHash": "c69aff9fb6e0afa7"
+    },
+    {
+      "file": "test/core/clock/monotonic_clock_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/clock/app_clock.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "0535cf85ffce4d09"
     },
     {
       "file": "test/core/ekf/degraded_mode_test.dart",
@@ -18598,6 +18639,12 @@
     },
     {
       "from": "lib/services/trackingservice.dart",
+      "to": "lib/core/clock/app_clock.dart",
+      "source": "package:geowake2/core/clock/app_clock.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/trackingservice.dart",
       "to": "lib/services/alarm_player.dart",
       "source": "package:geowake2/services/alarm_player.dart",
       "kind": "static"
@@ -18954,6 +19001,18 @@
       "from": "test/core/clock/app_clock_test.dart",
       "to": "lib/core/clock/app_clock.dart",
       "source": "package:geowake2/core/clock/app_clock.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/core/clock/monotonic_clock_test.dart",
+      "to": "lib/core/clock/app_clock.dart",
+      "source": "package:geowake2/core/clock/app_clock.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/core/clock/monotonic_clock_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
       "kind": "static"
     },
     {
@@ -22641,15 +22700,16 @@
       ]
     },
     {
-      "file": "lib/services/api_client.dart",
+      "file": "lib/core/clock/app_clock.dart",
       "importers": 14,
       "exports": [
-        "ApiClient"
+        "AppClock",
+        "DateTimeClockExtension"
       ]
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 13,
+      "importers": 14,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -22661,11 +22721,10 @@
       ]
     },
     {
-      "file": "lib/core/clock/app_clock.dart",
-      "importers": 12,
+      "file": "lib/services/api_client.dart",
+      "importers": 14,
       "exports": [
-        "AppClock",
-        "DateTimeClockExtension"
+        "ApiClient"
       ]
     },
     {
@@ -22856,7 +22915,7 @@
   "topFanOut": [
     {
       "file": "lib/services/trackingservice.dart",
-      "imports": 24
+      "imports": 25
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",
@@ -23318,37 +23377,39 @@
       "riskLevel": "critical"
     },
     {
-      "file": "lib/services/api_client.dart",
+      "file": "lib/core/clock/app_clock.dart",
       "importers": 14,
       "directDependents": [
-        "lib/screens/homescreen.dart",
-        "lib/screens/splash_screen.dart",
-        "lib/services/direction_service.dart",
-        "lib/services/metro_stop_service.dart",
-        "lib/services/places_service.dart",
-        "test/app_config_url_alignment_test.dart",
-        "test/deviation_reroute_stress_test.dart",
-        "test/direction_service_behavior_test.dart",
-        "test/hybrid_eta_time_test.dart",
-        "test/places_session_token_test.dart",
-        "test/route_cache_integration_test.dart",
-        "test/simplified_polyline_present_test.dart",
-        "test/tracking_service_reroute_integration_test.dart",
-        "test/tracking_service_route_activation_test.dart"
+        "lib/dashboard/deviation_dashboard.dart",
+        "lib/dashboard/deviation_simulation_controller.dart",
+        "lib/dashboard/unified_dashboard.dart",
+        "lib/services/deviation_monitor.dart",
+        "lib/services/eta_engine.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking_termination_policy.dart",
+        "lib/services/trackingservice.dart",
+        "test/core/clock/app_clock_integration_test.dart",
+        "test/core/clock/app_clock_test.dart",
+        "test/core/clock/monotonic_clock_test.dart",
+        "test/dashboard/constraint_event_integration_test.dart",
+        "test/dashboard/deviation_dashboard_integration_test.dart",
+        "test/dashboard/deviation_simulation_controller_test.dart"
       ],
       "exportedSymbols": [
-        "ApiClient"
+        "AppClock",
+        "DateTimeClockExtension"
       ],
       "riskLevel": "critical"
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 13,
+      "importers": 14,
       "directDependents": [
         "lib/services/alarm_evaluator.dart",
         "lib/services/ios/ios_backstop_planner.dart",
         "lib/services/tracking/alarm_controller.dart",
         "lib/services/tracking/notification_updater.dart",
+        "test/core/clock/monotonic_clock_test.dart",
         "test/ekf/replay_harness_test.dart",
         "test/integration/reachability_ride_scenario_test.dart",
         "test/integration/reachability_scenarios_test.dart",
@@ -23371,25 +23432,26 @@
       "riskLevel": "critical"
     },
     {
-      "file": "lib/core/clock/app_clock.dart",
-      "importers": 12,
+      "file": "lib/services/api_client.dart",
+      "importers": 14,
       "directDependents": [
-        "lib/dashboard/deviation_dashboard.dart",
-        "lib/dashboard/deviation_simulation_controller.dart",
-        "lib/dashboard/unified_dashboard.dart",
-        "lib/services/deviation_monitor.dart",
-        "lib/services/eta_engine.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking_termination_policy.dart",
-        "test/core/clock/app_clock_integration_test.dart",
-        "test/core/clock/app_clock_test.dart",
-        "test/dashboard/constraint_event_integration_test.dart",
-        "test/dashboard/deviation_dashboard_integration_test.dart",
-        "test/dashboard/deviation_simulation_controller_test.dart"
+        "lib/screens/homescreen.dart",
+        "lib/screens/splash_screen.dart",
+        "lib/services/direction_service.dart",
+        "lib/services/metro_stop_service.dart",
+        "lib/services/places_service.dart",
+        "test/app_config_url_alignment_test.dart",
+        "test/deviation_reroute_stress_test.dart",
+        "test/direction_service_behavior_test.dart",
+        "test/hybrid_eta_time_test.dart",
+        "test/places_session_token_test.dart",
+        "test/route_cache_integration_test.dart",
+        "test/simplified_polyline_present_test.dart",
+        "test/tracking_service_reroute_integration_test.dart",
+        "test/tracking_service_route_activation_test.dart"
       ],
       "exportedSymbols": [
-        "AppClock",
-        "DateTimeClockExtension"
+        "ApiClient"
       ],
       "riskLevel": "critical"
     },

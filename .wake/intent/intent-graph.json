@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "79c05ad12005ab8e38a938cf88983749bc3b90a0",
-  "generatedAt": "2026-07-18T15:40:05+05:30",
-  "structuralDigest": "9fd8eef19bdaaa73d3ff7fda656438a30c8922a4",
+  "gitCommit": "6d93d0fd0bb3724cced359e82ef8ccb3c7779dab",
+  "generatedAt": "2026-07-18T16:11:51+05:30",
+  "structuralDigest": "195af3e24e6dffef307141a15c2bef648a2feadb",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 916,
-    "edgeCount": 1859,
+    "nodeCount": 918,
+    "edgeCount": 1863,
     "byLevel": {
       "feature": 9,
-      "file": 328,
+      "file": 329,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 544
+      "symbol": 545
     },
     "byEdgeType": {
-      "contains": 666,
-      "depends-on": 676,
+      "contains": 667,
+      "depends-on": 679,
       "references": 517
     }
   },
@@ -559,7 +559,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 12,
+      "importers": 14,
       "exportCount": 2
     },
     {
@@ -746,7 +746,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 13,
+      "importers": 14,
       "exportCount": 7
     },
     {
@@ -2073,6 +2073,17 @@
       "id": "file:test/core/clock/app_clock_test.dart",
       "level": "file",
       "label": "test/core/clock/app_clock_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/core/clock/monotonic_clock_test.dart",
+      "level": "file",
+      "label": "test/core/clock/monotonic_clock_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -7356,6 +7367,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/core/clock/app_clock_test.dart"
+    },
+    {
+      "id": "symbol:test/core/clock/monotonic_clock_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/core/clock/monotonic_clock_test.dart"
     },
     {
       "id": "symbol:test/core/ekf/degraded_mode_test.dart#main",
@@ -15808,6 +15828,13 @@
     },
     {
       "from": "file:lib/services/trackingservice.dart",
+      "to": "file:lib/core/clock/app_clock.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/trackingservice.dart",
       "to": "file:lib/core/ekf/ekf_types.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -17081,6 +17108,27 @@
     {
       "from": "file:test/core/clock/app_clock_test.dart",
       "to": "symbol:test/core/clock/app_clock_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/core/clock/monotonic_clock_test.dart",
+      "to": "file:lib/core/clock/app_clock.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/core/clock/monotonic_clock_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/core/clock/monotonic_clock_test.dart",
+      "to": "symbol:test/core/clock/monotonic_clock_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
