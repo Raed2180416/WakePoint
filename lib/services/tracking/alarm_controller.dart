@@ -431,6 +431,26 @@ class AlarmController {
       name: 'AlarmController',
     );
 
+    // GAP #8: the north-star funnel numerator — record that a destination alarm
+    // fired, and via which lever, breakable down by device/OEM/SDK. Firing is
+    // never-late by construction (outcome=onTime); a later feature can detect
+    // late/missed from post-arrival ground truth. viaReach/backstop are inferred
+    // from the fire reason. Fail-open — telemetry must never break the wake.
+    try {
+      final r = (debugReason ?? '').toLowerCase();
+      final viaReach = r.contains('reach') || r.contains('backstop');
+      final String? mode = r.contains('distance')
+          ? 'distance'
+          : r.contains('time')
+              ? 'time'
+              : (r.contains('stops') || r.contains('metro') ? 'stops' : null);
+      TelemetryService.instance.alarmOutcome(
+        outcome: AlarmOutcome.onTime,
+        firedViaReachability: viaReach,
+        mode: mode,
+      );
+    } catch (_) {/* never break the wake */}
+
     _lastAlarmFiredAt = AppClock().now();
 
     if (isTestMode) {

@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "6660d108ca4f94166ab61b3e5d7363accc973e98",
-    "gitTree": "7189e5d63b10d108c634a3e7ac08a3358be248c7",
-    "generatedAt": "2026-07-18T10:26:08+05:30",
-    "filesIndexed": 326,
-    "dependencyEdges": 670,
-    "totalExports": 541,
-    "totalImports": 1496,
+    "gitCommit": "daf21e4de801bc74cb754d57c3a60d4396e7cdcc",
+    "gitTree": "447da74dc70238400e62a5da56701e15642baada",
+    "generatedAt": "2026-07-18T10:28:10+05:30",
+    "filesIndexed": 327,
+    "dependencyEdges": 675,
+    "totalExports": 542,
+    "totalImports": 1502,
     "byRole": {
       "other": 2,
       "backend": 12,
-      "flutter-test": 173,
+      "flutter-test": 174,
       "flutter-lib": 131,
       "tool": 8
     },
@@ -6916,7 +6916,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "7efe046b38d42654"
+      "contentHash": "453af1f99c6f1d05"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -7153,6 +7153,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/services/telemetry/telemetry_service.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/notification_service.dart"
         },
         {
@@ -7204,7 +7208,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a3e8007954197e40"
+      "contentHash": "4b6f6452ca09c249"
     },
     {
       "file": "lib/services/tracking/notification_updater.dart",
@@ -7619,6 +7623,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/services/telemetry/telemetry_service.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/alarm_player.dart"
         },
         {
@@ -7811,7 +7819,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "397c4bb27d37a160"
+      "contentHash": "601859ed87b0c6bd"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -15353,6 +15361,47 @@
       "contentHash": "3eb4c78f20243ab1"
     },
     {
+      "file": "test/telemetry/emit_sites_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/alarm_controller.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/telemetry/telemetry_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/test_service_instance.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "12f7e485eb8a3e79"
+    },
+    {
       "file": "test/telemetry/file_telemetry_sink_test.dart",
       "lang": "dart",
       "exports": [
@@ -18259,6 +18308,12 @@
     },
     {
       "from": "lib/services/tracking/location_stream_handler.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "package:geowake2/services/telemetry/telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/tracking/location_stream_handler.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
       "kind": "static"
@@ -18471,6 +18526,12 @@
       "from": "lib/services/trackingservice.dart",
       "to": "lib/services/tracking_state_store.dart",
       "source": "package:geowake2/services/tracking_state_store.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/trackingservice.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "package:geowake2/services/telemetry/telemetry_service.dart",
       "kind": "static"
     },
     {
@@ -20544,6 +20605,24 @@
       "kind": "static"
     },
     {
+      "from": "test/telemetry/emit_sites_test.dart",
+      "to": "lib/services/tracking/alarm_controller.dart",
+      "source": "package:geowake2/services/tracking/alarm_controller.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/telemetry/emit_sites_test.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "package:geowake2/services/telemetry/telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/telemetry/emit_sites_test.dart",
+      "to": "lib/services/test_service_instance.dart",
+      "source": "package:geowake2/services/test_service_instance.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/telemetry/file_telemetry_sink_test.dart",
       "to": "lib/services/telemetry/telemetry_service.dart",
       "source": "package:geowake2/services/telemetry/telemetry_service.dart",
@@ -22567,6 +22646,18 @@
       ]
     },
     {
+      "file": "lib/services/telemetry/telemetry_service.dart",
+      "importers": 10,
+      "exports": [
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
+      ]
+    },
+    {
       "file": "lib/services/active_route_manager.dart",
       "importers": 9,
       "exports": [
@@ -22692,24 +22783,12 @@
         "PreflightLevel",
         "PreflightSeverity"
       ]
-    },
-    {
-      "file": "lib/services/telemetry/telemetry_service.dart",
-      "importers": 7,
-      "exports": [
-        "TelemetryEventType",
-        "TelemetryEvent",
-        "TelemetrySink",
-        "InMemoryTelemetrySink",
-        "TelemetryService",
-        "AlarmOutcome"
-      ]
     }
   ],
   "topFanOut": [
     {
       "file": "lib/services/trackingservice.dart",
-      "imports": 23
+      "imports": 24
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",
@@ -22732,11 +22811,11 @@
       "imports": 13
     },
     {
-      "file": "lib/services/tracking/alarm_controller.dart",
-      "imports": 12
+      "file": "lib/services/tracking/location_stream_handler.dart",
+      "imports": 13
     },
     {
-      "file": "lib/services/tracking/location_stream_handler.dart",
+      "file": "lib/services/tracking/alarm_controller.dart",
       "imports": 12
     },
     {
@@ -23345,6 +23424,31 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/telemetry/telemetry_service.dart",
+      "importers": 10,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/services/telemetry/file_telemetry_sink.dart",
+        "lib/services/telemetry/telemetry_session.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "lib/services/trackingservice.dart",
+        "test/telemetry/emit_sites_test.dart",
+        "test/telemetry/file_telemetry_sink_test.dart",
+        "test/telemetry/telemetry_edgecases_test.dart",
+        "test/telemetry/telemetry_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/active_route_manager.dart",
       "importers": 9,
       "directDependents": [
@@ -23616,28 +23720,6 @@
         "ReliabilityPreflightService",
         "PreflightLevel",
         "PreflightSeverity"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/telemetry/telemetry_service.dart",
-      "importers": 7,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/services/telemetry/file_telemetry_sink.dart",
-        "lib/services/telemetry/telemetry_session.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "test/telemetry/file_telemetry_sink_test.dart",
-        "test/telemetry/telemetry_edgecases_test.dart",
-        "test/telemetry/telemetry_service_test.dart"
-      ],
-      "exportedSymbols": [
-        "TelemetryEventType",
-        "TelemetryEvent",
-        "TelemetrySink",
-        "InMemoryTelemetrySink",
-        "TelemetryService",
-        "AlarmOutcome"
       ],
       "riskLevel": "high"
     }

@@ -515,6 +515,31 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/telemetry/telemetry_service.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/services/telemetry/file_telemetry_sink.dart",
+      "lib/services/telemetry/telemetry_session.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/trackingservice.dart",
+      "test/telemetry/emit_sites_test.dart",
+      "test/telemetry/file_telemetry_sink_test.dart",
+      "test/telemetry/telemetry_edgecases_test.dart",
+      "test/telemetry/telemetry_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "TelemetryEventType",
+      "TelemetryEvent",
+      "TelemetrySink",
+      "InMemoryTelemetrySink",
+      "TelemetryService",
+      "AlarmOutcome"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/active_route_manager.dart",
     "importers": 9,
     "directDependents": [
@@ -786,28 +811,6 @@
       "ReliabilityPreflightService",
       "PreflightLevel",
       "PreflightSeverity"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/telemetry/telemetry_service.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/services/telemetry/file_telemetry_sink.dart",
-      "lib/services/telemetry/telemetry_session.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "test/telemetry/file_telemetry_sink_test.dart",
-      "test/telemetry/telemetry_edgecases_test.dart",
-      "test/telemetry/telemetry_service_test.dart"
-    ],
-    "exportedSymbols": [
-      "TelemetryEventType",
-      "TelemetryEvent",
-      "TelemetrySink",
-      "InMemoryTelemetrySink",
-      "TelemetryService",
-      "AlarmOutcome"
     ],
     "riskLevel": "high"
   }

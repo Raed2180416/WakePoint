@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "6660d108ca4f94166ab61b3e5d7363accc973e98",
-  "generatedAt": "2026-07-18T10:26:08+05:30",
-  "structuralDigest": "7189e5d63b10d108c634a3e7ac08a3358be248c7",
+  "gitCommit": "daf21e4de801bc74cb754d57c3a60d4396e7cdcc",
+  "generatedAt": "2026-07-18T10:28:10+05:30",
+  "structuralDigest": "447da74dc70238400e62a5da56701e15642baada",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 911,
-    "edgeCount": 1850,
+    "nodeCount": 913,
+    "edgeCount": 1856,
     "byLevel": {
       "feature": 9,
-      "file": 326,
+      "file": 327,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 541
+      "symbol": 542
     },
     "byEdgeType": {
-      "contains": 663,
-      "depends-on": 670,
+      "contains": 664,
+      "depends-on": 675,
       "references": 517
     }
   },
@@ -1637,7 +1637,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 10,
       "exportCount": 6
     },
     {
@@ -1659,7 +1659,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 0,
+      "importers": 1,
       "exportCount": 1
     },
     {
@@ -1736,7 +1736,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 5,
+      "importers": 6,
       "exportCount": 2
     },
     {
@@ -3580,6 +3580,17 @@
       "id": "file:test/switch_point_logic_test.dart",
       "level": "file",
       "label": "test/switch_point_logic_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/telemetry/emit_sites_test.dart",
+      "level": "file",
+      "label": "test/telemetry/emit_sites_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -8936,6 +8947,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/switch_point_logic_test.dart"
+    },
+    {
+      "id": "symbol:test/telemetry/emit_sites_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/emit_sites_test.dart"
     },
     {
       "id": "symbol:test/telemetry/file_telemetry_sink_test.dart#main",
@@ -15505,6 +15525,13 @@
     },
     {
       "from": "file:lib/services/tracking/location_stream_handler.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/tracking/location_stream_handler.dart",
       "to": "file:lib/services/tracking_state_store.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -16004,6 +16031,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 8
+    },
+    {
+      "from": "file:lib/services/trackingservice.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/services/trackingservice.dart",
@@ -21947,6 +21981,34 @@
     {
       "from": "file:test/switch_point_logic_test.dart",
       "to": "symbol:test/switch_point_logic_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/emit_sites_test.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/emit_sites_test.dart",
+      "to": "file:lib/services/test_service_instance.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/emit_sites_test.dart",
+      "to": "file:lib/services/tracking/alarm_controller.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/emit_sites_test.dart",
+      "to": "symbol:test/telemetry/emit_sites_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

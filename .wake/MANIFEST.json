@@ -1,12 +1,12 @@
 {
   "schemaVersion": "wakepoint-manifest-v1",
   "repo": "WakePoint",
-  "gitCommit": "6660d108ca4f94166ab61b3e5d7363accc973e98",
-  "gitTree": "7189e5d63b10d108c634a3e7ac08a3358be248c7",
-  "generatedAt": "2026-07-18T10:26:08+05:30",
-  "sourceDigest": "e8e9341ddd46d34cdea2c613a266eedb95119c0b1f211e0cd54de8a6dec00afc",
+  "gitCommit": "daf21e4de801bc74cb754d57c3a60d4396e7cdcc",
+  "gitTree": "447da74dc70238400e62a5da56701e15642baada",
+  "generatedAt": "2026-07-18T10:28:10+05:30",
+  "sourceDigest": "396bebd3c77373bfbe7aabd2aa85dcc86631934063082bad2565cbe4a42646a5",
   "artifactCount": 19,
-  "rootDigest": "eeb500468133f1a4ed89ab4ba7c4fe606985d366a4219c9ff3c04e44529d7177",
+  "rootDigest": "34eb80be09ab986ff190a8cd5a679076b6503e2ee6604eef77a6e328214016c7",
   "artifacts": [
     {
       "path": ".wake/AGENT_CONTEXT.md",
@@ -52,9 +52,9 @@
     },
     {
       "path": ".wake/intent/intent-graph.json",
-      "bytes": 684957,
+      "bytes": 686812,
       "layer": "semantic",
-      "sha256": "bd3c464b5c82886d6be56ccd876b85e23af86945010b023e3d24f7a214ef995e"
+      "sha256": "d4843831bba6eb44a4333d3b8111b96c9fa8bcd155a7de9b416f3402b732dcd9"
     },
     {
       "path": ".wake/intent/intent-graph.svg",
@@ -70,9 +70,9 @@
     },
     {
       "path": ".wake/map/change-impact.json",
-      "bytes": 29042,
+      "bytes": 29191,
       "layer": "deterministic",
-      "sha256": "88cee9bf566e21b928831dfc9bdc3f4dfd559dbf4e07a6c6ec7fd9230e465f1e"
+      "sha256": "253567678296b5754de4708a5e545292f46a32cf76efde10d0c610619007ff56"
     },
     {
       "path": ".wake/map/entry-points.json",
@@ -82,21 +82,21 @@
     },
     {
       "path": ".wake/map/knowledge-graph.json",
-      "bytes": 605661,
+      "bytes": 608225,
       "layer": "deterministic",
-      "sha256": "a861489d393e82e572c6ef73e9a95f59f9690111abf19ea3fa24018dba389308"
+      "sha256": "7f235a38f67598ef91721e5d7a9c38fec4a4961f7d10f366ec66ee3e44acf9b8"
     },
     {
       "path": ".wake/map/LLM_NAVIGATION_GUIDE.md",
       "bytes": 1535,
       "layer": "deterministic",
-      "sha256": "723fc6412450f1425ff2979a0f6745ee5e3556a631274ff519c9adae6af1e7e5"
+      "sha256": "14432b1507bbac9b1a6bf7cc2f431883d0aef1a8e9eda01c2d60f2da9d476bf9"
     },
     {
       "path": ".wake/map/module-interfaces.jsonl",
-      "bytes": 234325,
+      "bytes": 235133,
       "layer": "deterministic",
-      "sha256": "04a69b2b62b539a08cd32447924a75e50c2f3d8950067fbd78ac62f80113edb1"
+      "sha256": "4272f80532a8df1b7f20d847c0b7e041d806e8b9daec3c2bcb2e4b3af3f6f775"
     },
     {
       "path": ".wake/map/public-api-surface.json",
@@ -106,9 +106,9 @@
     },
     {
       "path": ".wake/map/type-signatures.jsonl",
-      "bytes": 33040,
+      "bytes": 33118,
       "layer": "deterministic",
-      "sha256": "e119a1a9950a698f08f10cf61f3881ebbe11afca2c1d545bac83cacddbf5da6c"
+      "sha256": "f1da7eb7d61ae69a3ace4f001fd79e5fef2c13da3f073649734844f0efc341db"
     },
     {
       "path": ".wake/rag/codebase-index.json",
@@ -120,7 +120,7 @@
       "path": ".wake/surface/coverage-ledger.json",
       "bytes": 3346,
       "layer": "deterministic",
-      "sha256": "a972f4a9059c576bce6c4fd5ba80582e5c738fe21fa7396d10abb6355197cecc"
+      "sha256": "a70385375441af47950b6db53ffcf1e12a84a6023d5901c13487a4e756d576fe"
     }
   ]
 }

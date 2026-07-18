@@ -19,6 +19,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/eta_engine.dart';
 import 'package:geowake2/services/location_manager.dart';
+import 'package:geowake2/services/telemetry/telemetry_service.dart';
 import 'package:geowake2/services/notification_service.dart';
 import 'package:geowake2/config/power_policy.dart';
 import 'package:geowake2/services/route_registry.dart';
@@ -97,6 +98,11 @@ class LocationStreamHandler {
 
   // Last GPS update time for dropout detection
   DateTime? _lastGpsUpdate;
+  // GAP #15: GPS-blackout telemetry funnel. True while GPS has been silent past
+  // the dropout buffer; emits gpsLost on entry and gpsReacquired on the next
+  // real fix. Fail-open (telemetry never throws into the alarm path).
+  bool _inGpsBlackout = false;
+  DateTime? _blackoutStartedAt;
 
   // GPS dropout buffer duration
   Duration gpsDropoutBuffer = const Duration(seconds: 5);
@@ -229,7 +235,19 @@ class LocationStreamHandler {
         name: 'LocationStreamHandler',
       );
 
-      _lastGpsUpdate = DateTime.now();
+      final nowFix = DateTime.now();
+      // GAP #15: a real fix ended a GPS blackout — record how long it lasted.
+      if (_inGpsBlackout) {
+        final start = _blackoutStartedAt;
+        TelemetryService.instance.gpsReacquired(
+          blackoutSeconds: start != null
+              ? nowFix.difference(start).inMilliseconds / 1000.0
+              : 0.0,
+        );
+        _inGpsBlackout = false;
+        _blackoutStartedAt = null;
+      }
+      _lastGpsUpdate = nowFix;
       _lastProcessedPosition = LatLng(position.latitude, position.longitude);
       _lastSpeedMps = position.speed;
       _lastPositionTimestamp = position.timestamp;
@@ -534,6 +552,15 @@ class LocationStreamHandler {
 
     final silentFor = DateTime.now().difference(last);
     if (silentFor >= gpsDropoutBuffer) {
+      // GAP #15: mark the start of a GPS blackout once (not every tick) and
+      // record it — the funnel that tells us how often/long riders go dark.
+      if (!_inGpsBlackout) {
+        _inGpsBlackout = true;
+        _blackoutStartedAt = last;
+        TelemetryService.instance.gpsLost(
+          sinceLastFixSeconds: silentFor.inMilliseconds / 1000.0,
+        );
+      }
       if (_lastProcessedPosition != null) {
         _ensureFusionManagerPosition(_lastProcessedPosition!, ctx);
       }

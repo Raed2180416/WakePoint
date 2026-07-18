@@ -41,6 +41,7 @@ import 'package:geowake2/services/route_registry.dart';
 import 'package:geowake2/services/route_session_manager.dart';
 import 'package:geowake2/services/active_route_manager.dart';
 import 'package:geowake2/services/tracking_state_store.dart';
+import 'package:geowake2/services/telemetry/telemetry_service.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/eta_engine.dart';
 import 'package:geowake2/services/reroute_policy.dart';
@@ -1638,6 +1639,19 @@ void _handleBackgroundStartTracking({
   // their stop by the cold-start reachability backstop. A later real GPS fix
   // re-anchors via onAcceptedFix; this seed is idempotent.
   _alarmController.seedReachabilityAnchorAtArm(sMeters: 0.0);
+
+  // GAP #8: telemetry funnel denominator — record every armed trip (mode/value),
+  // so field outcomes can be measured per device·OEM·SDK. Fail-open.
+  try {
+    TelemetryService.instance.alarmArmed(
+      mode: alarmMode,
+      value: alarmValue,
+      line: _transitLegStops.isNotEmpty ? _transitLegStops.first.lineName : null,
+      city: _transitLegStops.isNotEmpty
+          ? _transitLegStops.first.cityKey
+          : null,
+    );
+  } catch (_) {/* telemetry must never break arming */}
 
   // Initialize termination policy with destination
   _terminationPolicy.reset();

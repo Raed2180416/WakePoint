@@ -37,3 +37,9 @@ jobs:
 
       - name: Reachability physics proofs
         run: flutter test test/reachability/
+
+      - name: Metro data integrity (shipped Dart data)
+        run: flutter test test/metro_data_integrity_test.dart test/metro_vehicle_types_test.dart
+
+      - name: Full test suite (all pass)
+        run: flutter test

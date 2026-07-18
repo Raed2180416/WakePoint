@@ -282,6 +282,7 @@
 {"file":"test/stops_mode_validation_test.dart","name":"main","signature":"()"}
 {"file":"test/stops_prior_semantics_test.dart","name":"main","signature":"()"}
 {"file":"test/switch_point_logic_test.dart","name":"main","signature":"()"}
+{"file":"test/telemetry/emit_sites_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/file_telemetry_sink_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_edgecases_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_service_test.dart","name":"main","signature":"()"}
