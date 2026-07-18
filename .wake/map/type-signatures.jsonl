@@ -123,6 +123,7 @@
 {"file":"test/ekf/replay_harness_test.dart","name":"printCombinedTable","signature":"(List<RunResult> results, List<String> errors)"}
 {"file":"test/ekf/replay_harness_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_engine_test.dart","name":"main","signature":"()"}
+{"file":"test/eta_sigma_floor_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_utils_test.dart","name":"main","signature":"()"}
 {"file":"test/event_alarm_overlap_test.dart","name":"main","signature":"()"}
 {"file":"test/event_alarm_progress_source_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}

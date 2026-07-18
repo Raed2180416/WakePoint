@@ -256,7 +256,7 @@
   },
   {
     "file": "lib/services/alarm_evaluator.dart",
-    "importers": 18,
+    "importers": 19,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/services/tracking/alarm_controller.dart",
@@ -269,6 +269,7 @@
       "test/debug_alarm_mismatch.dart",
       "test/destination_only_metro_time_test.dart",
       "test/ekf/replay_harness_test.dart",
+      "test/eta_sigma_floor_test.dart",
       "test/fire_decision_fractile_test.dart",
       "test/integration/reachability_ride_scenario_test.dart",
       "test/integration/reachability_scenarios_test.dart",
@@ -532,6 +533,24 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/config/fire_decision_config.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/services/alarm_evaluator.dart",
+      "lib/services/location_manager.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "test/ekf/replay_harness_test.dart",
+      "test/eta_sigma_floor_test.dart",
+      "test/fire_decision_fractile_test.dart",
+      "test/integration/reachability_scenarios_test.dart"
+    ],
+    "exportedSymbols": [
+      "FireDecisionConfig"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/alarm_player.dart",
     "importers": 8,
     "directDependents": [
@@ -602,23 +621,6 @@
     "exportedSymbols": [
       "SnapResult",
       "SnapToRouteEngine"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/config/fire_decision_config.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/services/alarm_evaluator.dart",
-      "lib/services/location_manager.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/location_stream_handler.dart",
-      "test/ekf/replay_harness_test.dart",
-      "test/fire_decision_fractile_test.dart",
-      "test/integration/reachability_scenarios_test.dart"
-    ],
-    "exportedSymbols": [
-      "FireDecisionConfig"
     ],
     "riskLevel": "high"
   },

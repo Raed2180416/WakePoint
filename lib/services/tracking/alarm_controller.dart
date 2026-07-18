@@ -878,6 +878,32 @@ class AlarmController {
             ? AlarmMode.time
             : AlarmMode.distance;
 
+    // GAP #3 (BLOCK): physics never-late bound for the DISTANCE and non-metro
+    // TIME fire paths too — not just metro-stops. During a GPS blackout the
+    // dead-reckoned progress/ETA can freeze while the train keeps moving; the
+    // reachability bound (last real fix + wall clock) keeps growing, so feeding
+    // it into these paths keeps them never-late. Free-run bound with the FASTEST
+    // V_LINE across all legs => a valid upper bound whichever leg the rider is
+    // really on (a higher V_LINE only fires earlier, never later). Inert when GPS
+    // is healthy (fresh anchor => bound ~= current progress).
+    double vMaxModes = VLineTable.defaultMps;
+    for (final leg in context.transitLegs) {
+      final v = _reach.vLineTable.forLine(lineName: leg.lineName);
+      if (v.isFinite && v > vMaxModes) vMaxModes = v;
+    }
+    double? reachBoundModes;
+    {
+      final a = _reach.anchor;
+      if (a != null) {
+        final bb = Reachability.bound(
+          anchor: a,
+          nowSeconds: _nowSeconds(),
+          vLineMps: vMaxModes,
+        );
+        if (!bb.sMaxMeters.isNaN) reachBoundModes = bb.sMaxMeters;
+      }
+    }
+
     // TIME ALARM ELIGIBILITY GATE:
     // Skip time alarm evaluation if eligibility gates not met
     // (100m traveled, 3 GPS samples, 30s tracking duration)
@@ -947,10 +973,38 @@ class AlarmController {
               sigmaVMps: context.ekfSigmaV,
             )
           : 0.0;
-      if (etaSeconds != null &&
+      // GAP #3: physics never-late lower bound for time mode. The earliest the
+      // train could arrive is (remaining distance / fastest speed). If the
+      // worst-case reachable position puts that within the threshold, fire —
+      // this protects time mode when the dead-reckoned ETA is stale (frozen
+      // underground) while the train physically keeps moving.
+      bool reachFireTime = false;
+      if (reachBoundModes != null) {
+        if (!reachBoundModes.isFinite) {
+          reachFireTime = true; // watchdog / fire-forcing bound
+        } else {
+          double? totalForReach;
+          try {
+            totalForReach = (alarmKey != null)
+                ? context.registry.getByKey(alarmKey)?.lengthMeters
+                : null;
+          } catch (_) {}
+          totalForReach ??=
+              activeEvents.where((e) => e.type == 'destination').isNotEmpty
+                  ? activeEvents.where((e) => e.type == 'destination').last.meters
+                  : null;
+          if (totalForReach != null && totalForReach.isFinite && vMaxModes > 0) {
+            final remain = totalForReach - reachBoundModes;
+            final etaReachLB = remain <= 0 ? 0.0 : remain / vMaxModes;
+            if (etaReachLB <= thresholdSeconds) reachFireTime = true;
+          }
+        }
+      }
+      final bool etaFire = etaSeconds != null &&
           etaSeconds.isFinite &&
           (etaSeconds - FireDecisionConfig.fractileK * etaSigma) <=
-              thresholdSeconds) {
+              thresholdSeconds;
+      if (etaFire || reachFireTime) {
         setDestinationAlarmFiredForKey(alarmKey, true);
 
         final key = context.activeKey;
@@ -972,8 +1026,10 @@ class AlarmController {
           allowContinueTracking: false,
           isBackgroundIsolate: context.isBackgroundIsolate,
           isTestMode: context.isTestMode,
-          debugReason:
-              'Time-mode (non-metro) destination (ETA ${etaSeconds.toStringAsFixed(0)}s <= ${thresholdSeconds.toStringAsFixed(0)}s)',
+          debugReason: etaFire
+              ? 'Time-mode (non-metro) destination (ETA ${etaSeconds.toStringAsFixed(0)}s <= ${thresholdSeconds.toStringAsFixed(0)}s)'
+              : 'Time-mode (non-metro) reachability backstop '
+                  '(worst-case ETA <= ${thresholdSeconds.toStringAsFixed(0)}s)',
         );
 
         startAlarmStopPollTimer(
@@ -1029,7 +1085,15 @@ class AlarmController {
 
         totalMeters ??= dest.meters;
 
-        final remainingMeters = (totalMeters - progressMeters).clamp(
+        // GAP #3: never-late — use the physics-effective progress (the greater
+        // of the dead-reckoned progress and the reachability bound) so a
+        // frozen-DR blackout cannot delay the fire. Inert when GPS is healthy
+        // (bound ~= progress). A fire-forcing +inf bound => remaining clamps to 0.
+        final double effProgress =
+            (reachBoundModes != null && reachBoundModes > progressMeters)
+                ? reachBoundModes
+                : progressMeters;
+        final remainingMeters = (totalMeters - effProgress).clamp(
           0.0,
           double.infinity,
         );
@@ -1731,10 +1795,12 @@ class AlarmController {
     required double? sigmaVMps,
   }) {
     if (!etaSeconds.isFinite) return 0.0;
+    // GAP #21: floor the effective velocity to a realistic transit speed when
+    // the measured speed is unobservable (stale <= 0.5 m/s underground), so the
+    // ETA cushion doesn't collapse to 0 and degrade the fire test to the median.
     final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
         ? speedMps
-        : 0.0;
-    if (v <= 0.0) return 0.0;
+        : FireDecisionConfig.etaSigmaSpeedFloorMps;
     final sS =
         (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
             ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)

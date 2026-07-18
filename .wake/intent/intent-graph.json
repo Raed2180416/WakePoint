@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "faf539c3865e72e8f85e15b892aeb980a06ffded",
-  "generatedAt": "2026-07-18T09:24:50+05:30",
-  "structuralDigest": "a8ae30ec7827ff9fac67fce2e05058d79be812e8",
+  "gitCommit": "3ff862ab644b8253a01688319e0fa8505ca00799",
+  "generatedAt": "2026-07-18T09:41:15+05:30",
+  "structuralDigest": "2bed31386873fa4cf7e8c3f3cdc18a668efbd359",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 888,
-    "edgeCount": 1812,
+    "nodeCount": 890,
+    "edgeCount": 1815,
     "byLevel": {
       "feature": 9,
-      "file": 315,
+      "file": 316,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 529
+      "symbol": 530
     },
     "byEdgeType": {
-      "contains": 651,
-      "depends-on": 644,
+      "contains": 652,
+      "depends-on": 646,
       "references": 517
     }
   },
@@ -482,7 +482,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 8,
       "exportCount": 1
     },
     {
@@ -1043,7 +1043,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 18,
+      "importers": 19,
       "exportCount": 4
     },
     {
@@ -2392,6 +2392,17 @@
       "id": "file:test/eta_engine_test.dart",
       "level": "file",
       "label": "test/eta_engine_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/eta_sigma_floor_test.dart",
+      "level": "file",
+      "label": "test/eta_sigma_floor_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -7582,6 +7593,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/eta_engine_test.dart"
+    },
+    {
+      "id": "symbol:test/eta_sigma_floor_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/eta_sigma_floor_test.dart"
     },
     {
       "id": "symbol:test/eta_utils_test.dart#main",
@@ -18028,6 +18048,27 @@
     {
       "from": "file:test/eta_engine_test.dart",
       "to": "symbol:test/eta_engine_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/eta_sigma_floor_test.dart",
+      "to": "file:lib/config/fire_decision_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/eta_sigma_floor_test.dart",
+      "to": "file:lib/services/alarm_evaluator.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/eta_sigma_floor_test.dart",
+      "to": "symbol:test/eta_sigma_floor_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

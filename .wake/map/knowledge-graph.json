@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "faf539c3865e72e8f85e15b892aeb980a06ffded",
-    "gitTree": "a8ae30ec7827ff9fac67fce2e05058d79be812e8",
-    "generatedAt": "2026-07-18T09:24:50+05:30",
-    "filesIndexed": 315,
-    "dependencyEdges": 644,
-    "totalExports": 529,
-    "totalImports": 1445,
+    "gitCommit": "3ff862ab644b8253a01688319e0fa8505ca00799",
+    "gitTree": "2bed31386873fa4cf7e8c3f3cdc18a668efbd359",
+    "generatedAt": "2026-07-18T09:41:15+05:30",
+    "filesIndexed": 316,
+    "dependencyEdges": 646,
+    "totalExports": 530,
+    "totalImports": 1448,
     "byRole": {
       "other": 2,
       "backend": 11,
-      "flutter-test": 165,
+      "flutter-test": 166,
       "flutter-lib": 129,
       "tool": 8
     },
@@ -568,7 +568,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b47d1e468e65fc20"
+      "contentHash": "709629eac38abc22"
     },
     {
       "file": "lib/config/platform_test_flag_io.dart",
@@ -3688,7 +3688,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "fcaeace12c6adc41"
+      "contentHash": "40446b3b9d0db6f4"
     },
     {
       "file": "lib/services/alarm_haptics.dart",
@@ -6772,7 +6772,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "09f7d52d94731557"
+      "contentHash": "df8f45bb232d098e"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -10199,6 +10199,43 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "a4018cd05d0a5eb7"
+    },
+    {
+      "file": "test/eta_sigma_floor_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/alarm_evaluator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/config/fire_decision_config.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "febebcf8e111f850"
     },
     {
       "file": "test/eta_utils_test.dart",
@@ -18656,6 +18693,18 @@
       "kind": "static"
     },
     {
+      "from": "test/eta_sigma_floor_test.dart",
+      "to": "lib/services/alarm_evaluator.dart",
+      "source": "package:geowake2/services/alarm_evaluator.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/eta_sigma_floor_test.dart",
+      "to": "lib/config/fire_decision_config.dart",
+      "source": "package:geowake2/config/fire_decision_config.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/eta_utils_test.dart",
       "to": "lib/services/eta_utils.dart",
       "source": "package:geowake2/services/eta_utils.dart",
@@ -21732,7 +21781,7 @@
     },
     {
       "file": "lib/services/alarm_evaluator.dart",
-      "importers": 18,
+      "importers": 19,
       "exports": [
         "AlarmEventType",
         "AlarmTrigger",
@@ -21839,6 +21888,13 @@
       ]
     },
     {
+      "file": "lib/config/fire_decision_config.dart",
+      "importers": 8,
+      "exports": [
+        "FireDecisionConfig"
+      ]
+    },
+    {
       "file": "lib/services/alarm_player.dart",
       "importers": 8,
       "exports": [
@@ -21866,13 +21922,6 @@
       "exports": [
         "SnapResult",
         "SnapToRouteEngine"
-      ]
-    },
-    {
-      "file": "lib/config/fire_decision_config.dart",
-      "importers": 7,
-      "exports": [
-        "FireDecisionConfig"
       ]
     },
     {
@@ -22337,7 +22386,7 @@
     },
     {
       "file": "lib/services/alarm_evaluator.dart",
-      "importers": 18,
+      "importers": 19,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/services/tracking/alarm_controller.dart",
@@ -22350,6 +22399,7 @@
         "test/debug_alarm_mismatch.dart",
         "test/destination_only_metro_time_test.dart",
         "test/ekf/replay_harness_test.dart",
+        "test/eta_sigma_floor_test.dart",
         "test/fire_decision_fractile_test.dart",
         "test/integration/reachability_ride_scenario_test.dart",
         "test/integration/reachability_scenarios_test.dart",
@@ -22613,6 +22663,24 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/config/fire_decision_config.dart",
+      "importers": 8,
+      "directDependents": [
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/location_manager.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/eta_sigma_floor_test.dart",
+        "test/fire_decision_fractile_test.dart",
+        "test/integration/reachability_scenarios_test.dart"
+      ],
+      "exportedSymbols": [
+        "FireDecisionConfig"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/alarm_player.dart",
       "importers": 8,
       "directDependents": [
@@ -22683,23 +22751,6 @@
       "exportedSymbols": [
         "SnapResult",
         "SnapToRouteEngine"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/config/fire_decision_config.dart",
-      "importers": 7,
-      "directDependents": [
-        "lib/services/alarm_evaluator.dart",
-        "lib/services/location_manager.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/location_stream_handler.dart",
-        "test/ekf/replay_harness_test.dart",
-        "test/fire_decision_fractile_test.dart",
-        "test/integration/reachability_scenarios_test.dart"
-      ],
-      "exportedSymbols": [
-        "FireDecisionConfig"
       ],
       "riskLevel": "high"
     },

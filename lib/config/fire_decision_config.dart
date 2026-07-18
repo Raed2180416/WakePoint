@@ -39,4 +39,12 @@ class FireDecisionConfig {
   /// safe (early, never late) AND tight. This does NOT clamp the filter's
   /// reported σ — only the value fed into the fire decision.
   static const double maxFractileSigmaMeters = 300.0;
+
+  /// GAP #21: velocity floor (m/s) used to convert position uncertainty into an
+  /// ETA-time cushion when the measured speed is unobservable (stale <= 0.5 m/s,
+  /// the normal underground state). Without a floor the ETA sigma collapses to 0
+  /// and the fire test degrades to firing at the median (late-risk). 9.2 m/s is
+  /// the metro scheduled cruise speed (~33 km/h with dwell), so the cushion is
+  /// realistic rather than exploding as v -> 0.
+  static const double etaSigmaSpeedFloorMps = 9.2;
 }

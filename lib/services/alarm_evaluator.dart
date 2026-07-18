@@ -1542,10 +1542,13 @@ ${stopNamesDebug.map((s) => '║   $s').join('\n')}
     required double? sigmaVMps,
   }) {
     if (!etaSeconds.isFinite) return 0.0;
+    // GAP #21: underground the GPS/EKF speed is stale (<= 0.5 m/s), which made
+    // this return 0 — ZERO ETA cushion, degrading the fire test to the median
+    // (late-risk). Floor the effective velocity to a realistic transit speed so
+    // position uncertainty (sigmaS) still yields a positive time cushion.
     final v = (speedMps != null && speedMps.isFinite && speedMps > 0.5)
         ? speedMps
-        : 0.0;
-    if (v <= 0.0) return 0.0;
+        : FireDecisionConfig.etaSigmaSpeedFloorMps;
     final sS =
         (sigmaSMeters != null && sigmaSMeters.isFinite && sigmaSMeters > 0)
             ? sigmaSMeters.clamp(0.0, FireDecisionConfig.maxFractileSigmaMeters)
