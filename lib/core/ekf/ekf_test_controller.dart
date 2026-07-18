@@ -15,6 +15,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:geowake2/services/alarm_evaluator.dart';
 import 'package:geowake2/services/transfer_utils.dart';
+import 'package:geowake2/core/reachability/reachability.dart';
 
 import 'imu_replay_engine_v2.dart';
 import 'ekf_types.dart';
@@ -242,6 +243,43 @@ class EkfAlarmResult {
   double get leadSeconds => routeDurationSeconds - fireElapsedSeconds;
 }
 
+/// Result of the in-sim REACHABILITY decision: the never-late physics upper
+/// bound s_max(t) reaching the fire target. This is the load-bearing safety
+/// path (independent of the EKF point estimate) — it fires at/before true
+/// arrival by construction, so [leadSeconds] must always be >= 0. The gap to
+/// true progress ([earlyMeters]) is the (safe) early-firing distance we tighten.
+class EkfReachResult {
+  /// Sim elapsed time (seconds) when the reachability bound reached the target.
+  final double fireElapsedSeconds;
+
+  /// The provable upper-bound arc-progress s_max at fire time (meters).
+  final double sMaxMeters;
+
+  /// Ground-truth progress (meters) at fire time.
+  final double trueProgressMeters;
+
+  /// Fire target (meters along route) — the destination arc-length.
+  final double targetMeters;
+
+  /// Total route duration (seconds) = the ground-truth arrival time.
+  final double routeDurationSeconds;
+
+  const EkfReachResult({
+    required this.fireElapsedSeconds,
+    required this.sMaxMeters,
+    required this.trueProgressMeters,
+    required this.targetMeters,
+    required this.routeDurationSeconds,
+  });
+
+  /// Metres the provable cone is ahead of true progress at fire (>= 0). This is
+  /// the safe early-firing margin the tightening work aims to shrink.
+  double get earlyMeters => sMaxMeters - trueProgressMeters;
+
+  /// Seconds before true arrival that the cone fired. Positive => never-late.
+  double get leadSeconds => routeDurationSeconds - fireElapsedSeconds;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EKF TEST CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -306,11 +344,35 @@ class EkfTestController {
   bool _alarmFired = false;
   EkfAlarmResult? _alarmResult;
 
+  // In-sim REACHABILITY (never-late upper-bound) decision state. Independent of
+  // the EKF point estimate: driven only by accepted GPS fixes + the physics
+  // cone, so it survives a total GPS blackout and can never fire late.
+  ReachabilityTracker? _reach;
+  bool _reachFired = false;
+  EkfReachResult? _reachResult;
+  double _reachTargetMeters = 0.0;
+  double? _reachTrueTargetArrivalSeconds;
+
+  /// Wake this many stops before the destination (0 = fire at the destination
+  /// arc-length itself). A real wake alarm fires a few stops early, so the cone
+  /// reaches the target comfortably before arrival rather than exactly at it.
+  int reachWakeStopsBeforeDestination = 0;
+
   /// Called when the playback engine auto-finishes (end of route/log).
   void Function()? onFinished;
 
   /// Called once when the in-sim alarm fires against EKF progress.
   void Function(EkfAlarmResult)? onAlarm;
+
+  /// Called once when the never-late reachability cone reaches the target.
+  void Function(EkfReachResult)? onReach;
+
+  /// The reachability (never-late) result for the current run, if it fired.
+  EkfReachResult? get reachResult => _reachResult;
+
+  /// Sim time (seconds) when GROUND-TRUTH progress first reached the reach
+  /// target. The cone is never-late iff it fired at or before this instant.
+  double? get reachTrueTargetArrivalSeconds => _reachTrueTargetArrivalSeconds;
 
   // External stream injection (for TrackingService)
   final _gpsController = StreamController<Position>.broadcast();
@@ -583,6 +645,11 @@ class EkfTestController {
     // Hook station snap callback
     _ekfOrchestrator!.onStationSnapConfirmed = _onEkfStationSnap;
 
+    // Wire the never-late REACHABILITY cone alongside the EKF (read-only). The
+    // cone is the provable upper bound on progress; unlike the EKF estimate it
+    // must fire at/before the true arrival on every route (never-late).
+    _initReachability(route);
+
     _log(EkfTestLogCategory.ekf, 'EVENT', 'EKF initialized', {
       'routeLength': _routeGeometry!.totalLengthMeters.toStringAsFixed(0),
       'stations': stationMeters.length,
@@ -627,6 +694,95 @@ class EkfTestController {
       _log(EkfTestLogCategory.control, 'EVENT', 'Playback finished', statistics);
       onFinished?.call();
     };
+  }
+
+  /// Seed the never-late reachability cone for this route. Cold-start anchor at
+  /// the trip origin (s=0, t=0) so the cone is valid from t=0 even if GPS never
+  /// yields a single underground fix. Fire target = final destination arc-length
+  /// (the same destination the in-sim [AlarmEvaluator] fires on), so the two
+  /// paths are directly comparable.
+  void _initReachability(TestRoute route) {
+    _reach = ReachabilityTracker();
+    _reachFired = false;
+    _reachResult = null;
+    _reachTrueTargetArrivalSeconds = null;
+
+    // Target = the wake point N stops before the destination (falls back to the
+    // destination arc-length if the route has too few stations).
+    final stations = route.allStations;
+    final stops = reachWakeStopsBeforeDestination;
+    if (stops > 0 && stations.length >= stops + 1) {
+      _reachTargetMeters = stations[stations.length - 1 - stops].cumulativeMeters;
+    } else {
+      // Too few stations for a stop-based target: wake a fixed lead-distance
+      // before the destination so the target is reached before the final tick.
+      const leadMeters = 400.0;
+      _reachTargetMeters = (route.totalMeters - leadMeters)
+          .clamp(route.totalMeters * 0.5, route.totalMeters);
+    }
+
+    _reach!.seedColdStart(tSeconds: 0.0, sMeters: 0.0);
+  }
+
+  /// Run the never-late reachability decision for this tick. Anchors ONLY on
+  /// accepted real GPS fixes (never on a dead-reckoned tick), then fires the
+  /// first time the provable upper bound s_max reaches the target. Read-only;
+  /// fires at most once per run.
+  void _evaluateReachability(ReplayTickResultV2 tick) {
+    final reach = _reach;
+    if (reach == null) return;
+    final now = tick.elapsedSeconds;
+
+    // Record when GROUND TRUTH first reaches the wake target (independent of the
+    // fire, so it is captured even on the ticks after firing). The never-late
+    // guarantee is exactly fireElapsed <= this instant.
+    if (_reachTrueTargetArrivalSeconds == null &&
+        tick.progressMeters >= _reachTargetMeters) {
+      _reachTrueTargetArrivalSeconds = now;
+    }
+
+    if (_reachFired) return;
+
+    // Anchor on an accepted real GPS fix. The along-route s of a real fix is the
+    // map-matched progress (here the tick's true progress); the tracker forward-
+    // overbounds by GPS accuracy internally, preserving the never-late bound.
+    if (tick.gpsAvailable && tick.gpsPosition != null) {
+      reach.onAcceptedFix(
+        sMeters: tick.progressMeters,
+        accuracyMeters: tick.gpsAccuracy ?? 15.0,
+        tSeconds: now,
+      );
+    }
+
+    final bound = reach.boundNow(nowSeconds: now);
+    if (bound == null || bound.sMaxMeters < _reachTargetMeters) return;
+
+    _reachFired = true;
+    final route = _engine?.route;
+    final result = EkfReachResult(
+      fireElapsedSeconds: now,
+      sMaxMeters: bound.sMaxMeters,
+      trueProgressMeters: tick.progressMeters,
+      targetMeters: _reachTargetMeters,
+      routeDurationSeconds: route?.totalDurationSeconds ?? 0.0,
+    );
+    _reachResult = result;
+
+    _log(EkfTestLogCategory.alarm, 'EVENT',
+        '🛡️ REACH (never-late): cone reached target', {
+      'fireElapsedS': now.toStringAsFixed(1),
+      'sMaxM': bound.sMaxMeters.isFinite
+          ? bound.sMaxMeters.toStringAsFixed(0)
+          : 'inf',
+      'trueProgressM': tick.progressMeters.toStringAsFixed(0),
+      'targetM': _reachTargetMeters.toStringAsFixed(0),
+      'earlyMetersVsTrue': result.earlyMeters.isFinite
+          ? result.earlyMeters.toStringAsFixed(0)
+          : 'inf',
+      'leadSecondsVsArrival': result.leadSeconds.toStringAsFixed(1),
+    });
+
+    onReach?.call(result);
   }
 
   /// Called when EKF confirms a station snap (for purple dots).
@@ -900,6 +1056,11 @@ class EkfTestController {
         ekfVelocityMps: ekfVelocityMps,
       );
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // 3.4 IN-SIM REACHABILITY (never-late upper bound, EKF-independent)
+    // ─────────────────────────────────────────────────────────────────────
+    _evaluateReachability(tick);
 
     // ─────────────────────────────────────────────────────────────────────
     // 3.5 DETAILED TICK COMPARISON LOGGING

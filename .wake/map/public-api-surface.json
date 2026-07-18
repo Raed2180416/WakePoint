@@ -132,6 +132,10 @@
     },
     {
       "kind": "class",
+      "name": "EkfReachResult"
+    },
+    {
+      "kind": "class",
       "name": "EkfTestController"
     },
     {

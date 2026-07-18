@@ -41,6 +41,9 @@ jobs:
       - name: Never-late AT SCALE (real Dart over the committed route matrix)
         run: flutter test test/scale/reachability_scale_test.dart
 
+      - name: NEVER-LATE through the simulation-playground engine (real replay)
+        run: flutter test test/dashboard/playground_reachability_e2e_test.dart
+
       - name: Monotonic-clock guard (backward-wall-jump never-late)
         run: flutter test test/core/clock/
 

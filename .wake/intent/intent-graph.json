@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "f0bdf463d7f3c02c13d19aee1654959cfe425397",
-  "generatedAt": "2026-07-18T19:44:22+05:30",
-  "structuralDigest": "4718f11dae8f7512dc96a43503eaad4f865d43ea",
+  "gitCommit": "b2eec7a85b115cb0088f734ccaeeb1bfc049963f",
+  "generatedAt": "2026-07-18T19:46:07+05:30",
+  "structuralDigest": "5b59a2288d130f34a8dcf765f7a3097f17f1f669",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 919,
-    "edgeCount": 1864,
+    "nodeCount": 922,
+    "edgeCount": 1869,
     "byLevel": {
       "feature": 9,
-      "file": 329,
+      "file": 330,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 546
+      "symbol": 548
     },
     "byEdgeType": {
-      "contains": 668,
-      "depends-on": 679,
+      "contains": 670,
+      "depends-on": 682,
       "references": 517
     }
   },
@@ -625,8 +625,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
-      "exportCount": 7
+      "importers": 4,
+      "exportCount": 8
     },
     {
       "id": "file:lib/core/ekf/ekf_types.dart",
@@ -658,7 +658,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "ekf-sensor-fusion",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 17
     },
     {
@@ -746,7 +746,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 14,
+      "importers": 15,
       "exportCount": 7
     },
     {
@@ -2282,6 +2282,17 @@
       "id": "file:test/dashboard/osm_overlay_manager_test.dart",
       "level": "file",
       "label": "test/dashboard/osm_overlay_manager_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/dashboard/playground_reachability_e2e_test.dart",
+      "level": "file",
+      "label": "test/dashboard/playground_reachability_e2e_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -4555,6 +4566,15 @@
       "id": "symbol:lib/core/ekf/ekf_test_controller.dart#EkfAlarmResult",
       "level": "symbol",
       "label": "EkfAlarmResult",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/ekf/ekf_test_controller.dart"
+    },
+    {
+      "id": "symbol:lib/core/ekf/ekf_test_controller.dart#EkfReachResult",
+      "level": "symbol",
+      "label": "EkfReachResult",
       "kind": "class",
       "deterministic": true,
       "source": "map",
@@ -7547,6 +7567,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/dashboard/osm_overlay_manager_test.dart"
+    },
+    {
+      "id": "symbol:test/dashboard/playground_reachability_e2e_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/dashboard/playground_reachability_e2e_test.dart"
     },
     {
       "id": "symbol:test/dashboard/simulation_state_test.dart#main",
@@ -10654,6 +10683,13 @@
     },
     {
       "from": "file:lib/core/ekf/ekf_test_controller.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/ekf/ekf_test_controller.dart",
       "to": "file:lib/services/alarm_evaluator.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -10669,6 +10705,13 @@
     {
       "from": "file:lib/core/ekf/ekf_test_controller.dart",
       "to": "symbol:lib/core/ekf/ekf_test_controller.dart#EkfAlarmResult",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/ekf/ekf_test_controller.dart",
+      "to": "symbol:lib/core/ekf/ekf_test_controller.dart#EkfReachResult",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17886,6 +17929,27 @@
     {
       "from": "file:test/dashboard/osm_overlay_manager_test.dart",
       "to": "symbol:test/dashboard/osm_overlay_manager_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/dashboard/playground_reachability_e2e_test.dart",
+      "to": "file:lib/core/ekf/ekf_test_controller.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/dashboard/playground_reachability_e2e_test.dart",
+      "to": "file:lib/core/ekf/imu_replay_engine_v2.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/dashboard/playground_reachability_e2e_test.dart",
+      "to": "symbol:test/dashboard/playground_reachability_e2e_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
