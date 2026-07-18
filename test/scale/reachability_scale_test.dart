@@ -17,7 +17,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/core/reachability/reachability.dart';
 
-const String kScaleRidesDir = '/home/raed/geowake_imu_analysis/scale/rides';
+// Committed diverse subset (runs in CI) preferred; the full generated matrix on
+// the founder's machine is used when present.
+const String kInRepoScaleDir = 'test/fixtures/scale';
+const String kExternalScaleDir = '/home/raed/geowake_imu_analysis/scale/rides';
+
+String get kScaleRidesDir =>
+    Directory(kInRepoScaleDir).existsSync() ? kInRepoScaleDir : kExternalScaleDir;
 
 class _Ride {
   final String id;
@@ -153,6 +159,7 @@ void main() {
         '${lateRides.take(10).join("; ")}');
     expect(late, 0, reason: 'LATE fires through the real reachability code: '
         '${lateRides.take(10).join("; ")}');
-    expect(ran, greaterThan(50), reason: 'expected the generated ride matrix');
+    expect(ran, greaterThan(10),
+        reason: 'expected the committed scale subset (or the full external matrix)');
   }, timeout: const Timeout(Duration(minutes: 10)));
 }

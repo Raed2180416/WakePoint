@@ -38,6 +38,12 @@ jobs:
       - name: Reachability physics proofs
         run: flutter test test/reachability/
 
+      - name: Never-late AT SCALE (real Dart over the committed route matrix)
+        run: flutter test test/scale/reachability_scale_test.dart
+
+      - name: Monotonic-clock guard (backward-wall-jump never-late)
+        run: flutter test test/core/clock/
+
       - name: Metro data integrity (shipped Dart data)
         run: flutter test test/metro_data_integrity_test.dart test/metro_vehicle_types_test.dart
 

@@ -3,12 +3,12 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "a7dbcd366f2e8ac88e0d0031a9bc64650eef7fe3",
-    "gitTree": "ffa7136e54c529bab5995e60ca03647c0b830e95",
-    "generatedAt": "2026-07-18T19:42:48+05:30",
+    "gitCommit": "f0bdf463d7f3c02c13d19aee1654959cfe425397",
+    "gitTree": "4718f11dae8f7512dc96a43503eaad4f865d43ea",
+    "generatedAt": "2026-07-18T19:44:22+05:30",
     "filesIndexed": 329,
     "dependencyEdges": 679,
-    "totalExports": 545,
+    "totalExports": 546,
     "totalImports": 1510,
     "byRole": {
       "other": 2,
@@ -14513,7 +14513,11 @@
         },
         {
           "kind": "const",
-          "name": "kScaleRidesDir"
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "kind": "const",
+          "name": "kExternalScaleDir"
         }
       ],
       "imports": [
@@ -14557,13 +14561,16 @@
       ],
       "constants": [
         {
-          "name": "kScaleRidesDir"
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "name": "kExternalScaleDir"
         }
       ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "0a1cbe02e288cf2c"
+      "contentHash": "10520fe6949713c6"
     },
     {
       "file": "test/segment_builder_test.dart",
