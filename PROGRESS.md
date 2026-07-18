@@ -105,3 +105,19 @@ Launched a skeptical reviewer to try to BREAK the never-late guarantee in the cr
 - **FINDING 2 (V_LINE under-bound on mis-named fast line):** mitigated with suburban/local + city keywords; blanket ceiling default REJECTED (fires every metro ~2x early on blackout + inverts metro<express<RRTS ordering). Narrow residual (Airport Express as "Orange Line", Mumbai suburban as "Western Line") documented honestly in forLine + VALIDATION_REPORT §1.15/§3 as a dataset/vehicle-type follow-up — keyword matching fundamentally can't distinguish it. RRTS stays reliably branded/caught.
 
 **FINAL STATE:** 10 commits on sim-validation (faf539c → 013b62f). Full `flutter test` = 1175 green; `flutter analyze lib/` = 0 errors/0 warnings; never-late GATE = PASS (0 late). All 8 brief phases addressed to the definition-of-done: every gap is fixed-and-proven (with repro) OR honestly documented with the exact reason it needs hardware/a human. The core never-late promise is real for every alarm mode, gated in CI, and the crown-jewel core has been adversarially verified. Deliverables complete: VALIDATION_REPORT.md, ECONOMICS.md, DATA_STRATEGY.md, docs/research/grounding_notes.md (+raw/), docs/BACKLOG_CURRENT.md, docs/IMPL_PACKAGES.md, PROGRESS.md, canon reconciled.
+
+---
+
+## Deep underground-positioning research (2026-07-18, wave 5)
+
+User asked to deeply attack the braking-force / stop-detection lead, model it to SOTA (not naive), simulate on the real polyline/stops, cover car/walk modes, verify on-train detection, and evaluate the observed-speed idea. Ran 4 adversarially-verified parallel workflows (~40 agents) + hands-on real-data validation on the 2 REAL Bengaluru Purple-line rides. Committed 2fb2ca9 (docs/research/underground/, no lib/ changes, suite green 1175).
+
+VERDICT (SYNTHESIS.md): the win is REAL + large (43-46% early-firing cut; worst 9-min blackout +7279m->-34m, ~214x) but SENSOR-GATED. Never-late core deliberately UNTOUCHED.
+- Braking force works for STOP-EVENT detection -> re-anchor to KNOWN station geometry, NOT velocity integration (longitudinal sign unobservable on handheld). Needs high-precision detection (false stop = sole late-fire path) -> needs barometer/magnetometer/WiFi corroborator we don't log yet.
+- Observed-speed: literal V_LINE:=observed-max PROVEN UNSAFE; accel-limited cone dips 24/33 real windows with naive v0 (needs dwell-gated v0 + a_max upper bound). Safe uses: mode confirm, kinematic params, crowd-sourced design-speed-floored segment speeds (data-moat tie-in).
+- On-train vs parallel car: unsolvable from motion (SHL F1 ~89%); solvable from geometry (route-correlated GPS-outage + station-cadence). 2 adversarial late-fire holes found+fixed-in-design.
+- Modes: walk PDR bounded (tractable); car hardest; classifier train->walk error 0/2460, V_LINE=max-plausible rule 0/2460 under-estimates.
+- Adversarial verifiers caught REAL never-late breaks (train-kinematics terminal-decel direction; HMM tail-quantile trigger; accel-cone a_max) — all corrected in-doc. My own per-tau validation independently confirmed the accel-cone naive-v0 dip.
+- V_LINE=28 confirmed valid ceiling (max true 21.6 m/s); 22.2 is NOT.
+
+Roadmap (build-off-existing): log baro+mag (sensor_fusion) + collect real rides incl. a parallel-car ride -> precision-gated HMM stop detector (active_route_manager/station_association) -> reachability-gated stop-anchor min()-term (default-OFF) -> mode-max V_LINE selection -> on-train gate (G v B) with the 2 fixes -> accel-limited cone with dwell-gated v0. Everything device-unproven at scale until on-device data.

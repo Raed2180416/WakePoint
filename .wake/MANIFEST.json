@@ -1,12 +1,12 @@
 {
   "schemaVersion": "wakepoint-manifest-v1",
   "repo": "WakePoint",
-  "gitCommit": "f1ef7b68d2043bf12c70120d694defdd13494f4a",
-  "gitTree": "52945b4ea0e3ecaf1bea0ded18a00d258e247c9e",
-  "generatedAt": "2026-07-18T11:11:16+05:30",
-  "sourceDigest": "4a9eece844511046d285fe26c75d6e52fa2d8f7a4334e05ed14084d3f9863a8b",
+  "gitCommit": "2fb2ca9b5c2ea2fd15995134db86ea94464f0f71",
+  "gitTree": "65c8f37d4779190c6427e7b0ee44980ff1542ad4",
+  "generatedAt": "2026-07-18T15:39:29+05:30",
+  "sourceDigest": "ad81b92a8c2056768cc3a7a889ddd9b4e6a0d23afabb426ca67e88c843719c1d",
   "artifactCount": 19,
-  "rootDigest": "ed14dc89c6de54fac1d548ab42405be017e4562934cb49c4ca5d808c1ad8a3f0",
+  "rootDigest": "0d0c098a1a1a27562c70d706e71c13cfb48c4f24db41d8bb7e006b319b3fe683",
   "artifacts": [
     {
       "path": ".wake/AGENT_CONTEXT.md",
@@ -54,7 +54,7 @@
       "path": ".wake/intent/intent-graph.json",
       "bytes": 686812,
       "layer": "semantic",
-      "sha256": "9c1cdd06e6c98f2ac51c37097a647d5ae89ab1661d07c41092e7126c42d48e1c"
+      "sha256": "6256d30a2bb549e576f8e700e0f96556a022df3009040cd6318940459f1e794a"
     },
     {
       "path": ".wake/intent/intent-graph.svg",
@@ -84,13 +84,13 @@
       "path": ".wake/map/knowledge-graph.json",
       "bytes": 608225,
       "layer": "deterministic",
-      "sha256": "695def20dc4442d1651825f50f10068e4b4bed03d9a0dd13d635accf23a4000c"
+      "sha256": "eadccc824a5d609ae5c32656f57694ae6bde8ca616a4d8cb480accc68aa9f91b"
     },
     {
       "path": ".wake/map/LLM_NAVIGATION_GUIDE.md",
       "bytes": 1535,
       "layer": "deterministic",
-      "sha256": "f66df9ac18886a6bf01fa5612d04e9240595cb003832a8fa48058f4f61da85c7"
+      "sha256": "78d3d9e155db8b2c6698af3bb1681243f201a2ae7a040ed807225cc9ef088938"
     },
     {
       "path": ".wake/map/module-interfaces.jsonl",
@@ -120,7 +120,7 @@
       "path": ".wake/surface/coverage-ledger.json",
       "bytes": 3346,
       "layer": "deterministic",
-      "sha256": "80eef3f22266817280fd8176f22c579cb9e24d130ca5787d03ca3eac7b289226"
+      "sha256": "3895d6af9a4291cbb4cc243ae4544e6fd46fed6331d45f0bb8f594112706d9ff"
     }
   ]
 }
