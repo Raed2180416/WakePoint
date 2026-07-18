@@ -1,5 +1,7 @@
 # GeoWake — Unit Economics Model
 
+> **⚠️ CORRECTED BY `SUSTAINABILITY.md` (2026-07-19).** Three numbers here are now pinned with cited 2026 data and are worse than modeled: **India Nearby Search = $9.60/1k** (not the $1.50 "optimistic"; ~60% of the bill), **Place Details on the shipped legacy code = $5.10/1k** (not $1.50), so the true fully-metered India cost at 100K MAU is **~$0.59/user/mo (2.2× the $0.27 headline below)**, ~$2.15 on the global sheet. "Flips green on cost alone" (§4.2) holds only after migrating Place Details to Places-New with a strict field mask AND excluding support/HA/legal fixed costs — see SUSTAINABILITY.md §3/§5. Use SUSTAINABILITY.md for the break-even model.
+
 _Founder deliverable. Question being answered: **"At launch scale, do we lose money per active user, and what is the cheapest path to break-even?"**_
 
 _Author: cost/revenue model built 2026-07-18 from the cited research files in `docs/research/raw/` + a read of the live code cost surface. FX: **₹83 = $1** (per brief). Note: the ad-research file cites the spot rate at **₹96.4/$** as of 2026-07-17 (https://www.exchangerates.org.uk/USD-INR-spot-exchange-rates-history-2026.html), so every ₹ figure here is ~14% conservative (understated) vs. spot. Every external number is cited inline with its `source_url`. Anything not in the research is tagged **ASSUMPTION** or **NEEDS DATA**._

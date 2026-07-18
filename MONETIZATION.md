@@ -51,6 +51,8 @@ The synthesis these three force: **monetize the moments (intent), not the attent
 - **Math:** 1M MAU × 2% × ₹399 one-time = ₹80L (one-time, not recurring). Subscription = better LTV, lower conversion. **Fit:** launch-viable, steady, but capped by India WTP — it's a nice line, not a rocket.
 
 ### C. Contextual commerce / affiliate — **the asymmetric opportunity, and the reason this app is special**
+
+> **⚠️ CORRECTED (SUSTAINABILITY.md §2, 2026-07-19): the "₹75–300/user/mo" below is an error (~50–500× too high).** Every off-the-shelf India affiliate program (Rapido ₹30, Uber ~₹60, Ola ₹24, Swiggy ₹54, Zomato ₹70) is a **ONE-TIME new-user bounty**, not a per-ride commission — realistic amortized value is **~₹0.5–1.5/user/mo, the same order as ads.** The ₹75–300 "monetize intent" thesis is only reachable via a **recurring** revenue share — a direct ride-hail CPS deal or an **ONDC** buyer-app build (~3% BAF ≈ ₹12/user/mo, BD-free but a real Beckn integration). Do not bank the number below.
 This is the one to actually reason hard about. GeoWake owns the **last-mile-intent moment**: the user just exited transit and needs to get from the station to their real destination. That intent is worth *orders of magnitude* more than an impression.
 - **Last-mile ride-hailing** (Rapido / Ola / Uber): "Book a ride from the station" at arrival. Referral/CPA programs pay per first-ride or per-booking (verify current terms; historically ₹20–100/CPA range). This is *aligned with the user's actual need*, not extractive.
 - **Food / coffee** (Swiggy/Zomato + local merchants): "You're near X" deals at arrival.
