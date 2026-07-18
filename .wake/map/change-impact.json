@@ -447,6 +447,36 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/data_asset/data_asset_config.dart",
+    "importers": 11,
+    "directDependents": [
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/differential_privacy.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/mobility_consent_service.dart",
+      "lib/services/data_asset/od_cell.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/consent_test.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/pipeline_hive_test.dart"
+    ],
+    "exportedSymbols": [
+      "kDataAssetEgressEnabled",
+      "kOdKAnonymityThreshold",
+      "kMinContributingUsersCatchment",
+      "kPerUserMaxCellsPerDay",
+      "kPerUserMaxCountPerCellPerDay",
+      "kEpsilonPerCell",
+      "kPerUserDailyEpsilonCap",
+      "kAggregateSchemaVersion",
+      "kConsentNoticeVersion",
+      "kStationSnapMaxRadiusMeters"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/direction_service.dart",
     "importers": 11,
     "directDependents": [
@@ -589,6 +619,31 @@
       "WrongDirectionAlert",
       "ActiveRouteState",
       "ActiveRouteManager"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/data_asset/od_cell.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/od_aggregator.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/pipeline_hive_test.dart",
+      "test/data_asset/station_binner_test.dart"
+    ],
+    "exportedSymbols": [
+      "OdCellKey",
+      "OdCell",
+      "StationArrivalCell",
+      "ReleaseCandidateCell",
+      "ReleasedCell",
+      "MergeBackendAuthority",
+      "DayType"
     ],
     "riskLevel": "high"
   },
@@ -777,45 +832,6 @@
       "DefaultRouteCachePort",
       "OfflineCoordinator",
       "RouteSource"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/polyline_decoder.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/screens/maptracking.dart",
-      "lib/services/direction_service.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/stop_matcher.dart",
-      "lib/services/transfer_utils.dart",
-      "test/services/projection_correction_test.dart",
-      "test/transit_leg_stops_test.dart"
-    ],
-    "exportedSymbols": [
-      "decodePolyline",
-      "haversineDistance",
-      "polylineLength",
-      "pointAlongPolyline",
-      "estimateStopPositions",
-      "stopDistancesAlongPolyline"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/polyline_simplifier.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/screens/maptracking.dart",
-      "lib/services/direction_service.dart",
-      "lib/services/route_session_manager.dart",
-      "test/event_alarm_progress_source_test.dart",
-      "test/maptracking_eta_distance_test.dart",
-      "test/polyline_projection_clamp_test.dart",
-      "test/polyline_simplifier_test.dart"
-    ],
-    "exportedSymbols": [
-      "PolylineSimplifier"
     ],
     "riskLevel": "high"
   }

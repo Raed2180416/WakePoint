@@ -103,6 +103,15 @@ class SettingsDrawer extends StatelessWidget {
                 );
               },
             ),
+            // Separate, purpose-specific consent (NOT Pro) — default-OFF, opt-in.
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Anonymous data sharing'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed('/dataConsent');
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.close),

@@ -14,6 +14,8 @@ import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
 import 'screens/monetization/paywall_screen.dart';
 import 'screens/stats/trip_stats_screen.dart';
+import 'screens/mobility_data_consent_screen.dart';
+import 'services/data_asset/data_asset_pipeline.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -69,6 +71,9 @@ Future<void> main() async {
     // gates safely default to "free" until it's ready; the core alarm never
     // depends on it. Fire-and-forget so a slow store/ad SDK can't delay startup.
     unawaited(MonetizationService.instance.init());
+    // On-device mobility aggregator: consent defaults OFF and egress is a no-op,
+    // so init is inert until the user opts in. Never blocks startup.
+    unawaited(DataAssetPipeline.instance.init());
 
     runApp(const MyApp());
   }, (Object error, StackTrace stack) {
@@ -206,6 +211,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         if (settings.name == '/tripStats') {
           return MaterialPageRoute(
             builder: (_) => const TripStatsScreen(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/dataConsent') {
+          return MaterialPageRoute(
+            builder: (_) => const DataSharingConsentScreen(),
             settings: settings,
           );
         }

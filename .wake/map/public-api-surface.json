@@ -645,6 +645,12 @@
       "name": "MapTrackingScreen"
     }
   ],
+  "lib/screens/mobility_data_consent_screen.dart": [
+    {
+      "kind": "class",
+      "name": "DataSharingConsentScreen"
+    }
+  ],
   "lib/screens/monetization/paywall_screen.dart": [
     {
       "kind": "class",
@@ -747,6 +753,166 @@
     {
       "kind": "class",
       "name": "ApiClient"
+    }
+  ],
+  "lib/services/data_asset/aggregate_egress_sink.dart": [
+    {
+      "kind": "class",
+      "name": "AggregateEgressSink"
+    },
+    {
+      "kind": "class",
+      "name": "NullEgressSink"
+    }
+  ],
+  "lib/services/data_asset/aggregate_schema.dart": [
+    {
+      "kind": "class",
+      "name": "OdFlowMatrix"
+    },
+    {
+      "kind": "class",
+      "name": "ReleaseCandidateMatrix"
+    },
+    {
+      "kind": "class",
+      "name": "CatchmentReport"
+    },
+    {
+      "kind": "class",
+      "name": "ReleasedCatchmentCell"
+    }
+  ],
+  "lib/services/data_asset/contribution_cap.dart": [
+    {
+      "kind": "class",
+      "name": "ContributionCap"
+    }
+  ],
+  "lib/services/data_asset/data_asset_config.dart": [
+    {
+      "kind": "const",
+      "name": "kDataAssetEgressEnabled"
+    },
+    {
+      "kind": "const",
+      "name": "kOdKAnonymityThreshold"
+    },
+    {
+      "kind": "const",
+      "name": "kMinContributingUsersCatchment"
+    },
+    {
+      "kind": "const",
+      "name": "kPerUserMaxCellsPerDay"
+    },
+    {
+      "kind": "const",
+      "name": "kPerUserMaxCountPerCellPerDay"
+    },
+    {
+      "kind": "const",
+      "name": "kEpsilonPerCell"
+    },
+    {
+      "kind": "const",
+      "name": "kPerUserDailyEpsilonCap"
+    },
+    {
+      "kind": "const",
+      "name": "kAggregateSchemaVersion"
+    },
+    {
+      "kind": "const",
+      "name": "kConsentNoticeVersion"
+    },
+    {
+      "kind": "const",
+      "name": "kStationSnapMaxRadiusMeters"
+    }
+  ],
+  "lib/services/data_asset/data_asset_pipeline.dart": [
+    {
+      "kind": "class",
+      "name": "DataAssetPipeline"
+    }
+  ],
+  "lib/services/data_asset/differential_privacy.dart": [
+    {
+      "kind": "class",
+      "name": "DpParams"
+    },
+    {
+      "kind": "class",
+      "name": "LaplaceMechanism"
+    },
+    {
+      "kind": "enum",
+      "name": "DpModel"
+    }
+  ],
+  "lib/services/data_asset/k_anonymity_filter.dart": [
+    {
+      "kind": "class",
+      "name": "KAnonymityFilter"
+    }
+  ],
+  "lib/services/data_asset/mobility_consent_copy.dart": [
+    {
+      "kind": "class",
+      "name": "MobilityConsentCopy"
+    }
+  ],
+  "lib/services/data_asset/mobility_consent_service.dart": [
+    {
+      "kind": "class",
+      "name": "MobilityConsentService"
+    }
+  ],
+  "lib/services/data_asset/od_aggregator.dart": [
+    {
+      "kind": "class",
+      "name": "OdAggregator"
+    }
+  ],
+  "lib/services/data_asset/od_cell.dart": [
+    {
+      "kind": "class",
+      "name": "OdCellKey"
+    },
+    {
+      "kind": "class",
+      "name": "OdCell"
+    },
+    {
+      "kind": "class",
+      "name": "StationArrivalCell"
+    },
+    {
+      "kind": "class",
+      "name": "ReleaseCandidateCell"
+    },
+    {
+      "kind": "class",
+      "name": "ReleasedCell"
+    },
+    {
+      "kind": "class",
+      "name": "MergeBackendAuthority"
+    },
+    {
+      "kind": "enum",
+      "name": "DayType"
+    }
+  ],
+  "lib/services/data_asset/station_binner.dart": [
+    {
+      "kind": "class",
+      "name": "TripEndpoint"
+    },
+    {
+      "kind": "class",
+      "name": "StationBinner"
     }
   ],
   "lib/services/deviation_detection.dart": [

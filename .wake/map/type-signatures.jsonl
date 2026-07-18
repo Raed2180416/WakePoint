@@ -96,6 +96,11 @@
 {"file":"test/dashboard/simulation_state_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard_alarm_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard_regression_test.dart","name":"main","signature":"()"}
+{"file":"test/data_asset/consent_test.dart","name":"main","signature":"()"}
+{"file":"test/data_asset/dp_and_kanon_test.dart","name":"main","signature":"()"}
+{"file":"test/data_asset/pipeline_hive_test.dart","name":"testBinner","signature":"()"}
+{"file":"test/data_asset/pipeline_hive_test.dart","name":"main","signature":"()"}
+{"file":"test/data_asset/station_binner_test.dart","name":"main","signature":"()"}
 {"file":"test/debug_alarm_diagnostic.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/debug_alarm_diagnostic.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/debug_alarm_diagnostic.dart","name":"problemRoute","signature":"()"}
