@@ -34,8 +34,9 @@ const List<_ProItem> _kItems = [
   _ProItem(Icons.favorite, 'Guardian mode',
       'Auto-share your journey with family + an "arrived safely" alert.',
       PaywallSource.guardian),
-  _ProItem(Icons.alarm_add, 'Multiple alarms at once',
-      'Wake at your transfer AND your destination.', PaywallSource.multiAlarm),
+  // NOTE: transfer/interchange alarms (wake at each transfer + the destination
+  // across a multi-leg journey) already ship and are FREE — do NOT list them as
+  // a Pro benefit.
   _ProItem(Icons.bookmark, 'Unlimited saved routes',
       'Pin every commute you take.', PaywallSource.savedRoutes),
   _ProItem(Icons.music_note, 'Custom & escalating alarm',
