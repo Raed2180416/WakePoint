@@ -23,24 +23,20 @@
 //   3. NO CORE WORK. It performs zero alarm / reachability / tracking / teardown
 //      work — only observation of an already-finished trip.
 //
-// The four bundled sinks (each independently safe on its own):
-//   1. TripStatsService.recordTrip       — local, PII-free ledger (FREE growth
-//                                           loop). Called on the UI isolate, so
-//                                           its single-writer Hive invariant is
-//                                           honored (fromBackgroundIsolate:false).
-//   2. DataAssetPipeline.onTripCompleted — opt-in aggregate surface. Self-gates
+// The bundled sinks (each independently safe on its own):
+//   1. DataAssetPipeline.onTripCompleted — opt-in aggregate surface. Self-gates
 //                                           on consent (default OFF) as line one,
 //                                           so with sharing disabled it is a
 //                                           no-op that never touches a coordinate.
 //                                           Only invoked when BOTH endpoints are
 //                                           known (a degenerate origin≈dest pair
 //                                           is not recorded).
-//   3. PostAlarmMulticast.dispatch       — Guardian "arrived safely" and any
+//   2. PostAlarmMulticast.dispatch       — Guardian "arrived safely" and any
 //                                           other post-alarm observers. The
 //                                           multicast already runs each listener
 //                                           on its own microtask inside its own
 //                                           guard.
-//   4. MonetizationService.recordRide    — increments the ad-frequency cap
+//   3. MonetizationService.recordRide    — increments the ad-frequency cap
 //                                           counter for a completed ride.
 library;
 
@@ -49,8 +45,6 @@ import 'dart:developer' as dev;
 
 import 'package:geowake2/services/data_asset/data_asset_pipeline.dart';
 import 'package:geowake2/services/monetization/monetization_service.dart';
-import 'package:geowake2/services/stats/trip_record.dart';
-import 'package:geowake2/services/stats/trip_stats_service.dart';
 import 'package:geowake2/services/tracking/post_alarm_multicast.dart';
 
 /// Post-arrival fan-out. Pure static entry point — no state, no lifecycle.
@@ -84,27 +78,7 @@ class ArrivalHooks {
       final ts = now ?? DateTime.now();
       final int epochMs = ts.millisecondsSinceEpoch;
 
-      // (1) Local trip ledger — FREE growth loop. UI-isolate call, so the Hive
-      // box is written inline (single-writer invariant). recordTrip is itself
-      // double-swallowed and non-throwing; we still unawait + guard it.
-      try {
-        unawaited(
-          TripStatsService.instance.recordTrip(
-            TripRecord.build(
-              mode: mode ?? 'unknown',
-              outcome: outcome,
-              destStation: destStation,
-              line: line,
-              city: city,
-              wokenOnTime: wokenOnTime,
-              completedAtMs: epochMs,
-            ),
-            fromBackgroundIsolate: false,
-          ),
-        );
-      } catch (_) {/* never matters */}
-
-      // (2) Opt-in aggregate mobility surface. Self-gates on consent (default
+      // (1) Opt-in aggregate mobility surface. Self-gates on consent (default
       // OFF) as its first statement, so this is a no-op unless the rider has
       // explicitly opted in. Only pass through a real, distinct OD pair.
       try {

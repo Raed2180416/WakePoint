@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "7c7f72b296333427d2b8e3c071ee1fd7e18614ff",
-    "gitTree": "f8f83dfd76856b1cfe2afacb9c0de08aeead73e3",
-    "generatedAt": "2026-07-19T05:30:42+05:30",
-    "filesIndexed": 394,
-    "dependencyEdges": 849,
-    "totalExports": 673,
-    "totalImports": 1808,
+    "gitCommit": "fece9766553ac2aa8a122997a682ca2761bf0e12",
+    "gitTree": "16ab4d4b109a44839cd482cd17a7f20713038d8b",
+    "generatedAt": "2026-07-19T05:35:17+05:30",
+    "filesIndexed": 389,
+    "dependencyEdges": 838,
+    "totalExports": 663,
+    "totalImports": 1785,
     "byRole": {
       "other": 4,
       "backend": 12,
-      "flutter-test": 195,
-      "flutter-lib": 174,
+      "flutter-test": 197,
+      "flutter-lib": 167,
       "tool": 8,
       "platform": 1
     },
@@ -3118,10 +3118,6 @@
         },
         {
           "kind": "static",
-          "source": "screens/stats/trip_stats_screen.dart"
-        },
-        {
-          "kind": "static",
           "source": "screens/mobility_data_consent_screen.dart"
         },
         {
@@ -3210,7 +3206,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "0fc68f038264a0d3"
+      "contentHash": "ff765f1a67720792"
     },
     {
       "file": "lib/main_playground.dart",
@@ -3858,7 +3854,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "982d4517fad77f65"
+      "contentHash": "b09fe55f6ec6791b"
     },
     {
       "file": "lib/screens/monetization/post_arrival_screen.dart",
@@ -4155,7 +4151,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "0f9f06f150bbde88"
+      "contentHash": "10caf4ec0969a591"
     },
     {
       "file": "lib/screens/splash_screen.dart",
@@ -4221,91 +4217,6 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "bf07de61c25f55bf"
-    },
-    {
-      "file": "lib/screens/stats/trip_stats_screen.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "TripStatsScreen"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "dart:ui"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter/material.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/monetization/monetization_service.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/monetization/premium_service.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/stat_card_exporter.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_service.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_summary.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/widgets/monetization/pro_gate.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/widgets/stats/share_stat_card.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "TripStatsScreen",
-          "extends": "StatefulWidget"
-        },
-        {
-          "name": "_TripStatsScreenState",
-          "extends": "State"
-        },
-        {
-          "name": "_HeadlineCard",
-          "extends": "StatelessWidget"
-        },
-        {
-          "name": "_ShareRow",
-          "extends": "StatelessWidget"
-        },
-        {
-          "name": "_DetailPanels",
-          "extends": "StatelessWidget"
-        },
-        {
-          "name": "_StatTile",
-          "extends": "StatelessWidget"
-        },
-        {
-          "name": "_TripStatsPaywall",
-          "extends": "StatelessWidget"
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "f142536ca9d64348"
     },
     {
       "file": "lib/services/active_route_manager.dart",
@@ -6007,7 +5918,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ac537a478665e62d"
+      "contentHash": "a863ba0c9b62beec"
     },
     {
       "file": "lib/services/monetization/purchase_backend.dart",
@@ -6725,42 +6636,6 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "657b9b2c6194615f"
-    },
-    {
-      "file": "lib/services/privacy/pii_guard.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "PiiViolation"
-        },
-        {
-          "kind": "class",
-          "name": "PiiGuard"
-        }
-      ],
-      "imports": [],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "PiiViolation",
-          "extends": "Error"
-        },
-        {
-          "name": "_PiiPattern",
-          "extends": null
-        },
-        {
-          "name": "PiiGuard",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "437fa79e6119a381"
     },
     {
       "file": "lib/services/reliability/reliability_preflight_runner.dart",
@@ -8142,203 +8017,6 @@
       "contentHash": "fccc587f28420efd"
     },
     {
-      "file": "lib/services/stats/stat_card_exporter.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "StatCardExportResult"
-        },
-        {
-          "kind": "class",
-          "name": "StatCardExporter"
-        },
-        {
-          "kind": "enum",
-          "name": "StatCardExportStatus"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "dart:developer"
-        },
-        {
-          "kind": "static",
-          "source": "dart:io"
-        },
-        {
-          "kind": "static",
-          "source": "dart:typed_data"
-        },
-        {
-          "kind": "static",
-          "source": "dart:ui"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter/rendering.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter/widgets.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:path_provider/path_provider.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:share_plus/share_plus.dart"
-        }
-      ],
-      "types": [
-        {
-          "name": "StatCardExportStatus",
-          "kind": "enum"
-        }
-      ],
-      "functions": [],
-      "classes": [
-        {
-          "name": "StatCardExportResult",
-          "extends": null
-        },
-        {
-          "name": "StatCardExporter",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "d6487fdce83264dd"
-    },
-    {
-      "file": "lib/services/stats/trip_record.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "TripRecord"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/privacy/pii_guard.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "TripRecord",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "93fef42f4019ce2d"
-    },
-    {
-      "file": "lib/services/stats/trip_stats_service.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "TripStatsService"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "dart:async"
-        },
-        {
-          "kind": "static",
-          "source": "dart:convert"
-        },
-        {
-          "kind": "static",
-          "source": "dart:developer"
-        },
-        {
-          "kind": "static",
-          "source": "dart:io"
-        },
-        {
-          "kind": "static",
-          "source": "package:hive/hive.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:path_provider/path_provider.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_summary.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "TripStatsService",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "faefc1e0bac16612"
-    },
-    {
-      "file": "lib/services/stats/trip_stats_summary.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "TopLine"
-        },
-        {
-          "kind": "class",
-          "name": "TripStatsSummary"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "TopLine",
-          "extends": null
-        },
-        {
-          "name": "TripStatsSummary",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "4d23217a2d45a649"
-    },
-    {
       "file": "lib/services/stop_logic_engine.dart",
       "lang": "dart",
       "exports": [
@@ -9010,14 +8688,6 @@
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_service.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:geowake2/services/tracking/post_alarm_multicast.dart"
         }
       ],
@@ -9033,7 +8703,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "52ce3abd6696fc45"
+      "contentHash": "6f7ffd7ac92bf879"
     },
     {
       "file": "lib/services/tracking/background_handlers.dart",
@@ -10432,7 +10102,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "eae2279c0603c797"
+      "contentHash": "2b14c46c236c0955"
     },
     {
       "file": "lib/widgets/post_arrival_card.dart",
@@ -10629,58 +10299,6 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "5c5e27f80376aade"
-    },
-    {
-      "file": "lib/widgets/stats/share_stat_card.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "ShareStatCardData"
-        },
-        {
-          "kind": "class",
-          "name": "ShareStatCard"
-        },
-        {
-          "kind": "const",
-          "name": "kShareCardLogicalWidth"
-        },
-        {
-          "kind": "const",
-          "name": "kShareCardLogicalHeight"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter/material.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "ShareStatCardData",
-          "extends": null
-        },
-        {
-          "name": "ShareStatCard",
-          "extends": "StatelessWidget"
-        }
-      ],
-      "constants": [
-        {
-          "name": "kShareCardLogicalWidth"
-        },
-        {
-          "name": "kShareCardLogicalHeight"
-        }
-      ],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "db069b31fa27e30b"
     },
     {
       "file": "lib/widgets/widget/widget_settings_tile.dart",
@@ -15165,7 +14783,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "f11c4ac2c919e093"
+      "contentHash": "2948a41a3ef2f4b9"
     },
     {
       "file": "test/monetization/monetization_service_test.dart",
@@ -15210,7 +14828,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "5b52eb32e77ef2f4"
+      "contentHash": "fe045449357bfc46"
     },
     {
       "file": "test/monetization/monetization_test.dart",
@@ -15251,7 +14869,89 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "0c68946ff6805a30"
+      "contentHash": "ee897cfe83695fbc"
+    },
+    {
+      "file": "test/monetization/post_arrival_decision_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/screens/monetization/post_arrival_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/post_arrival_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "341cdfbec06efcbc"
+    },
+    {
+      "file": "test/monetization/post_arrival_screen_widget_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/screens/monetization/post_arrival_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/post_arrival_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_host",
+          "signature": "(PostArrivalCard card)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "568ca8348b4e236f"
     },
     {
       "file": "test/monetization/post_arrival_test.dart",
@@ -15321,7 +15021,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "29697d727f18f291"
+      "contentHash": "576a271bb6cb93fd"
     },
     {
       "file": "test/multiple_switch_point_alarm_test.dart",
@@ -17597,6 +17297,95 @@
       "contentHash": "1898f9c6448a8145"
     },
     {
+      "file": "test/scale/multi_target_scale_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "kind": "const",
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/alarm_target.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/intermediate_target_evaluator.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_load",
+          "signature": "(String rideId)"
+        },
+        {
+          "name": "_trueS",
+          "signature": "(double t, List<double> ts, List<double> ss)"
+        },
+        {
+          "name": "_trueArrivalT",
+          "signature": "(_Ride r, double sTarget)"
+        },
+        {
+          "name": "_simMulti",
+          "signature": "(_Ride r, List<AlarmTarget> targets)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Ride",
+          "extends": null
+        },
+        {
+          "name": "_Fire",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "c25bdd3e8b3ff7e4"
+    },
+    {
       "file": "test/scale/reachability_scale_test.dart",
       "lang": "dart",
       "exports": [
@@ -18648,166 +18437,6 @@
       "contentHash": "437ec62a0c593fd1"
     },
     {
-      "file": "test/stats/share_stat_card_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter/material.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/stat_card_exporter.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/widgets/stats/share_stat_card.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "bcea1d1fa4403427"
-    },
-    {
-      "file": "test/stats/trip_record_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/privacy/pii_guard.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "740085a81c9f4a0a"
-    },
-    {
-      "file": "test/stats/trip_stats_service_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "dart:io"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:hive/hive.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_service.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "59e35d5b6a493fbb"
-    },
-    {
-      "file": "test/stats/trip_stats_summary_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_record.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/stats/trip_stats_summary.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "107ef4f59cb8d56e"
-    },
-    {
       "file": "test/stop_end_tracking_vm_test.dart",
       "lang": "dart",
       "exports": [
@@ -19380,6 +19009,47 @@
       "contentHash": "7368ec25273df8c4"
     },
     {
+      "file": "test/tracking/arrival_hooks_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/arrival_hooks.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/post_alarm_multicast.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        },
+        {
+          "name": "_pump",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "35cd41c46c5c0bb6"
+    },
+    {
       "file": "test/tracking/cold_start_reach_backstop_test.dart",
       "lang": "dart",
       "exports": [
@@ -19423,6 +19093,43 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "eab975f12026cd5f"
+    },
+    {
+      "file": "test/tracking/post_alarm_multicast_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/post_alarm_multicast.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        },
+        {
+          "name": "_pump",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "912433971c9d76a6"
     },
     {
       "file": "test/tracking_alarm_test.dart",
@@ -19902,6 +19609,51 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "a593c97ffa1a1107"
+    },
+    {
+      "file": "test/widget/home_widget_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking_state_store.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/widget_arm_handler.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/widget_render_state.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "2b488170b6eecfcf"
     },
     {
       "file": "test/widgets/post_arrival_card_widget_test.dart",
@@ -21069,12 +20821,6 @@
     },
     {
       "from": "lib/main.dart",
-      "to": "lib/screens/stats/trip_stats_screen.dart",
-      "source": "screens/stats/trip_stats_screen.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/main.dart",
       "to": "lib/screens/mobility_data_consent_screen.dart",
       "source": "screens/mobility_data_consent_screen.dart",
       "kind": "static"
@@ -21569,48 +21315,6 @@
       "from": "lib/screens/splash_screen.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/services/monetization/monetization_service.dart",
-      "source": "package:geowake2/services/monetization/monetization_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/services/monetization/premium_service.dart",
-      "source": "package:geowake2/services/monetization/premium_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/services/stats/stat_card_exporter.dart",
-      "source": "package:geowake2/services/stats/stat_card_exporter.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/services/stats/trip_stats_service.dart",
-      "source": "package:geowake2/services/stats/trip_stats_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/services/stats/trip_stats_summary.dart",
-      "source": "package:geowake2/services/stats/trip_stats_summary.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/widgets/monetization/pro_gate.dart",
-      "source": "package:geowake2/widgets/monetization/pro_gate.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/stats/trip_stats_screen.dart",
-      "to": "lib/widgets/stats/share_stat_card.dart",
-      "source": "package:geowake2/widgets/stats/share_stat_card.dart",
       "kind": "static"
     },
     {
@@ -22322,30 +22026,6 @@
       "kind": "static"
     },
     {
-      "from": "lib/services/stats/trip_record.dart",
-      "to": "lib/services/privacy/pii_guard.dart",
-      "source": "package:geowake2/services/privacy/pii_guard.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/stats/trip_stats_service.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/stats/trip_stats_service.dart",
-      "to": "lib/services/stats/trip_stats_summary.dart",
-      "source": "package:geowake2/services/stats/trip_stats_summary.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/stats/trip_stats_summary.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
       "from": "lib/services/stop_logic_engine.dart",
       "to": "lib/services/transfer_utils.dart",
       "source": "package:geowake2/services/transfer_utils.dart",
@@ -22505,18 +22185,6 @@
       "from": "lib/services/tracking/arrival_hooks.dart",
       "to": "lib/services/monetization/monetization_service.dart",
       "source": "package:geowake2/services/monetization/monetization_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/tracking/arrival_hooks.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/tracking/arrival_hooks.dart",
-      "to": "lib/services/stats/trip_stats_service.dart",
-      "source": "package:geowake2/services/stats/trip_stats_service.dart",
       "kind": "static"
     },
     {
@@ -24380,6 +24048,30 @@
       "kind": "static"
     },
     {
+      "from": "test/monetization/post_arrival_decision_test.dart",
+      "to": "lib/screens/monetization/post_arrival_screen.dart",
+      "source": "package:geowake2/screens/monetization/post_arrival_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_decision_test.dart",
+      "to": "lib/services/monetization/post_arrival_service.dart",
+      "source": "package:geowake2/services/monetization/post_arrival_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_screen_widget_test.dart",
+      "to": "lib/screens/monetization/post_arrival_screen.dart",
+      "source": "package:geowake2/screens/monetization/post_arrival_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_screen_widget_test.dart",
+      "to": "lib/services/monetization/post_arrival_service.dart",
+      "source": "package:geowake2/services/monetization/post_arrival_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/monetization/post_arrival_test.dart",
       "to": "lib/services/monetization/post_arrival_service.dart",
       "source": "package:geowake2/services/monetization/post_arrival_service.dart",
@@ -24920,6 +24612,12 @@
       "kind": "static"
     },
     {
+      "from": "test/scale/multi_target_scale_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/scale/reachability_scale_test.dart",
       "to": "lib/core/reachability/reachability.dart",
       "source": "package:geowake2/core/reachability/reachability.dart",
@@ -25238,54 +24936,6 @@
       "kind": "static"
     },
     {
-      "from": "test/stats/share_stat_card_test.dart",
-      "to": "lib/services/stats/stat_card_exporter.dart",
-      "source": "package:geowake2/services/stats/stat_card_exporter.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/share_stat_card_test.dart",
-      "to": "lib/widgets/stats/share_stat_card.dart",
-      "source": "package:geowake2/widgets/stats/share_stat_card.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_record_test.dart",
-      "to": "lib/services/privacy/pii_guard.dart",
-      "source": "package:geowake2/services/privacy/pii_guard.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_record_test.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_stats_service_test.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_stats_service_test.dart",
-      "to": "lib/services/stats/trip_stats_service.dart",
-      "source": "package:geowake2/services/stats/trip_stats_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_stats_summary_test.dart",
-      "to": "lib/services/stats/trip_record.dart",
-      "source": "package:geowake2/services/stats/trip_record.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/stats/trip_stats_summary_test.dart",
-      "to": "lib/services/stats/trip_stats_summary.dart",
-      "source": "package:geowake2/services/stats/trip_stats_summary.dart",
-      "kind": "static"
-    },
-    {
       "from": "test/stop_end_tracking_vm_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
@@ -25430,6 +25080,18 @@
       "kind": "static"
     },
     {
+      "from": "test/tracking/arrival_hooks_test.dart",
+      "to": "lib/services/tracking/arrival_hooks.dart",
+      "source": "package:geowake2/services/tracking/arrival_hooks.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/tracking/arrival_hooks_test.dart",
+      "to": "lib/services/tracking/post_alarm_multicast.dart",
+      "source": "package:geowake2/services/tracking/post_alarm_multicast.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/tracking/cold_start_reach_backstop_test.dart",
       "to": "lib/services/tracking/alarm_controller.dart",
       "source": "package:geowake2/services/tracking/alarm_controller.dart",
@@ -25445,6 +25107,12 @@
       "from": "test/tracking/cold_start_reach_backstop_test.dart",
       "to": "lib/services/transfer_utils.dart",
       "source": "package:geowake2/services/transfer_utils.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/tracking/post_alarm_multicast_test.dart",
+      "to": "lib/services/tracking/post_alarm_multicast.dart",
+      "source": "package:geowake2/services/tracking/post_alarm_multicast.dart",
       "kind": "static"
     },
     {
@@ -25547,6 +25215,24 @@
       "from": "test/transit_leg_stops_test.dart",
       "to": "lib/services/polyline_decoder.dart",
       "source": "package:geowake2/services/polyline_decoder.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/widget/home_widget_test.dart",
+      "to": "lib/services/tracking_state_store.dart",
+      "source": "package:geowake2/services/tracking_state_store.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/widget/home_widget_test.dart",
+      "to": "lib/services/widget/widget_arm_handler.dart",
+      "source": "package:geowake2/services/widget/widget_arm_handler.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/widget/home_widget_test.dart",
+      "to": "lib/services/widget/widget_render_state.dart",
+      "source": "package:geowake2/services/widget/widget_render_state.dart",
       "kind": "static"
     },
     {
@@ -26293,12 +25979,6 @@
         "name": "SplashScreen"
       }
     ],
-    "lib/screens/stats/trip_stats_screen.dart": [
-      {
-        "kind": "class",
-        "name": "TripStatsScreen"
-      }
-    ],
     "lib/services/active_route_manager.dart": [
       {
         "kind": "class",
@@ -26841,16 +26521,6 @@
         "name": "PositionProviderType"
       }
     ],
-    "lib/services/privacy/pii_guard.dart": [
-      {
-        "kind": "class",
-        "name": "PiiViolation"
-      },
-      {
-        "kind": "class",
-        "name": "PiiGuard"
-      }
-    ],
     "lib/services/reliability/reliability_preflight_runner.dart": [
       {
         "kind": "class",
@@ -27123,42 +26793,6 @@
       {
         "kind": "class",
         "name": "SoftLockManager"
-      }
-    ],
-    "lib/services/stats/stat_card_exporter.dart": [
-      {
-        "kind": "class",
-        "name": "StatCardExportResult"
-      },
-      {
-        "kind": "class",
-        "name": "StatCardExporter"
-      },
-      {
-        "kind": "enum",
-        "name": "StatCardExportStatus"
-      }
-    ],
-    "lib/services/stats/trip_record.dart": [
-      {
-        "kind": "class",
-        "name": "TripRecord"
-      }
-    ],
-    "lib/services/stats/trip_stats_service.dart": [
-      {
-        "kind": "class",
-        "name": "TripStatsService"
-      }
-    ],
-    "lib/services/stats/trip_stats_summary.dart": [
-      {
-        "kind": "class",
-        "name": "TopLine"
-      },
-      {
-        "kind": "class",
-        "name": "TripStatsSummary"
       }
     ],
     "lib/services/stop_logic_engine.dart": [
@@ -27539,24 +27173,6 @@
         "name": "ShareJourneyAction"
       }
     ],
-    "lib/widgets/stats/share_stat_card.dart": [
-      {
-        "kind": "class",
-        "name": "ShareStatCardData"
-      },
-      {
-        "kind": "class",
-        "name": "ShareStatCard"
-      },
-      {
-        "kind": "const",
-        "name": "kShareCardLogicalWidth"
-      },
-      {
-        "kind": "const",
-        "name": "kShareCardLogicalHeight"
-      }
-    ],
     "lib/widgets/widget/widget_settings_tile.dart": [
       {
         "kind": "class",
@@ -27775,11 +27391,25 @@
     },
     {
       "file": "lib/services/tracking_state_store.dart",
-      "importers": 24,
+      "importers": 25,
       "exports": [
         "TrackingSnapshot",
         "TrackingProgressPayload",
         "TrackingStateStore"
+      ]
+    },
+    {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 19,
+      "exports": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "RouteProfile",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
       ]
     },
     {
@@ -27793,31 +27423,10 @@
       ]
     },
     {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 18,
-      "exports": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "RouteProfile",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
-      ]
-    },
-    {
       "file": "lib/core/ekf/route_geometry.dart",
       "importers": 16,
       "exports": [
         "RouteGeometry"
-      ]
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 15,
-      "exports": [
-        "MonetizationService"
       ]
     },
     {
@@ -27844,8 +27453,15 @@
       ]
     },
     {
-      "file": "lib/services/monetization/premium_service.dart",
+      "file": "lib/services/monetization/monetization_service.dart",
       "importers": 14,
+      "exports": [
+        "MonetizationService"
+      ]
+    },
+    {
+      "file": "lib/services/monetization/premium_service.dart",
+      "importers": 13,
       "exports": [
         "PremiumProducts",
         "PremiumService",
@@ -28030,7 +27646,7 @@
     },
     {
       "file": "lib/main.dart",
-      "imports": 21
+      "imports": 20
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -28089,10 +27705,6 @@
       "imports": 8
     },
     {
-      "file": "lib/screens/stats/trip_stats_screen.dart",
-      "imports": 7
-    },
-    {
       "file": "lib/services/widget/home_widget_bridge.dart",
       "imports": 7
     },
@@ -28137,11 +27749,15 @@
       "imports": 5
     },
     {
-      "file": "lib/services/tracking/arrival_hooks.dart",
+      "file": "lib/services/transfer_utils.dart",
       "imports": 5
     },
     {
-      "file": "lib/services/transfer_utils.dart",
+      "file": "test/complex_route_alarm_test.dart",
+      "imports": 5
+    },
+    {
+      "file": "test/dashboard/deviation_simulation_controller_test.dart",
       "imports": 5
     }
   ],
@@ -28371,7 +27987,7 @@
     },
     {
       "file": "lib/services/tracking_state_store.dart",
-      "importers": 24,
+      "importers": 25,
       "directDependents": [
         "lib/screens/homescreen.dart",
         "lib/screens/maptracking.dart",
@@ -28396,12 +28012,49 @@
         "test/reproduce_missing_bounds.dart",
         "test/shared_prefs_reload_test.dart",
         "test/tracking_service_stop_flow_integration_test.dart",
-        "test/tracking_state_store_test.dart"
+        "test/tracking_state_store_test.dart",
+        "test/widget/home_widget_test.dart"
       ],
       "exportedSymbols": [
         "TrackingSnapshot",
         "TrackingProgressPayload",
         "TrackingStateStore"
+      ],
+      "riskLevel": "critical"
+    },
+    {
+      "file": "lib/core/reachability/reachability.dart",
+      "importers": 19,
+      "directDependents": [
+        "lib/core/ekf/ekf_test_controller.dart",
+        "lib/services/alarm_evaluator.dart",
+        "lib/services/ios/ios_backstop_planner.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/notification_updater.dart",
+        "test/core/clock/monotonic_clock_test.dart",
+        "test/dashboard/playground_reachability_e2e_test.dart",
+        "test/ekf/replay_harness_test.dart",
+        "test/integration/reachability_ride_scenario_test.dart",
+        "test/integration/reachability_scenarios_test.dart",
+        "test/ios/ios_backstop_edgecases_test.dart",
+        "test/ios/ios_backstop_planner_test.dart",
+        "test/notification_backstop_lead_test.dart",
+        "test/reachability/reachability_edgecases_test.dart",
+        "test/reachability/reachability_test.dart",
+        "test/reachability/tightening_guards_test.dart",
+        "test/reachability/tightening_never_late_test.dart",
+        "test/scale/multi_target_scale_test.dart",
+        "test/scale/reachability_scale_test.dart"
+      ],
+      "exportedSymbols": [
+        "VLineTable",
+        "ReachabilityAnchor",
+        "RouteTopology",
+        "RouteProfile",
+        "ReachabilityConfig",
+        "ReachabilityBound",
+        "Reachability",
+        "ReachabilityTracker"
       ],
       "riskLevel": "critical"
     },
@@ -28438,41 +28091,6 @@
       "riskLevel": "critical"
     },
     {
-      "file": "lib/core/reachability/reachability.dart",
-      "importers": 18,
-      "directDependents": [
-        "lib/core/ekf/ekf_test_controller.dart",
-        "lib/services/alarm_evaluator.dart",
-        "lib/services/ios/ios_backstop_planner.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/notification_updater.dart",
-        "test/core/clock/monotonic_clock_test.dart",
-        "test/dashboard/playground_reachability_e2e_test.dart",
-        "test/ekf/replay_harness_test.dart",
-        "test/integration/reachability_ride_scenario_test.dart",
-        "test/integration/reachability_scenarios_test.dart",
-        "test/ios/ios_backstop_edgecases_test.dart",
-        "test/ios/ios_backstop_planner_test.dart",
-        "test/notification_backstop_lead_test.dart",
-        "test/reachability/reachability_edgecases_test.dart",
-        "test/reachability/reachability_test.dart",
-        "test/reachability/tightening_guards_test.dart",
-        "test/reachability/tightening_never_late_test.dart",
-        "test/scale/reachability_scale_test.dart"
-      ],
-      "exportedSymbols": [
-        "VLineTable",
-        "ReachabilityAnchor",
-        "RouteTopology",
-        "RouteProfile",
-        "ReachabilityConfig",
-        "ReachabilityBound",
-        "Reachability",
-        "ReachabilityTracker"
-      ],
-      "riskLevel": "critical"
-    },
-    {
       "file": "lib/core/ekf/route_geometry.dart",
       "importers": 16,
       "directDependents": [
@@ -28495,31 +28113,6 @@
       ],
       "exportedSymbols": [
         "RouteGeometry"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 15,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/screens/guardian_setup_screen.dart",
-        "lib/screens/monetization/paywall_screen.dart",
-        "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/screens/settingsdrawer.dart",
-        "lib/screens/stats/trip_stats_screen.dart",
-        "lib/services/share/guardian_service.dart",
-        "lib/services/tracking/arrival_hooks.dart",
-        "lib/services/widget/home_widget_bridge.dart",
-        "lib/services/widget/widget_arm_handler.dart",
-        "lib/widgets/gated_banner_ad.dart",
-        "lib/widgets/share/guardian_settings_section.dart",
-        "lib/widgets/widget/widget_settings_tile.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart"
-      ],
-      "exportedSymbols": [
-        "MonetizationService"
       ],
       "riskLevel": "critical"
     },
@@ -28599,13 +28192,36 @@
       "riskLevel": "critical"
     },
     {
-      "file": "lib/services/monetization/premium_service.dart",
+      "file": "lib/services/monetization/monetization_service.dart",
       "importers": 14,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/tracking/arrival_hooks.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
+        "lib/widgets/gated_banner_ad.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "MonetizationService"
+      ],
+      "riskLevel": "critical"
+    },
+    {
+      "file": "lib/services/monetization/premium_service.dart",
+      "importers": 13,
       "directDependents": [
         "lib/screens/guardian_setup_screen.dart",
         "lib/screens/monetization/paywall_screen.dart",
         "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/screens/stats/trip_stats_screen.dart",
         "lib/services/monetization/ad_service.dart",
         "lib/services/monetization/monetization_service.dart",
         "lib/widgets/share/guardian_settings_section.dart",

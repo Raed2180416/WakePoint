@@ -217,29 +217,14 @@ class PremiumService {
   /// Remove all ads. (AdPolicy already honours [isPro]; this mirrors it for UI.)
   bool get isAdFree => isPro;
 
-  /// Multiple concurrent alarms.
-  bool get canUseMultipleAlarms => isPro;
-
-  /// Recurring / scheduled alarms.
-  bool get canUseRecurringAlarms => isPro;
-
-  /// Saved & frequent routes beyond the free single active route.
-  bool get canUseSavedRoutes => isPro;
-
-  /// Multi-leg journeys with interchange alerts.
-  bool get canUseMultiLegJourneys => isPro;
-
-  /// Fine "wake me N stops / N minutes before" control.
-  bool get canUseFineWakeControl => isPro;
+  // NOTE: transfer/interchange alarms (wake at each transfer + destination on a
+  // multi-leg journey) already ship and are FREE — there is no "multiple alarms"
+  // Pro gate. Likewise there is no "saved routes", "recurring auto-arm", or
+  // "offline / all-cities" gate: GeoWake is position-dependent (you must be
+  // online and present to plan/start a route), so those don't fit the product.
 
   /// Custom alarm sounds, escalating vibration, gentle-wake.
   bool get canUseCustomAlarmSounds => isPro;
-
-  /// Offline metro maps.
-  bool get canUseOfflineMaps => isPro;
-
-  /// All cities (free tier is capped to the local city set).
-  bool get canUseAllCities => isPro;
 
   /// Home-screen widget.
   bool get canUseWidget => isPro;
@@ -254,11 +239,6 @@ class PremiumService {
   /// "arrived safely" push. (Basic one-off share is ALWAYS free; this is the
   /// automatic/continuous Pro variant.)
   bool get canUseGuardianMode => isPro;
-
-  /// The trip-stats dashboard (streaks / patterns / favorite lines). Note: the
-  /// stat *recording* and the shareable stat CARD are free (growth loop); only
-  /// the rich dashboard is Pro.
-  bool get canUseTripStatsDashboard => isPro;
 
   // NOTE: there is deliberately NO "snooze" gate. A wake-before-your-stop alarm
   // must never be delayable — snoozing would make the rider miss their stop.

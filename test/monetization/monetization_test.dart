@@ -152,11 +152,7 @@ void main() {
 
       // Convenience features are gated off for free.
       expect(svc.isAdFree, isFalse);
-      expect(svc.canUseMultipleAlarms, isFalse);
-      expect(svc.canUseSavedRoutes, isFalse);
-      expect(svc.canUseOfflineMaps, isFalse);
       expect(svc.canUseWidget, isFalse);
-      expect(svc.canUseMultiLegJourneys, isFalse);
     });
 
     test('reliability stays free even for a Pro user (never regresses)', () {
@@ -181,14 +177,7 @@ void main() {
       expect(svc.tier, EntitlementTier.pro);
 
       expect(svc.isAdFree, isTrue);
-      expect(svc.canUseMultipleAlarms, isTrue);
-      expect(svc.canUseRecurringAlarms, isTrue);
-      expect(svc.canUseSavedRoutes, isTrue);
-      expect(svc.canUseMultiLegJourneys, isTrue);
-      expect(svc.canUseFineWakeControl, isTrue);
       expect(svc.canUseCustomAlarmSounds, isTrue);
-      expect(svc.canUseOfflineMaps, isTrue);
-      expect(svc.canUseAllCities, isTrue);
       expect(svc.canUseWidget, isTrue);
       expect(svc.canUseWearOs, isTrue);
       expect(svc.canUseFamilyAlarms, isTrue);

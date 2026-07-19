@@ -26,17 +26,11 @@ void main() {
     test('new Pro gates flip false→true on unlock', () async {
       expect(p.isPro, isFalse);
       expect(p.canUseGuardianMode, isFalse);
-      expect(p.canUseTripStatsDashboard, isFalse);
-      expect(p.canUseRecurringAlarms, isFalse);
-      expect(p.canUseMultipleAlarms, isFalse);
 
       expect(await p.buyPro(), isTrue);
 
       expect(p.isPro, isTrue);
       expect(p.canUseGuardianMode, isTrue);
-      expect(p.canUseTripStatsDashboard, isTrue);
-      expect(p.canUseRecurringAlarms, isTrue);
-      expect(p.canUseMultipleAlarms, isTrue);
     });
 
     test('rewarded day-pass grants Pro then expires', () async {

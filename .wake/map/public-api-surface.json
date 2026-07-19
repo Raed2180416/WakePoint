@@ -717,12 +717,6 @@
       "name": "SplashScreen"
     }
   ],
-  "lib/screens/stats/trip_stats_screen.dart": [
-    {
-      "kind": "class",
-      "name": "TripStatsScreen"
-    }
-  ],
   "lib/services/active_route_manager.dart": [
     {
       "kind": "class",
@@ -1265,16 +1259,6 @@
       "name": "PositionProviderType"
     }
   ],
-  "lib/services/privacy/pii_guard.dart": [
-    {
-      "kind": "class",
-      "name": "PiiViolation"
-    },
-    {
-      "kind": "class",
-      "name": "PiiGuard"
-    }
-  ],
   "lib/services/reliability/reliability_preflight_runner.dart": [
     {
       "kind": "class",
@@ -1547,42 +1531,6 @@
     {
       "kind": "class",
       "name": "SoftLockManager"
-    }
-  ],
-  "lib/services/stats/stat_card_exporter.dart": [
-    {
-      "kind": "class",
-      "name": "StatCardExportResult"
-    },
-    {
-      "kind": "class",
-      "name": "StatCardExporter"
-    },
-    {
-      "kind": "enum",
-      "name": "StatCardExportStatus"
-    }
-  ],
-  "lib/services/stats/trip_record.dart": [
-    {
-      "kind": "class",
-      "name": "TripRecord"
-    }
-  ],
-  "lib/services/stats/trip_stats_service.dart": [
-    {
-      "kind": "class",
-      "name": "TripStatsService"
-    }
-  ],
-  "lib/services/stats/trip_stats_summary.dart": [
-    {
-      "kind": "class",
-      "name": "TopLine"
-    },
-    {
-      "kind": "class",
-      "name": "TripStatsSummary"
     }
   ],
   "lib/services/stop_logic_engine.dart": [
@@ -1961,24 +1909,6 @@
     {
       "kind": "class",
       "name": "ShareJourneyAction"
-    }
-  ],
-  "lib/widgets/stats/share_stat_card.dart": [
-    {
-      "kind": "class",
-      "name": "ShareStatCardData"
-    },
-    {
-      "kind": "class",
-      "name": "ShareStatCard"
-    },
-    {
-      "kind": "const",
-      "name": "kShareCardLogicalWidth"
-    },
-    {
-      "kind": "const",
-      "name": "kShareCardLogicalHeight"
     }
   ],
   "lib/widgets/widget/widget_settings_tile.dart": [

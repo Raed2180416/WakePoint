@@ -97,26 +97,6 @@ class SettingsDrawer extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.insights),
-              title: const Text('Trip stats'),
-              trailing:
-                  (MonetizationService.instance.premiumOrNull?.isPro ?? false)
-                      ? null
-                      : const ProBadge(),
-              onTap: () {
-                Navigator.of(context).pop(); // close the drawer
-                ProGate.run(
-                  context,
-                  allowed: MonetizationService
-                          .instance.premiumOrNull?.canUseTripStatsDashboard ??
-                      false,
-                  source: PaywallSource.tripStats,
-                  onAllowed: () =>
-                      Navigator.of(context).pushNamed('/tripStats'),
-                );
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.favorite_border),
               title: const Text('Guardian mode'),
               trailing:

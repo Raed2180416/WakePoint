@@ -181,7 +181,6 @@ void main() {
 
       // Premium gates stay locked; the core alarm stays free.
       expect(premium.isAdFree, isFalse);
-      expect(premium.canUseSavedRoutes, isFalse);
       expect(premium.canUseCoreAlarm, isTrue);
 
       // A fresh brain over the same store confirms: still free after relaunch.
@@ -243,14 +242,7 @@ void main() {
 
       // Every premium gate flips on.
       expect(premium.isAdFree, isTrue);
-      expect(premium.canUseMultipleAlarms, isTrue);
-      expect(premium.canUseRecurringAlarms, isTrue);
-      expect(premium.canUseSavedRoutes, isTrue);
-      expect(premium.canUseMultiLegJourneys, isTrue);
-      expect(premium.canUseFineWakeControl, isTrue);
       expect(premium.canUseCustomAlarmSounds, isTrue);
-      expect(premium.canUseOfflineMaps, isTrue);
-      expect(premium.canUseAllCities, isTrue);
       expect(premium.canUseWidget, isTrue);
       expect(premium.canUseWearOs, isTrue);
       expect(premium.canUseFamilyAlarms, isTrue);

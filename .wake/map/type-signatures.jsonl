@@ -226,6 +226,9 @@
 {"file":"test/monetization/monetization_journey_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_service_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/post_arrival_decision_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/post_arrival_screen_widget_test.dart","name":"_host","signature":"(PostArrivalCard card)"}
+{"file":"test/monetization/post_arrival_screen_widget_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/premium_gates_wave0_test.dart","name":"main","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"syntheticMultiTransferDirections","signature":"()"}
@@ -303,6 +306,11 @@
 {"file":"test/route_registry_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}
 {"file":"test/saved_routes_service_test.dart","name":"main","signature":"()"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_load","signature":"(String rideId)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_trueArrivalT","signature":"(_Ride r, double sTarget)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_simMulti","signature":"(_Ride r, List<AlarmTarget> targets)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"main","signature":"()"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_load","signature":"(String rideId)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"main","signature":"()"}
@@ -333,10 +341,6 @@
 {"file":"test/simulated_route_integration_test.dart","name":"main","signature":"()"}
 {"file":"test/snap_to_route_test.dart","name":"main","signature":"()"}
 {"file":"test/soft_lock_manager_test.dart","name":"main","signature":"()"}
-{"file":"test/stats/share_stat_card_test.dart","name":"main","signature":"()"}
-{"file":"test/stats/trip_record_test.dart","name":"main","signature":"()"}
-{"file":"test/stats/trip_stats_service_test.dart","name":"main","signature":"()"}
-{"file":"test/stats/trip_stats_summary_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_end_tracking_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_logic_engine_test.dart","name":"main","signature":"()"}
 {"file":"test/stop_matcher_test.dart","name":"main","signature":"()"}
@@ -350,7 +354,11 @@
 {"file":"test/time_alarm_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/time_mode_switch_targeting_universal_test.dart","name":"main","signature":"()"}
 {"file":"test/tool_fetch_route.dart","name":"main","signature":"()"}
+{"file":"test/tracking/arrival_hooks_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking/arrival_hooks_test.dart","name":"_pump","signature":"()"}
 {"file":"test/tracking/cold_start_reach_backstop_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking/post_alarm_multicast_test.dart","name":"main","signature":"()"}
+{"file":"test/tracking/post_alarm_multicast_test.dart","name":"_pump","signature":"()"}
 {"file":"test/tracking_alarm_test.dart","name":"main","signature":"()"}
 {"file":"test/tracking_service_connectivity_test.dart","name":"main","signature":"()"}
 {"file":"test/tracking_service_reroute_integration_test.dart","name":"line","signature":"(LatLng a, LatLng b, int n)"}
@@ -365,6 +373,7 @@
 {"file":"test/transit_leg_stops_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/transit_leg_stops_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
 {"file":"test/transit_leg_stops_test.dart","name":"main","signature":"()"}
+{"file":"test/widget/home_widget_test.dart","name":"main","signature":"()"}
 {"file":"test/widgets/post_arrival_card_widget_test.dart","name":"_host","signature":"(Widget child)"}
 {"file":"test/widgets/post_arrival_card_widget_test.dart","name":"main","signature":"()"}
 {"file":"test/widgets/preflight_dialog_widget_test.dart","name":"_open","signature":"(WidgetTester t, PreflightResult result)"}

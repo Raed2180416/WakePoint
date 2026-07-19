@@ -13,7 +13,6 @@ import 'services/navigation_service.dart';
 import 'dart:developer' as dev;
 import 'screens/homescreen.dart';
 import 'screens/monetization/paywall_screen.dart';
-import 'screens/stats/trip_stats_screen.dart';
 import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
 import 'screens/guardian_setup_screen.dart';
@@ -264,12 +263,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
           // The single upsell surface. Arg is an optional PaywallSource.
           return MaterialPageRoute(
             builder: (_) => const GeoWakePaywallScreen(),
-            settings: settings,
-          );
-        }
-        if (settings.name == '/tripStats') {
-          return MaterialPageRoute(
-            builder: (_) => const TripStatsScreen(),
             settings: settings,
           );
         }

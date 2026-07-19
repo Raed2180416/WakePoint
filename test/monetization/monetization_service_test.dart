@@ -49,7 +49,6 @@ void main() {
     expect(ok, isTrue);
     expect(premium.isPro, isTrue);
     expect(premium.isAdFree, isTrue);
-    expect(premium.canUseSavedRoutes, isTrue);
     // Core reliability is free regardless.
     expect(premium.canUseCoreAlarm, isTrue);
   });

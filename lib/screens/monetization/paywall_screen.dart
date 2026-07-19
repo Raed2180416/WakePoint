@@ -26,28 +26,19 @@ class _ProItem {
   const _ProItem(this.icon, this.title, this.subtitle, [this.source]);
 }
 
-/// Lead items first (recurring auto-arm, Guardian) per the monetization design.
+/// GeoWake Pro benefits. Deliberately narrow: this app is position-dependent
+/// (a wake alarm you set for wherever you are), so "saved routes", "offline
+/// packs", and "recurring auto-arm" don't fit — you must be online + present to
+/// plan/start a route. Transfer/interchange alarms already ship FREE.
 const List<_ProItem> _kItems = [
-  _ProItem(Icons.schedule, 'Recurring auto-arm',
-      'Your commute arms itself — set it once, never tap again.',
-      PaywallSource.recurringAutoArm),
   _ProItem(Icons.favorite, 'Guardian mode',
       'Auto-share your journey with family + an "arrived safely" alert.',
       PaywallSource.guardian),
-  // NOTE: transfer/interchange alarms (wake at each transfer + the destination
-  // across a multi-leg journey) already ship and are FREE — do NOT list them as
-  // a Pro benefit.
-  _ProItem(Icons.bookmark, 'Unlimited saved routes',
-      'Pin every commute you take.', PaywallSource.savedRoutes),
   _ProItem(Icons.music_note, 'Custom & escalating alarm',
       'Your own sounds, ramping volume that won\'t let you sleep through it.',
       PaywallSource.customSound),
-  _ProItem(Icons.download_for_offline, 'Offline all-cities pack',
-      'Every metro, no data needed.', PaywallSource.offline),
   _ProItem(Icons.widgets, 'Home widget & Wear OS',
       'One-tap arm from your home screen or wrist.', PaywallSource.widget),
-  _ProItem(Icons.insights, 'Trip stats',
-      'Streaks, patterns, and your on-time record.', PaywallSource.tripStats),
   _ProItem(Icons.block, 'Ad-free', 'No ads, anywhere.'),
 ];
 

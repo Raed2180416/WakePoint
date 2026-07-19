@@ -15,22 +15,17 @@ import 'package:flutter/material.dart';
 /// delayable, so there is no snooze feature to gate.)
 enum PaywallSource {
   drawer,
-  recurringAutoArm,
   guardian,
-  multiAlarm,
-  savedRoutes,
   customSound,
-  offline,
   widget,
   wearOs,
-  tripStats,
   postArrival,
 }
 
 /// The one gate every premium tap goes through.
 ///
 /// [allowed] is the entitlement read, computed by the caller (e.g.
-/// `MonetizationService.instance.premiumOrNull?.canUseRecurringAlarms ?? false`)
+/// `MonetizationService.instance.premiumOrNull?.canUseGuardianMode ?? false`)
 /// so this widget never imports the entitlement layer. A null/loading/expired
 /// entitlement resolves to `false` at the call site ⇒ the paywall shows, never a
 /// broken tap.
