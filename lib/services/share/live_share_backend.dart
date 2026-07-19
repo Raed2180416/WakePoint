@@ -46,6 +46,26 @@ abstract class ShareBackend {
   Future<void> revoke(String shareId);
 }
 
+/// The READ side of the contract (the follower / "Friends' rides" surface).
+///
+/// Kept SEPARATE from [ShareBackend] on purpose: the push-only implementers
+/// (Noop, tests) stay untouched, and only a backend that can serve reads
+/// (HttpShareBackend) implements it. This is the one backend addition the
+/// follower needs on top of the push contract:
+///
+///   GET {base}/v1/share/{id}/status -> 200 {id, status, destLabel, etaEpochMs,
+///                                             lat, lng, atMs}   (latest only)
+///                                       410 Gone   (expired / revoked)
+///                                       404        (unknown id)
+///
+/// The response is the LATEST coarse snapshot plus share metadata — never a
+/// trajectory. All errors are swallowed and surface as `null`.
+abstract class ShareStatusReader {
+  /// Fetch the latest coarse status for [id], or null if unavailable/unknown.
+  /// A 410 returns a [ShareStatusView.gone] so the follower can retire the row.
+  Future<ShareStatusView?> getStatus(String id);
+}
+
 /// DEFAULT backend. Everything is a no-op; basic share works fully offline.
 class NoopShareBackend implements ShareBackend {
   const NoopShareBackend();
@@ -76,7 +96,7 @@ class NoopShareBackend implements ShareBackend {
 ///   DELETE {base}/v1/share/{id}                                                       -> 204
 /// Auth: a founder-provisioned bearer token ([authToken]); the server enforces
 /// TTL + hard-delete and never persists a trajectory.
-class HttpShareBackend implements ShareBackend {
+class HttpShareBackend implements ShareBackend, ShareStatusReader {
   final String baseUrl;
   final String? authToken;
   final http.Client _client;
@@ -154,5 +174,23 @@ class HttpShareBackend implements ShareBackend {
           .delete(Uri.parse('$_base/v1/share/$shareId'), headers: _headers)
           .timeout(timeout);
     } catch (_) {/* best effort */}
+  }
+
+  /// READ side (follower). Backend addition: GET {base}/v1/share/{id}/status.
+  /// 410 -> a gone view; 404 / non-2xx / transport error -> null (fail-safe).
+  @override
+  Future<ShareStatusView?> getStatus(String id) async {
+    try {
+      final res = await _client
+          .get(Uri.parse('$_base/v1/share/$id/status'), headers: _headers)
+          .timeout(timeout);
+      if (res.statusCode == 410) return ShareStatusView.gone(id);
+      if (res.statusCode == 404) return null;
+      if (res.statusCode ~/ 100 != 2) return null;
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      return ShareStatusView.fromJson(id, body);
+    } catch (_) {
+      return null; // fail-safe: follower keeps its last-known view
+    }
   }
 }

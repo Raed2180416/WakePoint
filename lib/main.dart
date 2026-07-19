@@ -18,6 +18,13 @@ import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
 import 'screens/guardian_setup_screen.dart';
 import 'screens/monetization/post_arrival_screen.dart';
+import 'screens/friends_rides_screen.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:app_links/app_links.dart';
+import 'services/share/share_backend_config.dart';
+import 'services/share/journey_share_service.dart';
+import 'services/share/followed_rides_service.dart';
+import 'services/share/share_deep_link.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -77,6 +84,23 @@ Future<void> main() async {
     // so init is inert until the user opts in. Never blocks startup.
     unawaited(DataAssetPipeline.instance.init());
 
+    // Journey-share backend (sharer + follower). Fire-and-forget, fail-safe:
+    // basic share always works; the live ping/follow path attaches only when the
+    // backend + token are configured. Never touches the arm → track → alarm spine.
+    unawaited(() async {
+      try {
+        await ShareBackendConfig.configure();
+        // Relay live position to the share backend whenever a share is active.
+        // ingestLocation self-gates on an active share, so this is inert
+        // otherwise and can never affect tracking or the never-late alarm.
+        JourneyShareService.instance.bindTracking<Position>(
+          TrackingService().locationStream,
+          latOf: (p) => p.latitude,
+          lngOf: (p) => p.longitude,
+        );
+      } catch (_) {/* share is best-effort; never block or crash startup */}
+    }());
+
     runApp(const MyApp());
   }, (Object error, StackTrace stack) {
     TelemetryService.instance.recordError(error, stack, fatal: true);
@@ -106,12 +130,45 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // =======================================================================
     _checkNotificationPermission();
     _restoreThemePreference();
+    _initShareDeepLinks();
+  }
+
+  // Handle GeoWake journey-share deep links (App Links https://<domain>/j/{id}
+  // or geowake://j/{id}). Opening one follows that friend's ride + shows the
+  // "Friends' rides" screen. Additive + fail-safe; never touches the alarm path.
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSub;
+
+  Future<void> _initShareDeepLinks() async {
+    try {
+      final initial = await _appLinks.getInitialLink();
+      _handleShareLink(initial);
+    } catch (_) {/* no initial link */}
+    _linkSub = _appLinks.uriLinkStream.listen(
+      _handleShareLink,
+      onError: (_) {},
+    );
+  }
+
+  void _handleShareLink(Uri? uri) {
+    final link = ShareDeepLinkParser.parse(uri);
+    if (link == null) return;
+    () async {
+      try {
+        await FollowedRidesService.instance.follow(link.id, token: link.token);
+        final nav = NavigationService.navigatorKey.currentState;
+        nav?.push(MaterialPageRoute(
+          builder: (_) => const FriendsRidesScreen(),
+        ));
+      } catch (_) {/* fail-safe: a bad link never crashes the app */}
+    }();
   }
 
   @override
   void dispose() {
     // Stop listening to prevent memory leaks.
     WidgetsBinding.instance.removeObserver(this);
+    _linkSub?.cancel();
     // As a final cleanup when the app is truly closing, close Hive.
     Hive.close();
     super.dispose();

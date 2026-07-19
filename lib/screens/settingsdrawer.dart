@@ -9,6 +9,7 @@ import 'package:geowake2/services/tracking_state_store.dart';
 // --- STEP 1: ADD THIS IMPORT ---
 // This line tells our settings drawer that the RingtonesScreen exists and where to find it.
 import 'package:geowake2/screens/ringtones_screen.dart';
+import 'package:geowake2/screens/friends_rides_screen.dart';
 
 class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({
@@ -69,6 +70,18 @@ class SettingsDrawer extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const RingtonesScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.group_outlined),
+              title: const Text("Friends' rides"),
+              onTap: () {
+                Navigator.of(context).pop(); // close the drawer
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const FriendsRidesScreen(),
                   ),
                 );
               },

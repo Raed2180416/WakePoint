@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "10259e4709c817ca9d411351f34be7c26383ea0d",
-    "gitTree": "6d73b01c214f717efdfd1eb4de7ed695b8d584b5",
-    "generatedAt": "2026-07-19T05:00:23+05:30",
-    "filesIndexed": 390,
-    "dependencyEdges": 831,
-    "totalExports": 667,
-    "totalImports": 1779,
+    "gitCommit": "980196cc442b0f8dca193db1fcb996e914397435",
+    "gitTree": "2d1528368f5d10bb20dde99d65554833ed940a73",
+    "generatedAt": "2026-07-19T05:25:03+05:30",
+    "filesIndexed": 394,
+    "dependencyEdges": 849,
+    "totalExports": 673,
+    "totalImports": 1808,
     "byRole": {
       "other": 4,
       "backend": 12,
-      "flutter-test": 194,
-      "flutter-lib": 171,
+      "flutter-test": 195,
+      "flutter-lib": 174,
       "tool": 8,
       "platform": 1
     },
@@ -3138,6 +3138,34 @@
         },
         {
           "kind": "static",
+          "source": "screens/friends_rides_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geolocator/geolocator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:app_links/app_links.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/share/share_backend_config.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/share/journey_share_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/share/followed_rides_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/share/share_deep_link.dart"
+        },
+        {
+          "kind": "static",
           "source": "screens/maptracking.dart"
         },
         {
@@ -3182,7 +3210,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "57f88670231275a4"
+      "contentHash": "0fc68f038264a0d3"
     },
     {
       "file": "lib/main_playground.dart",
@@ -3319,6 +3347,55 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "4a4f5f0fc3de72dc"
+    },
+    {
+      "file": "lib/screens/friends_rides_screen.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "FriendsRidesScreen"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../services/share/followed_rides_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../services/share/share_deep_link.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "FriendsRidesScreen",
+          "extends": "StatefulWidget"
+        },
+        {
+          "name": "_FriendsRidesScreenState",
+          "extends": "State"
+        },
+        {
+          "name": "_EmptyState",
+          "extends": "StatelessWidget"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "10248b6cc89c115b"
     },
     {
       "file": "lib/screens/guardian_setup_screen.dart",
@@ -7449,6 +7526,79 @@
       "contentHash": "c68fa8d8e787645d"
     },
     {
+      "file": "lib/services/share/followed_rides_service.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "FollowedRide"
+        },
+        {
+          "kind": "class",
+          "name": "FollowedRideFormat"
+        },
+        {
+          "kind": "class",
+          "name": "FollowedRidesService"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:hive_flutter/hive_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "journey_share_models.dart"
+        },
+        {
+          "kind": "static",
+          "source": "live_share_backend.dart"
+        },
+        {
+          "kind": "static",
+          "source": "share_link_builder.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "FollowedRide",
+          "extends": null
+        },
+        {
+          "name": "FollowedRideFormat",
+          "extends": null
+        },
+        {
+          "name": "FollowedRidesService",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "9b9a987905057b8e"
+    },
+    {
       "file": "lib/services/share/guardian_service.dart",
       "lang": "dart",
       "exports": [
@@ -7753,6 +7903,47 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "5967815dc149ebbb"
+    },
+    {
+      "file": "lib/services/share/share_backend_config.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "ShareBackendConfig"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "followed_rides_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "journey_share_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "live_share_backend.dart"
+        },
+        {
+          "kind": "static",
+          "source": "share_link_builder.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "ShareBackendConfig",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "e1f1aab2f5a25484"
     },
     {
       "file": "lib/services/share/share_deep_link.dart",
@@ -17922,6 +18113,60 @@
       "contentHash": "66e4fd4d403c208e"
     },
     {
+      "file": "test/share/followed_rides_service_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:hive/hive.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/share/followed_rides_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/share/journey_share_models.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/share/live_share_backend.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_FakeReader",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "470c79a0e9477393"
+    },
+    {
       "file": "test/share/guardian_service_test.dart",
       "lang": "dart",
       "exports": [
@@ -20854,6 +21099,36 @@
     },
     {
       "from": "lib/main.dart",
+      "to": "lib/screens/friends_rides_screen.dart",
+      "source": "screens/friends_rides_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/share/share_backend_config.dart",
+      "source": "services/share/share_backend_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/share/journey_share_service.dart",
+      "source": "services/share/journey_share_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/share/followed_rides_service.dart",
+      "source": "services/share/followed_rides_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/share/share_deep_link.dart",
+      "source": "services/share/share_deep_link.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
       "to": "lib/screens/maptracking.dart",
       "source": "screens/maptracking.dart",
       "kind": "static"
@@ -20892,6 +21167,18 @@
       "from": "lib/main_unified_dashboard.dart",
       "to": "lib/dashboard/unified_dashboard.dart",
       "source": "dashboard/unified_dashboard.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/friends_rides_screen.dart",
+      "to": "lib/services/share/followed_rides_service.dart",
+      "source": "../services/share/followed_rides_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/friends_rides_screen.dart",
+      "to": "lib/services/share/share_deep_link.dart",
+      "source": "../services/share/share_deep_link.dart",
       "kind": "static"
     },
     {
@@ -21252,6 +21539,12 @@
       "from": "lib/screens/settingsdrawer.dart",
       "to": "lib/screens/ringtones_screen.dart",
       "source": "package:geowake2/screens/ringtones_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/settingsdrawer.dart",
+      "to": "lib/screens/friends_rides_screen.dart",
+      "source": "package:geowake2/screens/friends_rides_screen.dart",
       "kind": "static"
     },
     {
@@ -21921,6 +22214,24 @@
       "kind": "static"
     },
     {
+      "from": "lib/services/share/followed_rides_service.dart",
+      "to": "lib/services/share/journey_share_models.dart",
+      "source": "journey_share_models.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/followed_rides_service.dart",
+      "to": "lib/services/share/live_share_backend.dart",
+      "source": "live_share_backend.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/followed_rides_service.dart",
+      "to": "lib/services/share/share_link_builder.dart",
+      "source": "share_link_builder.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/services/share/guardian_service.dart",
       "to": "lib/services/monetization/monetization_service.dart",
       "source": "../monetization/monetization_service.dart",
@@ -21972,6 +22283,30 @@
       "from": "lib/services/share/live_share_backend.dart",
       "to": "lib/services/share/journey_share_models.dart",
       "source": "journey_share_models.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/share_backend_config.dart",
+      "to": "lib/services/share/followed_rides_service.dart",
+      "source": "followed_rides_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/share_backend_config.dart",
+      "to": "lib/services/share/journey_share_service.dart",
+      "source": "journey_share_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/share_backend_config.dart",
+      "to": "lib/services/share/live_share_backend.dart",
+      "source": "live_share_backend.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/share/share_backend_config.dart",
+      "to": "lib/services/share/share_link_builder.dart",
+      "source": "share_link_builder.dart",
       "kind": "static"
     },
     {
@@ -24747,6 +25082,24 @@
       "kind": "static"
     },
     {
+      "from": "test/share/followed_rides_service_test.dart",
+      "to": "lib/services/share/followed_rides_service.dart",
+      "source": "package:geowake2/services/share/followed_rides_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/share/followed_rides_service_test.dart",
+      "to": "lib/services/share/journey_share_models.dart",
+      "source": "package:geowake2/services/share/journey_share_models.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/share/followed_rides_service_test.dart",
+      "to": "lib/services/share/live_share_backend.dart",
+      "source": "package:geowake2/services/share/live_share_backend.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/share/guardian_service_test.dart",
       "to": "lib/services/share/guardian_service.dart",
       "source": "package:geowake2/services/share/guardian_service.dart",
@@ -25852,6 +26205,12 @@
         "name": "RouteModel"
       }
     ],
+    "lib/screens/friends_rides_screen.dart": [
+      {
+        "kind": "class",
+        "name": "FriendsRidesScreen"
+      }
+    ],
     "lib/screens/guardian_setup_screen.dart": [
       {
         "kind": "class",
@@ -26640,6 +26999,20 @@
         "name": "SensorFusionManager"
       }
     ],
+    "lib/services/share/followed_rides_service.dart": [
+      {
+        "kind": "class",
+        "name": "FollowedRide"
+      },
+      {
+        "kind": "class",
+        "name": "FollowedRideFormat"
+      },
+      {
+        "kind": "class",
+        "name": "FollowedRidesService"
+      }
+    ],
     "lib/services/share/guardian_service.dart": [
       {
         "kind": "class",
@@ -26706,6 +27079,12 @@
       {
         "kind": "class",
         "name": "HttpShareBackend"
+      }
+    ],
+    "lib/services/share/share_backend_config.dart": [
+      {
+        "kind": "class",
+        "name": "ShareBackendConfig"
       }
     ],
     "lib/services/share/share_deep_link.dart": [
@@ -27578,6 +27957,27 @@
       ]
     },
     {
+      "file": "lib/services/share/journey_share_models.dart",
+      "importers": 9,
+      "exports": [
+        "ShareSession",
+        "ShareSnapshot",
+        "ShareStatusView",
+        "GuardianContact",
+        "ShareMode",
+        "ShareStatus",
+        "GuardianChannel"
+      ]
+    },
+    {
+      "file": "lib/services/share/journey_share_service.dart",
+      "importers": 9,
+      "exports": [
+        "StartedShare",
+        "JourneyShareService"
+      ]
+    },
+    {
       "file": "lib/config/fire_decision_config.dart",
       "importers": 8,
       "exports": [
@@ -27621,27 +28021,6 @@
         "SnapResult",
         "SnapToRouteEngine"
       ]
-    },
-    {
-      "file": "lib/dashboard/simulation_state.dart",
-      "importers": 7,
-      "exports": [
-        "SimulationStateMachine",
-        "SimulationState"
-      ]
-    },
-    {
-      "file": "lib/services/offline_coordinator.dart",
-      "importers": 7,
-      "exports": [
-        "OfflineRouteResult",
-        "DirectionsProvider",
-        "DefaultDirectionsProvider",
-        "RouteCachePort",
-        "DefaultRouteCachePort",
-        "OfflineCoordinator",
-        "RouteSource"
-      ]
     }
   ],
   "topFanOut": [
@@ -27650,15 +28029,15 @@
       "imports": 25
     },
     {
+      "file": "lib/main.dart",
+      "imports": 21
+    },
+    {
       "file": "lib/screens/maptracking.dart",
       "imports": 18
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",
-      "imports": 16
-    },
-    {
-      "file": "lib/main.dart",
       "imports": 16
     },
     {
@@ -27718,6 +28097,10 @@
       "imports": 7
     },
     {
+      "file": "lib/screens/settingsdrawer.dart",
+      "imports": 6
+    },
+    {
       "file": "lib/services/direction_service.dart",
       "imports": 6
     },
@@ -27743,10 +28126,6 @@
     },
     {
       "file": "lib/screens/guardian_setup_screen.dart",
-      "imports": 5
-    },
-    {
-      "file": "lib/screens/settingsdrawer.dart",
       "imports": 5
     },
     {
@@ -28467,6 +28846,51 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/share/journey_share_models.dart",
+      "importers": 9,
+      "directDependents": [
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/services/share/followed_rides_service.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/share/journey_share_service.dart",
+        "lib/services/share/live_share_backend.dart",
+        "test/share/followed_rides_service_test.dart",
+        "test/share/guardian_service_test.dart",
+        "test/share/journey_share_models_test.dart",
+        "test/share/journey_share_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "ShareSession",
+        "ShareSnapshot",
+        "ShareStatusView",
+        "GuardianContact",
+        "ShareMode",
+        "ShareStatus",
+        "GuardianChannel"
+      ],
+      "riskLevel": "high"
+    },
+    {
+      "file": "lib/services/share/journey_share_service.dart",
+      "importers": 9,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/share/share_backend_config.dart",
+        "lib/widgets/share/share_journey_action.dart",
+        "lib/widgets/share/share_sheet.dart",
+        "test/share/guardian_service_test.dart",
+        "test/share/journey_share_service_test.dart",
+        "test/share/share_journey_action_widget_test.dart"
+      ],
+      "exportedSymbols": [
+        "StartedShare",
+        "JourneyShareService"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/config/fire_decision_config.dart",
       "importers": 8,
       "directDependents": [
@@ -28574,47 +28998,6 @@
       "exportedSymbols": [
         "SnapResult",
         "SnapToRouteEngine"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/dashboard/simulation_state.dart",
-      "importers": 7,
-      "directDependents": [
-        "lib/dashboard/deviation_dashboard.dart",
-        "lib/dashboard/deviation_simulation_controller.dart",
-        "lib/dashboard/simulation_controls.dart",
-        "lib/dashboard/unified_dashboard.dart",
-        "test/dashboard/deviation_dashboard_integration_test.dart",
-        "test/dashboard/deviation_simulation_controller_test.dart",
-        "test/dashboard/simulation_state_test.dart"
-      ],
-      "exportedSymbols": [
-        "SimulationStateMachine",
-        "SimulationState"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/offline_coordinator.dart",
-      "importers": 7,
-      "directDependents": [
-        "lib/screens/homescreen.dart",
-        "lib/services/route_session_manager.dart",
-        "lib/services/trackingservice.dart",
-        "test/integration/offline_scenario_test.dart",
-        "test/offline_coordinator_test.dart",
-        "test/offline_routing_guard_test.dart",
-        "test/route_cache_pin_test.dart"
-      ],
-      "exportedSymbols": [
-        "OfflineRouteResult",
-        "DirectionsProvider",
-        "DefaultDirectionsProvider",
-        "RouteCachePort",
-        "DefaultRouteCachePort",
-        "OfflineCoordinator",
-        "RouteSource"
       ],
       "riskLevel": "high"
     }

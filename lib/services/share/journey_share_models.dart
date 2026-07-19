@@ -155,6 +155,72 @@ class ShareSnapshot {
       };
 }
 
+/// The READ view a follower gets back from the backend for a share id
+/// (`GET /v1/share/{id}/status`). It is the latest coarse snapshot plus the
+/// small amount of share metadata a follower needs to render a ROUTE-RELATIVE
+/// status ("On the way to X — arriving ~8:42").
+///
+/// PRIVACY: [lat]/[lng] are coarse (5 dp) and are NEVER rendered to the user;
+/// the follower surface derives only route-relative / time-relative copy from
+/// [destLabel] + [etaEpochMs] + [status]. The follower never persists this view.
+class ShareStatusView {
+  /// The share id this view describes.
+  final String id;
+
+  /// Lifecycle status the server reports (enRoute / arrived; expired / revoked
+  /// arrive as [gone]).
+  final ShareStatus status;
+
+  /// Coarse destination label (station / area), never coordinates.
+  final String? destLabel;
+
+  /// Latest known ETA (epoch ms).
+  final int? etaEpochMs;
+
+  /// Coarse latest point (5 dp). DELIVERY-INTERNAL ONLY — never shown raw.
+  final double? lat;
+
+  /// Coarse latest point (5 dp). DELIVERY-INTERNAL ONLY — never shown raw.
+  final double? lng;
+
+  /// When the latest snapshot was taken (epoch ms), for a "updated N min ago".
+  final int? atMs;
+
+  /// True when the server returned 410 Gone — the share expired/was revoked and
+  /// all state hard-deleted. The follower shows "Link expired" and stops polling.
+  final bool gone;
+
+  const ShareStatusView({
+    required this.id,
+    required this.status,
+    this.destLabel,
+    this.etaEpochMs,
+    this.lat,
+    this.lng,
+    this.atMs,
+    this.gone = false,
+  });
+
+  /// A terminal "gone" view (410 / expired / revoked) — no coordinates.
+  factory ShareStatusView.gone(String id) =>
+      ShareStatusView(id: id, status: ShareStatus.expired, gone: true);
+
+  factory ShareStatusView.fromJson(String id, Map<String, dynamic> j) =>
+      ShareStatusView(
+        id: (j['id'] as String?) ?? id,
+        status: _statusFromName(j['status'] as String?),
+        destLabel: j['destLabel'] as String?,
+        etaEpochMs: (j['etaEpochMs'] as num?)?.toInt(),
+        lat: (j['lat'] as num?)?.toDouble(),
+        lng: (j['lng'] as num?)?.toDouble(),
+        atMs: (j['atMs'] as num?)?.toInt(),
+        gone: (j['gone'] as bool?) ?? false,
+      );
+
+  /// True while the ride is still in progress (worth continued polling).
+  bool get isActive => !gone && status == ShareStatus.enRoute;
+}
+
 /// A recipient the user has chosen for Guardian mode. Stored LOCALLY only.
 enum GuardianChannel { app, whatsapp, sms }
 

@@ -319,6 +319,7 @@
 {"file":"test/services/testing/osm_graph_test.dart","name":"_createMinimalWkpFile","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"_minDistanceToRoute","signature":"(LatLng point, List<LatLng> route)"}
+{"file":"test/share/followed_rides_service_test.dart","name":"main","signature":"()"}
 {"file":"test/share/guardian_service_test.dart","name":"_pump","signature":"()"}
 {"file":"test/share/guardian_service_test.dart","name":"main","signature":"()"}
 {"file":"test/share/journey_share_models_test.dart","name":"main","signature":"()"}

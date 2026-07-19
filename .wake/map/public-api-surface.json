@@ -629,6 +629,12 @@
       "name": "RouteModel"
     }
   ],
+  "lib/screens/friends_rides_screen.dart": [
+    {
+      "kind": "class",
+      "name": "FriendsRidesScreen"
+    }
+  ],
   "lib/screens/guardian_setup_screen.dart": [
     {
       "kind": "class",
@@ -1417,6 +1423,20 @@
       "name": "SensorFusionManager"
     }
   ],
+  "lib/services/share/followed_rides_service.dart": [
+    {
+      "kind": "class",
+      "name": "FollowedRide"
+    },
+    {
+      "kind": "class",
+      "name": "FollowedRideFormat"
+    },
+    {
+      "kind": "class",
+      "name": "FollowedRidesService"
+    }
+  ],
   "lib/services/share/guardian_service.dart": [
     {
       "kind": "class",
@@ -1483,6 +1503,12 @@
     {
       "kind": "class",
       "name": "HttpShareBackend"
+    }
+  ],
+  "lib/services/share/share_backend_config.dart": [
+    {
+      "kind": "class",
+      "name": "ShareBackendConfig"
     }
   ],
   "lib/services/share/share_deep_link.dart": [

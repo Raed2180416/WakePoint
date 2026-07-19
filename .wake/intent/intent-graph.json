@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "10259e4709c817ca9d411351f34be7c26383ea0d",
-  "generatedAt": "2026-07-19T05:00:23+05:30",
-  "structuralDigest": "6d73b01c214f717efdfd1eb4de7ed695b8d584b5",
+  "gitCommit": "980196cc442b0f8dca193db1fcb996e914397435",
+  "generatedAt": "2026-07-19T05:25:03+05:30",
+  "structuralDigest": "2d1528368f5d10bb20dde99d65554833ed940a73",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1101,
-    "edgeCount": 2137,
+    "nodeCount": 1111,
+    "edgeCount": 2161,
     "byLevel": {
       "feature": 9,
-      "file": 390,
+      "file": 394,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 667
+      "symbol": 673
     },
     "byEdgeType": {
-      "contains": 789,
-      "depends-on": 831,
+      "contains": 795,
+      "depends-on": 849,
       "references": 517
     }
   },
@@ -992,6 +992,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:lib/screens/friends_rides_screen.dart",
+      "level": "file",
+      "label": "lib/screens/friends_rides_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/screens/guardian_setup_screen.dart",
       "level": "file",
       "label": "lib/screens/guardian_setup_screen.dart",
@@ -1795,6 +1806,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/services/share/followed_rides_service.dart",
+      "level": "file",
+      "label": "lib/services/share/followed_rides_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 4,
+      "exportCount": 3
+    },
+    {
       "id": "file:lib/services/share/guardian_service.dart",
       "level": "file",
       "label": "lib/services/share/guardian_service.dart",
@@ -1813,7 +1835,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 9,
       "exportCount": 7
     },
     {
@@ -1824,7 +1846,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 9,
       "exportCount": 2
     },
     {
@@ -1835,8 +1857,19 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 6,
       "exportCount": 4
+    },
+    {
+      "id": "file:lib/services/share/share_backend_config.dart",
+      "level": "file",
+      "label": "lib/services/share/share_backend_config.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
     },
     {
       "id": "file:lib/services/share/share_deep_link.dart",
@@ -1846,7 +1879,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 1,
+      "importers": 3,
       "exportCount": 2
     },
     {
@@ -1857,7 +1890,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 6,
       "exportCount": 1
     },
     {
@@ -4031,6 +4064,17 @@
       "id": "file:test/services/testing/pathfinder_test.dart",
       "level": "file",
       "label": "test/services/testing/pathfinder_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/share/followed_rides_service_test.dart",
+      "level": "file",
+      "label": "test/share/followed_rides_service_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -6240,6 +6284,15 @@
       "file": "lib/models/route_models.dart"
     },
     {
+      "id": "symbol:lib/screens/friends_rides_screen.dart#FriendsRidesScreen",
+      "level": "symbol",
+      "label": "FriendsRidesScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/friends_rides_screen.dart"
+    },
+    {
       "id": "symbol:lib/screens/guardian_setup_screen.dart#GuardianSetupScreen",
       "level": "symbol",
       "label": "GuardianSetupScreen",
@@ -7689,6 +7742,33 @@
       "file": "lib/services/sensor_fusion.dart"
     },
     {
+      "id": "symbol:lib/services/share/followed_rides_service.dart#FollowedRide",
+      "level": "symbol",
+      "label": "FollowedRide",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/followed_rides_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/share/followed_rides_service.dart#FollowedRideFormat",
+      "level": "symbol",
+      "label": "FollowedRideFormat",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/followed_rides_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/share/followed_rides_service.dart#FollowedRidesService",
+      "level": "symbol",
+      "label": "FollowedRidesService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/followed_rides_service.dart"
+    },
+    {
       "id": "symbol:lib/services/share/guardian_service.dart#GuardianDenied",
       "level": "symbol",
       "label": "GuardianDenied",
@@ -7822,6 +7902,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/share/live_share_backend.dart"
+    },
+    {
+      "id": "symbol:lib/services/share/share_backend_config.dart#ShareBackendConfig",
+      "level": "symbol",
+      "label": "ShareBackendConfig",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/share_backend_config.dart"
     },
     {
       "id": "symbol:lib/services/share/share_deep_link.dart#ShareDeepLink",
@@ -10576,6 +10665,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/services/testing/pathfinder_test.dart"
+    },
+    {
+      "id": "symbol:test/share/followed_rides_service_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/share/followed_rides_service_test.dart"
     },
     {
       "id": "symbol:test/share/guardian_service_test.dart#main",
@@ -13949,6 +14047,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/screens/friends_rides_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/screens/guardian_setup_screen.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14088,6 +14193,34 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/services/share/followed_rides_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/share/journey_share_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/share/share_backend_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/share/share_deep_link.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/services/telemetry/telemetry_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14161,6 +14294,27 @@
     {
       "from": "file:lib/models/route_models.dart",
       "to": "symbol:lib/models/route_models.dart#TransitSwitch",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/friends_rides_screen.dart",
+      "to": "file:lib/services/share/followed_rides_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/friends_rides_screen.dart",
+      "to": "file:lib/services/share/share_deep_link.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/friends_rides_screen.dart",
+      "to": "symbol:lib/screens/friends_rides_screen.dart#FriendsRidesScreen",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -14847,6 +15001,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 3
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "file:lib/screens/friends_rides_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/settingsdrawer.dart",
@@ -17146,6 +17307,48 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "file:lib/services/share/journey_share_models.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "file:lib/services/share/live_share_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "file:lib/services/share/share_link_builder.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "symbol:lib/services/share/followed_rides_service.dart#FollowedRide",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "symbol:lib/services/share/followed_rides_service.dart#FollowedRideFormat",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/followed_rides_service.dart",
+      "to": "symbol:lib/services/share/followed_rides_service.dart#FollowedRidesService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/share/guardian_service.dart",
       "to": "file:lib/services/monetization/monetization_service.dart",
       "type": "depends-on",
@@ -17309,6 +17512,41 @@
     {
       "from": "file:lib/services/share/live_share_backend.dart",
       "to": "symbol:lib/services/share/live_share_backend.dart#ShareStatusReader",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/share_backend_config.dart",
+      "to": "file:lib/services/share/followed_rides_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/share_backend_config.dart",
+      "to": "file:lib/services/share/journey_share_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/share_backend_config.dart",
+      "to": "file:lib/services/share/live_share_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/share_backend_config.dart",
+      "to": "file:lib/services/share/share_link_builder.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/share_backend_config.dart",
+      "to": "symbol:lib/services/share/share_backend_config.dart#ShareBackendConfig",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -25157,6 +25395,34 @@
     {
       "from": "file:test/services/testing/pathfinder_test.dart",
       "to": "symbol:test/services/testing/pathfinder_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/followed_rides_service_test.dart",
+      "to": "file:lib/services/share/followed_rides_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/followed_rides_service_test.dart",
+      "to": "file:lib/services/share/journey_share_models.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/followed_rides_service_test.dart",
+      "to": "file:lib/services/share/live_share_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/share/followed_rides_service_test.dart",
+      "to": "symbol:test/share/followed_rides_service_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

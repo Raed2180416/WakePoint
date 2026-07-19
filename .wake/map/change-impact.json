@@ -699,6 +699,51 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/share/journey_share_models.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/services/share/followed_rides_service.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/share/journey_share_service.dart",
+      "lib/services/share/live_share_backend.dart",
+      "test/share/followed_rides_service_test.dart",
+      "test/share/guardian_service_test.dart",
+      "test/share/journey_share_models_test.dart",
+      "test/share/journey_share_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "ShareSession",
+      "ShareSnapshot",
+      "ShareStatusView",
+      "GuardianContact",
+      "ShareMode",
+      "ShareStatus",
+      "GuardianChannel"
+    ],
+    "riskLevel": "high"
+  },
+  {
+    "file": "lib/services/share/journey_share_service.dart",
+    "importers": 9,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/share/share_backend_config.dart",
+      "lib/widgets/share/share_journey_action.dart",
+      "lib/widgets/share/share_sheet.dart",
+      "test/share/guardian_service_test.dart",
+      "test/share/journey_share_service_test.dart",
+      "test/share/share_journey_action_widget_test.dart"
+    ],
+    "exportedSymbols": [
+      "StartedShare",
+      "JourneyShareService"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/config/fire_decision_config.dart",
     "importers": 8,
     "directDependents": [
@@ -806,47 +851,6 @@
     "exportedSymbols": [
       "SnapResult",
       "SnapToRouteEngine"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/dashboard/simulation_state.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/dashboard/deviation_dashboard.dart",
-      "lib/dashboard/deviation_simulation_controller.dart",
-      "lib/dashboard/simulation_controls.dart",
-      "lib/dashboard/unified_dashboard.dart",
-      "test/dashboard/deviation_dashboard_integration_test.dart",
-      "test/dashboard/deviation_simulation_controller_test.dart",
-      "test/dashboard/simulation_state_test.dart"
-    ],
-    "exportedSymbols": [
-      "SimulationStateMachine",
-      "SimulationState"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/offline_coordinator.dart",
-    "importers": 7,
-    "directDependents": [
-      "lib/screens/homescreen.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/trackingservice.dart",
-      "test/integration/offline_scenario_test.dart",
-      "test/offline_coordinator_test.dart",
-      "test/offline_routing_guard_test.dart",
-      "test/route_cache_pin_test.dart"
-    ],
-    "exportedSymbols": [
-      "OfflineRouteResult",
-      "DirectionsProvider",
-      "DefaultDirectionsProvider",
-      "RouteCachePort",
-      "DefaultRouteCachePort",
-      "OfflineCoordinator",
-      "RouteSource"
     ],
     "riskLevel": "high"
   }
