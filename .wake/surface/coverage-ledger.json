@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-coverage-ledger-v1",
-  "gitCommit": "980196cc442b0f8dca193db1fcb996e914397435",
-  "generatedAt": "2026-07-19T05:25:03+05:30",
-  "surfaceSha256": "2d1528368f5d10bb20dde99d65554833ed940a73",
+  "gitCommit": "7c7f72b296333427d2b8e3c071ee1fd7e18614ff",
+  "generatedAt": "2026-07-19T05:30:42+05:30",
+  "surfaceSha256": "f8f83dfd76856b1cfe2afacb9c0de08aeead73e3",
   "verdict": "complete-visible-surface + complete-dart-symbol-references + partial-call-graph; gaps: Dart L5 call-hierarchy, L6/L7",
   "toolchain": {
     "dart": "scip-dart 1.6.2 (Dart 3.12.2, Flutter 3.44.6 resolved)",
