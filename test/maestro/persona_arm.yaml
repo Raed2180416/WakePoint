@@ -1,0 +1,16 @@
+appId: com.geowake.app
+---
+- launchApp: { permissions: { all: allow }, clearState: false }
+- tapOn: "Enter your destination"
+- inputText: "MG Road"
+- waitForAnimationToEnd: { timeout: 5000 }
+- takeScreenshot: a_01_typed_mgroad
+# is there ANY tappable suggestion row?
+- tapOn: { text: "MG Road.*", optional: true, index: 0 }
+- takeScreenshot: a_02_after_tap_suggestion
+- hideKeyboard
+- takeScreenshot: a_03_after_hide_kb
+- assertVisible: { text: "Wake Me!" }
+# try tapping Wake Me and see if anything happens (is it truly disabled?)
+- tapOn: { text: "Wake Me!" }
+- takeScreenshot: a_04_after_wake_me_tap

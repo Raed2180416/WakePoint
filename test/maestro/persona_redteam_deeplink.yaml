@@ -1,0 +1,8 @@
+appId: com.geowake.app
+---
+- openLink: "geowake://open?paywall=1"
+- takeScreenshot: r_01_deeplink_paywall
+- openLink: "geowake://arm?routeId=nonexistent-malformed-<script>"
+- takeScreenshot: r_02_deeplink_malformed_arm
+- openLink: "geowake://j/../../etc/passwd"
+- takeScreenshot: r_03_deeplink_pathtraversal

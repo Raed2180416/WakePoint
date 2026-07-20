@@ -1,0 +1,12 @@
+appId: com.geowake.app
+---
+- launchApp: { permissions: { all: allow } }
+- takeScreenshot: c_01_home
+- tapOn: { id: ".*", point: "8%,7%" }   # hamburger (top-left)
+- takeScreenshot: c_02_drawer
+- swipe: { direction: UP }
+- takeScreenshot: c_03_drawer_scrolled
+- tapOn: { text: "Settings", optional: true }
+- takeScreenshot: c_04_settings
+- back
+- takeScreenshot: c_05_back_home
