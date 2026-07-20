@@ -198,6 +198,10 @@
   "lib/core/ekf/imu_replay_engine_v2.dart": [
     {
       "kind": "class",
+      "name": "GpsBlackoutWindow"
+    },
+    {
+      "kind": "class",
       "name": "TestRouteStation"
     },
     {
@@ -1899,6 +1903,20 @@
     {
       "kind": "class",
       "name": "SimulationEngine"
+    }
+  ],
+  "lib/testing/harness_runner.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    },
+    {
+      "kind": "function",
+      "name": "sweep"
+    },
+    {
+      "kind": "function",
+      "name": "runScenario"
     }
   ],
   "lib/themes/appthemes.dart": [

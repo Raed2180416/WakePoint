@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "9064b0e4abd89ae0d97c7063151d1b345e1d1996",
-    "gitTree": "5fdf3b8722637da823397425ee8992775c3890aa",
-    "generatedAt": "2026-07-19T05:57:23+05:30",
-    "filesIndexed": 402,
-    "dependencyEdges": 867,
-    "totalExports": 680,
-    "totalImports": 1850,
+    "gitCommit": "994735831e23aaaee0705cb125a728bcf10e2269",
+    "gitTree": "ea2f4ae083f5faee00fda6c3b4369d49bce4b048",
+    "generatedAt": "2026-07-20T20:32:22+05:30",
+    "filesIndexed": 405,
+    "dependencyEdges": 872,
+    "totalExports": 688,
+    "totalImports": 1865,
     "byRole": {
       "other": 4,
       "backend": 12,
-      "flutter-test": 206,
-      "flutter-lib": 171,
+      "flutter-test": 208,
+      "flutter-lib": 172,
       "tool": 8,
       "platform": 1
     },
@@ -1509,7 +1509,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "21e412f363e51df7"
+      "contentHash": "509986b8bdb05d04"
     },
     {
       "file": "lib/core/ekf/ekf_types.dart",
@@ -1636,6 +1636,10 @@
       "file": "lib/core/ekf/imu_replay_engine_v2.dart",
       "lang": "dart",
       "exports": [
+        {
+          "kind": "class",
+          "name": "GpsBlackoutWindow"
+        },
         {
           "kind": "class",
           "name": "TestRouteStation"
@@ -1773,6 +1777,10 @@
       "functions": [],
       "classes": [
         {
+          "name": "GpsBlackoutWindow",
+          "extends": null
+        },
+        {
           "name": "TestRouteStation",
           "extends": null
         },
@@ -1825,7 +1833,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b8793220847ada9e"
+      "contentHash": "54017d9cdac7f755"
     },
     {
       "file": "lib/core/ekf/motion_classifier.dart",
@@ -3238,6 +3246,10 @@
         },
         {
           "kind": "static",
+          "source": "package:flutter_driver/driver_extension.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:permission_handler/permission_handler.dart"
         },
         {
@@ -3392,7 +3404,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "cedca596007919ba"
+      "contentHash": "939e5c41c99cb32f"
     },
     {
       "file": "lib/main_playground.dart",
@@ -3787,7 +3799,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "38e2eae9482ae254"
+      "contentHash": "02fd61a9edc75f76"
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -3928,7 +3940,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "6670d9ed59219b27"
+      "contentHash": "f7a644dae3341ed6"
     },
     {
       "file": "lib/screens/mobility_data_consent_screen.dart",
@@ -10386,6 +10398,156 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "0317923b0d1e61ee"
+    },
+    {
+      "file": "lib/testing/harness_runner.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "function",
+          "name": "sweep"
+        },
+        {
+          "kind": "function",
+          "name": "runScenario"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "dart:math"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/ekf/ekf_test_controller.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/ekf/imu_replay_engine_v2.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "(List<String> args)"
+        },
+        {
+          "name": "sweep",
+          "signature": "(List<Map<String, dynamic>> specs)"
+        },
+        {
+          "name": "runScenario",
+          "signature": "(Map<String, dynamic> spec)"
+        },
+        {
+          "name": "_parseReachConfig",
+          "signature": "(Object? raw)"
+        },
+        {
+          "name": "_reachConfigJson",
+          "signature": "(ReachabilityConfig c)"
+        },
+        {
+          "name": "_parseGpsDropoutMode",
+          "signature": "(String? s)"
+        },
+        {
+          "name": "_parseRouteId",
+          "signature": "(String s)"
+        },
+        {
+          "name": "_parsePolyline",
+          "signature": "(List<dynamic> raw)"
+        },
+        {
+          "name": "_parseWindows",
+          "signature": "(Object? raw)"
+        },
+        {
+          "name": "_isSweep",
+          "signature": "(Object? decoded)"
+        },
+        {
+          "name": "_extractSpecs",
+          "signature": "(Object? decoded)"
+        },
+        {
+          "name": "_asMap",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_asString",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_asList",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_asNum",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_asDouble",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_asBool",
+          "signature": "(Object? v)"
+        },
+        {
+          "name": "_finiteOrNull",
+          "signature": "(double v)"
+        },
+        {
+          "name": "_round",
+          "signature": "(double v, int places)"
+        },
+        {
+          "name": "_roundOrInf",
+          "signature": "(double v, int places)"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_LoadInfo",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "_usage"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "049d48e4037363ee"
     },
     {
       "file": "lib/themes/appthemes.dart",
@@ -17948,6 +18110,87 @@
       "contentHash": "1898f9c6448a8145"
     },
     {
+      "file": "test/scale/multi_target_scale_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "kind": "const",
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_load",
+          "signature": "(String rideId)"
+        },
+        {
+          "name": "_trueS",
+          "signature": "(double t, List<double> ts, List<double> ss)"
+        },
+        {
+          "name": "_targetsFor",
+          "signature": "(_Ride r, List<int> offsets)"
+        },
+        {
+          "name": "_simMulti",
+          "signature": "(_Ride r, List<_Target> targets)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Ride",
+          "extends": null
+        },
+        {
+          "name": "_Target",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "de6ea35d5a1e7365"
+    },
+    {
       "file": "test/scale/reachability_scale_test.dart",
       "lang": "dart",
       "exports": [
@@ -19507,6 +19750,39 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "f6fb04c81fe41c8f"
+    },
+    {
+      "file": "test/testing/harness_runner_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/testing/harness_runner.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "69dd5f242254769a"
     },
     {
       "file": "test/time_alarm_vm_test.dart",
@@ -23458,6 +23734,24 @@
       "kind": "static"
     },
     {
+      "from": "lib/testing/harness_runner.dart",
+      "to": "lib/core/ekf/ekf_test_controller.dart",
+      "source": "package:geowake2/core/ekf/ekf_test_controller.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/testing/harness_runner.dart",
+      "to": "lib/core/ekf/imu_replay_engine_v2.dart",
+      "source": "package:geowake2/core/ekf/imu_replay_engine_v2.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/testing/harness_runner.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/widgets/gated_banner_ad.dart",
       "to": "lib/services/monetization/ad_policy.dart",
       "source": "package:geowake2/services/monetization/ad_policy.dart",
@@ -25438,6 +25732,12 @@
       "kind": "static"
     },
     {
+      "from": "test/scale/multi_target_scale_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/scale/reachability_scale_test.dart",
       "to": "lib/core/reachability/reachability.dart",
       "source": "package:geowake2/core/reachability/reachability.dart",
@@ -25876,6 +26176,12 @@
       "kind": "static"
     },
     {
+      "from": "test/testing/harness_runner_test.dart",
+      "to": "lib/testing/harness_runner.dart",
+      "source": "package:geowake2/testing/harness_runner.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/time_alarm_vm_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
@@ -26296,6 +26602,10 @@
       }
     ],
     "lib/core/ekf/imu_replay_engine_v2.dart": [
+      {
+        "kind": "class",
+        "name": "GpsBlackoutWindow"
+      },
       {
         "kind": "class",
         "name": "TestRouteStation"
@@ -28001,6 +28311,20 @@
         "name": "SimulationEngine"
       }
     ],
+    "lib/testing/harness_runner.dart": [
+      {
+        "kind": "function",
+        "name": "main"
+      },
+      {
+        "kind": "function",
+        "name": "sweep"
+      },
+      {
+        "kind": "function",
+        "name": "runScenario"
+      }
+    ],
     "lib/themes/appthemes.dart": [
       {
         "kind": "class",
@@ -28282,7 +28606,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 22,
+      "importers": 24,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -28912,13 +29236,14 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 22,
+      "importers": 24,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/services/alarm_evaluator.dart",
         "lib/services/ios/ios_backstop_planner.dart",
         "lib/services/tracking/alarm_controller.dart",
         "lib/services/tracking/notification_updater.dart",
+        "lib/testing/harness_runner.dart",
         "test/core/clock/monotonic_clock_test.dart",
         "test/dashboard/playground_reachability_e2e_test.dart",
         "test/ekf/replay_harness_test.dart",
@@ -28935,6 +29260,7 @@
         "test/reachability/tightening_guards_test.dart",
         "test/reachability/tightening_never_late_test.dart",
         "test/reachability/vline_vehicle_type_test.dart",
+        "test/scale/multi_target_scale_test.dart",
         "test/scale/reachability_scale_test.dart"
       ],
       "exportedSymbols": [

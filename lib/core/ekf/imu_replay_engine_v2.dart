@@ -96,6 +96,25 @@ enum LegType {
   transit, // Bus/other transit
 }
 
+/// A GPS-blackout time window for synthesized replays.
+///
+/// During `[startSeconds, endSeconds)` of *simulation* time the synthesized GPS
+/// fix is suppressed (as if the vehicle were underground / in a tunnel),
+/// forcing the EKF to dead-reckon. Used by
+/// [ImuReplayEngineV2.loadFromPolyline] to model arbitrary tunnel / no-signal
+/// stretches on a recorded trip without depending on a specific
+/// [GpsDropoutMode]. An empty window list means GPS follows the normal dropout
+/// mode (no additional suppression).
+class GpsBlackoutWindow {
+  final double startSeconds;
+  final double endSeconds;
+
+  const GpsBlackoutWindow(this.startSeconds, this.endSeconds);
+
+  /// True if [t] (simulation seconds) falls inside this window.
+  bool contains(double t) => t >= startSeconds && t < endSeconds;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA CLASSES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -558,6 +577,14 @@ class ImuReplayEngineV2 {
   /// Callback for external EKF state injection.
   void Function(double progressMeters, double velocity)? onEkfStateRequest;
 
+  /// GPS-blackout windows (simulation seconds) for synthesized polyline
+  /// replays. Empty by default (no effect). When non-empty and the current
+  /// elapsed time falls inside a window, [_computeGpsState] suppresses the
+  /// synthesized GPS fix regardless of [gpsDropoutMode]. Set exclusively by
+  /// [loadFromPolyline]; other loaders leave this empty, so existing behaviour
+  /// is unchanged.
+  List<GpsBlackoutWindow> _blackoutWindows = const [];
+
   // Log Replay State
   bool _isLogReplayMode = false;
   List<LogLocation> _logLocations = [];
@@ -702,6 +729,138 @@ class ImuReplayEngineV2 {
       'stations': _route?.allStations.length,
       'totalMeters': _route?.totalMeters,
       'durationMinutes': (_route?.totalDurationSeconds ?? 0) / 60,
+    });
+  }
+
+  /// Synthesize a full EKF/IMU/GPS timeline from an ARBITRARY polyline.
+  ///
+  /// Mirrors [_loadMetroRoute] (interpolate → build leg → build [TestRoute])
+  /// but takes any recorded/real-trip [polyline] instead of a canned metro
+  /// route. Once loaded, the *exact same* synthesis primitives the metro path
+  /// uses drive the timeline through the standard [_tick] loop:
+  ///   • heading from consecutive points  ([_bearingAtTime]/[_calculateBearing])
+  ///   • accel/decel + braking/cruise/stop ([_updateMotionState] +
+  ///     [_generateAccelerometer]/[_generateGyroscope])
+  ///   • ZUPT at [stops] via station dwell windows
+  ///   • GPS-blackout windows via [blackoutWindows] (tunnel/no-signal stretches)
+  ///
+  /// Parameters:
+  ///  - [speedMps]: cruising speed; sets travel time and interpolation density.
+  ///  - [blackoutWindows]: simulation-time windows during which GPS is
+  ///    suppressed (empty => GPS follows [gpsDropoutMode] as usual).
+  ///  - [dtSeconds]: target time resolution; polyline is interpolated so each
+  ///    segment is ~`speedMps * dtSeconds` metres (mirrors the metro path's 10 m
+  ///    interpolation, but derived from the desired temporal step).
+  ///  - [stops]: waypoints (LatLng) at which the vehicle dwells and ZUPTs; each
+  ///    is snapped to the route and becomes a [TestRouteStation].
+  ///  - [dwellSeconds]: dwell time applied at every stop.
+  ///  - [legType]: leg classification (metro enables tunnel GPS handling).
+  Future<void> loadFromPolyline(
+    List<LatLng> polyline, {
+    double speedMps = 12.0,
+    List<GpsBlackoutWindow> blackoutWindows = const [],
+    double dtSeconds = 1.0,
+    List<LatLng> stops = const [],
+    double dwellSeconds = 25.0,
+    String name = 'Synthetic Polyline Route',
+    String description =
+        'Synthesized EKF/IMU/GPS timeline from an arbitrary polyline',
+    LegType legType = LegType.metro,
+    bool isUnderground = false,
+  }) async {
+    _log('LOAD', 'INFO', 'Loading polyline route: ${polyline.length} pts');
+
+    if (polyline.length < 2) {
+      _log('LOAD', 'ERROR', 'Polyline too short (${polyline.length} pts)');
+      return;
+    }
+
+    // Clamp speed to a positive value so travel-time / interpolation are safe.
+    final v = speedMps <= 0 ? 1.0 : speedMps;
+
+    // 1. Cumulative metres, then interpolate for a smooth simulation. Segment
+    //    length is derived from the desired temporal step (mirrors the metro
+    //    path's fixed 10 m interpolation via the same [_interpolatePolyline]).
+    final rawCum = _computeCumulativeMeters(polyline);
+    final maxSegmentMeters = math.max(1.0, v * dtSeconds);
+    final (interpolated, interpolatedCum) =
+        _interpolatePolyline(polyline, rawCum, maxSegmentMeters);
+
+    final totalMeters = interpolatedCum.isEmpty ? 0.0 : interpolatedCum.last;
+
+    // 2. Build dwell stations from [stops], snapped onto the interpolated route.
+    //    Arrival time is the linear-model time at which progress reaches the
+    //    stop's arc-length, so the braking / at-station dwell windows in
+    //    [_updateMotionState] line up spatially with the stop.
+    final totalDwell = stops.length * dwellSeconds;
+    final cruiseSeconds = totalMeters / v;
+    final totalDuration = cruiseSeconds + totalDwell;
+
+    final stations = <TestRouteStation>[];
+    for (var i = 0; i < stops.length; i++) {
+      final (snapped, _, progressM) =
+          _findClosestPointOnPolyline(stops[i], interpolated);
+      final arrival = totalMeters > 0
+          ? (progressM / totalMeters) * totalDuration
+          : 0.0;
+      stations.add(
+        TestRouteStation(
+          id: 'stop_$i',
+          name: 'Stop ${i + 1}',
+          position: snapped,
+          cumulativeMeters: progressM,
+          dwellTimeSeconds: dwellSeconds,
+          arrivalTimeSeconds: arrival,
+          isUnderground: isUnderground,
+        ),
+      );
+    }
+    // Order stations by their progress along the route (defensive: stops may be
+    // passed out of order).
+    stations.sort((a, b) => a.cumulativeMeters.compareTo(b.cumulativeMeters));
+
+    // 3. Leg average speed is the dwell-reduced average (exactly like the metro
+    //    leg: totalMeters / duration), so [_updateMotionState] cruises at the
+    //    same effective pace as the linear [_positionAtTime] model.
+    final legAvgSpeed = totalDuration > 0 ? totalMeters / totalDuration : v;
+
+    final leg = TestRouteLeg(
+      id: 'synthetic_polyline_leg',
+      type: legType,
+      name: name,
+      polyline: interpolated,
+      cumulativeMeters: interpolatedCum,
+      stations: stations,
+      startTimeSeconds: 0,
+      endTimeSeconds: totalDuration,
+      averageSpeedMps: legAvgSpeed,
+      hasGpsInTunnel: false,
+    );
+
+    _route = TestRoute(
+      id: TestRouteId.capturedRealRoute,
+      name: name,
+      description: description,
+      legs: [leg],
+      fullPolyline: interpolated,
+      groundTruthPolyline: interpolated,
+      fullCumulativeMeters: interpolatedCum,
+      totalMeters: totalMeters,
+      totalDurationSeconds: totalDuration,
+    );
+
+    // Install the GPS-blackout windows for the synthesized tick path, then reset
+    // into the standard (non-log) synthesis mode.
+    _blackoutWindows = List.unmodifiable(blackoutWindows);
+    _reset();
+
+    _log('LOAD', 'EVENT', 'Polyline route loaded: $name', {
+      'points': interpolated.length,
+      'stations': stations.length,
+      'blackoutWindows': _blackoutWindows.length,
+      'totalMeters': totalMeters.toStringAsFixed(0),
+      'durationSeconds': totalDuration.toStringAsFixed(0),
+      'cruiseSpeedMps': v.toStringAsFixed(1),
     });
   }
 
@@ -1968,6 +2127,15 @@ class ImuReplayEngineV2 {
     LatLng truePosition,
     TestRouteLeg? leg,
   ) {
+    // Synthesized GPS-blackout windows (loadFromPolyline). These override the
+    // dropout mode: while inside a window there is simply no fix, as in a
+    // tunnel. Empty list (every other loader) => no-op, existing behaviour.
+    for (final w in _blackoutWindows) {
+      if (w.contains(_elapsedSeconds)) {
+        return (position: null, accuracy: 0.0, shouldEmit: false);
+      }
+    }
+
     final isMetro = leg?.type == LegType.metro;
 
     switch (gpsDropoutMode) {

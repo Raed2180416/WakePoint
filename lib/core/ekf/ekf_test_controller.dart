@@ -543,6 +543,68 @@ class EkfTestController {
     });
   }
 
+  /// Load an ARBITRARY polyline (real/recorded trip) for synthesized replay.
+  ///
+  /// Wires the same pipeline as [loadRoute] (fresh engine → dropout/warp config
+  /// → REAL EKF + IMU stream → leak-free subscriptions) but drives the engine
+  /// from any [polyline] via [ImuReplayEngineV2.loadFromPolyline], so arbitrary
+  /// recorded trips exercise the never-late engine, not just canned metro
+  /// routes. [stops] become ZUPT dwell points and [blackoutWindows] model
+  /// tunnel / no-signal stretches (simulation seconds).
+  Future<void> loadRouteFromPolyline(
+    List<LatLng> polyline, {
+    double speedMps = 12.0,
+    List<GpsBlackoutWindow> blackoutWindows = const [],
+    double dtSeconds = 1.0,
+    List<LatLng> stops = const [],
+    double dwellSeconds = 25.0,
+    String name = 'Synthetic Polyline Route',
+    String description =
+        'Synthesized EKF/IMU/GPS timeline from an arbitrary polyline',
+    LegType legType = LegType.metro,
+    bool isUnderground = false,
+  }) async {
+    _engine = ImuReplayEngineV2();
+    _engine!.logVerbosity = logVerbosity;
+    _engine!.gpsDropoutMode = _gpsDropoutMode;
+    _engine!.warpFactor = _warpFactor;
+
+    await _engine!.loadFromPolyline(
+      polyline,
+      speedMps: speedMps,
+      blackoutWindows: blackoutWindows,
+      dtSeconds: dtSeconds,
+      stops: stops,
+      dwellSeconds: dwellSeconds,
+      name: name,
+      description: description,
+      legType: legType,
+      isUnderground: isUnderground,
+    );
+
+    // Wire the REAL EKF (orchestrator + IMU stream), leak-free subscriptions.
+    _initializeEkf();
+    _subscribeToEngineImu();
+    _resubscribeEngine();
+
+    _isActive = true;
+    _resetStatistics();
+
+    _log(
+      EkfTestLogCategory.control,
+      'INFO',
+      'Loaded polyline route: $name',
+      {
+        'points': polyline.length,
+        'speedMps': speedMps,
+        'stops': stops.length,
+        'blackoutWindows': blackoutWindows.length,
+        'gpsMode': _gpsDropoutMode.name,
+        'warpFactor': _warpFactor,
+      },
+    );
+  }
+
   /// Load a log for replay.
   Future<void> loadLog(String logDirectory, TestRouteId routeId) async {
     _scenario = TestScenario.logReplay;

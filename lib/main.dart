@@ -3,6 +3,7 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:geowake2/services/trackingservice.dart';
@@ -132,6 +133,15 @@ Future<void> main() async {
         );
       } catch (_) {/* share is best-effort; never block or crash startup */}
     }());
+
+    // MANDATE §7.1 (black-box drivability): expose the Flutter Driver extension
+    // ONLY when built with --dart-define=ENABLE_FLUTTER_DRIVER=true. bool
+    // .fromEnvironment defaults to false, so production builds never register
+    // the extension — this is a pure no-op unless the dart-define is set, and
+    // it never touches the arm → track → alarm spine.
+    if (const bool.fromEnvironment('ENABLE_FLUTTER_DRIVER')) {
+      enableFlutterDriverExtension();
+    }
 
     runApp(const MyApp());
   }, (Object error, StackTrace stack) {

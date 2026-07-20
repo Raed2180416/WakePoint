@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "9064b0e4abd89ae0d97c7063151d1b345e1d1996",
-  "generatedAt": "2026-07-19T05:57:23+05:30",
-  "structuralDigest": "5fdf3b8722637da823397425ee8992775c3890aa",
+  "gitCommit": "994735831e23aaaee0705cb125a728bcf10e2269",
+  "generatedAt": "2026-07-20T20:32:22+05:30",
+  "structuralDigest": "ea2f4ae083f5faee00fda6c3b4369d49bce4b048",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1126,
-    "edgeCount": 2186,
+    "nodeCount": 1137,
+    "edgeCount": 2199,
     "byLevel": {
       "feature": 9,
-      "file": 402,
+      "file": 405,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 680
+      "symbol": 688
     },
     "byEdgeType": {
-      "contains": 802,
-      "depends-on": 867,
+      "contains": 810,
+      "depends-on": 872,
       "references": 517
     }
   },
@@ -669,7 +669,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 8
     },
     {
@@ -702,8 +702,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "ekf-sensor-fusion",
-      "importers": 4,
-      "exportCount": 17
+      "importers": 5,
+      "exportCount": 18
     },
     {
       "id": "file:lib/core/ekf/motion_classifier.dart",
@@ -790,7 +790,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 22,
+      "importers": 24,
       "exportCount": 9
     },
     {
@@ -2277,6 +2277,17 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 1
+    },
+    {
+      "id": "file:lib/testing/harness_runner.dart",
+      "level": "file",
+      "label": "lib/testing/harness_runner.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 3
     },
     {
       "id": "file:lib/themes/appthemes.dart",
@@ -4039,6 +4050,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/scale/multi_target_scale_test.dart",
+      "level": "file",
+      "label": "test/scale/multi_target_scale_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 3
+    },
+    {
       "id": "file:test/scale/reachability_scale_test.dart",
       "level": "file",
       "label": "test/scale/reachability_scale_test.dart",
@@ -4405,6 +4427,17 @@
       "id": "file:test/test_routes.dart",
       "level": "file",
       "label": "test/test_routes.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/testing/harness_runner_test.dart",
+      "level": "file",
+      "label": "test/testing/harness_runner_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -5542,6 +5575,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/core/ekf/gps_degradation_detector.dart"
+    },
+    {
+      "id": "symbol:lib/core/ekf/imu_replay_engine_v2.dart#GpsBlackoutWindow",
+      "level": "symbol",
+      "label": "GpsBlackoutWindow",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/ekf/imu_replay_engine_v2.dart"
     },
     {
       "id": "symbol:lib/core/ekf/imu_replay_engine_v2.dart#GpsDropoutMode",
@@ -8748,6 +8790,33 @@
       "file": "lib/simulation_engine.dart"
     },
     {
+      "id": "symbol:lib/testing/harness_runner.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/testing/harness_runner.dart"
+    },
+    {
+      "id": "symbol:lib/testing/harness_runner.dart#runScenario",
+      "level": "symbol",
+      "label": "runScenario",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/testing/harness_runner.dart"
+    },
+    {
+      "id": "symbol:lib/testing/harness_runner.dart#sweep",
+      "level": "symbol",
+      "label": "sweep",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/testing/harness_runner.dart"
+    },
+    {
       "id": "symbol:lib/themes/appthemes.dart#AppThemes",
       "level": "symbol",
       "label": "AppThemes",
@@ -10683,6 +10752,33 @@
       "file": "test/saved_routes_service_test.dart"
     },
     {
+      "id": "symbol:test/scale/multi_target_scale_test.dart#kExternalScaleDir",
+      "level": "symbol",
+      "label": "kExternalScaleDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/multi_target_scale_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/multi_target_scale_test.dart#kInRepoScaleDir",
+      "level": "symbol",
+      "label": "kInRepoScaleDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/multi_target_scale_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/multi_target_scale_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/multi_target_scale_test.dart"
+    },
+    {
       "id": "symbol:test/scale/reachability_scale_test.dart#kExternalScaleDir",
       "level": "symbol",
       "label": "kExternalScaleDir",
@@ -11023,6 +11119,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/test_routes.dart"
+    },
+    {
+      "id": "symbol:test/testing/harness_runner_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/testing/harness_runner_test.dart"
     },
     {
       "id": "symbol:test/time_alarm_vm_test.dart#main",
@@ -12893,6 +12998,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 21
+    },
+    {
+      "from": "file:lib/core/ekf/imu_replay_engine_v2.dart",
+      "to": "symbol:lib/core/ekf/imu_replay_engine_v2.dart#GpsBlackoutWindow",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/core/ekf/imu_replay_engine_v2.dart",
@@ -19794,6 +19906,48 @@
       "source": "map"
     },
     {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "file:lib/core/ekf/ekf_test_controller.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "file:lib/core/ekf/imu_replay_engine_v2.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "symbol:lib/testing/harness_runner.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "symbol:lib/testing/harness_runner.dart#runScenario",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/testing/harness_runner.dart",
+      "to": "symbol:lib/testing/harness_runner.dart#sweep",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/themes/appthemes.dart",
       "to": "symbol:lib/themes/appthemes.dart#AppThemes",
       "type": "contains",
@@ -25233,6 +25387,34 @@
       "source": "map"
     },
     {
+      "from": "file:test/scale/multi_target_scale_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/multi_target_scale_test.dart",
+      "to": "symbol:test/scale/multi_target_scale_test.dart#kExternalScaleDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/multi_target_scale_test.dart",
+      "to": "symbol:test/scale/multi_target_scale_test.dart#kInRepoScaleDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/multi_target_scale_test.dart",
+      "to": "symbol:test/scale/multi_target_scale_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/scale/reachability_scale_test.dart",
       "to": "file:lib/core/reachability/reachability.dart",
       "type": "depends-on",
@@ -26365,6 +26547,20 @@
     {
       "from": "file:test/test_routes.dart",
       "to": "symbol:test/test_routes.dart#TestRoutes",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/testing/harness_runner_test.dart",
+      "to": "file:lib/testing/harness_runner.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/testing/harness_runner_test.dart",
+      "to": "symbol:test/testing/harness_runner_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

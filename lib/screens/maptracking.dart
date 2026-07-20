@@ -1083,7 +1083,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
               ),
               if (_metroMode) ...[
                 const SizedBox(width: 8),
-                const Icon(Icons.train), // Mode icon.
+                const Icon(
+                  Icons.train,
+                  semanticLabel: 'Metro mode',
+                ), // Mode icon.
               ],
             ],
           ),
@@ -1310,7 +1313,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                   // the rider is still on board. One-shot only.
                                   if (!_snoozeUsed) ...[
                                     Expanded(
-                                      child: ElevatedButton.icon(
+                                      child: Semantics(
+                                        label: 'Snooze alarm',
+                                        identifier: 'snooze_button',
+                                        child: ElevatedButton.icon(
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: cs.secondaryContainer,
                                           foregroundColor:
@@ -1328,11 +1334,15 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                         icon: const Icon(Icons.snooze, size: 24),
                                         label: const Text('SNOOZE'),
                                       ),
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                   ],
                                   Expanded(
-                                    child: ElevatedButton.icon(
+                                    child: Semantics(
+                                      label: 'End tracking',
+                                      identifier: 'end_tracking_button_arrived',
+                                      child: ElevatedButton.icon(
                                       style: endTrackingStyle,
                                       onPressed: () async {
                                         // Prevent UI flicker during shutdown
@@ -1381,6 +1391,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                       ),
                                       label: const Text('END TRACKING'),
                                     ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1401,7 +1412,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                     Theme.of(
                                       context,
                                     ).colorScheme; // Theme colors.
-                                return ElevatedButton.icon(
+                                return Semantics(
+                                  label: 'Stop alarm',
+                                  identifier: 'stop_alarm_button',
+                                  child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: cs.secondaryContainer,
                                     foregroundColor: cs.onSecondaryContainer,
@@ -1443,6 +1457,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                     size: 24,
                                   ),
                                   label: const Text('STOP ALARM'),
+                                ),
                                 );
                               },
                             ),
@@ -1450,7 +1465,10 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                           const SizedBox(width: 8), // Spacing between buttons
                           // End Tracking Button
                           Expanded(
-                            child: ElevatedButton.icon(
+                            child: Semantics(
+                              label: 'End tracking',
+                              identifier: 'end_tracking_button',
+                              child: ElevatedButton.icon(
                               style: endTrackingStyle,
                               onPressed: () async {
                                 // Prevent UI flicker during shutdown
@@ -1476,6 +1494,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                 size: 24,
                               ),
                               label: const Text('END TRACKING'),
+                            ),
                             ),
                           ),
                         ],

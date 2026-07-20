@@ -1406,12 +1406,16 @@ class HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               const Text('Metro Mode', style: TextStyle(fontSize: 12)),
-              Switch(
-                value: _metroMode,
-                onChanged:
-                    _isTracking
-                        ? null
-                        : (val) => setState(() => _metroMode = val),
+              Semantics(
+                label: 'Metro mode toggle',
+                identifier: 'home_metro_mode_toggle',
+                child: Switch(
+                  value: _metroMode,
+                  onChanged:
+                      _isTracking
+                          ? null
+                          : (val) => setState(() => _metroMode = val),
+                ),
               ),
               const SizedBox(width: 8),
             ],
@@ -1478,6 +1482,7 @@ class HomeScreenState extends State<HomeScreen> {
                                         tooltip: 'Clear search',
                                         icon: Icon(
                                           Icons.close,
+                                          semanticLabel: 'Clear search',
                                           color: clearSearchIconColor,
                                         ),
                                         onPressed: () {
@@ -1547,6 +1552,8 @@ class HomeScreenState extends State<HomeScreen> {
                                             child: Icon(
                                               Icons.close,
                                               size: 16,
+                                              semanticLabel:
+                                                  'Remove recent destination',
                                               color: clearChipIconColor,
                                             ),
                                           ),
@@ -1586,10 +1593,15 @@ class HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text('Time'),
-                          Switch(
-                            value: _useDistanceMode,
-                            onChanged:
-                                (val) => setState(() => _useDistanceMode = val),
+                          Semantics(
+                            label: 'Alarm trigger mode toggle',
+                            identifier: 'home_mode_toggle',
+                            child: Switch(
+                              value: _useDistanceMode,
+                              onChanged:
+                                  (val) =>
+                                      setState(() => _useDistanceMode = val),
+                            ),
                           ),
                           Text(_metroMode ? 'Stops' : 'Distance'),
                         ],
@@ -1658,7 +1670,10 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.015),
-                      Slider(
+                      Semantics(
+                        label: 'Alarm threshold slider',
+                        identifier: 'home_threshold_slider',
+                        child: Slider(
                         value:
                             _useDistanceMode
                                 ? (_metroMode
@@ -1692,6 +1707,7 @@ class HomeScreenState extends State<HomeScreen> {
                             }
                           });
                         },
+                        ),
                       ),
                       if (_lowBattery)
                         Padding(
@@ -1755,8 +1771,12 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: enabled ? _onWakeMePressed : null,
+          child: Semantics(
+            label: 'Arm wake alarm',
+            identifier: 'wake_me_cta',
+            button: true,
+            child: ElevatedButton(
+              onPressed: enabled ? _onWakeMePressed : null,
             child:
                 _isLoading
                     ? Row(
@@ -1784,6 +1804,7 @@ class HomeScreenState extends State<HomeScreen> {
                       'Wake Me!',
                       style: TextStyle(fontSize: screenWidth * 0.05),
                     ),
+            ),
           ),
         ),
       ),
@@ -1804,7 +1825,12 @@ class HomeScreenState extends State<HomeScreen> {
           width: 40,
           height: 40,
           alignment: Alignment.center,
-          child: Icon(icon, color: Colors.white, size: 24),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 24,
+            semanticLabel: 'Low battery warning',
+          ),
         ),
       ),
     );

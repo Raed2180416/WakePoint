@@ -93,6 +93,26 @@
 {"file":"lib/services/trackingservice.dart","name":"_handleBackgroundForegroundResumed","signature":"(ServiceInstance service)"}
 {"file":"lib/services/trackingservice.dart","name":"startLocationStream","signature":"(ServiceInstance service)"}
 {"file":"lib/services/widget/widget_arm_handler.dart","name":"widgetInteractivityCallback","signature":"(Uri? uri)"}
+{"file":"lib/testing/harness_runner.dart","name":"main","signature":"(List<String> args)"}
+{"file":"lib/testing/harness_runner.dart","name":"sweep","signature":"(List<Map<String, dynamic>> specs)"}
+{"file":"lib/testing/harness_runner.dart","name":"runScenario","signature":"(Map<String, dynamic> spec)"}
+{"file":"lib/testing/harness_runner.dart","name":"_parseReachConfig","signature":"(Object? raw)"}
+{"file":"lib/testing/harness_runner.dart","name":"_reachConfigJson","signature":"(ReachabilityConfig c)"}
+{"file":"lib/testing/harness_runner.dart","name":"_parseGpsDropoutMode","signature":"(String? s)"}
+{"file":"lib/testing/harness_runner.dart","name":"_parseRouteId","signature":"(String s)"}
+{"file":"lib/testing/harness_runner.dart","name":"_parsePolyline","signature":"(List<dynamic> raw)"}
+{"file":"lib/testing/harness_runner.dart","name":"_parseWindows","signature":"(Object? raw)"}
+{"file":"lib/testing/harness_runner.dart","name":"_isSweep","signature":"(Object? decoded)"}
+{"file":"lib/testing/harness_runner.dart","name":"_extractSpecs","signature":"(Object? decoded)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asMap","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asString","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asList","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asNum","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asDouble","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_asBool","signature":"(Object? v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_finiteOrNull","signature":"(double v)"}
+{"file":"lib/testing/harness_runner.dart","name":"_round","signature":"(double v, int places)"}
+{"file":"lib/testing/harness_runner.dart","name":"_roundOrInf","signature":"(double v, int places)"}
 {"file":"test/active_route_manager_complex_test.dart","name":"main","signature":"()"}
 {"file":"test/active_route_manager_test.dart","name":"main","signature":"()"}
 {"file":"test/alarm_leg_id_stability_test.dart","name":"main","signature":"()"}
@@ -320,6 +340,11 @@
 {"file":"test/route_registry_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}
 {"file":"test/saved_routes_service_test.dart","name":"main","signature":"()"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_load","signature":"(String rideId)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_targetsFor","signature":"(_Ride r, List<int> offsets)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"_simMulti","signature":"(_Ride r, List<_Target> targets)"}
+{"file":"test/scale/multi_target_scale_test.dart","name":"main","signature":"()"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_load","signature":"(String rideId)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_pct","signature":"(List<double> xs, double p)"}
@@ -362,6 +387,7 @@
 {"file":"test/telemetry/http_telemetry_sink_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_edgecases_test.dart","name":"main","signature":"()"}
 {"file":"test/telemetry/telemetry_service_test.dart","name":"main","signature":"()"}
+{"file":"test/testing/harness_runner_test.dart","name":"main","signature":"()"}
 {"file":"test/time_alarm_vm_test.dart","name":"main","signature":"()"}
 {"file":"test/time_mode_switch_targeting_universal_test.dart","name":"main","signature":"()"}
 {"file":"test/tool_fetch_route.dart","name":"main","signature":"()"}
