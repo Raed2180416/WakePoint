@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "2ad04b5d48a69bf70ea213374a4cd68cee51b162",
-  "generatedAt": "2026-07-20T21:11:33+05:30",
-  "structuralDigest": "3660f0a37afae62afb85a2dabb9dd5f947886661",
+  "gitCommit": "642b57392d9d724af47985e5b16a95a160dc2ddd",
+  "generatedAt": "2026-07-20T21:21:52+05:30",
+  "structuralDigest": "94ef606f2b84497fe39a028d4f7c6655d89544d5",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1139,
-    "edgeCount": 2201,
+    "nodeCount": 1145,
+    "edgeCount": 2209,
     "byLevel": {
       "feature": 9,
-      "file": 406,
+      "file": 408,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 689
+      "symbol": 693
     },
     "byEdgeType": {
-      "contains": 811,
-      "depends-on": 873,
+      "contains": 815,
+      "depends-on": 877,
       "references": 517
     }
   },
@@ -497,6 +497,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:integration_test/patrol_alarm_test.dart",
+      "level": "file",
+      "label": "integration_test/patrol_alarm_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/all_india_stops.dart",
       "level": "file",
       "label": "lib/all_india_stops.dart",
@@ -790,7 +801,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 25,
+      "importers": 26,
       "exportCount": 9
     },
     {
@@ -988,7 +999,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 3
     },
     {
@@ -1560,7 +1571,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 39,
+      "importers": 40,
       "exportCount": 3
     },
     {
@@ -2220,7 +2231,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 45,
+      "importers": 46,
       "exportCount": 6
     },
     {
@@ -4072,6 +4083,17 @@
       "exportCount": 3
     },
     {
+      "id": "file:test/scale/never_late_gps_error_stress_test.dart",
+      "level": "file",
+      "label": "test/scale/never_late_gps_error_stress_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 3
+    },
+    {
       "id": "file:test/scale/reachability_scale_test.dart",
       "level": "file",
       "label": "test/scale/reachability_scale_test.dart",
@@ -5226,6 +5248,15 @@
       "deterministic": true,
       "source": "map",
       "file": "integration_test/device_alarm_integration_test.dart"
+    },
+    {
+      "id": "symbol:integration_test/patrol_alarm_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "integration_test/patrol_alarm_test.dart"
     },
     {
       "id": "symbol:lib/all_india_stops.dart#allIndiaStops",
@@ -10799,6 +10830,33 @@
       "file": "test/scale/multi_target_scale_test.dart"
     },
     {
+      "id": "symbol:test/scale/never_late_gps_error_stress_test.dart#kExternalScaleDir",
+      "level": "symbol",
+      "label": "kExternalScaleDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/never_late_gps_error_stress_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/never_late_gps_error_stress_test.dart#kInRepoScaleDir",
+      "level": "symbol",
+      "label": "kInRepoScaleDir",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/never_late_gps_error_stress_test.dart"
+    },
+    {
+      "id": "symbol:test/scale/never_late_gps_error_stress_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/scale/never_late_gps_error_stress_test.dart"
+    },
+    {
       "id": "symbol:test/scale/reachability_scale_test.dart#kExternalScaleDir",
       "level": "symbol",
       "label": "kExternalScaleDir",
@@ -12422,6 +12480,34 @@
     {
       "from": "file:integration_test/device_alarm_integration_test.dart",
       "to": "symbol:integration_test/device_alarm_integration_test.dart#SimpleLocationInjector",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/patrol_alarm_test.dart",
+      "to": "file:lib/main.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/patrol_alarm_test.dart",
+      "to": "file:lib/services/notification_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/patrol_alarm_test.dart",
+      "to": "file:lib/services/trackingservice.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/patrol_alarm_test.dart",
+      "to": "symbol:integration_test/patrol_alarm_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -25444,6 +25530,34 @@
     {
       "from": "file:test/scale/multi_target_scale_test.dart",
       "to": "symbol:test/scale/multi_target_scale_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/never_late_gps_error_stress_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/never_late_gps_error_stress_test.dart",
+      "to": "symbol:test/scale/never_late_gps_error_stress_test.dart#kExternalScaleDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/never_late_gps_error_stress_test.dart",
+      "to": "symbol:test/scale/never_late_gps_error_stress_test.dart#kInRepoScaleDir",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/scale/never_late_gps_error_stress_test.dart",
+      "to": "symbol:test/scale/never_late_gps_error_stress_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

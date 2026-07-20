@@ -91,6 +91,15 @@ dev_dependencies:
   flutter_native_splash: ^2.3.5
   flutter_launcher_icons: ^0.14.3
   meta: ^1.12.0 # ADDED DEPENDENCY
+  patrol: ^4.7.1
+
+# Patrol (LeanCode) native E2E config. Consumed by `patrol test` / patrol_cli.
+# app_name is a human label; the Android package under test is the RUNTIME
+# applicationId (com.geowake.app), NOT the source namespace (com.example.geowake2).
+patrol:
+  app_name: GeoWake
+  android:
+    package_name: com.geowake.app
 
 flutter:
   uses-material-design: true

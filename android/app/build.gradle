@@ -27,7 +27,13 @@ android {
         // Bump the build number in pubspec (`+N`) to cut a new release.
         versionCode flutter.versionCode
         versionName flutter.versionName
-        
+
+        // Patrol (LeanCode) native E2E: run instrumentation through Patrol's
+        // JUnit runner and clear app data between tests via the AndroidX Test
+        // Orchestrator (configured under testOptions below).
+        testInstrumentationRunner "pl.leancode.patrol.PatrolJUnitRunner"
+        testInstrumentationRunnerArguments clearPackageData: "true"
+
         // SECURITY: the Maps key comes ONLY from android/key.properties (gitignored).
         // The previous hardcoded fallback shipped a LIVE key in source control (and
         // it leaked into chat transcripts) — a billing/abuse risk and a Play flag.
@@ -58,6 +64,13 @@ android {
                           'proguard-rules.pro'
         }
     }
+
+    // Patrol (LeanCode) native E2E: run instrumentation under the AndroidX Test
+    // Orchestrator so each test runs in its own instrumentation and app data is
+    // cleared between tests (clearPackageData in defaultConfig).
+    testOptions {
+        execution "ANDROIDX_TEST_ORCHESTRATOR"
+    }
 }
 
 dependencies {
@@ -67,4 +80,11 @@ dependencies {
 
     // Desugaring support library
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+
+    // Patrol (LeanCode) native E2E: AndroidX Test Orchestrator runtime. Required
+    // for `testOptions { execution "ANDROIDX_TEST_ORCHESTRATOR" }` above —
+    // installs the orchestrator APK so each Patrol test runs isolated and
+    // clearPackageData works. (Version matches patrol 4.7.1's example.) The
+    // JUnit + PatrolJUnitRunner deps come transitively from the patrol plugin.
+    androidTestUtil 'androidx.test:orchestrator:1.5.1'
 }

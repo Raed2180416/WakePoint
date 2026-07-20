@@ -72,11 +72,12 @@
   },
   {
     "file": "lib/services/trackingservice.dart",
-    "importers": 45,
+    "importers": 46,
     "directDependents": [
       "integration_test/alarm_chain_ondevice_test.dart",
       "integration_test/backstop_doze_ondevice_test.dart",
       "integration_test/device_alarm_integration_test.dart",
+      "integration_test/patrol_alarm_test.dart",
       "lib/dashboard/ekf_test_panel.dart",
       "lib/dashboard/unified_dashboard.dart",
       "lib/debug/demo_tools.dart",
@@ -132,11 +133,12 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 39,
+    "importers": 40,
     "directDependents": [
       "integration_test/alarm_chain_ondevice_test.dart",
       "integration_test/backstop_doze_ondevice_test.dart",
       "integration_test/device_alarm_integration_test.dart",
+      "integration_test/patrol_alarm_test.dart",
       "lib/debug/demo_tools.dart",
       "lib/screens/maptracking.dart",
       "lib/screens/ringtones_screen.dart",
@@ -228,7 +230,7 @@
   },
   {
     "file": "lib/core/reachability/reachability.dart",
-    "importers": 25,
+    "importers": 26,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/services/alarm_evaluator.dart",
@@ -254,6 +256,7 @@
       "test/reachability/tightening_never_late_test.dart",
       "test/reachability/vline_vehicle_type_test.dart",
       "test/scale/multi_target_scale_test.dart",
+      "test/scale/never_late_gps_error_stress_test.dart",
       "test/scale/reachability_scale_test.dart"
     ],
     "exportedSymbols": [

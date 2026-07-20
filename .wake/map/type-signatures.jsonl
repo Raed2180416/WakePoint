@@ -46,6 +46,9 @@
 {"file":"integration_test/backstop_doze_ondevice_test.dart","name":"_pumpFor","signature":"(WidgetTester tester, Duration total)"}
 {"file":"integration_test/backstop_doze_ondevice_test.dart","name":"main","signature":"()"}
 {"file":"integration_test/device_alarm_integration_test.dart","name":"main","signature":"()"}
+{"file":"integration_test/patrol_alarm_test.dart","name":"_pumpFor","signature":"(PatrolIntegrationTester $, Duration total)"}
+{"file":"integration_test/patrol_alarm_test.dart","name":"_grantRuntimePermissions","signature":"(PatrolIntegrationTester $)"}
+{"file":"integration_test/patrol_alarm_test.dart","name":"main","signature":"()"}
 {"file":"lib/config/platform_test_flag_io.dart","name":"detectFlutterTest","signature":"()"}
 {"file":"lib/config/platform_test_flag_stub.dart","name":"detectFlutterTest","signature":"()"}
 {"file":"lib/dashboard/unified_dashboard.dart","name":"main","signature":"()"}
@@ -346,6 +349,9 @@
 {"file":"test/scale/multi_target_scale_test.dart","name":"_targetsFor","signature":"(_Ride r, List<int> offsets)"}
 {"file":"test/scale/multi_target_scale_test.dart","name":"_simMulti","signature":"(_Ride r, List<_Target> targets)"}
 {"file":"test/scale/multi_target_scale_test.dart","name":"main","signature":"()"}
+{"file":"test/scale/never_late_gps_error_stress_test.dart","name":"_load","signature":"(String rideId)"}
+{"file":"test/scale/never_late_gps_error_stress_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
+{"file":"test/scale/never_late_gps_error_stress_test.dart","name":"main","signature":"()"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_load","signature":"(String rideId)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_trueS","signature":"(double t, List<double> ts, List<double> ss)"}
 {"file":"test/scale/reachability_scale_test.dart","name":"_pct","signature":"(List<double> xs, double p)"}

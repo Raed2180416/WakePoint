@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "2ad04b5d48a69bf70ea213374a4cd68cee51b162",
-    "gitTree": "3660f0a37afae62afb85a2dabb9dd5f947886661",
-    "generatedAt": "2026-07-20T21:11:33+05:30",
-    "filesIndexed": 406,
-    "dependencyEdges": 873,
-    "totalExports": 689,
-    "totalImports": 1867,
+    "gitCommit": "642b57392d9d724af47985e5b16a95a160dc2ddd",
+    "gitTree": "94ef606f2b84497fe39a028d4f7c6655d89544d5",
+    "generatedAt": "2026-07-20T21:21:52+05:30",
+    "filesIndexed": 408,
+    "dependencyEdges": 877,
+    "totalExports": 693,
+    "totalImports": 1880,
     "byRole": {
       "other": 4,
       "backend": 12,
-      "flutter-test": 209,
+      "flutter-test": 211,
       "flutter-lib": 172,
       "tool": 8,
       "platform": 1
@@ -848,6 +848,80 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "dbb6bf773f4c9e21"
+    },
+    {
+      "file": "integration_test/patrol_alarm_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:patrol/patrol.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geolocator/geolocator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/main.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/trackingservice.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/notification_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_pumpFor",
+          "signature": "(PatrolIntegrationTester $, Duration total)"
+        },
+        {
+          "name": "_grantRuntimePermissions",
+          "signature": "(PatrolIntegrationTester $)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_GpsInjector",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "48585cebc121c15a"
     },
     {
       "file": "lib/all_india_stops.dart",
@@ -18224,6 +18298,75 @@
       "contentHash": "de6ea35d5a1e7365"
     },
     {
+      "file": "test/scale/never_late_gps_error_stress_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        },
+        {
+          "kind": "const",
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "kind": "const",
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_load",
+          "signature": "(String rideId)"
+        },
+        {
+          "name": "_trueS",
+          "signature": "(double t, List<double> ts, List<double> ss)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Ride",
+          "extends": null
+        }
+      ],
+      "constants": [
+        {
+          "name": "kInRepoScaleDir"
+        },
+        {
+          "name": "kExternalScaleDir"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "2f9fc8a50c2ca578"
+    },
+    {
       "file": "test/scale/reachability_scale_test.dart",
       "lang": "dart",
       "exports": [
@@ -21364,6 +21507,24 @@
       "from": "integration_test/device_alarm_integration_test.dart",
       "to": "lib/main.dart",
       "source": "package:geowake2/main.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/patrol_alarm_test.dart",
+      "to": "lib/main.dart",
+      "source": "package:geowake2/main.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/patrol_alarm_test.dart",
+      "to": "lib/services/trackingservice.dart",
+      "source": "package:geowake2/services/trackingservice.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/patrol_alarm_test.dart",
+      "to": "lib/services/notification_service.dart",
+      "source": "package:geowake2/services/notification_service.dart",
       "kind": "static"
     },
     {
@@ -25777,6 +25938,12 @@
       "kind": "static"
     },
     {
+      "from": "test/scale/never_late_gps_error_stress_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/scale/reachability_scale_test.dart",
       "to": "lib/core/reachability/reachability.dart",
       "source": "package:geowake2/core/reachability/reachability.dart",
@@ -28599,7 +28766,7 @@
     },
     {
       "file": "lib/services/trackingservice.dart",
-      "importers": 45,
+      "importers": 46,
       "exports": [
         "TestServiceInstance",
         "TrackingService",
@@ -28611,7 +28778,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 39,
+      "importers": 40,
       "exports": [
         "NotificationService",
         "NotificationActionOutcome",
@@ -28636,7 +28803,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 25,
+      "importers": 26,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -29082,11 +29249,12 @@
     },
     {
       "file": "lib/services/trackingservice.dart",
-      "importers": 45,
+      "importers": 46,
       "directDependents": [
         "integration_test/alarm_chain_ondevice_test.dart",
         "integration_test/backstop_doze_ondevice_test.dart",
         "integration_test/device_alarm_integration_test.dart",
+        "integration_test/patrol_alarm_test.dart",
         "lib/dashboard/ekf_test_panel.dart",
         "lib/dashboard/unified_dashboard.dart",
         "lib/debug/demo_tools.dart",
@@ -29142,11 +29310,12 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 39,
+      "importers": 40,
       "directDependents": [
         "integration_test/alarm_chain_ondevice_test.dart",
         "integration_test/backstop_doze_ondevice_test.dart",
         "integration_test/device_alarm_integration_test.dart",
+        "integration_test/patrol_alarm_test.dart",
         "lib/debug/demo_tools.dart",
         "lib/screens/maptracking.dart",
         "lib/screens/ringtones_screen.dart",
@@ -29238,7 +29407,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 25,
+      "importers": 26,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/services/alarm_evaluator.dart",
@@ -29264,6 +29433,7 @@
         "test/reachability/tightening_never_late_test.dart",
         "test/reachability/vline_vehicle_type_test.dart",
         "test/scale/multi_target_scale_test.dart",
+        "test/scale/never_late_gps_error_stress_test.dart",
         "test/scale/reachability_scale_test.dart"
       ],
       "exportedSymbols": [
