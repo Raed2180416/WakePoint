@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "1a5fb255ba627ae7742495f1169ced27065937be",
-  "generatedAt": "2026-07-20T21:10:56+05:30",
-  "structuralDigest": "1ee0d7fe5747c3ca22064aa9c48e7dbb695fc4e4",
+  "gitCommit": "2ad04b5d48a69bf70ea213374a4cd68cee51b162",
+  "generatedAt": "2026-07-20T21:11:33+05:30",
+  "structuralDigest": "3660f0a37afae62afb85a2dabb9dd5f947886661",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1137,
-    "edgeCount": 2199,
+    "nodeCount": 1139,
+    "edgeCount": 2201,
     "byLevel": {
       "feature": 9,
-      "file": 405,
+      "file": 406,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 688
+      "symbol": 689
     },
     "byEdgeType": {
-      "contains": 810,
-      "depends-on": 872,
+      "contains": 811,
+      "depends-on": 873,
       "references": 517
     }
   },
@@ -790,7 +790,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 24,
+      "importers": 25,
       "exportCount": 9
     },
     {
@@ -3701,6 +3701,17 @@
       "id": "file:test/reachability/multileg_piecewise_vline_test.dart",
       "level": "file",
       "label": "test/reachability/multileg_piecewise_vline_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reachability/never_late_along_track_gps_test.dart",
+      "level": "file",
+      "label": "test/reachability/never_late_along_track_gps_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -10408,6 +10419,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/reachability/multileg_piecewise_vline_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/never_late_along_track_gps_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/never_late_along_track_gps_test.dart"
     },
     {
       "id": "symbol:test/reachability/never_late_vehicle_type_piecewise_test.dart#main",
@@ -24517,6 +24537,20 @@
     {
       "from": "file:test/reachability/multileg_piecewise_vline_test.dart",
       "to": "symbol:test/reachability/multileg_piecewise_vline_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/never_late_along_track_gps_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/never_late_along_track_gps_test.dart",
+      "to": "symbol:test/reachability/never_late_along_track_gps_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

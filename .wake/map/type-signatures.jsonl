@@ -289,6 +289,7 @@
 {"file":"test/reachability/multileg_piecewise_vline_test.dart","name":"_piecewiseSMax","signature":"(double sHi, double dt)"}
 {"file":"test/reachability/multileg_piecewise_vline_test.dart","name":"_flatSMax","signature":"(double sHi, double dt)"}
 {"file":"test/reachability/multileg_piecewise_vline_test.dart","name":"main","signature":"()"}
+{"file":"test/reachability/never_late_along_track_gps_test.dart","name":"main","signature":"()"}
 {"file":"test/reachability/never_late_vehicle_type_piecewise_test.dart","name":"main","signature":"()"}
 {"file":"test/reachability/reachability_edgecases_test.dart","name":"main","signature":"()"}
 {"file":"test/reachability/reachability_test.dart","name":"main","signature":"()"}
