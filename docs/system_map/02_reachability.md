@@ -1,3 +1,5 @@
+> **⚠ STALE — needs regen (as of 2026-07-20 @ `8b9295a`).** This doc is 2026-07-15 vintage and predates three never-late engine changes in `reachability.dart` / `alarm_controller.dart`: (1) the **name-free vehicle-type V_LINE floor** `VLineTable._vehicleCeiling` + `forLine(vehicleType:)` (GW-0076), (2) **piecewise multi-leg V_LINE** via `VLineSegment` + `Reachability._piecewiseFreeRun` + `bound(vLineSegments:)` (replacing the old flat-`max(V_LINE)` over forward legs), and (3) the **physics process-death backstop** `AlarmController.backstopPhysicsFireInSeconds` → OS backstop armed at `min(ETA, physics)` (GW-0080). All three are monotone-safe (fire earlier, never later). See `SYSTEM_MAP.md §0` for the delta.
+
 ## Reachability Protection Level (the "never-late" physics core)
 
 **Role in the core promise:**
