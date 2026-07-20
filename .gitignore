@@ -76,3 +76,6 @@ web/maps_key.js
 
 # agent scratch
 .geowake_env.fish
+
+# build artifact — never commit (100MB, exceeds GitHub limit; GW: purged from history)
+artifacts.zip
