@@ -179,8 +179,6 @@ void main() {
       expect(svc.isAdFree, isTrue);
       expect(svc.canUseCustomAlarmSounds, isTrue);
       expect(svc.canUseWidget, isTrue);
-      expect(svc.canUseWearOs, isTrue);
-      expect(svc.canUseFamilyAlarms, isTrue);
     });
 
     test('a declined purchase leaves the user free', () async {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GeoWake home-screen widget colors (dark theme). -->
+<resources>
+    <color name="gw_widget_bg">#FF1B1F24</color>
+    <color name="gw_widget_title">#FFE6EAF0</color>
+    <color name="gw_widget_subtitle">#FF9AA3AD</color>
+    <color name="gw_widget_accent">#FF4C9AFF</color>
+    <color name="gw_widget_on_accent">#FF08121F</color>
+</resources>

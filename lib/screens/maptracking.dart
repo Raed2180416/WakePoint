@@ -42,6 +42,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   double? _destinationLat; // Destination latitude argument.
   double? _destinationLng; // Destination longitude argument.
   String? _destinationName; // Destination name.
+  // Boarding origin captured at trip start (initial user fix from nav args).
+  // Used ONLY by the post-arrival, consent-gated aggregate surface; never by the
+  // alarm/wake spine. _currentUserLocation moves to the destination during the
+  // ride, so the origin must be snapshotted here at arg-parse time.
+  double? _originLat;
+  double? _originLng;
   bool _metroMode = false; // Whether route is metro-inclusive.
   bool _isMetroTimeMode = false; // Metro + time-mode: destination-only toggle.
   Set<Marker> _markers = {}; // Map markers set.
@@ -300,6 +306,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     double userLat = args['userLat'] ?? 37.422; // Default lat if missing.
     double userLng = args['userLng'] ?? -122.084; // Default lng if missing.
     _currentUserLocation = LatLng(userLat, userLng); // Seed current location.
+    // Snapshot the boarding origin now, before position updates move
+    // _currentUserLocation toward the destination. Only used by the opt-in
+    // aggregate surface (consent default OFF); absent/default coords simply fail
+    // to snap to a catalogue station and are dropped.
+    _originLat = args['userLat'];
+    _originLng = args['userLng'];
     dev.log(
       "MapTrackingScreen: Destination: $_destinationName, ($_destinationLat, $_destinationLng)",
       name: "MapTrackingScreen",
@@ -1344,7 +1356,17 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                         // Guardian "arrived", ad-cap). Synchronous, fire-and-forget,
                                         // non-blocking — runs only AFTER the alarm fired + teardown,
                                         // so it can never delay/reorder the never-late wake.
-                                        ArrivalHooks.fireArrived();
+                                        // Coordinates feed the consent-gated aggregate surface
+                                        // (DataAssetPipeline self-gates on consent, default OFF, as
+                                        // its first statement); a missing origin simply skips it.
+                                        ArrivalHooks.fireArrived(
+                                          destStation: _destinationName,
+                                          destLat: _destinationLat,
+                                          destLng: _destinationLng,
+                                          originLat: _originLat,
+                                          originLng: _originLng,
+                                          mode: _metroMode ? 'metro' : 'transit',
+                                        );
 
                                         // Show the post-arrival screen (free share + last-mile +
                                         // optional rewarded), which returns the rider home on Done.

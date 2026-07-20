@@ -15,12 +15,16 @@ import 'package:crypto/crypto.dart';
 class ShareLinkBuilder {
   const ShareLinkBuilder._();
 
-  /// Default App-Links domain. The founder swaps this for the real registered
-  /// domain (with `/.well-known/assetlinks.json`) when the backend ships.
-  static const String defaultDomain = 'https://geo.wake';
+  /// Default App-Links domain — the deployed Railway backend, which serves both
+  /// the `/j/{id}` recipient page AND `/.well-known/assetlinks.json`, so shared
+  /// links resolve to a real page today and Android App Links can verify against
+  /// it. Swap this (and the AndroidManifest App-Link host) for a custom short
+  /// domain later; overridable at build via --dart-define=GEOWAKE_SHARE_DOMAIN=...
+  static const String defaultDomain =
+      'https://geowake-share-production.up.railway.app';
 
   /// Android package id (for the Play install-referrer fallback link).
-  static const String androidPackage = 'com.example.geowake2';
+  static const String androidPackage = 'com.geowake.app';
 
   /// The `/j/{id}` share URL a recipient opens.
   ///
@@ -55,9 +59,10 @@ class ShareLinkBuilder {
     DateTime? eta,
     String? destLabel,
   }) {
-    final dest = (destLabel != null && destLabel.trim().isNotEmpty)
-        ? ' to ${destLabel.trim()}'
-        : '';
+    final dest =
+        (destLabel != null && destLabel.trim().isNotEmpty)
+            ? ' to ${destLabel.trim()}'
+            : '';
     final when = eta != null ? ' — arriving ~${formatEta(eta)}' : '';
     // Reads like a status the recipient gets value from even without tapping.
     return 'On my way$dest$when · GeoWake\n$url';
@@ -65,9 +70,10 @@ class ShareLinkBuilder {
 
   /// The "arrived safely" message Guardian sends to the saved contact.
   static String buildArrivedMessage({String? destLabel}) {
-    final where = (destLabel != null && destLabel.trim().isNotEmpty)
-        ? ' at ${destLabel.trim()}'
-        : '';
+    final where =
+        (destLabel != null && destLabel.trim().isNotEmpty)
+            ? ' at ${destLabel.trim()}'
+            : '';
     return 'I\'ve arrived safely$where · GeoWake';
   }
 

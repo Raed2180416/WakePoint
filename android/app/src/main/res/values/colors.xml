@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+
+    <!-- GeoWake home-screen widget (light theme). Dark overrides live in
+         values-night/colors.xml. Kept here (not in Flutter theme) because the
+         native RemoteViews cannot read the Dart color scheme. -->
+    <color name="gw_widget_bg">#FFFFFFFF</color>
+    <color name="gw_widget_title">#FF101418</color>
+    <color name="gw_widget_subtitle">#FF5A6068</color>
+    <color name="gw_widget_accent">#FF0B6BCB</color>
+    <color name="gw_widget_on_accent">#FFFFFFFF</color>
 </resources>

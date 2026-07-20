@@ -51,6 +51,33 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- GeoWake journey-share deep links (Friends' rides). Two entry
+                 points into MainActivity, delivered to app_links →
+                 _handleShareLink (lib/main.dart) which follows the ride and
+                 opens the "Friends' rides" screen:
+                 (1) Verified App Link (https): a tapped /j/{id} link from
+                     WhatsApp/SMS opens the app directly (no chooser) once the
+                     host serves /.well-known/assetlinks.json listing THIS
+                     build's signing SHA-256. The host must match the App-Links
+                     domain (ShareLinkBuilder.defaultDomain / GEOWAKE_SHARE_DOMAIN).
+                 (2) Custom scheme geowake://j/{id}: always opens the app WITHOUT
+                     assetlinks verification — the interim/testing entry point. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="geowake-share-production.up.railway.app"
+                    android:pathPrefix="/j" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="geowake" android:host="j" />
+            </intent-filter>
         </activity>
 
         <meta-data
@@ -89,12 +116,61 @@
             android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
 
+        <!-- GeoWake home-screen widget (FEATURES_SPEC §3.6-A). Display/observer
+             surface only: renders the state HomeWidgetBridge mirrors in and, on
+             tap, LAUNCHes MainActivity with the gw_widget_deeplink URI so the
+             normal Dart one-tap-arm flow runs. Never on the arm→track→alarm
+             path. android:name matches HomeWidgetBridge.androidQualifiedName
+             (com.example.geowake2.GeoWakeWidgetProvider). Additive — leaves the
+             notification/boot receivers and deep-link intent-filters untouched. -->
+        <receiver
+            android:name=".GeoWakeWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/geowake_widget_info" />
+        </receiver>
+
+        <!-- home_widget background plumbing for registerInteractivityCallback /
+             widgetInteractivityCallback. Inert unless a background widget intent
+             is dispatched; the widget's taps use a LAUNCH intent, so these are a
+             standard fail-safe fallback, not the primary path. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true" />
+
     </application>
 
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <!-- Guardian mode: compose an "arrived safely" / tracking-link message into
+             the user's SMS or WhatsApp app (USER taps send). Android 11+ package
+             visibility so url_launcher can resolve these composers. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="sms" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
         <!-- G2: allow querying/launching the OS battery-optimization settings screen -->
         <intent>

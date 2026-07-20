@@ -47,39 +47,50 @@ class FollowedRide {
   /// "reconnecting…" hint; the last-known [latest] is preserved regardless).
   final Object? error;
 
+  /// Optional LOCAL nickname the follower typed for this friend ("Amma",
+  /// "Rahul"). Stored ONLY on this device (in the local record) — it is never
+  /// sent to the backend and never leaves the phone; the share model itself
+  /// carries no identity. Null ⇒ fall back to the route-relative headline.
+  final String? label;
+
   const FollowedRide({
     required this.id,
     required this.addedAtMs,
     this.token,
     this.latest,
     this.error,
+    this.label,
   });
 
   FollowedRide copyWith({
     ShareStatusView? latest,
     Object? error,
     bool clearError = false,
-  }) =>
-      FollowedRide(
-        id: id,
-        token: token,
-        addedAtMs: addedAtMs,
-        latest: latest ?? this.latest,
-        error: clearError ? null : (error ?? this.error),
-      );
+    String? label,
+  }) => FollowedRide(
+    id: id,
+    token: token,
+    addedAtMs: addedAtMs,
+    latest: latest ?? this.latest,
+    error: clearError ? null : (error ?? this.error),
+    label: label ?? this.label,
+  );
 
-  /// The ONLY thing that touches disk — id/token/addedAt. No coordinates.
+  /// The ONLY thing that touches disk — id/token/addedAt + the local nickname.
+  /// No coordinates ever, and the nickname never leaves the device.
   Map<String, dynamic> toRecordJson() => {
-        'id': id,
-        'token': token,
-        'addedAtMs': addedAtMs,
-      };
+    'id': id,
+    'token': token,
+    'addedAtMs': addedAtMs,
+    if (label != null) 'label': label,
+  };
 
   factory FollowedRide.fromRecordJson(Map<String, dynamic> j) => FollowedRide(
-        id: j['id'] as String,
-        token: j['token'] as String?,
-        addedAtMs: (j['addedAtMs'] as num?)?.toInt() ?? 0,
-      );
+    id: j['id'] as String,
+    token: j['token'] as String?,
+    addedAtMs: (j['addedAtMs'] as num?)?.toInt() ?? 0,
+    label: j['label'] as String?,
+  );
 
   String encodeRecord() => jsonEncode(toRecordJson());
 
@@ -111,7 +122,9 @@ class FollowedRideFormat {
     final dest = _dest(v.destLabel);
     final eta = v.etaEpochMs;
     final arriving =
-        eta != null ? ' — arriving ~${ShareLinkBuilder.formatEta(DateTime.fromMillisecondsSinceEpoch(eta))}' : '';
+        eta != null
+            ? ' — arriving ~${ShareLinkBuilder.formatEta(DateTime.fromMillisecondsSinceEpoch(eta))}'
+            : '';
     if (dest != null) return 'On the way to $dest$arriving';
     if (arriving.isNotEmpty) return 'On the way$arriving';
     return 'On the way';
@@ -139,11 +152,9 @@ class FollowedRideFormat {
 /// Subscribes to a set of followed share ids and keeps their latest coarse
 /// status live via polling. Exposes a [ValueListenable] the UI binds to.
 class FollowedRidesService {
-  FollowedRidesService._({
-    int Function()? nowMs,
-    Box<String>? box,
-  })  : _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
-        _box = box;
+  FollowedRidesService._({int Function()? nowMs, Box<String>? box})
+    : _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
+      _box = box;
 
   /// Process-wide singleton (wall clock).
   static final FollowedRidesService instance = FollowedRidesService._();
@@ -152,8 +163,7 @@ class FollowedRidesService {
   factory FollowedRidesService.forTest({
     int Function()? nowMs,
     Box<String>? box,
-  }) =>
-      FollowedRidesService._(nowMs: nowMs, box: box);
+  }) => FollowedRidesService._(nowMs: nowMs, box: box);
 
   static const String boxName = 'gw_followed_rides';
 
@@ -198,14 +208,18 @@ class FollowedRidesService {
       try {
         _box = await Hive.openBox<String>(boxName);
       } catch (e) {
-        dev.log('followed box open failed: $e — recreating',
-            name: 'FollowedRidesService');
+        dev.log(
+          'followed box open failed: $e — recreating',
+          name: 'FollowedRidesService',
+        );
         try {
           await Hive.deleteBoxFromDisk(boxName);
           _box = await Hive.openBox<String>(boxName);
         } catch (e2) {
-          dev.log('followed box recreate failed: $e2',
-              name: 'FollowedRidesService');
+          dev.log(
+            'followed box recreate failed: $e2',
+            name: 'FollowedRidesService',
+          );
         }
       }
     }();
@@ -240,7 +254,9 @@ class FollowedRidesService {
       try {
         final r = FollowedRide.decodeRecord(v);
         _byId[r.id] = r;
-      } catch (_) {/* skip corrupt entry */}
+      } catch (_) {
+        /* skip corrupt entry */
+      }
     }
     _loaded = true;
     _publish();
@@ -251,20 +267,24 @@ class FollowedRidesService {
 
   /// Start following [id] (idempotent) and immediately fetch its status. Returns
   /// the resulting row. Never throws.
-  Future<FollowedRide> follow(String id, {String? token}) async {
+  Future<FollowedRide> follow(String id, {String? token, String? label}) async {
     final trimmed = id.trim();
     final existing = _byId[trimmed];
-    final ride = existing ??
-        FollowedRide(id: trimmed, token: token, addedAtMs: _now());
-    // Adopt a freshly-supplied token if the previous follow had none.
-    final merged = (existing != null && token != null && existing.token == null)
-        ? FollowedRide(
-            id: ride.id,
-            token: token,
-            addedAtMs: ride.addedAtMs,
-            latest: ride.latest,
-            error: ride.error)
-        : ride;
+    final cleanLabel = label?.trim();
+    // Adopt a freshly-supplied token / nickname if provided, otherwise preserve
+    // whatever the existing subscription had. Idempotent re-follow keeps the
+    // stable order (addedAtMs) and the last-known view.
+    final merged = FollowedRide(
+      id: trimmed,
+      token: token ?? existing?.token,
+      addedAtMs: existing?.addedAtMs ?? _now(),
+      latest: existing?.latest,
+      error: existing?.error,
+      label:
+          (cleanLabel != null && cleanLabel.isNotEmpty)
+              ? cleanLabel
+              : existing?.label,
+    );
     _byId[trimmed] = merged;
     await _persist(merged);
     _publish();
@@ -353,8 +373,9 @@ class FollowedRidesService {
   }
 
   void _publish() {
-    final list = _byId.values.toList()
-      ..sort((a, b) => b.addedAtMs.compareTo(a.addedAtMs));
+    final list =
+        _byId.values.toList()
+          ..sort((a, b) => b.addedAtMs.compareTo(a.addedAtMs));
     rides.value = List.unmodifiable(list);
   }
 }

@@ -24,6 +24,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'file_telemetry_sink.dart';
+import 'http_telemetry_sink.dart';
 
 /// Outcome of a fired (or missed) alarm — the north-star metric.
 enum AlarmOutcome { onTime, early, late, missed, dismissed, snoozed }
@@ -143,11 +144,22 @@ class TelemetryService {
   /// path_provider's getApplicationSupportDirectory) so this service keeps ZERO
   /// dependency on path_provider and stays unit-testable against a temp dir.
   /// Replaces any previously-registered sinks so it is idempotent.
-  void configureDefaultSinks({required String dir}) {
+  ///
+  /// [telemetryUrl]/[telemetryToken] (from --dart-define, see main.dart) wire an
+  /// optional network egress sink. INERT by default: an empty [telemetryUrl]
+  /// registers NO http sink, so telemetry stays PII-free + local-only until the
+  /// founder supplies an endpoint. The in-memory + file sinks are always kept.
+  void configureDefaultSinks({
+    required String dir,
+    String telemetryUrl = '',
+    String telemetryToken = '',
+  }) {
     configure(
       sinks: <TelemetrySink>[
         InMemoryTelemetrySink(),
         FileTelemetrySink(dir: dir),
+        if (telemetryUrl.trim().isNotEmpty)
+          HttpTelemetrySink(endpoint: telemetryUrl, token: telemetryToken),
       ],
       replace: true,
     );

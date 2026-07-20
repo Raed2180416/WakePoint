@@ -46,7 +46,7 @@ function createConfigFromEnv(env = process.env) {
     // Android App Links signing cert fingerprint(s) — SHA-256, colon-separated
     // hex, comma-separated for multiple. Founder-provided.
     androidCertSha256: env.ANDROID_CERT_SHA256 || '',
-    androidPackage: env.ANDROID_PACKAGE || 'com.example.geowake2',
+    androidPackage: env.ANDROID_PACKAGE || 'com.geowake.app',
 
     // CORS: locked down by default (native app + top-level web nav need no CORS).
     // Set to a specific origin (e.g. https://geo.wake) only if a browser client

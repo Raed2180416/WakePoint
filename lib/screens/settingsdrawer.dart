@@ -1,6 +1,7 @@
 // lib/screens/settingsdrawer.dart
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../widgets/monetization/pro_gate.dart';
 import '../services/monetization/monetization_service.dart';
@@ -10,6 +11,37 @@ import 'package:geowake2/services/tracking_state_store.dart';
 // This line tells our settings drawer that the RingtonesScreen exists and where to find it.
 import 'package:geowake2/screens/ringtones_screen.dart';
 import 'package:geowake2/screens/friends_rides_screen.dart';
+import 'package:geowake2/screens/report_problem_screen.dart';
+
+/// Founder: replace `YOUR_HANDLE` with your real Buy Me a Coffee handle. Until
+/// then the tile shows a hint instead of opening the wrong page (so a supporter
+/// never funds someone else's account).
+const String kBuyMeACoffeeUrl = 'https://www.buymeacoffee.com/YOUR_HANDLE';
+
+/// Open the support link in an external browser. Captures the messenger before
+/// the await so no BuildContext is used across the async gap.
+Future<void> _openBuyMeACoffee(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  Navigator.of(context).pop(); // close the drawer first
+  if (kBuyMeACoffeeUrl.contains('YOUR_HANDLE')) {
+    messenger.showSnackBar(const SnackBar(
+      content: Text('Set your Buy Me a Coffee link (kBuyMeACoffeeUrl)'),
+    ));
+    return;
+  }
+  var ok = false;
+  try {
+    ok = await launchUrl(
+      Uri.parse(kBuyMeACoffeeUrl),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (_) {/* fall through to the failure snackbar */}
+  if (!ok) {
+    messenger.showSnackBar(const SnackBar(
+      content: Text("Couldn't open the link"),
+    ));
+  }
+}
 
 class SettingsDrawer extends StatelessWidget {
   const SettingsDrawer({
@@ -60,16 +92,27 @@ class SettingsDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.alarm),
               title: const Text('Alarm Ringtones'),
-              // --- STEP 2: UPDATE THIS onTap FUNCTION ---
+              subtitle: const Text('Custom tones (the default alarm is free)'),
+              // Custom ringtones are a Pro feature. The core DEFAULT alarm sound
+              // stays free — only the custom-tone picker is gated. Free users get
+              // the paywall; Pro users get the picker.
+              trailing:
+                  (MonetizationService.instance.premiumOrNull?.isPro ?? false)
+                      ? null
+                      : const ProBadge(),
               onTap: () {
-                // This closes the drawer before navigating to the new screen
-                // for a smoother user experience.
+                // Close the drawer before showing the picker or the paywall.
                 Navigator.of(context).pop();
-
-                // This is the command that pushes the RingtonesScreen onto the view.
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const RingtonesScreen(),
+                ProGate.run(
+                  context,
+                  allowed: MonetizationService
+                          .instance.premiumOrNull?.canUseCustomAlarmSounds ??
+                      false,
+                  source: PaywallSource.customSound,
+                  onAllowed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const RingtonesScreen(),
+                    ),
                   ),
                 );
               },
@@ -126,6 +169,24 @@ class SettingsDrawer extends StatelessWidget {
               },
             ),
             const Divider(),
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined),
+              title: const Text('Report a problem'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ReportProblemScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.coffee_outlined),
+              title: const Text('Buy me a coffee'),
+              subtitle: const Text('Support GeoWake — keeps it ad-light'),
+              onTap: () => _openBuyMeACoffee(context),
+            ),
             ListTile(
               leading: const Icon(Icons.close),
               title: const Text('Close'),

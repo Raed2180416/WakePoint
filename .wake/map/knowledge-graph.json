@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "fece9766553ac2aa8a122997a682ca2761bf0e12",
-    "gitTree": "16ab4d4b109a44839cd482cd17a7f20713038d8b",
-    "generatedAt": "2026-07-19T05:35:17+05:30",
-    "filesIndexed": 389,
-    "dependencyEdges": 838,
-    "totalExports": 663,
-    "totalImports": 1785,
+    "gitCommit": "9064b0e4abd89ae0d97c7063151d1b345e1d1996",
+    "gitTree": "5fdf3b8722637da823397425ee8992775c3890aa",
+    "generatedAt": "2026-07-19T05:57:23+05:30",
+    "filesIndexed": 402,
+    "dependencyEdges": 867,
+    "totalExports": 680,
+    "totalImports": 1850,
     "byRole": {
       "other": 4,
       "backend": 12,
-      "flutter-test": 197,
-      "flutter-lib": 167,
+      "flutter-test": 206,
+      "flutter-lib": 171,
       "tool": 8,
       "platform": 1
     },
@@ -167,7 +167,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "other",
-      "contentHash": "8fe3a17f3acc3b99"
+      "contentHash": "146e74d19b69115d"
     },
     {
       "file": "backend/share/server.test.js",
@@ -207,7 +207,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "other",
-      "contentHash": "51c950b0c334e5c2"
+      "contentHash": "98cab44e9f7fd7ef"
     },
     {
       "file": "claudesciencesession/code/ekf_js.js",
@@ -628,6 +628,154 @@
       "contentHash": "ccac0d1f1f8067ec"
     },
     {
+      "file": "integration_test/alarm_chain_ondevice_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:integration_test/integration_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geolocator/geolocator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/trackingservice.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/notification_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_pumpFor",
+          "signature": "(WidgetTester tester, Duration total)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Injector",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "4fc35238a2f8a7d6"
+    },
+    {
+      "file": "integration_test/backstop_doze_ondevice_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:integration_test/integration_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geolocator/geolocator.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/trackingservice.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/notification_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_pumpFor",
+          "signature": "(WidgetTester tester, Duration total)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_Injector",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "092e2a6f879f21ba"
+    },
+    {
       "file": "integration_test/device_alarm_integration_test.dart",
       "lang": "dart",
       "exports": [
@@ -648,6 +796,10 @@
         {
           "kind": "static",
           "source": "dart:io"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
         },
         {
           "kind": "static",
@@ -695,7 +847,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "efc5ab714a84927c"
+      "contentHash": "dbb6bf773f4c9e21"
     },
     {
       "file": "lib/all_india_stops.dart",
@@ -2132,6 +2284,10 @@
         },
         {
           "kind": "class",
+          "name": "VLineSegment"
+        },
+        {
+          "kind": "class",
           "name": "Reachability"
         },
         {
@@ -2177,6 +2333,10 @@
           "extends": null
         },
         {
+          "name": "VLineSegment",
+          "extends": null
+        },
+        {
           "name": "Reachability",
           "extends": null
         },
@@ -2189,7 +2349,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "8a5b1729a46eee41"
+      "contentHash": "ea5a6df5426bf5f9"
     },
     {
       "file": "lib/dashboard/alarm_debouncer.dart",
@@ -3126,6 +3286,10 @@
         },
         {
           "kind": "static",
+          "source": "services/widget/home_widget_bridge.dart"
+        },
+        {
+          "kind": "static",
           "source": "screens/guardian_setup_screen.dart"
         },
         {
@@ -3138,6 +3302,10 @@
         },
         {
           "kind": "static",
+          "source": "screens/report_problem_screen.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geolocator/geolocator.dart"
         },
         {
@@ -3147,6 +3315,10 @@
         {
           "kind": "static",
           "source": "services/share/share_backend_config.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/share/guardian_service.dart"
         },
         {
           "kind": "static",
@@ -3190,6 +3362,10 @@
         {
           "name": "main",
           "signature": "()"
+        },
+        {
+          "name": "_markSessionCrashed",
+          "signature": "()"
         }
       ],
       "classes": [
@@ -3202,11 +3378,21 @@
           "extends": "State"
         }
       ],
-      "constants": [],
+      "constants": [
+        {
+          "name": "_telemetryUrl"
+        },
+        {
+          "name": "_telemetryToken"
+        },
+        {
+          "name": "_kCrashFlagKey"
+        }
+      ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ff765f1a67720792"
+      "contentHash": "cedca596007919ba"
     },
     {
       "file": "lib/main_playground.dart",
@@ -3391,7 +3577,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "10248b6cc89c115b"
+      "contentHash": "74e09715b4e10737"
     },
     {
       "file": "lib/screens/guardian_setup_screen.dart",
@@ -3510,11 +3696,11 @@
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/saved_route.dart"
+          "source": "package:geowake2/services/saved_routes_service.dart"
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/saved_routes_service.dart"
+          "source": "package:geowake2/services/saved_route.dart"
         },
         {
           "kind": "static",
@@ -3539,6 +3725,14 @@
         {
           "kind": "static",
           "source": "package:geowake2/services/trackingservice.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/share/guardian_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/widget_arm_handler.dart"
         },
         {
           "kind": "static",
@@ -3593,7 +3787,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "dfb9a060b9fd30ce"
+      "contentHash": "38e2eae9482ae254"
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -3734,7 +3928,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "922b696a24228e9c"
+      "contentHash": "6670d9ed59219b27"
     },
     {
       "file": "lib/screens/mobility_data_consent_screen.dart",
@@ -3854,7 +4048,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b09fe55f6ec6791b"
+      "contentHash": "5c07642ed6b586fe"
     },
     {
       "file": "lib/screens/monetization/post_arrival_screen.dart",
@@ -4024,6 +4218,47 @@
       "contentHash": "841f125828c889d9"
     },
     {
+      "file": "lib/screens/report_problem_screen.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "ReportProblemScreen"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:share_plus/share_plus.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../services/telemetry/telemetry_report_builder.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "ReportProblemScreen",
+          "extends": "StatefulWidget"
+        },
+        {
+          "name": "_ReportProblemScreenState",
+          "extends": "State"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "a55775773f9cf003"
+    },
+    {
       "file": "lib/screens/ringtones_screen.dart",
       "lang": "dart",
       "exports": [
@@ -4099,12 +4334,20 @@
         {
           "kind": "class",
           "name": "SettingsDrawer"
+        },
+        {
+          "kind": "const",
+          "name": "kBuyMeACoffeeUrl"
         }
       ],
       "imports": [
         {
           "kind": "static",
           "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:url_launcher/url_launcher.dart"
         },
         {
           "kind": "static",
@@ -4129,10 +4372,19 @@
         {
           "kind": "static",
           "source": "package:geowake2/screens/friends_rides_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/screens/report_problem_screen.dart"
         }
       ],
       "types": [],
-      "functions": [],
+      "functions": [
+        {
+          "name": "_openBuyMeACoffee",
+          "signature": "(BuildContext context)"
+        }
+      ],
       "classes": [
         {
           "name": "SettingsDrawer",
@@ -4147,11 +4399,15 @@
           "extends": "State"
         }
       ],
-      "constants": [],
+      "constants": [
+        {
+          "name": "kBuyMeACoffeeUrl"
+        }
+      ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "10caf4ec0969a591"
+      "contentHash": "d52e597396dea518"
     },
     {
       "file": "lib/screens/splash_screen.dart",
@@ -4653,6 +4909,10 @@
         },
         {
           "kind": "const",
+          "name": "kDataAssetEgressEndpoint"
+        },
+        {
+          "kind": "const",
           "name": "kOdKAnonymityThreshold"
         },
         {
@@ -4697,6 +4957,9 @@
           "name": "kDataAssetEgressEnabled"
         },
         {
+          "name": "kDataAssetEgressEndpoint"
+        },
+        {
           "name": "kOdKAnonymityThreshold"
         },
         {
@@ -4727,7 +4990,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "1dac5c82ee22c567"
+      "contentHash": "8bdba04b5dfda69d"
     },
     {
       "file": "lib/services/data_asset/data_asset_pipeline.dart",
@@ -4847,6 +5110,55 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "d2c07970a191242b"
+    },
+    {
+      "file": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "HttpAggregateEgressSink"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        },
+        {
+          "kind": "static",
+          "source": "aggregate_egress_sink.dart"
+        },
+        {
+          "kind": "static",
+          "source": "aggregate_schema.dart"
+        },
+        {
+          "kind": "static",
+          "source": "data_asset_config.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "HttpAggregateEgressSink",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "8a8e0014e64163c9"
     },
     {
       "file": "lib/services/data_asset/k_anonymity_filter.dart",
@@ -5918,7 +6230,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a863ba0c9b62beec"
+      "contentHash": "3f0ca7fd64de4f66"
     },
     {
       "file": "lib/services/monetization/purchase_backend.dart",
@@ -7471,7 +7783,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "9b9a987905057b8e"
+      "contentHash": "ff9c23b8c6f924fa"
     },
     {
       "file": "lib/services/share/guardian_service.dart",
@@ -7484,6 +7796,14 @@
         {
           "kind": "class",
           "name": "GuardianService"
+        },
+        {
+          "kind": "typedef",
+          "name": "GuardianUriLauncher"
+        },
+        {
+          "kind": "typedef",
+          "name": "GuardianAutoSender"
         }
       ],
       "imports": [
@@ -7502,6 +7822,10 @@
         {
           "kind": "static",
           "source": "package:hive_flutter/hive_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:url_launcher/url_launcher.dart"
         },
         {
           "kind": "static",
@@ -7528,7 +7852,16 @@
           "source": "share_link_builder.dart"
         }
       ],
-      "types": [],
+      "types": [
+        {
+          "name": "GuardianUriLauncher",
+          "kind": "typedef"
+        },
+        {
+          "name": "GuardianAutoSender",
+          "kind": "typedef"
+        }
+      ],
       "functions": [],
       "classes": [
         {
@@ -7544,7 +7877,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "aec7221b59f56f13"
+      "contentHash": "8c108d19b3f751da"
     },
     {
       "file": "lib/services/share/journey_share_models.dart",
@@ -7818,7 +8151,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "e1f1aab2f5a25484"
+      "contentHash": "5f9f1ba1c853f624"
     },
     {
       "file": "lib/services/share/share_deep_link.dart",
@@ -7883,7 +8216,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "1107f7607422a770"
+      "contentHash": "ba08ccb76cc7c6fc"
     },
     {
       "file": "lib/services/simulation_client.dart",
@@ -8164,6 +8497,80 @@
       "contentHash": "724e54e598662803"
     },
     {
+      "file": "lib/services/telemetry/http_telemetry_sink.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "HttpTelemetrySink"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        },
+        {
+          "kind": "static",
+          "source": "telemetry_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "HttpTelemetrySink",
+          "extends": "TelemetrySink"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "167a70265245f211"
+    },
+    {
+      "file": "lib/services/telemetry/telemetry_report_builder.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "TelemetryReportBuilder"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:device_info_plus/device_info_plus.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:package_info_plus/package_info_plus.dart"
+        },
+        {
+          "kind": "static",
+          "source": "telemetry_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "TelemetryReportBuilder",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "f99ad6eb2afeb3b3"
+    },
+    {
       "file": "lib/services/telemetry/telemetry_service.dart",
       "lang": "dart",
       "exports": [
@@ -8204,6 +8611,10 @@
         {
           "kind": "static",
           "source": "file_telemetry_sink.dart"
+        },
+        {
+          "kind": "static",
+          "source": "http_telemetry_sink.dart"
         }
       ],
       "types": [
@@ -8239,7 +8650,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f8d0b538c629b9fb"
+      "contentHash": "13e10a3d49275be7"
     },
     {
       "file": "lib/services/telemetry/telemetry_session.dart",
@@ -8658,7 +9069,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "38e769c661e63f81"
+      "contentHash": "4952b9fb93b32713"
     },
     {
       "file": "lib/services/tracking/arrival_hooks.dart",
@@ -9076,7 +9487,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "47e11c91d79f0091"
+      "contentHash": "5811f0471f56576a"
     },
     {
       "file": "lib/services/tracking/post_alarm_multicast.dart",
@@ -9652,7 +10063,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "68a4b9d7ee88ab4a"
+      "contentHash": "e85b62b436d01fde"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -9729,7 +10140,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c81179c0a0699779"
+      "contentHash": "d179fce2c57e7ce2"
     },
     {
       "file": "lib/services/widget/home_widget_bridge.dart",
@@ -10021,6 +10432,10 @@
       "imports": [
         {
           "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
           "source": "package:flutter/material.dart"
         },
         {
@@ -10056,7 +10471,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c86842752ebb30a1"
+      "contentHash": "8c062c5a28c2d0fb"
     },
     {
       "file": "lib/widgets/monetization/pro_gate.dart",
@@ -10102,7 +10517,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "2b14c46c236c0955"
+      "contentHash": "a1ff18572d958636"
     },
     {
       "file": "lib/widgets/post_arrival_card.dart",
@@ -12074,6 +12489,59 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "3450b682c957a344"
+    },
+    {
+      "file": "test/data_asset/http_egress_sink_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/aggregate_egress_sink.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/aggregate_schema.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/data_asset_config.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/data_asset_pipeline.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/http_aggregate_egress_sink.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "b0d2e4a6e7195d14"
     },
     {
       "file": "test/data_asset/pipeline_hive_test.dart",
@@ -14783,7 +15251,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "2948a41a3ef2f4b9"
+      "contentHash": "9ace79f1875c531f"
     },
     {
       "file": "test/monetization/monetization_service_test.dart",
@@ -14869,7 +15337,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "ee897cfe83695fbc"
+      "contentHash": "c69440e289c2722f"
     },
     {
       "file": "test/monetization/post_arrival_decision_test.dart",
@@ -15021,7 +15489,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "576a271bb6cb93fd"
+      "contentHash": "e80eef8e1d0497a5"
     },
     {
       "file": "test/multiple_switch_point_alarm_test.dart",
@@ -15226,6 +15694,39 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "cf8afb8bd28fec21"
+    },
+    {
+      "file": "test/notification_physics_backstop_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/tracking/alarm_controller.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "9dc2a02cf2564bcb"
     },
     {
       "file": "test/notification_service_test.dart",
@@ -15971,6 +16472,123 @@
       "contentHash": "a39b06762377772d"
     },
     {
+      "file": "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "8e0269461bc28e64"
+    },
+    {
+      "file": "test/reachability/multileg_piecewise_vline_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_piecewiseSMax",
+          "signature": "(double sHi, double dt)"
+        },
+        {
+          "name": "_flatSMax",
+          "signature": "(double sHi, double dt)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [
+        {
+          "name": "_metroV"
+        },
+        {
+          "name": "_rrtsV"
+        },
+        {
+          "name": "_segments"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "ed826ecf38f894a6"
+    },
+    {
+      "file": "test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "6fe5aa71d055c7de"
+    },
+    {
       "file": "test/reachability/reachability_edgecases_test.dart",
       "lang": "dart",
       "exports": [
@@ -16158,6 +16776,39 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "ffa8ce17ac9e309a"
+    },
+    {
+      "file": "test/reachability/vline_vehicle_type_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/reachability/reachability.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "30738ae3d934d711"
     },
     {
       "file": "test/regression_prod_data_test.dart",
@@ -17297,95 +17948,6 @@
       "contentHash": "1898f9c6448a8145"
     },
     {
-      "file": "test/scale/multi_target_scale_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        },
-        {
-          "kind": "const",
-          "name": "kInRepoScaleDir"
-        },
-        {
-          "kind": "const",
-          "name": "kExternalScaleDir"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "dart:convert"
-        },
-        {
-          "kind": "static",
-          "source": "dart:io"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/core/reachability/reachability.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/tracking/alarm_target.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/tracking/intermediate_target_evaluator.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "_load",
-          "signature": "(String rideId)"
-        },
-        {
-          "name": "_trueS",
-          "signature": "(double t, List<double> ts, List<double> ss)"
-        },
-        {
-          "name": "_trueArrivalT",
-          "signature": "(_Ride r, double sTarget)"
-        },
-        {
-          "name": "_simMulti",
-          "signature": "(_Ride r, List<AlarmTarget> targets)"
-        },
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [
-        {
-          "name": "_Ride",
-          "extends": null
-        },
-        {
-          "name": "_Fire",
-          "extends": null
-        }
-      ],
-      "constants": [
-        {
-          "name": "kInRepoScaleDir"
-        },
-        {
-          "name": "kExternalScaleDir"
-        }
-      ],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "c25bdd3e8b3ff7e4"
-    },
-    {
       "file": "test/scale/reachability_scale_test.dart",
       "lang": "dart",
       "exports": [
@@ -17431,6 +17993,10 @@
           "signature": "(double t, List<double> ts, List<double> ss)"
         },
         {
+          "name": "_pct",
+          "signature": "(List<double> xs, double p)"
+        },
+        {
           "name": "main",
           "signature": "()"
         }
@@ -17438,6 +18004,10 @@
       "classes": [
         {
           "name": "_Ride",
+          "extends": null
+        },
+        {
+          "name": "_WindowStats",
           "extends": null
         }
       ],
@@ -17447,12 +18017,15 @@
         },
         {
           "name": "kExternalScaleDir"
+        },
+        {
+          "name": "_kMaxP95StopsEarly"
         }
       ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "10520fe6949713c6"
+      "contentHash": "57d6242c3ba015c9"
     },
     {
       "file": "test/segment_builder_test.dart",
@@ -18023,7 +18596,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "0ca33063b6d63fd5"
+      "contentHash": "cdd56054a58c1d85"
     },
     {
       "file": "test/share/journey_share_models_test.dart",
@@ -18225,7 +18798,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "9806ffa43b667cbe"
+      "contentHash": "e7d47fb7ddaff3ae"
     },
     {
       "file": "test/shared_prefs_reload_test.dart",
@@ -18763,6 +19336,64 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "b37ca59fca5c0d38"
+    },
+    {
+      "file": "test/telemetry/http_telemetry_sink_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "HttpFailure"
+        },
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/testing.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/telemetry/telemetry_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/telemetry/http_telemetry_sink.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "HttpFailure",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "12a1cd78589e3639"
     },
     {
       "file": "test/telemetry/telemetry_edgecases_test.dart",
@@ -19656,6 +20287,39 @@
       "contentHash": "2b488170b6eecfcf"
     },
     {
+      "file": "test/widget/widget_field_contract_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/widget/home_widget_bridge.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "111987b1ec3eeb63"
+    },
+    {
       "file": "test/widgets/post_arrival_card_widget_test.dart",
       "lang": "dart",
       "exports": [
@@ -20352,6 +21016,30 @@
       "kind": "require"
     },
     {
+      "from": "integration_test/alarm_chain_ondevice_test.dart",
+      "to": "lib/services/trackingservice.dart",
+      "source": "package:geowake2/services/trackingservice.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/alarm_chain_ondevice_test.dart",
+      "to": "lib/services/notification_service.dart",
+      "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/backstop_doze_ondevice_test.dart",
+      "to": "lib/services/trackingservice.dart",
+      "source": "package:geowake2/services/trackingservice.dart",
+      "kind": "static"
+    },
+    {
+      "from": "integration_test/backstop_doze_ondevice_test.dart",
+      "to": "lib/services/notification_service.dart",
+      "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "integration_test/device_alarm_integration_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
@@ -20833,6 +21521,12 @@
     },
     {
       "from": "lib/main.dart",
+      "to": "lib/services/widget/home_widget_bridge.dart",
+      "source": "services/widget/home_widget_bridge.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
       "to": "lib/screens/guardian_setup_screen.dart",
       "source": "screens/guardian_setup_screen.dart",
       "kind": "static"
@@ -20851,8 +21545,20 @@
     },
     {
       "from": "lib/main.dart",
+      "to": "lib/screens/report_problem_screen.dart",
+      "source": "screens/report_problem_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
       "to": "lib/services/share/share_backend_config.dart",
       "source": "services/share/share_backend_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/share/guardian_service.dart",
+      "source": "services/share/guardian_service.dart",
       "kind": "static"
     },
     {
@@ -20989,14 +21695,14 @@
     },
     {
       "from": "lib/screens/homescreen.dart",
-      "to": "lib/services/saved_route.dart",
-      "source": "package:geowake2/services/saved_route.dart",
+      "to": "lib/services/saved_routes_service.dart",
+      "source": "package:geowake2/services/saved_routes_service.dart",
       "kind": "static"
     },
     {
       "from": "lib/screens/homescreen.dart",
-      "to": "lib/services/saved_routes_service.dart",
-      "source": "package:geowake2/services/saved_routes_service.dart",
+      "to": "lib/services/saved_route.dart",
+      "source": "package:geowake2/services/saved_route.dart",
       "kind": "static"
     },
     {
@@ -21033,6 +21739,18 @@
       "from": "lib/screens/homescreen.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/homescreen.dart",
+      "to": "lib/services/share/guardian_service.dart",
+      "source": "package:geowake2/services/share/guardian_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/homescreen.dart",
+      "to": "lib/services/widget/widget_arm_handler.dart",
+      "source": "package:geowake2/services/widget/widget_arm_handler.dart",
       "kind": "static"
     },
     {
@@ -21252,6 +21970,12 @@
       "kind": "static"
     },
     {
+      "from": "lib/screens/report_problem_screen.dart",
+      "to": "lib/services/telemetry/telemetry_report_builder.dart",
+      "source": "../services/telemetry/telemetry_report_builder.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/screens/ringtones_screen.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
@@ -21291,6 +22015,12 @@
       "from": "lib/screens/settingsdrawer.dart",
       "to": "lib/screens/friends_rides_screen.dart",
       "source": "package:geowake2/screens/friends_rides_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/settingsdrawer.dart",
+      "to": "lib/screens/report_problem_screen.dart",
+      "source": "package:geowake2/screens/report_problem_screen.dart",
       "kind": "static"
     },
     {
@@ -21469,6 +22199,24 @@
     },
     {
       "from": "lib/services/data_asset/differential_privacy.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "data_asset_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "lib/services/data_asset/aggregate_egress_sink.dart",
+      "source": "aggregate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "lib/services/data_asset/aggregate_schema.dart",
+      "source": "aggregate_schema.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/http_aggregate_egress_sink.dart",
       "to": "lib/services/data_asset/data_asset_config.dart",
       "source": "data_asset_config.dart",
       "kind": "static"
@@ -22044,9 +22792,27 @@
       "kind": "static"
     },
     {
+      "from": "lib/services/telemetry/http_telemetry_sink.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/telemetry/telemetry_report_builder.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "telemetry_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/services/telemetry/telemetry_service.dart",
       "to": "lib/services/telemetry/file_telemetry_sink.dart",
       "source": "file_telemetry_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/telemetry/telemetry_service.dart",
+      "to": "lib/services/telemetry/http_telemetry_sink.dart",
+      "source": "http_telemetry_sink.dart",
       "kind": "static"
     },
     {
@@ -23322,6 +24088,36 @@
       "kind": "static"
     },
     {
+      "from": "test/data_asset/http_egress_sink_test.dart",
+      "to": "lib/services/data_asset/aggregate_egress_sink.dart",
+      "source": "package:geowake2/services/data_asset/aggregate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/data_asset/http_egress_sink_test.dart",
+      "to": "lib/services/data_asset/aggregate_schema.dart",
+      "source": "package:geowake2/services/data_asset/aggregate_schema.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/data_asset/http_egress_sink_test.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "package:geowake2/services/data_asset/data_asset_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/data_asset/http_egress_sink_test.dart",
+      "to": "lib/services/data_asset/data_asset_pipeline.dart",
+      "source": "package:geowake2/services/data_asset/data_asset_pipeline.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/data_asset/http_egress_sink_test.dart",
+      "to": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "source": "package:geowake2/services/data_asset/http_aggregate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/data_asset/pipeline_hive_test.dart",
       "to": "lib/services/data_asset/aggregate_egress_sink.dart",
       "source": "package:geowake2/services/data_asset/aggregate_egress_sink.dart",
@@ -24144,6 +24940,12 @@
       "kind": "static"
     },
     {
+      "from": "test/notification_physics_backstop_test.dart",
+      "to": "lib/services/tracking/alarm_controller.dart",
+      "source": "package:geowake2/services/tracking/alarm_controller.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/notification_service_test.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
@@ -24330,6 +25132,24 @@
       "kind": "static"
     },
     {
+      "from": "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/reachability/multileg_piecewise_vline_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/reachability/reachability_edgecases_test.dart",
       "to": "lib/core/reachability/reachability.dart",
       "source": "package:geowake2/core/reachability/reachability.dart",
@@ -24349,6 +25169,12 @@
     },
     {
       "from": "test/reachability/tightening_never_late_test.dart",
+      "to": "lib/core/reachability/reachability.dart",
+      "source": "package:geowake2/core/reachability/reachability.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/reachability/vline_vehicle_type_test.dart",
       "to": "lib/core/reachability/reachability.dart",
       "source": "package:geowake2/core/reachability/reachability.dart",
       "kind": "static"
@@ -24609,12 +25435,6 @@
       "from": "test/saved_routes_service_test.dart",
       "to": "lib/services/saved_routes_service.dart",
       "source": "package:geowake2/services/saved_routes_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/scale/multi_target_scale_test.dart",
-      "to": "lib/core/reachability/reachability.dart",
-      "source": "package:geowake2/core/reachability/reachability.dart",
       "kind": "static"
     },
     {
@@ -25032,6 +25852,18 @@
       "kind": "static"
     },
     {
+      "from": "test/telemetry/http_telemetry_sink_test.dart",
+      "to": "lib/services/telemetry/telemetry_service.dart",
+      "source": "package:geowake2/services/telemetry/telemetry_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/telemetry/http_telemetry_sink_test.dart",
+      "to": "lib/services/telemetry/http_telemetry_sink.dart",
+      "source": "package:geowake2/services/telemetry/http_telemetry_sink.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/telemetry/telemetry_edgecases_test.dart",
       "to": "lib/services/telemetry/telemetry_service.dart",
       "source": "package:geowake2/services/telemetry/telemetry_service.dart",
@@ -25233,6 +26065,12 @@
       "from": "test/widget/home_widget_test.dart",
       "to": "lib/services/widget/widget_render_state.dart",
       "source": "package:geowake2/services/widget/widget_render_state.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/widget/widget_field_contract_test.dart",
+      "to": "lib/services/widget/home_widget_bridge.dart",
+      "source": "package:geowake2/services/widget/home_widget_bridge.dart",
       "kind": "static"
     },
     {
@@ -25704,6 +26542,10 @@
       },
       {
         "kind": "class",
+        "name": "VLineSegment"
+      },
+      {
+        "kind": "class",
         "name": "Reachability"
       },
       {
@@ -25953,6 +26795,12 @@
         "name": "RecentLocationsService"
       }
     ],
+    "lib/screens/report_problem_screen.dart": [
+      {
+        "kind": "class",
+        "name": "ReportProblemScreen"
+      }
+    ],
     "lib/screens/ringtones_screen.dart": [
       {
         "kind": "class",
@@ -25971,6 +26819,10 @@
       {
         "kind": "class",
         "name": "SettingsDrawer"
+      },
+      {
+        "kind": "const",
+        "name": "kBuyMeACoffeeUrl"
       }
     ],
     "lib/screens/splash_screen.dart": [
@@ -26074,6 +26926,10 @@
       },
       {
         "kind": "const",
+        "name": "kDataAssetEgressEndpoint"
+      },
+      {
+        "kind": "const",
         "name": "kOdKAnonymityThreshold"
       },
       {
@@ -26127,6 +26983,12 @@
       {
         "kind": "enum",
         "name": "DpModel"
+      }
+    ],
+    "lib/services/data_asset/http_aggregate_egress_sink.dart": [
+      {
+        "kind": "class",
+        "name": "HttpAggregateEgressSink"
       }
     ],
     "lib/services/data_asset/k_anonymity_filter.dart": [
@@ -26691,6 +27553,14 @@
       {
         "kind": "class",
         "name": "GuardianService"
+      },
+      {
+        "kind": "typedef",
+        "name": "GuardianUriLauncher"
+      },
+      {
+        "kind": "typedef",
+        "name": "GuardianAutoSender"
       }
     ],
     "lib/services/share/journey_share_models.dart": [
@@ -26827,6 +27697,18 @@
       {
         "kind": "class",
         "name": "FileTelemetrySink"
+      }
+    ],
+    "lib/services/telemetry/http_telemetry_sink.dart": [
+      {
+        "kind": "class",
+        "name": "HttpTelemetrySink"
+      }
+    ],
+    "lib/services/telemetry/telemetry_report_builder.dart": [
+      {
+        "kind": "class",
+        "name": "TelemetryReportBuilder"
       }
     ],
     "lib/services/telemetry/telemetry_service.dart": [
@@ -27354,7 +28236,7 @@
     },
     {
       "file": "lib/services/trackingservice.dart",
-      "importers": 43,
+      "importers": 45,
       "exports": [
         "TestServiceInstance",
         "TrackingService",
@@ -27366,7 +28248,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 37,
+      "importers": 39,
       "exports": [
         "NotificationService",
         "NotificationActionOutcome",
@@ -27400,7 +28282,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 19,
+      "importers": 22,
       "exports": [
         "VLineTable",
         "ReachabilityAnchor",
@@ -27408,6 +28290,7 @@
         "RouteProfile",
         "ReachabilityConfig",
         "ReachabilityBound",
+        "VLineSegment",
         "Reachability",
         "ReachabilityTracker"
       ]
@@ -27460,27 +28343,11 @@
       ]
     },
     {
-      "file": "lib/services/monetization/premium_service.dart",
+      "file": "lib/services/data_asset/data_asset_config.dart",
       "importers": 13,
       "exports": [
-        "PremiumProducts",
-        "PremiumService",
-        "EntitlementTier"
-      ]
-    },
-    {
-      "file": "lib/core/ekf/ekf_orchestrator.dart",
-      "importers": 11,
-      "exports": [
-        "EkfOrchestrator",
-        "EkfOrchestratorLogCallback"
-      ]
-    },
-    {
-      "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 11,
-      "exports": [
         "kDataAssetEgressEnabled",
+        "kDataAssetEgressEndpoint",
         "kOdKAnonymityThreshold",
         "kMinContributingUsersCatchment",
         "kPerUserMaxCellsPerDay",
@@ -27490,6 +28357,35 @@
         "kAggregateSchemaVersion",
         "kConsentNoticeVersion",
         "kStationSnapMaxRadiusMeters"
+      ]
+    },
+    {
+      "file": "lib/services/monetization/premium_service.dart",
+      "importers": 13,
+      "exports": [
+        "PremiumProducts",
+        "PremiumService",
+        "EntitlementTier"
+      ]
+    },
+    {
+      "file": "lib/services/telemetry/telemetry_service.dart",
+      "importers": 13,
+      "exports": [
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
+      ]
+    },
+    {
+      "file": "lib/core/ekf/ekf_orchestrator.dart",
+      "importers": 11,
+      "exports": [
+        "EkfOrchestrator",
+        "EkfOrchestratorLogCallback"
       ]
     },
     {
@@ -27527,18 +28423,6 @@
         "ConstraintEvent",
         "ConstraintLogger",
         "ConstraintEventType"
-      ]
-    },
-    {
-      "file": "lib/services/telemetry/telemetry_service.dart",
-      "importers": 10,
-      "exports": [
-        "TelemetryEventType",
-        "TelemetryEvent",
-        "TelemetrySink",
-        "InMemoryTelemetrySink",
-        "TelemetryService",
-        "AlarmOutcome"
       ]
     },
     {
@@ -27646,7 +28530,11 @@
     },
     {
       "file": "lib/main.dart",
-      "imports": 20
+      "imports": 23
+    },
+    {
+      "file": "lib/screens/homescreen.dart",
+      "imports": 18
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -27654,10 +28542,6 @@
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",
-      "imports": 16
-    },
-    {
-      "file": "lib/screens/homescreen.dart",
       "imports": 16
     },
     {
@@ -27705,12 +28589,12 @@
       "imports": 8
     },
     {
-      "file": "lib/services/widget/home_widget_bridge.dart",
+      "file": "lib/screens/settingsdrawer.dart",
       "imports": 7
     },
     {
-      "file": "lib/screens/settingsdrawer.dart",
-      "imports": 6
+      "file": "lib/services/widget/home_widget_bridge.dart",
+      "imports": 7
     },
     {
       "file": "lib/services/direction_service.dart",
@@ -27835,8 +28719,10 @@
     },
     {
       "file": "lib/services/trackingservice.dart",
-      "importers": 43,
+      "importers": 45,
       "directDependents": [
+        "integration_test/alarm_chain_ondevice_test.dart",
+        "integration_test/backstop_doze_ondevice_test.dart",
         "integration_test/device_alarm_integration_test.dart",
         "lib/dashboard/ekf_test_panel.dart",
         "lib/dashboard/unified_dashboard.dart",
@@ -27893,8 +28779,10 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 37,
+      "importers": 39,
       "directDependents": [
+        "integration_test/alarm_chain_ondevice_test.dart",
+        "integration_test/backstop_doze_ondevice_test.dart",
         "integration_test/device_alarm_integration_test.dart",
         "lib/debug/demo_tools.dart",
         "lib/screens/maptracking.dart",
@@ -28024,7 +28912,7 @@
     },
     {
       "file": "lib/core/reachability/reachability.dart",
-      "importers": 19,
+      "importers": 22,
       "directDependents": [
         "lib/core/ekf/ekf_test_controller.dart",
         "lib/services/alarm_evaluator.dart",
@@ -28039,11 +28927,14 @@
         "test/ios/ios_backstop_edgecases_test.dart",
         "test/ios/ios_backstop_planner_test.dart",
         "test/notification_backstop_lead_test.dart",
+        "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+        "test/reachability/multileg_piecewise_vline_test.dart",
+        "test/reachability/never_late_vehicle_type_piecewise_test.dart",
         "test/reachability/reachability_edgecases_test.dart",
         "test/reachability/reachability_test.dart",
         "test/reachability/tightening_guards_test.dart",
         "test/reachability/tightening_never_late_test.dart",
-        "test/scale/multi_target_scale_test.dart",
+        "test/reachability/vline_vehicle_type_test.dart",
         "test/scale/reachability_scale_test.dart"
       ],
       "exportedSymbols": [
@@ -28053,6 +28944,7 @@
         "RouteProfile",
         "ReachabilityConfig",
         "ReachabilityBound",
+        "VLineSegment",
         "Reachability",
         "ReachabilityTracker"
       ],
@@ -28216,6 +29108,39 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/data_asset/data_asset_config.dart",
+      "importers": 13,
+      "directDependents": [
+        "lib/services/data_asset/aggregate_schema.dart",
+        "lib/services/data_asset/contribution_cap.dart",
+        "lib/services/data_asset/data_asset_pipeline.dart",
+        "lib/services/data_asset/differential_privacy.dart",
+        "lib/services/data_asset/http_aggregate_egress_sink.dart",
+        "lib/services/data_asset/k_anonymity_filter.dart",
+        "lib/services/data_asset/mobility_consent_service.dart",
+        "lib/services/data_asset/od_cell.dart",
+        "lib/services/data_asset/station_binner.dart",
+        "test/data_asset/consent_test.dart",
+        "test/data_asset/dp_and_kanon_test.dart",
+        "test/data_asset/http_egress_sink_test.dart",
+        "test/data_asset/pipeline_hive_test.dart"
+      ],
+      "exportedSymbols": [
+        "kDataAssetEgressEnabled",
+        "kDataAssetEgressEndpoint",
+        "kOdKAnonymityThreshold",
+        "kMinContributingUsersCatchment",
+        "kPerUserMaxCellsPerDay",
+        "kPerUserMaxCountPerCellPerDay",
+        "kEpsilonPerCell",
+        "kPerUserDailyEpsilonCap",
+        "kAggregateSchemaVersion",
+        "kConsentNoticeVersion",
+        "kStationSnapMaxRadiusMeters"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/services/monetization/premium_service.dart",
       "importers": 13,
       "directDependents": [
@@ -28241,6 +29166,34 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/telemetry/telemetry_service.dart",
+      "importers": 13,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/services/telemetry/file_telemetry_sink.dart",
+        "lib/services/telemetry/http_telemetry_sink.dart",
+        "lib/services/telemetry/telemetry_report_builder.dart",
+        "lib/services/telemetry/telemetry_session.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/location_stream_handler.dart",
+        "lib/services/trackingservice.dart",
+        "test/telemetry/emit_sites_test.dart",
+        "test/telemetry/file_telemetry_sink_test.dart",
+        "test/telemetry/http_telemetry_sink_test.dart",
+        "test/telemetry/telemetry_edgecases_test.dart",
+        "test/telemetry/telemetry_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "TelemetryEventType",
+        "TelemetryEvent",
+        "TelemetrySink",
+        "InMemoryTelemetrySink",
+        "TelemetryService",
+        "AlarmOutcome"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
       "importers": 11,
       "directDependents": [
@@ -28259,36 +29212,6 @@
       "exportedSymbols": [
         "EkfOrchestrator",
         "EkfOrchestratorLogCallback"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 11,
-      "directDependents": [
-        "lib/services/data_asset/aggregate_schema.dart",
-        "lib/services/data_asset/contribution_cap.dart",
-        "lib/services/data_asset/data_asset_pipeline.dart",
-        "lib/services/data_asset/differential_privacy.dart",
-        "lib/services/data_asset/k_anonymity_filter.dart",
-        "lib/services/data_asset/mobility_consent_service.dart",
-        "lib/services/data_asset/od_cell.dart",
-        "lib/services/data_asset/station_binner.dart",
-        "test/data_asset/consent_test.dart",
-        "test/data_asset/dp_and_kanon_test.dart",
-        "test/data_asset/pipeline_hive_test.dart"
-      ],
-      "exportedSymbols": [
-        "kDataAssetEgressEnabled",
-        "kOdKAnonymityThreshold",
-        "kMinContributingUsersCatchment",
-        "kPerUserMaxCellsPerDay",
-        "kPerUserMaxCountPerCellPerDay",
-        "kEpsilonPerCell",
-        "kPerUserDailyEpsilonCap",
-        "kAggregateSchemaVersion",
-        "kConsentNoticeVersion",
-        "kStationSnapMaxRadiusMeters"
       ],
       "riskLevel": "critical"
     },
@@ -28366,31 +29289,6 @@
         "ConstraintEvent",
         "ConstraintLogger",
         "ConstraintEventType"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/telemetry/telemetry_service.dart",
-      "importers": 10,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/services/telemetry/file_telemetry_sink.dart",
-        "lib/services/telemetry/telemetry_session.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/location_stream_handler.dart",
-        "lib/services/trackingservice.dart",
-        "test/telemetry/emit_sites_test.dart",
-        "test/telemetry/file_telemetry_sink_test.dart",
-        "test/telemetry/telemetry_edgecases_test.dart",
-        "test/telemetry/telemetry_service_test.dart"
-      ],
-      "exportedSymbols": [
-        "TelemetryEventType",
-        "TelemetryEvent",
-        "TelemetrySink",
-        "InMemoryTelemetrySink",
-        "TelemetryService",
-        "AlarmOutcome"
       ],
       "riskLevel": "high"
     },

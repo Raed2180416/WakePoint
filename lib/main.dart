@@ -15,12 +15,15 @@ import 'screens/homescreen.dart';
 import 'screens/monetization/paywall_screen.dart';
 import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
+import 'services/widget/home_widget_bridge.dart';
 import 'screens/guardian_setup_screen.dart';
 import 'screens/monetization/post_arrival_screen.dart';
 import 'screens/friends_rides_screen.dart';
+import 'screens/report_problem_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:app_links/app_links.dart';
 import 'services/share/share_backend_config.dart';
+import 'services/share/guardian_service.dart';
 import 'services/share/journey_share_service.dart';
 import 'services/share/followed_rides_service.dart';
 import 'services/share/share_deep_link.dart';
@@ -32,6 +35,14 @@ import 'themes/appthemes.dart';
 import 'screens/otherimpservices/recent_locations_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Network telemetry egress config (INERT by default). Supplied at build time via
+// --dart-define; empty => no network sink is registered and nothing ships
+// off-device. The actual server + token are businessGated (founder-owned).
+const String _telemetryUrl =
+    String.fromEnvironment('GEOWAKE_TELEMETRY_URL', defaultValue: '');
+const String _telemetryToken =
+    String.fromEnvironment('GEOWAKE_TELEMETRY_TOKEN', defaultValue: '');
 
 Future<void> main() async {
   // BLOCKER FIX (HANDOFF §3): a reliability-critical app must never die silently.
@@ -46,6 +57,7 @@ Future<void> main() async {
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     TelemetryService.instance.recordError(error, stack, fatal: true);
+    _markSessionCrashed();
     return true; // handled — do not crash the isolate
   };
 
@@ -66,10 +78,18 @@ Future<void> main() async {
     // (BACKLOG #7 + #16). path_provider stays OUT of TelemetryService — resolve
     // the dir here and inject it. Fire-and-forget so a slow disk can't delay
     // startup; the in-memory sink keeps working until the file sink is wired.
+    // Optional network egress, INERT by default: the endpoint/token come from
+    // --dart-define (GEOWAKE_TELEMETRY_URL / GEOWAKE_TELEMETRY_TOKEN) and default
+    // to ''. An empty URL registers NO http sink, so telemetry stays PII-free +
+    // local-only until the founder supplies a backend.
     unawaited(() async {
       try {
         final supportDir = await getApplicationSupportDirectory();
-        TelemetryService.instance.configureDefaultSinks(dir: supportDir.path);
+        TelemetryService.instance.configureDefaultSinks(
+          dir: supportDir.path,
+          telemetryUrl: _telemetryUrl,
+          telemetryToken: _telemetryToken,
+        );
       } catch (_) {/* telemetry is best-effort; never block or crash startup */}
     }());
 
@@ -79,9 +99,22 @@ Future<void> main() async {
     // gates safely default to "free" until it's ready; the core alarm never
     // depends on it. Fire-and-forget so a slow store/ad SDK can't delay startup.
     unawaited(MonetizationService.instance.init());
+    // Guardian mode (Pro): load persisted state and register the POST-ALARM
+    // "arrived safely" observer. The observer hangs off PostAlarmMulticast, so it
+    // runs AFTER the wake has already fired + tracking torn down — it can never
+    // delay, reorder, or abort the arm→track→alarm spine. Fire-and-forget and
+    // fail-open to disabled; inert unless the user is Pro + turned Guardian on.
+    unawaited(GuardianService.instance.init());
     // On-device mobility aggregator: consent defaults OFF and egress is a no-op,
     // so init is inert until the user opts in. Never blocks startup.
     unawaited(DataAssetPipeline.instance.init());
+
+    // Home-screen widget bridge: registers widget-tap handling and paints an
+    // initial card. Fail-open — a missing/broken home_widget plugin disables the
+    // bridge for the session (see HomeWidgetBridge.initialize). Display/observer
+    // only: it reads already-computed state and never touches the arm→track→
+    // alarm spine. Fire-and-forget so it can't delay or crash startup.
+    unawaited(HomeWidgetBridge.instance.initialize());
 
     // Journey-share backend (sharer + follower). Fire-and-forget, fail-safe:
     // basic share always works; the live ping/follow path attaches only when the
@@ -103,8 +136,23 @@ Future<void> main() async {
     runApp(const MyApp());
   }, (Object error, StackTrace stack) {
     TelemetryService.instance.recordError(error, stack, fatal: true);
+    _markSessionCrashed();
     dev.log('Uncaught zone error: $error', name: 'main', error: error, stackTrace: stack);
   });
+}
+
+/// Persist a best-effort "the app hit a fatal error last session" flag so the
+/// next launch can offer to send a diagnostic report. Fire-and-forget; wrapped
+/// so it can never re-throw out of an error handler.
+const String _kCrashFlagKey = 'gw_last_session_crashed';
+
+void _markSessionCrashed() {
+  () async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kCrashFlagKey, true);
+    } catch (_) {/* best-effort; never matters */}
+  }();
 }
 
 class MyApp extends StatefulWidget {
@@ -130,6 +178,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _checkNotificationPermission();
     _restoreThemePreference();
     _initShareDeepLinks();
+    _maybeOfferCrashReport();
   }
 
   // Handle GeoWake journey-share deep links (App Links https://<domain>/j/{id}
@@ -161,6 +210,48 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ));
       } catch (_) {/* fail-safe: a bad link never crashes the app */}
     }();
+  }
+
+  /// If the previous session ended in a fatal error, offer (once) to send a
+  /// diagnostic report. Reads + clears the flag so it prompts at most once.
+  Future<void> _maybeOfferCrashReport() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool(_kCrashFlagKey) ?? false)) return;
+      await prefs.remove(_kCrashFlagKey);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final nav = NavigationService.navigatorKey.currentState;
+        final ctx = nav?.overlay?.context;
+        if (nav == null || ctx == null) return;
+        showDialog<void>(
+          context: ctx,
+          builder: (dctx) => AlertDialog(
+            title: const Text('GeoWake hit a problem'),
+            content: const Text(
+              'Last time, GeoWake ran into an unexpected error. Send a quick '
+              'diagnostic report so it can be fixed? No location or personal '
+              'data is included, and you choose where to send it.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dctx).pop(),
+                child: const Text('Not now'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dctx).pop();
+                  nav.push(MaterialPageRoute(
+                    builder: (_) =>
+                        const ReportProblemScreen(crashedLastSession: true),
+                  ));
+                },
+                child: const Text('Report'),
+              ),
+            ],
+          ),
+        );
+      });
+    } catch (_) {/* never block startup */}
   }
 
   @override

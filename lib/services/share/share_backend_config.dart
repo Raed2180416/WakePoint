@@ -38,7 +38,9 @@ class ShareBackendConfig {
   );
 
   /// App-Links domain that serves `/j/{id}` and `/.well-known/assetlinks.json`.
-  /// Defaults to the builder's placeholder until the founder registers a domain.
+  /// Defaults to the deployed Railway backend (ShareLinkBuilder.defaultDomain);
+  /// override with --dart-define=GEOWAKE_SHARE_DOMAIN=... for a custom domain
+  /// (also update the AndroidManifest App-Link host if you do).
   static const String appLinksDomain = String.fromEnvironment(
     'GEOWAKE_SHARE_DOMAIN',
     defaultValue: ShareLinkBuilder.defaultDomain,
@@ -68,7 +70,8 @@ class ShareBackendConfig {
 
     // Follower read side: only a backend that can serve reads is a reader.
     FollowedRidesService.instance.attachReader(
-        backend is ShareStatusReader ? backend as ShareStatusReader : null);
+      backend is ShareStatusReader ? backend as ShareStatusReader : null,
+    );
     await FollowedRidesService.instance.init();
   }
 }

@@ -442,6 +442,10 @@
     },
     {
       "kind": "class",
+      "name": "VLineSegment"
+    },
+    {
+      "kind": "class",
       "name": "Reachability"
     },
     {
@@ -691,6 +695,12 @@
       "name": "RecentLocationsService"
     }
   ],
+  "lib/screens/report_problem_screen.dart": [
+    {
+      "kind": "class",
+      "name": "ReportProblemScreen"
+    }
+  ],
   "lib/screens/ringtones_screen.dart": [
     {
       "kind": "class",
@@ -709,6 +719,10 @@
     {
       "kind": "class",
       "name": "SettingsDrawer"
+    },
+    {
+      "kind": "const",
+      "name": "kBuyMeACoffeeUrl"
     }
   ],
   "lib/screens/splash_screen.dart": [
@@ -812,6 +826,10 @@
     },
     {
       "kind": "const",
+      "name": "kDataAssetEgressEndpoint"
+    },
+    {
+      "kind": "const",
       "name": "kOdKAnonymityThreshold"
     },
     {
@@ -865,6 +883,12 @@
     {
       "kind": "enum",
       "name": "DpModel"
+    }
+  ],
+  "lib/services/data_asset/http_aggregate_egress_sink.dart": [
+    {
+      "kind": "class",
+      "name": "HttpAggregateEgressSink"
     }
   ],
   "lib/services/data_asset/k_anonymity_filter.dart": [
@@ -1429,6 +1453,14 @@
     {
       "kind": "class",
       "name": "GuardianService"
+    },
+    {
+      "kind": "typedef",
+      "name": "GuardianUriLauncher"
+    },
+    {
+      "kind": "typedef",
+      "name": "GuardianAutoSender"
     }
   ],
   "lib/services/share/journey_share_models.dart": [
@@ -1565,6 +1597,18 @@
     {
       "kind": "class",
       "name": "FileTelemetrySink"
+    }
+  ],
+  "lib/services/telemetry/http_telemetry_sink.dart": [
+    {
+      "kind": "class",
+      "name": "HttpTelemetrySink"
+    }
+  ],
+  "lib/services/telemetry/telemetry_report_builder.dart": [
+    {
+      "kind": "class",
+      "name": "TelemetryReportBuilder"
     }
   ],
   "lib/services/telemetry/telemetry_service.dart": [

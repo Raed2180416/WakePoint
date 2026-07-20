@@ -18,7 +18,6 @@ enum PaywallSource {
   guardian,
   customSound,
   widget,
-  wearOs,
   postArrival,
 }
 

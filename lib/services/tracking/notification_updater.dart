@@ -39,6 +39,12 @@ class BroadcastContext {
   final double? polylineTotalMeters;
   final double? stepTotalMeters;
 
+  /// P0-00 (GW-0080): transient (never serialized) absolute wall-clock instant at
+  /// which the physics free-run reach bound reaches the fire target, threaded
+  /// from AlarmController. Arms the OS backstop at min(eta, physics) so a process
+  /// death mid-blackout still wakes on time. Null => physics unavailable.
+  final DateTime? backstopPhysicsFireAt;
+
   BroadcastContext({
     this.apiEtaSeconds,
     this.smoothedETA,
@@ -56,6 +62,7 @@ class BroadcastContext {
     this.toNextEventMeters,
     this.polylineTotalMeters,
     this.stepTotalMeters,
+    this.backstopPhysicsFireAt,
   });
 }
 
@@ -224,30 +231,44 @@ class NotificationUpdater {
         return;
       }
 
+      final now = DateTime.now();
+
+      // (a) ETA-based candidate. During a blackout smoothedETA FREEZES, so this
+      // instant marches forward (postponed) — the P0-00 late bug when it is the
+      // only survivor of process death.
+      DateTime? etaFireAt;
       final etaSeconds = context.smoothedETA ?? context.apiEtaSeconds;
-      if (etaSeconds == null || etaSeconds <= 0) return;
-
-      // Lead time before predicted arrival, derived per-mode from the alarm
-      // config (never a stale hardcoded floor). See [backstopLeadSeconds].
-      final leadSeconds = backstopLeadSeconds(
-        context.alarmMode ?? '',
-        context.alarmValue ?? 0.0,
-      );
-
-      final fireInSeconds = (etaSeconds - leadSeconds);
-      if (fireInSeconds <= 0) {
-        // Predicted arrival already within the lead window — arm ~immediately so
-        // a dying process still wakes the rider.
-        await NotificationService().scheduleEtaBackstop(
-          fireAt: DateTime.now().add(const Duration(seconds: 2)),
-          title: 'Approaching ${context.destinationName ?? 'your stop'}',
-          body: 'Wake up — you are almost there.',
+      if (etaSeconds != null && etaSeconds > 0) {
+        // Lead time before predicted arrival, derived per-mode from the alarm
+        // config (never a stale hardcoded floor). See [backstopLeadSeconds].
+        final leadSeconds = backstopLeadSeconds(
+          context.alarmMode ?? '',
+          context.alarmValue ?? 0.0,
         );
-        return;
+        etaFireAt =
+            now.add(Duration(seconds: (etaSeconds - leadSeconds).round()));
       }
 
+      // (b) PHYSICS candidate: the free-run never-late instant, anchored to the
+      // last REAL fix => a FIXED wall time that does NOT drift during a blackout.
+      final DateTime? physicsFireAt = context.backstopPhysicsFireAt;
+
+      // Earliest available candidate. min() can only move the fire EARLIER; the
+      // physics instant is proven <= true arrival (never-late), so the armed OS
+      // alarm can never be later than physics even if the process then dies.
+      DateTime? fireAt;
+      for (final c in <DateTime?>[etaFireAt, physicsFireAt]) {
+        if (c == null) continue;
+        if (fireAt == null || c.isBefore(fireAt)) fireAt = c;
+      }
+      if (fireAt == null) return; // nothing to arm
+
+      // Never schedule in the past — a dying process must still get a wake.
+      final earliest = now.add(const Duration(seconds: 2));
+      if (fireAt.isBefore(earliest)) fireAt = earliest;
+
       await NotificationService().scheduleEtaBackstop(
-        fireAt: DateTime.now().add(Duration(seconds: fireInSeconds.round())),
+        fireAt: fireAt,
         title: 'Approaching ${context.destinationName ?? 'your stop'}',
         body: 'Wake up — you are almost there.',
       );

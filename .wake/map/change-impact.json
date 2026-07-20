@@ -72,8 +72,10 @@
   },
   {
     "file": "lib/services/trackingservice.dart",
-    "importers": 43,
+    "importers": 45,
     "directDependents": [
+      "integration_test/alarm_chain_ondevice_test.dart",
+      "integration_test/backstop_doze_ondevice_test.dart",
       "integration_test/device_alarm_integration_test.dart",
       "lib/dashboard/ekf_test_panel.dart",
       "lib/dashboard/unified_dashboard.dart",
@@ -130,8 +132,10 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 37,
+    "importers": 39,
     "directDependents": [
+      "integration_test/alarm_chain_ondevice_test.dart",
+      "integration_test/backstop_doze_ondevice_test.dart",
       "integration_test/device_alarm_integration_test.dart",
       "lib/debug/demo_tools.dart",
       "lib/screens/maptracking.dart",
@@ -261,7 +265,7 @@
   },
   {
     "file": "lib/core/reachability/reachability.dart",
-    "importers": 19,
+    "importers": 22,
     "directDependents": [
       "lib/core/ekf/ekf_test_controller.dart",
       "lib/services/alarm_evaluator.dart",
@@ -276,11 +280,14 @@
       "test/ios/ios_backstop_edgecases_test.dart",
       "test/ios/ios_backstop_planner_test.dart",
       "test/notification_backstop_lead_test.dart",
+      "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "test/reachability/multileg_piecewise_vline_test.dart",
+      "test/reachability/never_late_vehicle_type_piecewise_test.dart",
       "test/reachability/reachability_edgecases_test.dart",
       "test/reachability/reachability_test.dart",
       "test/reachability/tightening_guards_test.dart",
       "test/reachability/tightening_never_late_test.dart",
-      "test/scale/multi_target_scale_test.dart",
+      "test/reachability/vline_vehicle_type_test.dart",
       "test/scale/reachability_scale_test.dart"
     ],
     "exportedSymbols": [
@@ -290,6 +297,7 @@
       "RouteProfile",
       "ReachabilityConfig",
       "ReachabilityBound",
+      "VLineSegment",
       "Reachability",
       "ReachabilityTracker"
     ],
@@ -453,6 +461,39 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/data_asset/data_asset_config.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/differential_privacy.dart",
+      "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/mobility_consent_service.dart",
+      "lib/services/data_asset/od_cell.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/consent_test.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/http_egress_sink_test.dart",
+      "test/data_asset/pipeline_hive_test.dart"
+    ],
+    "exportedSymbols": [
+      "kDataAssetEgressEnabled",
+      "kDataAssetEgressEndpoint",
+      "kOdKAnonymityThreshold",
+      "kMinContributingUsersCatchment",
+      "kPerUserMaxCellsPerDay",
+      "kPerUserMaxCountPerCellPerDay",
+      "kEpsilonPerCell",
+      "kPerUserDailyEpsilonCap",
+      "kAggregateSchemaVersion",
+      "kConsentNoticeVersion",
+      "kStationSnapMaxRadiusMeters"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/monetization/premium_service.dart",
     "importers": 13,
     "directDependents": [
@@ -478,6 +519,34 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/telemetry/telemetry_service.dart",
+    "importers": 13,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/services/telemetry/file_telemetry_sink.dart",
+      "lib/services/telemetry/http_telemetry_sink.dart",
+      "lib/services/telemetry/telemetry_report_builder.dart",
+      "lib/services/telemetry/telemetry_session.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/location_stream_handler.dart",
+      "lib/services/trackingservice.dart",
+      "test/telemetry/emit_sites_test.dart",
+      "test/telemetry/file_telemetry_sink_test.dart",
+      "test/telemetry/http_telemetry_sink_test.dart",
+      "test/telemetry/telemetry_edgecases_test.dart",
+      "test/telemetry/telemetry_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "TelemetryEventType",
+      "TelemetryEvent",
+      "TelemetrySink",
+      "InMemoryTelemetrySink",
+      "TelemetryService",
+      "AlarmOutcome"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/core/ekf/ekf_orchestrator.dart",
     "importers": 11,
     "directDependents": [
@@ -496,36 +565,6 @@
     "exportedSymbols": [
       "EkfOrchestrator",
       "EkfOrchestratorLogCallback"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/data_asset/data_asset_config.dart",
-    "importers": 11,
-    "directDependents": [
-      "lib/services/data_asset/aggregate_schema.dart",
-      "lib/services/data_asset/contribution_cap.dart",
-      "lib/services/data_asset/data_asset_pipeline.dart",
-      "lib/services/data_asset/differential_privacy.dart",
-      "lib/services/data_asset/k_anonymity_filter.dart",
-      "lib/services/data_asset/mobility_consent_service.dart",
-      "lib/services/data_asset/od_cell.dart",
-      "lib/services/data_asset/station_binner.dart",
-      "test/data_asset/consent_test.dart",
-      "test/data_asset/dp_and_kanon_test.dart",
-      "test/data_asset/pipeline_hive_test.dart"
-    ],
-    "exportedSymbols": [
-      "kDataAssetEgressEnabled",
-      "kOdKAnonymityThreshold",
-      "kMinContributingUsersCatchment",
-      "kPerUserMaxCellsPerDay",
-      "kPerUserMaxCountPerCellPerDay",
-      "kEpsilonPerCell",
-      "kPerUserDailyEpsilonCap",
-      "kAggregateSchemaVersion",
-      "kConsentNoticeVersion",
-      "kStationSnapMaxRadiusMeters"
     ],
     "riskLevel": "critical"
   },
@@ -603,31 +642,6 @@
       "ConstraintEvent",
       "ConstraintLogger",
       "ConstraintEventType"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/telemetry/telemetry_service.dart",
-    "importers": 10,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/services/telemetry/file_telemetry_sink.dart",
-      "lib/services/telemetry/telemetry_session.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/location_stream_handler.dart",
-      "lib/services/trackingservice.dart",
-      "test/telemetry/emit_sites_test.dart",
-      "test/telemetry/file_telemetry_sink_test.dart",
-      "test/telemetry/telemetry_edgecases_test.dart",
-      "test/telemetry/telemetry_service_test.dart"
-    ],
-    "exportedSymbols": [
-      "TelemetryEventType",
-      "TelemetryEvent",
-      "TelemetrySink",
-      "InMemoryTelemetrySink",
-      "TelemetryService",
-      "AlarmOutcome"
     ],
     "riskLevel": "high"
   },

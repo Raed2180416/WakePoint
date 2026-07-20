@@ -26,11 +26,15 @@ void main() {
     test('new Pro gates flip false→true on unlock', () async {
       expect(p.isPro, isFalse);
       expect(p.canUseGuardianMode, isFalse);
+      // Custom alarm tones are Pro; the RingtonesScreen picker is gated on this.
+      // (The DEFAULT alarm sound is free and carries no entitlement check.)
+      expect(p.canUseCustomAlarmSounds, isFalse);
 
       expect(await p.buyPro(), isTrue);
 
       expect(p.isPro, isTrue);
       expect(p.canUseGuardianMode, isTrue);
+      expect(p.canUseCustomAlarmSounds, isTrue);
     });
 
     test('rewarded day-pass grants Pro then expires', () async {

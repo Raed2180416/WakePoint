@@ -267,7 +267,7 @@ test('assetlinks.json exposes the configured package + fingerprint', async () =>
       const res = await fetch(`${base}/.well-known/assetlinks.json`);
       assert.equal(res.status, 200);
       const j = await res.json();
-      assert.equal(j[0].target.package_name, 'com.example.geowake2');
+      assert.equal(j[0].target.package_name, 'com.geowake.app');
       assert.deepEqual(j[0].target.sha256_cert_fingerprints, ['AA:BB:CC']);
       assert.deepEqual(j[0].relation, ['delegate_permission/common.handle_all_urls']);
     },

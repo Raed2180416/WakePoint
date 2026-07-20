@@ -47,27 +47,28 @@ class _FriendsRidesScreenState extends State<FriendsRidesScreen> {
     final controller = TextEditingController();
     final link = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Follow a friend's ride"),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Paste a GeoWake link',
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Follow a friend's ride"),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Paste a GeoWake link',
+              ),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(controller.text),
+                child: const Text('Follow'),
+              ),
+            ],
           ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Follow'),
-          ),
-        ],
-      ),
     );
     if (link == null || link.trim().isEmpty) return;
     final parsed = ShareDeepLinkParser.parseString(link.trim());
@@ -78,7 +79,44 @@ class _FriendsRidesScreenState extends State<FriendsRidesScreen> {
       );
       return;
     }
-    await _service.follow(parsed.id, token: parsed.token);
+    // Optional LOCAL nickname so the list reads "Amma · On the way to Home"
+    // instead of a bare destination. Stored only on this device — no account,
+    // no login, and nothing about the name is ever sent to the backend.
+    if (!mounted) return;
+    final name = await _promptNickname();
+    await _service.follow(parsed.id, token: parsed.token, label: name);
+  }
+
+  /// Small optional "who is this?" prompt. Returns the trimmed name, or null if
+  /// skipped/empty. Purely local — the name is never transmitted anywhere.
+  Future<String?> _promptNickname() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Who is this? (optional)'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(hintText: 'e.g. Amma, Rahul'),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Skip'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(controller.text),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+    );
+    final trimmed = name?.trim();
+    return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
   }
 
   @override
@@ -101,10 +139,28 @@ class _FriendsRidesScreenState extends State<FriendsRidesScreen> {
             itemBuilder: (context, i) {
               final r = rides[i];
               final away = FollowedRideFormat.minutesAway(r, nowMs: _nowMs);
+              final headline = FollowedRideFormat.headline(r);
+              final name = r.label?.trim();
+              final hasName = name != null && name.isNotEmpty;
+              // With a nickname: the name is the title and the route status the
+              // subtitle. Without one: the route-relative headline is the title
+              // (unchanged behaviour).
+              final subtitleText =
+                  hasName
+                      ? [headline, if (away != null) away].join(' · ')
+                      : away;
               return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.directions_walk)),
-                title: Text(FollowedRideFormat.headline(r)),
-                subtitle: away == null ? null : Text(away),
+                leading: CircleAvatar(
+                  child:
+                      hasName
+                          ? Text(name.substring(0, 1).toUpperCase())
+                          : const Icon(Icons.directions_walk),
+                ),
+                title: Text(hasName ? name : headline),
+                subtitle:
+                    (subtitleText == null || subtitleText.isEmpty)
+                        ? null
+                        : Text(subtitleText),
                 trailing: IconButton(
                   icon: const Icon(Icons.close),
                   tooltip: 'Stop following',
@@ -124,9 +180,9 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).textTheme.bodyMedium?.color?.withValues(
-          alpha: 0.7,
-        );
+    final muted = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),

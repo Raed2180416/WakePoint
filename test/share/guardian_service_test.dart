@@ -124,4 +124,149 @@ void main() {
     await _pump();
     expect(backend.arrived, 1);
   });
+
+  // --- Delivery MVP: composer deep links + user-mediated send ----------------
+
+  test('composeDeepLink builds an sms: composer URI carrying the message body',
+      () {
+    final uri = GuardianService.composeDeepLink(
+      const GuardianContact(
+          id: 'x',
+          displayName: 'Mom',
+          channel: GuardianChannel.sms,
+          address: '+91 12345'),
+      'On my way · GeoWake\nhttps://x/j/abc',
+    );
+    expect(uri, isNotNull);
+    expect(uri!.scheme, 'sms');
+    expect(uri.path, '+9112345'); // spaces stripped, leading + kept
+    expect(uri.queryParameters['body'], 'On my way · GeoWake\nhttps://x/j/abc');
+  });
+
+  test('composeDeepLink builds a wa.me URL for the WhatsApp channel', () {
+    final uri = GuardianService.composeDeepLink(
+      const GuardianContact(
+          id: 'x',
+          displayName: 'Mom',
+          channel: GuardianChannel.whatsapp,
+          address: '+91 98765 43210'),
+      'hi',
+    );
+    expect(uri, isNotNull);
+    expect(uri!.scheme, 'https');
+    expect(uri.host, 'wa.me');
+    expect(uri.pathSegments.single, '919876543210'); // digits only, no +
+    expect(uri.queryParameters['text'], 'hi');
+  });
+
+  test('composeDeepLink returns null when the address has no usable digits', () {
+    final uri = GuardianService.composeDeepLink(
+      const GuardianContact(
+          id: 'x',
+          displayName: 'Mom',
+          channel: GuardianChannel.whatsapp,
+          address: '   '),
+      'hi',
+    );
+    expect(uri, isNull);
+  });
+
+  test('pro arm composes the tracking link into the contact composer', () async {
+    final share = JourneyShareService.forTest();
+    final launched = <Uri>[];
+    final g = GuardianService.forTest(
+      entitlement: () => true,
+      share: share,
+      launcher: (uri) async {
+        launched.add(uri);
+        return true;
+      },
+    );
+    await g.setContact(
+        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+    await g.setEnabled(true);
+
+    await g.onJourneyArmed(destLabel: 'Indiranagar');
+    await _pump();
+
+    expect(launched, hasLength(1));
+    expect(launched.single.scheme, 'sms');
+    // The composer body carries the /j/{id} tracking link.
+    expect(launched.single.queryParameters['body'], contains('/j/'));
+  });
+
+  test('arrived-on-wake never opens a composer over the alarm; auto-sender '
+      'delivers the "arrived safely" message when wired', () async {
+    final share = JourneyShareService.forTest();
+    final launched = <Uri>[];
+    final autoMsgs = <String>[];
+    final g = GuardianService.forTest(
+      entitlement: () => true,
+      share: share,
+      launcher: (uri) async {
+        launched.add(uri);
+        return true;
+      },
+      autoSender: (contact, msg) async => autoMsgs.add(msg),
+    );
+    await g.setContact(
+        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+    await g.setEnabled(true);
+    g.registerPostAlarm();
+
+    await g.onJourneyArmed(destLabel: 'Indiranagar');
+    await _pump();
+    launched.clear();
+    autoMsgs.clear(); // drop the arm-time auto-send; isolate the arrival one
+
+    PostAlarmMulticast.instance.dispatch();
+    await _pump();
+
+    // NEVER pop the user's SMS/WhatsApp composer at wake time (it would surface
+    // over the just-fired alarm). The follower already sees "arrived safely"
+    // via the backend; only a wired automatic sender delivers a message here.
+    expect(launched, isEmpty);
+    expect(autoMsgs, hasLength(1));
+    expect(autoMsgs.single, contains('arrived safely'));
+  });
+
+  test('a wired auto-sender delivers without opening a composer', () async {
+    final share = JourneyShareService.forTest();
+    final launched = <Uri>[];
+    final autoMsgs = <String>[];
+    final g = GuardianService.forTest(
+      entitlement: () => true,
+      share: share,
+      launcher: (uri) async {
+        launched.add(uri);
+        return true;
+      },
+      autoSender: (contact, msg) async => autoMsgs.add(msg),
+    );
+    await g.setContact(
+        displayName: 'Mom', channel: GuardianChannel.sms, address: '+91123');
+    await g.setEnabled(true);
+
+    await g.onJourneyArmed(destLabel: 'Stop');
+    await _pump();
+
+    expect(launched, isEmpty); // composer NOT opened
+    expect(autoMsgs, hasLength(1)); // automatic path took over
+  });
+
+  test('free user arm opens no composer', () async {
+    final share = JourneyShareService.forTest();
+    final launched = <Uri>[];
+    final g = GuardianService.forTest(
+      entitlement: () => false,
+      share: share,
+      launcher: (uri) async {
+        launched.add(uri);
+        return true;
+      },
+    );
+    await g.onJourneyArmed(destLabel: 'Stop');
+    await _pump();
+    expect(launched, isEmpty);
+  });
 }

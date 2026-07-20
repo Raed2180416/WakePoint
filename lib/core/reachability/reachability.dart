@@ -112,27 +112,72 @@ class VLineTable {
   /// conventional Indian metro (grounded: design speed ~90 km/h — see
   /// docs/research/grounding_notes.md §15), so it is correct for the common case.
   ///
-  /// KNOWN RESIDUAL (adversarial FINDING 2 / GAP #9, honest): a *fast* service
-  /// whose name does not keyword-match — chiefly Delhi Airport Express when
-  /// reported as "Orange Line" (design 135 km/h) or Mumbai Suburban named
-  /// "Western/Central Line" (~120 km/h) — falls to `defaultMps` and can
-  /// UNDER-bound → a late-fire risk during a GPS blackout on that leg. This is
-  /// NOT fixable by keyword matching alone (the names collide with slow metro
+  /// NAME-COLLISION HOLE — now closed by the [vehicleType] floor (GW-0076): a
+  /// *fast* service whose name does not keyword-match — chiefly Delhi Airport
+  /// Express when reported as "Orange Line" (design 135 km/h) or Mumbai Suburban
+  /// named "Western/Central Line" (~120 km/h) — otherwise falls to `defaultMps`
+  /// and can UNDER-bound → a late-fire risk during a GPS blackout on that leg.
+  /// Keyword matching alone cannot fix it (the names collide with slow metro
   /// lines, e.g. Nagpur's "Orange Line" IS a 90 km/h metro). The robust fix is
-  /// the shipped dataset (city+line -> true top speed) or the GTFS vehicle-type
-  /// threaded onto the leg — tracked as the #9 follow-up. Two mitigations already
-  /// reduce it: RRTS/Namo Bharat is reliably branded and caught by [looksRrts];
-  /// and a known fast line can be pinned via `overrides`. Raising the blanket
-  /// default to `absoluteCeilingMps` was rejected — it makes every conventional
-  /// metro fire ~2x early on a blackout and inverts the metro < express < RRTS
-  /// tier ordering (metro would exceed RRTS), for a residual that is narrow and
-  /// better closed with real data.
-  double forLine({String? city, String? lineName}) {
+  /// the name-free Google Directions vehicle.type ([_vehicleCeiling]): a
+  /// HEAVY_RAIL/COMMUTER class lifts the ceiling to the RRTS bound regardless of
+  /// the collidable display name, while a genuine SUBWAY/METRO_RAIL gets no lift
+  /// (Nagpur stays at metro speed). The lift is monotone (this method returns the
+  /// LARGER of the keyword tier and the vehicle floor), so it never lowers a
+  /// ceiling and is always never-late-safe. A residual fast-SUBWAY-with-generic-
+  /// name (Airport Express as a literal SUBWAY) still needs a (city,line)
+  /// `overrides` pin. Raising the blanket default to `absoluteCeilingMps` was
+  /// rejected — it makes every conventional metro fire ~2x early on a blackout
+  /// and inverts the metro < express < RRTS tier ordering, for a residual that is
+  /// narrow and better closed with real data.
+  double forLine({String? city, String? lineName, String? vehicleType}) {
     final o = overrides[_key(city, lineName)];
-    if (o != null && o.isFinite && o > 0) return o;
-    if (looksRrts(city) || looksRrts(lineName)) return rrtsMps;
-    if (looksExpress(lineName) || looksExpress(city)) return expressMps;
-    return defaultMps;
+    if (o != null && o.isFinite && o > 0) return o; // operator-certified pin wins
+    // Keyword tier (existing behaviour) — resolves off the (collidable) line name.
+    final double kw;
+    if (looksRrts(city) || looksRrts(lineName)) {
+      kw = rrtsMps;
+    } else if (looksExpress(lineName) || looksExpress(city)) {
+      kw = expressMps;
+    } else {
+      kw = defaultMps;
+    }
+    // NAME-FREE vehicle-class floor from the Google Directions vehicle.type. This
+    // is independent of the collidable display name, so it closes the "fast line
+    // reported with a slow/generic name" never-late hole (GAP #9: Delhi Airport
+    // Express as "Orange Line", Mumbai Suburban as "Western Line" = HEAVY_RAIL).
+    // Both `kw` and the floor are OVER-BOUND claims on true max speed, so taking
+    // the LARGER is always never-late-safe (monotone: the reach bound is
+    // non-decreasing in V_LINE, so a raise can only fire EARLIER, never later).
+    final vFloor = _vehicleCeiling(vehicleType);
+    return (vFloor != null && vFloor > kw) ? vFloor : kw;
+  }
+
+  /// Name-free V_LINE floor from the Google Directions `transit_details.line.
+  /// vehicle.type`. Returns the smallest ceiling that OVER-bounds the fastest
+  /// admissible service in that Google vehicle class (precondition ii), or null
+  /// for classes fully covered by [defaultMps]. Google lumps suburban EMUs and
+  /// ~160 km/h mainline expresses both under HEAVY_RAIL, so never-late forces the
+  /// class-max (RRTS ceiling) — 53 m/s is certified above every Indian
+  /// urban+regional rail top speed (see [rrtsMps]/[absoluteCeilingMps]).
+  static double? _vehicleCeiling(String? vehicleType) {
+    if (vehicleType == null) return null;
+    switch (vehicleType.trim().toUpperCase()) {
+      case 'HIGH_SPEED_TRAIN':
+      case 'LONG_DISTANCE_TRAIN':
+        return absoluteCeilingMps; // ~200 km/h
+      case 'HEAVY_RAIL':
+      case 'RAIL':
+      case 'COMMUTER_TRAIN':
+        return rrtsMps; // 53 m/s (~190 km/h): above every Indian urban+regional rail top speed
+      default:
+        // SUBWAY / METRO_RAIL / MONORAIL / TRAM / LIGHT_RAIL / unknown →
+        // conventional metro/tram; defaultMps (28 m/s / 100 km/h) already
+        // over-bounds, so NO lift (a genuine 90 km/h metro named "Orange" —
+        // Nagpur — is not over-fired). The residual fast-SUBWAY-with-generic-name
+        // case (Delhi Airport Express) stays a (city,line) override follow-up.
+        return null;
+    }
   }
 }
 
@@ -460,6 +505,28 @@ class _Cell {
   const _Cell(this.time, this.vExit);
 }
 
+/// One arc-length segment of a piecewise-constant V_LINE ceiling.
+///
+/// [endMeters] is the arc position (cumulative meters from route origin) where
+/// this segment ends — normally a transit leg's `legEndMeters`. [vLineMps] is
+/// the line-speed ceiling that applies from the previous boundary up to
+/// [endMeters] and MUST over-bound the true maximum speed of the train anywhere
+/// in that arc span (precondition ii, applied per leg). Segments are consumed in
+/// ascending [endMeters] order by [Reachability.bound].
+///
+/// WHY: a multi-leg journey (e.g. a slow metro leg feeding a fast RRTS leg) has
+/// a *position-dependent* speed ceiling. Taking a flat max V_LINE over all
+/// forward legs and applying it to the CURRENT leg's blackout inflates the bound
+/// (the metro stretch runs at the RRTS ceiling) and fires ~2x early. The rider
+/// cannot reach the faster leg without first traversing the intervening slower
+/// arc, so integrating V_LINE piecewise per leg is both never-late (each span's
+/// ceiling still over-bounds that span's true speed) and materially tighter.
+class VLineSegment {
+  final double endMeters;
+  final double vLineMps;
+  const VLineSegment(this.endMeters, this.vLineMps);
+}
+
 /// Pure reachability mathematics.
 class Reachability {
   /// Worst-case reachable arc-progress at [nowSeconds].
@@ -479,6 +546,7 @@ class Reachability {
     required double vLineMps,
     RouteTopology? topology,
     ReachabilityConfig config = ReachabilityConfig.defaults,
+    List<VLineSegment>? vLineSegments,
   }) {
     // FAIL-SAFE toward firing: a non-finite anchor position, anchor time, or
     // clock means we CANNOT prove the train is still short of the target — so we
@@ -502,7 +570,20 @@ class Reachability {
         ? vLineMps
         : VLineTable.absoluteCeilingMps;
 
-    final double freeRun = anchor.sHi + v * dtClamped;
+    // Free-run bound. With a piecewise-constant V_LINE ceiling (multi-leg
+    // journeys) integrate the march per segment so the current (possibly slower)
+    // leg's ceiling governs until the reachable position crosses into a faster
+    // downstream leg — a valid over-bound at EVERY arc position and never looser
+    // than the flat-max form (each segment's v <= the flat max). [v] (the flat
+    // max) is the safe coast speed used beyond the last known boundary.
+    final double freeRun = (vLineSegments != null && vLineSegments.isNotEmpty)
+        ? _piecewiseFreeRun(
+            sHi: anchor.sHi,
+            dt: dtClamped,
+            segments: vLineSegments,
+            tailV: v,
+          )
+        : anchor.sHi + v * dtClamped;
 
     // Hard T_max watchdog: force a fire when the blackout outlives its budget.
     if (config.hardTMaxSeconds != null &&
@@ -597,6 +678,53 @@ class Reachability {
       position += vLineMps * timeLeft;
     }
     return position;
+  }
+
+  /// Piecewise-constant-V_LINE free-run: march forward from [sHi] for [dt]
+  /// seconds, spending time in each arc segment at that segment's ceiling.
+  ///
+  /// [segments] MUST be sorted ascending by `endMeters`; each `vLineMps` MUST
+  /// over-bound the true max speed anywhere in that segment's arc span. Beyond
+  /// the last segment boundary the march coasts at [tailV] (the flat max over the
+  /// forward legs — a safe over-bound past the final destination).
+  ///
+  /// NEVER-LATE: let P(t) be this march and S(t) the true progress with
+  /// P(0)=sHi>=S(0) (the forward-overbounded anchor). At every arc position s the
+  /// integrated ceiling v(s) >= the true train's instantaneous speed there (each
+  /// leg's V_LINE over-bounds that leg; a transfer gap is walked, far below the
+  /// adopted metro/RRTS ceiling). Since dP/dt = v(P) and dS/dt <= v(S), and both
+  /// start with P>=S, S can never overtake P (whenever S reaches P its rate is
+  /// <= P's rate) — so P(t) >= S(t) for all t. The result is an upper bound on
+  /// true progress, and because v(P) <= max_k v_k at every step it is <= the
+  /// flat-max free-run (strictly tighter on a slow leg with a fast downstream
+  /// leg), so the fix cannot introduce a late fire.
+  static double _piecewiseFreeRun({
+    required double sHi,
+    required double dt,
+    required List<VLineSegment> segments,
+    required double tailV,
+  }) {
+    double pos = sHi;
+    double timeLeft = dt;
+    for (final seg in segments) {
+      if (!seg.endMeters.isFinite || seg.endMeters <= pos) {
+        continue; // boundary already reached/behind (or corrupt) → skip
+      }
+      final v = (seg.vLineMps.isFinite && seg.vLineMps > 0)
+          ? seg.vLineMps
+          : VLineTable.absoluteCeilingMps;
+      final travel = (seg.endMeters - pos) / v;
+      if (travel >= timeLeft) {
+        pos += v * timeLeft;
+        return pos;
+      }
+      pos = seg.endMeters;
+      timeLeft -= travel;
+    }
+    final tv =
+        (tailV.isFinite && tailV > 0) ? tailV : VLineTable.absoluteCeilingMps;
+    if (timeLeft > 0.0) pos += tv * timeLeft;
+    return pos;
   }
 
   /// Fastest-feasible-train forward march over a precomputed [RouteProfile]
@@ -810,6 +938,7 @@ class ReachabilityTracker {
     required double nowSeconds,
     String? city,
     String? lineName,
+    String? vehicleType,
     RouteTopology? topology,
   }) {
     final a = _anchor;
@@ -817,7 +946,15 @@ class ReachabilityTracker {
     return Reachability.bound(
       anchor: a,
       nowSeconds: nowSeconds,
-      vLineMps: vLineTable.forLine(city: city, lineName: lineName),
+      // Thread the Google Directions vehicle.type so the harness bound gets the
+      // same name-free V_LINE floor the production path applies (GW-0076). This
+      // is a monotone OVER-bound (forLine takes max of keyword tier and floor),
+      // so it can only raise the ceiling → fire earlier, never later. Production
+      // does not call boundNow (it builds vLineSegments directly), so this only
+      // lifts test-harness fidelity, closing the fast-line-generic-name late hole
+      // in the EKF replay + scale harnesses too.
+      vLineMps: vLineTable.forLine(
+          city: city, lineName: lineName, vehicleType: vehicleType),
       topology: topology,
       config: config,
     );

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shown in the launcher's widget picker (Android 12+). -->
+    <string name="gw_widget_description">Arm your next GeoWake commute in one tap.</string>
+</resources>

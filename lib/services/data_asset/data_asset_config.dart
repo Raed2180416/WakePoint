@@ -20,6 +20,14 @@
 /// sign-off AND the cross-device merge backend exist (DATA_SURFACE_SPEC §5/§6).
 const bool kDataAssetEgressEnabled = false;
 
+/// INERT config placeholder — the merge-backend ingestion endpoint the future
+/// HttpAggregateEgressSink would POST a released [OdFlowMatrix] to. Empty by
+/// default and NEVER read while [kDataAssetEgressEnabled] is false. Set this
+/// (alongside flipping the kill-switch) ONLY once the secure-aggregation merge
+/// backend + ingestion server exist and a DPIA is signed (DATA_SURFACE_SPEC
+/// §5/§6). Until then it is a documented no-op.
+const String kDataAssetEgressEndpoint = '';
+
 /// k for origin-destination cell suppression (Google's "100 rule"). A cell with
 /// fewer than this many *contributing users* is dropped, never released.
 const int kOdKAnonymityThreshold = 100;

@@ -20,6 +20,7 @@ import 'dart:developer' as dev;
 
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
 import '../monetization/monetization_service.dart';
@@ -37,24 +38,54 @@ class GuardianDenied implements Exception {
   String toString() => 'GuardianDenied: $message';
 }
 
+/// Opens a composer/deep-link URI (an `sms:` or `https://wa.me/…` link). Returns
+/// whether the OS accepted it. Injectable so delivery is unit-testable.
+typedef GuardianUriLauncher = Future<bool> Function(Uri uri);
+
+/// CONFIG PLACEHOLDER — automatic, no-user-tap delivery (Twilio SMS / WhatsApp
+/// Business API / FCM push). Business-gated: defaults to null so GeoWake ships
+/// NO SMS gateway. When a founder wires a sender here, Guardian delivers without
+/// user mediation; until then every message is composed into the user's OWN
+/// SMS/WhatsApp composer for the user to send.
+typedef GuardianAutoSender = Future<void> Function(
+    GuardianContact contact, String message);
+
 class GuardianService {
   GuardianService._({
     bool Function()? entitlement,
     JourneyShareService? share,
+    GuardianUriLauncher? launcher,
+    GuardianAutoSender? autoSender,
   })  : _entitlement = entitlement ??
             (() =>
                 MonetizationService.instance.premiumOrNull?.canUseGuardianMode ??
                 false),
-        _share = share ?? JourneyShareService.instance;
+        _share = share ?? JourneyShareService.instance,
+        _launcher = launcher ?? _defaultLaunch {
+    autoDeliverySender = autoSender;
+  }
 
   static final GuardianService instance = GuardianService._();
 
-  /// Test factory — inject the entitlement read and a share service.
+  /// Test factory — inject the entitlement read, share service, and launcher.
+  /// The launcher defaults to a silent no-op so tests never touch the platform
+  /// url_launcher channel.
   factory GuardianService.forTest({
     required bool Function() entitlement,
     JourneyShareService? share,
+    GuardianUriLauncher? launcher,
+    GuardianAutoSender? autoSender,
   }) =>
-      GuardianService._(entitlement: entitlement, share: share);
+      GuardianService._(
+        entitlement: entitlement,
+        share: share,
+        launcher: launcher ?? ((Uri _) async => true),
+        autoSender: autoSender,
+      );
+
+  /// Real out-of-app launch: hands the composer URI to the OS (SMS / WhatsApp).
+  static Future<bool> _defaultLaunch(Uri uri) =>
+      launchUrl(uri, mode: LaunchMode.externalApplication);
 
   static const String contactsBox = 'gw_guardian_contacts';
   static const String enabledBox = 'gw_guardian_enabled';
@@ -63,7 +94,13 @@ class GuardianService {
 
   final bool Function() _entitlement;
   final JourneyShareService _share;
+  final GuardianUriLauncher _launcher;
   final Uuid _uuid = const Uuid();
+
+  /// Business-gated automatic sender (see [GuardianAutoSender]). Null by default
+  /// (no SMS gateway shipped) → delivery falls back to the user-mediated
+  /// composer deep link. A founder may set this once a paid backend is wired.
+  GuardianAutoSender? autoDeliverySender;
 
   /// Reactive: the Guardian on/off state for UI toggles.
   final ValueNotifier<bool> enabledListenable = ValueNotifier<bool>(false);
@@ -205,8 +242,9 @@ class GuardianService {
         mode: ShareMode.guardian,
       );
       _activeDestLabel = destLabel;
-      // Deliver the tracking link to the contact via the backend (Noop drops
-      // it; a live backend routes SMS/WhatsApp/app push server-side).
+      // Deliver the tracking link to the saved contact. Fire-and-forget: opens
+      // the user's SMS/WhatsApp composer pre-filled (user taps send), or an
+      // automatic sender if a founder has wired one.
       unawaited(_notifyContact(started.message));
     } catch (e) {
       dev.log('onJourneyArmed ignored: $e', name: 'GuardianService');
@@ -229,9 +267,19 @@ class GuardianService {
       // the backend for each active session (the server-side "arrived safely"
       // push), so we do NOT call backend.markArrived again here.
       await _share.markArrived();
-      final msg =
-          ShareLinkBuilder.buildArrivedMessage(destLabel: _activeDestLabel);
-      unawaited(_notifyContact(msg));
+      // The follower already sees "arrived safely" via the backend (markArrived
+      // above). Do NOT pop the user's SMS/WhatsApp composer here — that would
+      // surface OVER the just-fired wake alarm / dismiss UI (and Android 12+
+      // background-launch limits would likely block it anyway). Only the INERT,
+      // founder-wired automatic sender may deliver at arrival; with none wired
+      // (the default) the backend status is the arrival signal.
+      final contact = _contact;
+      final auto = autoDeliverySender;
+      if (contact != null && auto != null) {
+        final msg =
+            ShareLinkBuilder.buildArrivedMessage(destLabel: _activeDestLabel);
+        unawaited(auto(contact, msg));
+      }
     } catch (e) {
       dev.log('arrived delivery ignored: $e', name: 'GuardianService');
     } finally {
@@ -239,14 +287,54 @@ class GuardianService {
     }
   }
 
-  /// Best-effort out-of-app delivery. With the default NoopShareBackend the
-  /// server-side channels don't exist, so this is a no-op today; the live
-  /// backend + founder SMS/FCM turn [message] into a real message. Kept here so
-  /// wiring the live backend needs zero call-site changes.
+  /// Best-effort out-of-app delivery to the saved contact. Never throws.
+  ///
+  /// DELIVERY MODEL (free MVP, no SMS gateway): compose [message] into the
+  /// user's OWN SMS or WhatsApp app, pre-addressed to the saved contact, so the
+  /// USER taps send. GeoWake never sends a message itself. If a founder has
+  /// wired [autoDeliverySender] (a paid Twilio/WhatsApp/FCM backend), that path
+  /// takes over and delivers without user mediation.
   Future<void> _notifyContact(String message) async {
-    // Intentionally routed only through the backend contract — GeoWake never
-    // sends SMS itself. Left as a hook for HttpShareBackend to extend.
-    return;
+    try {
+      final contact = _contact;
+      if (contact == null) return;
+
+      // Automatic server-side delivery is INERT unless a founder wired it.
+      final auto = autoDeliverySender;
+      if (auto != null) {
+        unawaited(auto(contact, message));
+        return;
+      }
+
+      final uri = composeDeepLink(contact, message);
+      if (uri == null) return;
+      // Opens the composer pre-filled; the user taps send. Best-effort.
+      await _launcher(uri);
+    } catch (e) {
+      dev.log('notifyContact ignored: $e', name: 'GuardianService');
+    }
+  }
+
+  /// Build the channel-specific composer URI for [contact] carrying [message].
+  ///
+  /// Pure and side-effect-free (unit-testable). Returns null when there is no
+  /// usable address. WhatsApp → `https://wa.me/<digits>?text=…`; SMS (and the
+  /// not-yet-implemented in-app channel) → `sms:<number>?body=…`.
+  static Uri? composeDeepLink(GuardianContact contact, String message) {
+    final addr = contact.address.trim();
+    if (addr.isEmpty) return null;
+    switch (contact.channel) {
+      case GuardianChannel.whatsapp:
+        final phone = addr.replaceAll(RegExp(r'[^0-9]'), '');
+        if (phone.isEmpty) return null;
+        return Uri.parse(
+            'https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+      case GuardianChannel.sms:
+      case GuardianChannel.app: // no in-app transport yet → SMS composer
+        final phone = addr.replaceAll(RegExp(r'[^0-9+]'), '');
+        if (phone.isEmpty) return null;
+        return Uri.parse('sms:$phone?body=${Uri.encodeComponent(message)}');
+    }
   }
 
   // ---------------------------------------------------------------------------

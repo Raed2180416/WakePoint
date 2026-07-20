@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rounded surface for the GeoWake widget card (theme-aware via @color). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/gw_widget_bg" />
+    <corners android:radius="18dp" />
+</shape>

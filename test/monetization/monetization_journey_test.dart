@@ -244,8 +244,6 @@ void main() {
       expect(premium.isAdFree, isTrue);
       expect(premium.canUseCustomAlarmSounds, isTrue);
       expect(premium.canUseWidget, isTrue);
-      expect(premium.canUseWearOs, isTrue);
-      expect(premium.canUseFamilyAlarms, isTrue);
 
       // The core alarm / reliability is STILL free — never gated behind Pro.
       expect(premium.canUseCoreAlarm, isTrue);

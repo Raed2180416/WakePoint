@@ -73,3 +73,6 @@ node_modules/
 
 # Web Google Maps JS key (out-of-band, never commit) — see web/maps_key.example.js
 web/maps_key.js
+
+# agent scratch
+.geowake_env.fish

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AppWidgetProviderInfo for the GeoWake home-screen widget.
+  updatePeriodMillis=0: the app pushes updates on its own cadence via
+  HomeWidget.updateWidget (state changes / throttled progress ticks), so we do
+  NOT ask the platform to periodically re-broadcast (saves battery and never
+  wakes the tracking process). resizeMode lets the user fit it to one row.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="70dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/geowake_widget"
+    android:previewImage="@mipmap/ic_launcher"
+    android:description="@string/gw_widget_description"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

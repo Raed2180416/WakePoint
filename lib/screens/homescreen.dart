@@ -9,14 +9,16 @@ import 'package:geowake2/services/reliability/reliability_preflight_runner.dart'
 import 'package:geowake2/services/monetization/ad_policy.dart';
 import 'package:geowake2/widgets/gated_banner_ad.dart';
 import 'package:geowake2/screens/otherimpservices/recent_locations_service.dart';
-import 'package:geowake2/services/saved_route.dart';
 import 'package:geowake2/services/saved_routes_service.dart';
+import 'package:geowake2/services/saved_route.dart';
 import 'package:geowake2/services/places_service.dart';
 import 'package:geowake2/services/metro_stop_service.dart';
 import 'package:geowake2/services/stop_logic_engine.dart';
 import 'package:geowake2/services/transfer_utils.dart';
 import 'settingsdrawer.dart';
 import 'package:geowake2/services/trackingservice.dart';
+import 'package:geowake2/services/share/guardian_service.dart';
+import 'package:geowake2/services/widget/widget_arm_handler.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
@@ -40,7 +42,6 @@ class HomeScreenState extends State<HomeScreen> {
   String? _currentCountryCode;
 
   List<Map<String, dynamic>> _recentLocations = [];
-  List<RouteMemory> _savedRoutes = [];
   List<Map<String, dynamic>> _autocompleteResults = [];
   Map<String, dynamic>? _selectedLocation;
 
@@ -79,8 +80,8 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _placesService = PlacesService();
     _loadRecentLocations();
-    _loadSavedRoutes();
     _initBatteryMonitoring();
+    _consumeWidgetArm();
     // OfflineCoordinator.instance is now used via getter, no need to initialize here
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
@@ -470,12 +471,64 @@ class HomeScreenState extends State<HomeScreen> {
   // =======================================================================
   // ROUTE MEMORY — automatic recents + frequent trips (no manual saving).
   // GeoWake is position-dependent, so we LEARN routes from behaviour instead of
-  // pinning fixed Home/Work destinations: the last few trips show as one-tap
-  // recents, and a trip armed repeatedly is pinned as "frequent".
+  // pinning fixed Home/Work destinations. The on-screen "Recent trips" row was
+  // removed (the search autocomplete already surfaces recent destinations); the
+  // store is still recorded here because the home-screen WIDGET reads it.
   // =======================================================================
-  Future<void> _loadSavedRoutes() async {
-    final loaded = await RouteMemoryService.list();
-    if (mounted) setState(() => _savedRoutes = loaded);
+
+  /// Drain a pending widget "arm" tap. The home-screen widget stashes a
+  /// RouteMemory id then LAUNCHes the app; on init we consume that id and re-arm
+  /// the remembered trip through the normal one-tap flow. Runs on init only —
+  /// never on the arm→track→alarm fire path. Fail-safe: a no-op while tracking
+  /// or on any error, so a stale tap can never half-arm.
+  Future<void> _consumeWidgetArm() async {
+    try {
+      final routeId = await WidgetArmHandler.instance.consumePendingArm();
+      if (routeId == null || !mounted || _isTracking) return;
+      final routes = await RouteMemoryService.list();
+      RouteMemory? match;
+      for (final r in routes) {
+        if (r.id == routeId) {
+          match = r;
+          break;
+        }
+      }
+      if (match == null || !mounted) return;
+      await _armFromRoute(match);
+    } catch (e) {
+      dev.log('widget arm consume ignored: $e', name: 'HomeScreen');
+    }
+  }
+
+  /// Pre-fill destination + alarm mode/value from a remembered route, then run
+  /// the normal Wake-Me flow. Guarded off the fire path; no-op while tracking.
+  Future<void> _armFromRoute(RouteMemory r) async {
+    if (_isTracking) return;
+    setState(() {
+      _metroMode = r.metroMode;
+      switch (r.alarmMode) {
+        case 'stops':
+          _useDistanceMode = true;
+          _metroMode = true;
+          _stopsSliderValue = r.alarmValue.clamp(1.0, 10.0);
+          break;
+        case 'distance':
+          _useDistanceMode = true;
+          _metroMode = false;
+          _distanceSliderValue = r.alarmValue.clamp(0.5, 10.0);
+          break;
+        case 'time':
+        default:
+          _useDistanceMode = false;
+          _timeSliderValue = r.alarmValue.clamp(1.0, 60.0);
+          break;
+      }
+    });
+    await _setSelectedLocation(r.destinationName, r.lat, r.lng);
+    if (r.placeId != null && r.placeId!.isNotEmpty) {
+      _selectedLocation!['place_id'] = r.placeId;
+    }
+    await _onWakeMePressed();
   }
 
   /// Silently record the just-armed trip into route memory (upsert by coarse
@@ -507,103 +560,9 @@ class HomeScreenState extends State<HomeScreen> {
         originLat: originLat,
         originLng: originLng,
       );
-      await _loadSavedRoutes();
     } catch (e) {
       dev.log('Failed to record route memory: $e', name: 'HomeScreen');
     }
-  }
-
-  /// One-tap arm: pre-fill destination + alarm mode/value from a remembered
-  /// route, then run the normal Wake-Me flow (permissions, validation).
-  Future<void> _armSavedRoute(RouteMemory r) async {
-    if (_isTracking) return;
-    // Apply alarm mode/value onto the same state the Wake-Me flow reads.
-    setState(() {
-      _metroMode = r.metroMode;
-      switch (r.alarmMode) {
-        case 'stops':
-          _useDistanceMode = true;
-          _metroMode = true; // stops mode only exists under metro mode
-          _stopsSliderValue = r.alarmValue.clamp(1.0, 10.0);
-          break;
-        case 'distance':
-          _useDistanceMode = true;
-          _metroMode = false; // distance is the non-metro distance mode
-          _distanceSliderValue = r.alarmValue.clamp(0.5, 10.0);
-          break;
-        case 'time':
-        default:
-          _useDistanceMode = false; // keep metroMode as saved (metro-time is valid)
-          _timeSliderValue = r.alarmValue.clamp(1.0, 60.0);
-          break;
-      }
-    });
-    // Set destination (updates marker, search field and camera) then arm.
-    await _setSelectedLocation(r.destinationName, r.lat, r.lng);
-    if (r.placeId != null && r.placeId!.isNotEmpty) {
-      _selectedLocation!['place_id'] = r.placeId;
-    }
-    await _onWakeMePressed();
-  }
-
-  /// Long-press menu for a remembered route: arm, or forget it.
-  Future<void> _showSavedRouteOptions(RouteMemory r) async {
-    if (!mounted) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.destinationName.isEmpty
-                          ? 'Recent trip'
-                          : r.destinationName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      r.isFrequent
-                          ? 'Frequent · travelled ${r.timesTravelled}×'
-                          : 'Recent trip',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications_active),
-              title: const Text('Arm this trip'),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _armSavedRoute(r);
-              },
-            ),
-            ListTile(
-              leading:
-                  const Icon(Icons.delete_outline, color: Colors.redAccent),
-              title: const Text('Forget this trip'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                await RouteMemoryService.remove(r.id);
-                await _loadSavedRoutes();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// G24: surface a plain-spoken reliability/safety disclaimer exactly once.
@@ -617,21 +576,22 @@ class HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       await showDialog<void>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Please keep a backup alarm'),
-          content: const Text(
-            'GeoWake does its best to wake you at your stop, but no phone app '
-            'can guarantee it. On some phones, aggressive battery savers, Do Not '
-            'Disturb, or very deep sleep can delay or silence the alarm.\n\n'
-            'For any trip you truly can\'t miss, please also set a backup alarm.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Got it'),
+        builder:
+            (ctx) => AlertDialog(
+              title: const Text('Please keep a backup alarm'),
+              content: const Text(
+                'GeoWake does its best to wake you at your stop, but no phone app '
+                'can guarantee it. On some phones, aggressive battery savers, Do Not '
+                'Disturb, or very deep sleep can delay or silence the alarm.\n\n'
+                'For any trip you truly can\'t miss, please also set a backup alarm.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Got it'),
+                ),
+              ],
             ),
-          ],
-        ),
       );
       await prefs.setBool('reliability_disclaimer_shown', true);
     } catch (_) {
@@ -816,9 +776,11 @@ class HomeScreenState extends State<HomeScreen> {
       // invalid (>24h) total durations, which indicate corrupt/looping route
       // data rather than a real trip. Computed across ALL legs so a multi-leg
       // journey isn't under-measured by leg 0 alone.
-      final totalPlannedSeconds =
-          TransferUtils.totalPlannedDurationSeconds(directions);
-      const int maxSaneJourneySeconds = 24 * 3600; // 86400s ceiling, ~2.4x max sleeper
+      final totalPlannedSeconds = TransferUtils.totalPlannedDurationSeconds(
+        directions,
+      );
+      const int maxSaneJourneySeconds =
+          24 * 3600; // 86400s ceiling, ~2.4x max sleeper
       if (totalPlannedSeconds > maxSaneJourneySeconds) {
         _showErrorDialog(
           "Route Too Long",
@@ -943,8 +905,7 @@ class HomeScreenState extends State<HomeScreen> {
           debugPrint(
             '[StopsValidation] FAIL metro-leg: threshold=$alarmValue minMetroStops=${metroLegResult.minMetroStops} legs=${transitLegs.length}',
           );
-          final metroCount =
-              transitLegs.where((leg) => leg.isMetro).length;
+          final metroCount = transitLegs.where((leg) => leg.isMetro).length;
           final nonMetroCount = transitLegs.length - metroCount;
           dev.log(
             'Metro-leg validation failed: threshold=$alarmValue, metroCount=$metroCount, nonMetroCount=$nonMetroCount, minMetroStops=${metroLegResult.minMetroStops}',
@@ -977,7 +938,8 @@ class HomeScreenState extends State<HomeScreen> {
         _isLoading = false; // Clear spinner so the sheet is presented cleanly.
       });
       final confirmed = await _showPreArmConfirmation(
-        destinationName: _selectedLocation?['description'] ?? 'your destination',
+        destinationName:
+            _selectedLocation?['description'] ?? 'your destination',
         alarmMode: alarmMode,
         alarmValue: alarmValue,
         totalEtaSeconds: totalPlannedSeconds,
@@ -1045,8 +1007,10 @@ class HomeScreenState extends State<HomeScreen> {
       try {
         final preflight = await ReliabilityPreflightRunner.run();
         if (!preflight.isOk && mounted) {
-          final proceed =
-              await showReliabilityPreflightDialog(context, preflight);
+          final proceed = await showReliabilityPreflightDialog(
+            context,
+            preflight,
+          );
           if (!proceed) {
             if (mounted) {
               setState(() {
@@ -1057,7 +1021,9 @@ class HomeScreenState extends State<HomeScreen> {
             return; // blocking channel issue — do not arm a dead delivery path
           }
         }
-      } catch (_) {/* a preflight ERROR must never crash the arm flow */}
+      } catch (_) {
+        /* a preflight ERROR must never crash the arm flow */
+      }
 
       await trackingService.startTracking(
         destination: LatLng(destLat, destLng),
@@ -1070,6 +1036,20 @@ class HomeScreenState extends State<HomeScreen> {
       dev.log(
         '[StartupPerf] Tracking Service Started: ${stopwatch.elapsedMilliseconds}ms',
         name: 'Performance',
+      );
+
+      // Guardian mode (Pro): auto-share this commute with the saved contact so
+      // they can follow the live ride. Fire-and-forget and self-gating — it
+      // no-ops unless the user is Pro + enabled Guardian + set a contact, and it
+      // runs ONLY AFTER startTracking() has already returned, so it can never
+      // delay, reorder, or fail the arm→track→alarm spine. It starts a
+      // JourneyShare (reusing JourneyShareService) and composes the tracking link
+      // into the user's SMS/WhatsApp app for them to send. Never throws.
+      unawaited(
+        GuardianService.instance.onJourneyArmed(
+          destLabel: _selectedLocation?['description'] ?? 'Your Destination',
+          eta: DateTime.now().add(Duration(seconds: initialETA)),
+        ),
       );
 
       // Remember this trip (recents + frequency). Fire-and-forget — must never
@@ -1393,21 +1373,19 @@ class HomeScreenState extends State<HomeScreen> {
     final Color searchBarFillColor =
         isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     final Color clearSearchIconColor =
-      isDarkMode
-        ? colorScheme.onSurface.withOpacity(0.75)
-        : Colors.black54;
+        isDarkMode ? colorScheme.onSurface.withOpacity(0.75) : Colors.black54;
     final Color clearChipBg =
-      isDarkMode
-        ? colorScheme.surfaceContainerHighest.withOpacity(0.45)
-        : Colors.grey.shade200;
+        isDarkMode
+            ? colorScheme.surfaceContainerHighest.withOpacity(0.45)
+            : Colors.grey.shade200;
     final Color clearChipBorder =
-      isDarkMode
-        ? colorScheme.outline.withOpacity(0.5)
-        : Colors.grey.shade300;
+        isDarkMode
+            ? colorScheme.outline.withOpacity(0.5)
+            : Colors.grey.shade300;
     final Color clearChipIconColor =
-      isDarkMode
-        ? colorScheme.onSurfaceVariant.withOpacity(0.9)
-        : Colors.grey.shade700;
+        isDarkMode
+            ? colorScheme.onSurfaceVariant.withOpacity(0.9)
+            : Colors.grey.shade700;
 
     return Scaffold(
       drawer: SettingsDrawer(
@@ -1446,391 +1424,367 @@ class HomeScreenState extends State<HomeScreen> {
         child: GatedBannerAd(placement: AdPlacement.routeArming),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(screenWidth * 0.04),
-          child: AbsorbPointer(
-            absorbing: _isTracking,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_noConnectivity)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 12,
-                    ),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade700,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.wifi_off, color: Colors.white),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Offline mode: using cached routes only',
-                            style: TextStyle(color: Colors.white),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(screenWidth * 0.04),
+                child: AbsorbPointer(
+                  absorbing: _isTracking,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_noConnectivity)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,
-                  builder: (context, value, _) {
-                    final hasText = value.text.isNotEmpty;
-                    return TextField(
-                      focusNode: _searchFocus,
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your destination',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon:
-                            hasText
-                                ? IconButton(
-                                  tooltip: 'Clear search',
-                                  icon: Icon(
-                                    Icons.close,
-                                    color: clearSearchIconColor,
-                                  ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    if (mounted) _showTopRecentLocations();
-                                  },
-                                )
-                                : null,
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: screenHeight * 0.015,
-                          horizontal: screenWidth * 0.04,
-                        ),
-                        filled: true,
-                        fillColor: searchBarFillColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        hintStyle: TextStyle(
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
-                        ),
-                        prefixIconColor:
-                            isDarkMode ? Colors.white70 : Colors.black54,
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: screenHeight * 0.01),
-                if (_autocompleteResults.isNotEmpty)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.grey[800] : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _autocompleteResults.length,
-                      itemBuilder: (context, index) {
-                        final suggestion = _autocompleteResults[index];
-                        return ListTile(
-                          title: Text(suggestion['description'] ?? 'Unknown'),
-                          onTap: () => _onSuggestionSelected(suggestion),
-                          trailing:
-                              suggestion['isLocal'] == true
-                                  ? GestureDetector(
-                                    onTap:
-                                        () => _removeRecentLocation(suggestion),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: clearChipBg,
-                                        border: Border.all(
-                                          color: clearChipBorder,
-                                          width: 0.8,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 16,
-                                        color: clearChipIconColor,
-                                      ),
-                                    ),
-                                  )
-                                  : null,
-                        );
-                      },
-                    ),
-                  ),
-                SizedBox(height: screenHeight * 0.01),
-                _buildSavedRoutesSection(isDarkMode, colorScheme),
-                SizedBox(height: screenHeight * 0.02),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    height: screenHeight * 0.3,
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target:
-                            _currentPosition ??
-                            const LatLng(12.9716, 77.5946), // Bengaluru
-                        zoom: 12,
-                      ),
-                      markers: _markers,
-                      onTap: _handleMapTap,
-                      onCameraMove: (position) {
-                        _lastZoom = position.zoom;
-                      },
-                      onMapCreated: (controller) {
-                        if (!_mapController.isCompleted) {
-                          _mapController.complete(controller);
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Time'),
-                    Switch(
-                      value: _useDistanceMode,
-                      onChanged:
-                          (val) => setState(() => _useDistanceMode = val),
-                    ),
-                    Text(_metroMode ? 'Stops' : 'Distance'),
-                  ],
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                GestureDetector(
-                  onTap: () async {
-                    final newValue = await showDialog<double>(
-                      context: context,
-                      builder: (_) {
-                        return _EnterValueDialog(
-                          initialValue:
-                              _useDistanceMode
-                                  ? (_metroMode
-                                      ? _stopsSliderValue
-                                      : _distanceSliderValue)
-                                  : _timeSliderValue,
-                          isDistanceMode: _useDistanceMode && !_metroMode,
-                          isStopsMode: _useDistanceMode && _metroMode,
-                        );
-                      },
-                    );
-                    if (!mounted) return;
-                    if (newValue != null) {
-                      setState(() {
-                        if (_useDistanceMode) {
-                          if (_metroMode) {
-                            _stopsSliderValue = newValue.clamp(1.0, 10.0);
-                          } else {
-                            _distanceSliderValue = newValue.clamp(0.5, 10.0);
-                          }
-                        } else {
-                          _timeSliderValue = newValue.clamp(1.0, 60.0);
-                        }
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      vertical: screenHeight * 0.015,
-                      horizontal: screenWidth * 0.04,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: isDarkMode ? Colors.white38 : Colors.grey,
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Text(
-                      _useDistanceMode
-                          ? (_metroMode
-                              ? 'Alert me ${_stopsSliderValue.toStringAsFixed(0)} stops prior'
-                              : 'Alert me within ${_distanceSliderValue.toStringAsFixed(1)} km')
-                          : 'Alert me in ${_timeSliderValue.toStringAsFixed(0)} min',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: screenWidth * 0.045),
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.015),
-                Slider(
-                  value:
-                      _useDistanceMode
-                          ? (_metroMode
-                              ? _stopsSliderValue
-                              : _distanceSliderValue)
-                          : _timeSliderValue,
-                  min: _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
-                  max: _useDistanceMode ? (_metroMode ? 10.0 : 10.0) : 60.0,
-                  divisions: _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
-                  label:
-                      _useDistanceMode
-                          ? (_metroMode
-                              ? _stopsSliderValue.toStringAsFixed(0)
-                              : _distanceSliderValue.toStringAsFixed(1))
-                          : _timeSliderValue.toStringAsFixed(0),
-                  onChanged: (val) {
-                    setState(() {
-                      if (_useDistanceMode) {
-                        if (_metroMode) {
-                          // Stops slider should be integer-like in feel
-                          _stopsSliderValue = val.round().toDouble();
-                        } else {
-                          _distanceSliderValue = val;
-                        }
-                      } else {
-                        _timeSliderValue = val;
-                      }
-                    });
-                  },
-                ),
-                SizedBox(height: screenHeight * 0.015),
-                ElevatedButton(
-                  onPressed:
-                      (_selectedLocation == null ||
-                              _searchController.text.isEmpty ||
-                              _isLoading ||
-                              _isTracking)
-                          ? null
-                          : _onWakeMePressed,
-                  child:
-                      _isLoading
-                          ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade700,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: const [
+                              Icon(Icons.wifi_off, color: Colors.white),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Offline mode: using cached routes only',
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Loading route...',
-                                style: TextStyle(fontSize: screenWidth * 0.05),
+                            ],
+                          ),
+                        ),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _searchController,
+                        builder: (context, value, _) {
+                          final hasText = value.text.isNotEmpty;
+                          return TextField(
+                            focusNode: _searchFocus,
+                            controller: _searchController,
+                            onChanged: _onSearchChanged,
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your destination',
+                              prefixIcon: const Icon(Icons.search),
+                              suffixIcon:
+                                  hasText
+                                      ? IconButton(
+                                        tooltip: 'Clear search',
+                                        icon: Icon(
+                                          Icons.close,
+                                          color: clearSearchIconColor,
+                                        ),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          if (mounted)
+                                            _showTopRecentLocations();
+                                        },
+                                      )
+                                      : null,
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: screenHeight * 0.015,
+                                horizontal: screenWidth * 0.04,
+                              ),
+                              filled: true,
+                              fillColor: searchBarFillColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              hintStyle: TextStyle(
+                                color:
+                                    isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black54,
+                              ),
+                              prefixIconColor:
+                                  isDarkMode ? Colors.white70 : Colors.black54,
+                            ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: screenHeight * 0.01),
+                      if (_autocompleteResults.isNotEmpty)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDarkMode ? Colors.grey[800] : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _autocompleteResults.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _autocompleteResults[index];
+                              return ListTile(
+                                title: Text(
+                                  suggestion['description'] ?? 'Unknown',
+                                ),
+                                onTap: () => _onSuggestionSelected(suggestion),
+                                trailing:
+                                    suggestion['isLocal'] == true
+                                        ? GestureDetector(
+                                          onTap:
+                                              () => _removeRecentLocation(
+                                                suggestion,
+                                              ),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: clearChipBg,
+                                              border: Border.all(
+                                                color: clearChipBorder,
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.all(4),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 16,
+                                              color: clearChipIconColor,
+                                            ),
+                                          ),
+                                        )
+                                        : null,
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(height: screenHeight * 0.02),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          height: screenHeight * 0.3,
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target:
+                                  _currentPosition ??
+                                  const LatLng(12.9716, 77.5946), // Bengaluru
+                              zoom: 12,
+                            ),
+                            markers: _markers,
+                            onTap: _handleMapTap,
+                            onCameraMove: (position) {
+                              _lastZoom = position.zoom;
+                            },
+                            onMapCreated: (controller) {
+                              if (!_mapController.isCompleted) {
+                                _mapController.complete(controller);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.03),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Time'),
+                          Switch(
+                            value: _useDistanceMode,
+                            onChanged:
+                                (val) => setState(() => _useDistanceMode = val),
+                          ),
+                          Text(_metroMode ? 'Stops' : 'Distance'),
+                        ],
+                      ),
+                      SizedBox(height: screenHeight * 0.02),
+                      GestureDetector(
+                        onTap: () async {
+                          final newValue = await showDialog<double>(
+                            context: context,
+                            builder: (_) {
+                              return _EnterValueDialog(
+                                initialValue:
+                                    _useDistanceMode
+                                        ? (_metroMode
+                                            ? _stopsSliderValue
+                                            : _distanceSliderValue)
+                                        : _timeSliderValue,
+                                isDistanceMode: _useDistanceMode && !_metroMode,
+                                isStopsMode: _useDistanceMode && _metroMode,
+                              );
+                            },
+                          );
+                          if (!mounted) return;
+                          if (newValue != null) {
+                            setState(() {
+                              if (_useDistanceMode) {
+                                if (_metroMode) {
+                                  _stopsSliderValue = newValue.clamp(1.0, 10.0);
+                                } else {
+                                  _distanceSliderValue = newValue.clamp(
+                                    0.5,
+                                    10.0,
+                                  );
+                                }
+                              } else {
+                                _timeSliderValue = newValue.clamp(1.0, 60.0);
+                              }
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: screenHeight * 0.015,
+                            horizontal: screenWidth * 0.04,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isDarkMode
+                                    ? Colors.grey[700]
+                                    : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isDarkMode ? Colors.white38 : Colors.grey,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Text(
+                            _useDistanceMode
+                                ? (_metroMode
+                                    ? 'Alert me ${_stopsSliderValue.toStringAsFixed(0)} stops prior'
+                                    : 'Alert me within ${_distanceSliderValue.toStringAsFixed(1)} km')
+                                : 'Alert me in ${_timeSliderValue.toStringAsFixed(0)} min',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: screenWidth * 0.045),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.015),
+                      Slider(
+                        value:
+                            _useDistanceMode
+                                ? (_metroMode
+                                    ? _stopsSliderValue
+                                    : _distanceSliderValue)
+                                : _timeSliderValue,
+                        min: _useDistanceMode ? (_metroMode ? 1.0 : 0.5) : 1.0,
+                        max:
+                            _useDistanceMode
+                                ? (_metroMode ? 10.0 : 10.0)
+                                : 60.0,
+                        divisions:
+                            _useDistanceMode ? (_metroMode ? 9 : 19) : 59,
+                        label:
+                            _useDistanceMode
+                                ? (_metroMode
+                                    ? _stopsSliderValue.toStringAsFixed(0)
+                                    : _distanceSliderValue.toStringAsFixed(1))
+                                : _timeSliderValue.toStringAsFixed(0),
+                        onChanged: (val) {
+                          setState(() {
+                            if (_useDistanceMode) {
+                              if (_metroMode) {
+                                // Stops slider should be integer-like in feel
+                                _stopsSliderValue = val.round().toDouble();
+                              } else {
+                                _distanceSliderValue = val;
+                              }
+                            } else {
+                              _timeSliderValue = val;
+                            }
+                          });
+                        },
+                      ),
+                      if (_lowBattery)
+                        Padding(
+                          padding: EdgeInsets.only(top: screenHeight * 0.02),
+                          child: Row(
+                            children: [
+                              const Spacer(),
+                              _buildAlertButton(
+                                icon: Icons.battery_alert,
+                                onPressed: () {},
                               ),
                             ],
-                          )
-                          : Text(
-                            'Wake Me!',
-                            style: TextStyle(fontSize: screenWidth * 0.05),
                           ),
-                ),
-                if (_lowBattery)
-                  Padding(
-                    padding: EdgeInsets.only(top: screenHeight * 0.02),
-                    child: Row(
-                      children: [
-                        const Spacer(),
-                        _buildAlertButton(
-                          icon: Icons.battery_alert,
-                          onPressed: () {},
                         ),
-                      ],
-                    ),
+                    ],
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
+            // Docked primary CTA — the "Wake Me!" action lives in a persistent
+            // bottom bar (always thumb-reachable) instead of floating in the
+            // scroll body with a gap beneath it. It sits ABOVE the gated ad
+            // banner (the Scaffold's bottomNavigationBar), so an ad can never
+            // overlap the wake control (AdPolicy invariant).
+            _buildWakeMeBar(context, screenWidth, screenHeight),
+          ],
         ),
       ),
       // No floating action button in production
     );
   }
 
-  /// Compact horizontal "Recent trips" row, auto-populated from route memory.
-  /// One tap re-arms the trip; long-press offers Arm/Forget. Frequent trips are
-  /// pinned first (marked with a star). Hidden when nothing's been travelled.
-  Widget _buildSavedRoutesSection(bool isDarkMode, ColorScheme cs) {
-    if (_savedRoutes.isEmpty) return const SizedBox.shrink();
-    final ordered = _savedRoutes; // already frequent-first, then recent
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 6),
-            child: Text(
-              'Recent trips',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white70 : Colors.black54,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: ordered.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) =>
-                  _buildSavedRouteChip(ordered[i], isDarkMode, cs),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSavedRouteChip(RouteMemory r, bool isDarkMode, ColorScheme cs) {
-    final IconData icon = r.isFrequent ? Icons.star : Icons.history;
-    // Short label: destination name trimmed to the first, most-recognisable part.
-    String label = r.destinationName.trim();
-    if (label.isEmpty) label = 'Recent trip';
-    final comma = label.indexOf(',');
-    if (comma > 2) label = label.substring(0, comma);
-    if (label.length > 22) label = '${label.substring(0, 21)}…';
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: _isTracking ? null : () => _armSavedRoute(r),
-      onLongPress: () => _showSavedRouteOptions(r),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDarkMode ? Colors.white24 : Colors.grey.shade300,
-            width: 1.0,
-          ),
+  /// The primary "Wake Me!" call-to-action, docked in a persistent bottom bar so
+  /// it is always thumb-reachable and no longer floats in the scroll body with a
+  /// gap beneath it (which is what showed once the gated ad banner collapsed to
+  /// zero on no-fill). It renders ABOVE the ad banner (the Scaffold's
+  /// bottomNavigationBar), so an ad can never overlap the wake control.
+  Widget _buildWakeMeBar(
+    BuildContext context,
+    double screenWidth,
+    double screenHeight,
+  ) {
+    final cs = Theme.of(context).colorScheme;
+    final bool enabled =
+        _selectedLocation != null &&
+        _searchController.text.isNotEmpty &&
+        !_isLoading &&
+        !_isTracking;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: r.isFrequent ? Colors.amber[700] : cs.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          screenWidth * 0.04,
+          10,
+          screenWidth * 0.04,
+          10,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: enabled ? _onWakeMePressed : null,
+            child:
+                _isLoading
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Loading route...',
+                          style: TextStyle(fontSize: screenWidth * 0.05),
+                        ),
+                      ],
+                    )
+                    : Text(
+                      'Wake Me!',
+                      style: TextStyle(fontSize: screenWidth * 0.05),
+                    ),
+          ),
         ),
       ),
     );

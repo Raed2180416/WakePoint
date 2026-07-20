@@ -123,6 +123,21 @@ class AlarmController {
   // Last alarm time for rate limiting
   DateTime? _lastAlarmFiredAt;
 
+  // P0-00 BACKSTOP PHYSICS INSTANT (GW-0080): absolute wall-clock time at which
+  // the FREE-RUN reach bound (s_max = anchor.sHi + V_LINE*dt) reaches the
+  // mode-aware fire target, computed from the CURRENT (last real) anchor. Because
+  // it is anchored to the last REAL fix it is a FIXED wall instant that does NOT
+  // postpone during a GPS blackout (unlike the frozen smoothedETA). Threaded
+  // (transient) into the broadcast so the OS setAlarmClock backstop can be armed
+  // at min(eta_time, this) — never later than the physics never-late instant, so
+  // a process death mid-blackout still wakes on time. Null => not computable yet.
+  DateTime? _backstopPhysicsFireAt;
+
+  /// Absolute wall-clock instant (AppClock.now()) of the physics never-late
+  /// backstop, or null if not computable this tick. See notification_updater
+  /// ._maybeRearmEtaBackstop.
+  DateTime? get backstopPhysicsFireAt => _backstopPhysicsFireAt;
+
   // P0 REACHABILITY PROTECTION LEVEL: physics "never fire late" state. Anchored
   // ONLY on accepted real fixes (not dead-reckoned sentinels); grows the
   // worst-case reachable arc-progress during a GPS blackout. See
@@ -343,7 +358,7 @@ class AlarmController {
     // Fastest V_LINE across all legs => valid upper bound on any leg (safe).
     double vMax = VLineTable.defaultMps;
     for (final leg in legs) {
-      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName);
+      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
       if (v.isFinite && v > vMax) vMax = v;
     }
 
@@ -435,6 +450,91 @@ class AlarmController {
         ? (legLen / nStops).clamp(800.0, 8000.0)
         : 1200.0;
     return max(0.0, totalMeters - value * perStop);
+  }
+
+  /// P0-00 (GW-0080) pure never-late backstop math (deterministic; no clock/OS
+  /// reads): seconds from [nowSeconds] until the FREE-RUN bound reaches
+  /// [targetMeters] starting from an anchor at ([anchorSHiMeters],
+  /// [anchorTSeconds]) travelling at at most [vLineMps]. May be <= 0 (fire now).
+  /// Returns null when a physics time cannot be proven (non-finite / non-positive
+  /// speed) so the caller falls back to the ETA path.
+  ///
+  /// NEVER-LATE: s_max(t) = sHi + V_LINE*(t - t_anchor) >= true progress (V_LINE
+  /// over-bounds true speed), so the instant s_max reaches the target is at or
+  /// before the train's true arrival. Anchored to the frozen last-real-fix, the
+  /// returned "seconds from now" shrinks 1:1 as `nowSeconds` advances, so
+  /// `now + result` is a FIXED wall instant — the smoothedETA postpone bug is
+  /// structurally impossible.
+  @visibleForTesting
+  static double? backstopPhysicsFireInSeconds({
+    required double anchorSHiMeters,
+    required double anchorTSeconds,
+    required double targetMeters,
+    required double vLineMps,
+    required double nowSeconds,
+  }) {
+    if (!anchorSHiMeters.isFinite ||
+        !anchorTSeconds.isFinite ||
+        !targetMeters.isFinite ||
+        !nowSeconds.isFinite ||
+        !vLineMps.isFinite ||
+        vLineMps <= 0) {
+      return null;
+    }
+    final double reachAfterAnchor = (targetMeters - anchorSHiMeters) / vLineMps;
+    final double elapsed = nowSeconds - anchorTSeconds;
+    return reachAfterAnchor - elapsed; // seconds from now (<=0 => fire now)
+  }
+
+  /// Refresh [backstopPhysicsFireAt] from the current anchor + route geometry.
+  /// Mirrors the cold-start target/V_LINE derivation so the backstop aims at the
+  /// same fire point as the in-process net. Never throws (fails toward the ETA
+  /// path). The result is an ABSOLUTE wall instant for setAlarmClock.
+  void _refreshBackstopPhysicsFireAt(AlarmContext context) {
+    try {
+      final anchor = _reach.anchor;
+      final legs = context.transitLegs;
+      if (anchor == null || legs.isEmpty) {
+        _backstopPhysicsFireAt = null;
+        return;
+      }
+      double totalMeters = double.nan;
+      for (final leg in legs) {
+        if (leg.legEndMeters.isFinite) {
+          totalMeters = totalMeters.isNaN
+              ? leg.legEndMeters
+              : max(totalMeters, leg.legEndMeters);
+        }
+      }
+      if (!totalMeters.isFinite || totalMeters <= 0) {
+        _backstopPhysicsFireAt = null;
+        return;
+      }
+      // Fastest V_LINE across all legs => a valid upper bound on any leg (safe,
+      // never-late). Honours the GW-0076 vehicle-type lift.
+      double vMax = VLineTable.defaultMps;
+      for (final leg in legs) {
+        final v = _reach.vLineTable
+            .forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
+        if (v.isFinite && v > vMax) vMax = v;
+      }
+      final target = coldStartFireTargetMeters(context, totalMeters, legs, vMax);
+      final fireInSeconds = backstopPhysicsFireInSeconds(
+        anchorSHiMeters: anchor.sHi,
+        anchorTSeconds: anchor.tSeconds,
+        targetMeters: target,
+        vLineMps: vMax,
+        nowSeconds: _nowSeconds(),
+      );
+      if (fireInSeconds == null) {
+        _backstopPhysicsFireAt = null;
+        return;
+      }
+      final int secs = fireInSeconds.clamp(0.0, 8.64e7).round();
+      _backstopPhysicsFireAt = AppClock().now().add(Duration(seconds: secs));
+    } catch (_) {
+      _backstopPhysicsFireAt = null; // fail toward the ETA path
+    }
   }
 
   /// Trigger alarm notification - handles background isolate case.
@@ -935,7 +1035,7 @@ class AlarmController {
     // is healthy (fresh anchor => bound ~= current progress).
     double vMaxModes = VLineTable.defaultMps;
     for (final leg in context.transitLegs) {
-      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName);
+      final v = _reach.vLineTable.forLine(city: leg.cityKey, lineName: leg.lineName, vehicleType: leg.vehicleType);
       if (v.isFinite && v > vMaxModes) vMaxModes = v;
     }
     double? reachBoundModes;
@@ -1401,13 +1501,37 @@ class AlarmController {
       // RRTS) — a valid over-bound whichever leg they are really on. For a
       // single-leg metro journey this equals that leg's V_LINE (no change).
       double vMaxFwd = VLineTable.defaultMps;
+      // P0-too-early: integrate V_LINE PIECEWISE per leg instead of a flat max.
+      // The flat max applied the fastest downstream leg's ceiling (e.g. RRTS
+      // 53 m/s) to the CURRENT slower leg's blackout, inflating the bound ~2x and
+      // firing ~2x early. The rider provably cannot reach a faster downstream leg
+      // without first traversing the intervening slower arc, so the bound should
+      // grow at each leg's own V_LINE up to that leg's end and only adopt a
+      // faster ceiling PAST the boundary. This is a valid over-bound at every arc
+      // position (each leg's V_LINE >= that leg's true max speed; a transfer gap
+      // is walked, far below the adopted ceiling) AND strictly tighter than the
+      // flat max — so it removes the early fire without any late risk. Segments
+      // are built over ALL legs (not just forward) so that if the last real fix
+      // (anchor) still sits on a previous, faster leg the march uses THAT leg's
+      // ceiling for the arc it still covers — closing an anchor-behind late hole
+      // the flat forward-only max also had.
+      final vSegments = <VLineSegment>[];
       if (currentLegIndex >= 0 &&
           currentLegIndex < context.transitLegs.length) {
         for (var i = currentLegIndex; i < context.transitLegs.length; i++) {
           final l = context.transitLegs[i];
-          final v = _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName);
+          final v = _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName, vehicleType: l.vehicleType);
           if (v.isFinite && v > vMaxFwd) vMaxFwd = v;
         }
+        for (final l in context.transitLegs) {
+          final v =
+              _reach.vLineTable.forLine(city: l.cityKey, lineName: l.lineName, vehicleType: l.vehicleType);
+          final vv = (v.isFinite && v > 0) ? v : VLineTable.defaultMps;
+          if (l.legEndMeters.isFinite) {
+            vSegments.add(VLineSegment(l.legEndMeters, vv));
+          }
+        }
+        vSegments.sort((a, b) => a.endMeters.compareTo(b.endMeters));
         // Stations the train must pass on the CURRENT leg tighten the early-firing
         // via the stop-count cap.
         final leg = context.transitLegs[currentLegIndex];
@@ -1429,6 +1553,7 @@ class AlarmController {
               vLineMps: vMaxFwd,
               topology: reachTopo,
               config: _reach.config,
+              vLineSegments: vSegments.isEmpty ? null : vSegments,
             );
       // Pass the bound through unless it is NaN. A +infinity bound is the
       // fire-FORCING signal (T_max watchdog or a corrupt-input fail-safe) and
@@ -1457,6 +1582,11 @@ class AlarmController {
         }
       }
     }
+
+    // P0-00 (GW-0080): publish the physics never-late backstop instant for this
+    // tick (transient) so the OS process-death backstop is armed at
+    // min(eta, physics) instead of a frozen ETA that postpones during a blackout.
+    _refreshBackstopPhysicsFireAt(context);
 
     // Evaluate
     try {

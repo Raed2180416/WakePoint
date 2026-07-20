@@ -7,14 +7,18 @@ import 'package:geowake2/services/share/share_link_builder.dart';
 void main() {
   group('share message', () {
     test('exact format with ETA, says GeoWake, carries no PII', () {
-      final url = ShareLinkBuilder.buildShareUrl('abc123',
-          domain: 'https://geo.wake');
+      final url = ShareLinkBuilder.buildShareUrl(
+        'abc123',
+        domain: 'https://geo.wake',
+      );
       final eta = DateTime(2026, 7, 19, 8, 42);
       final msg = ShareLinkBuilder.buildBasicMessage(
-          url: url, eta: eta, destLabel: 'Nallur Halli');
+        url: url,
+        eta: eta,
+        destLabel: 'Nallur Halli',
+      );
 
-      expect(msg,
-          'On my way to Nallur Halli — arriving ~8:42 · GeoWake\n$url');
+      expect(msg, 'On my way to Nallur Halli — arriving ~8:42 · GeoWake\n$url');
       expect(msg.contains('GeoWake'), isTrue);
       // No coordinates / names leaked into the message.
       expect(RegExp(r'\d{1,3}\.\d{3,}').hasMatch(msg), isFalse);
@@ -29,10 +33,14 @@ void main() {
     });
 
     test('arrived message says GeoWake and is safe', () {
-      expect(ShareLinkBuilder.buildArrivedMessage(destLabel: 'Indiranagar'),
-          "I've arrived safely at Indiranagar · GeoWake");
-      expect(ShareLinkBuilder.buildArrivedMessage(),
-          "I've arrived safely · GeoWake");
+      expect(
+        ShareLinkBuilder.buildArrivedMessage(destLabel: 'Indiranagar'),
+        "I've arrived safely at Indiranagar · GeoWake",
+      );
+      expect(
+        ShareLinkBuilder.buildArrivedMessage(),
+        "I've arrived safely · GeoWake",
+      );
     });
 
     test('formatEta pads minutes, 24h hour, local', () {
@@ -43,20 +51,26 @@ void main() {
 
   group('urls', () {
     test('share url shape /j/{id} with token', () {
-      final u = ShareLinkBuilder.buildShareUrl('ID9',
-          domain: 'https://geo.wake', token: 'tok');
+      final u = ShareLinkBuilder.buildShareUrl(
+        'ID9',
+        domain: 'https://geo.wake',
+        token: 'tok',
+      );
       expect(u, 'https://geo.wake/j/ID9?t=tok');
     });
 
     test('trailing slash in domain is normalised', () {
-      final u = ShareLinkBuilder.buildShareUrl('ID9', domain: 'https://geo.wake/');
+      final u = ShareLinkBuilder.buildShareUrl(
+        'ID9',
+        domain: 'https://geo.wake/',
+      );
       expect(u, 'https://geo.wake/j/ID9');
     });
 
     test('install fallback carries referrer', () {
       final u = ShareLinkBuilder.buildInstallFallbackUrl('S1');
       expect(u.contains('referrer=share_S1'), isTrue);
-      expect(u.contains('com.example.geowake2'), isTrue);
+      expect(u.contains('com.geowake.app'), isTrue);
     });
   });
 

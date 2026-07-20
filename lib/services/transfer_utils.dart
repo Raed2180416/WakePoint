@@ -64,6 +64,14 @@ class TransitLegStops {
   /// resolution logic.
   final String? cityKey;
 
+  /// GAP #9: Google Directions `transit_details.line.vehicle.type` (SUBWAY,
+  /// HEAVY_RAIL, RAIL, COMMUTER_TRAIN, HIGH_SPEED_TRAIN, ...). A NAME-FREE V_LINE
+  /// signal: a fast service reported with a slow/generic line name (Mumbai
+  /// Suburban "Western Line") is HEAVY_RAIL here, so [VLineTable.forLine] can lift
+  /// V_LINE off the 28 m/s metro default and stay never-late during a blackout on
+  /// that leg. Null when the step carries no vehicle type (degrades to keyword tier).
+  final String? vehicleType;
+
   String get legId {
     try {
       // 1. Metro Stability: Use Stop Names (Topology) if available
@@ -125,6 +133,7 @@ class TransitLegStops {
     this.stopNames = const [],
     this.stopCountConfidence = 1.0,
     this.cityKey,
+    this.vehicleType,
   });
 
   /// Serialize for persistence.
@@ -143,6 +152,7 @@ class TransitLegStops {
     'stopNames': stopNames,
     'stopCountConfidence': stopCountConfidence,
     if (cityKey != null) 'cityKey': cityKey,
+    if (vehicleType != null) 'vehicleType': vehicleType,
   };
 
   /// Deserialize from persistence.
@@ -180,6 +190,7 @@ class TransitLegStops {
       stopCountConfidence:
           (m['stopCountConfidence'] as num?)?.toDouble() ?? 1.0,
       cityKey: m['cityKey'] as String?,
+      vehicleType: m['vehicleType'] as String?,
     );
   }
 
@@ -214,6 +225,7 @@ class TransitLegStops {
     List<String>? stopNames,
     double? stopCountConfidence,
     String? cityKey,
+    String? vehicleType,
   }) {
     return TransitLegStops(
       legStartMeters: legStartMeters ?? this.legStartMeters,
@@ -227,6 +239,7 @@ class TransitLegStops {
       stopNames: stopNames ?? this.stopNames,
       stopCountConfidence: stopCountConfidence ?? this.stopCountConfidence,
       cityKey: cityKey ?? this.cityKey,
+      vehicleType: vehicleType ?? this.vehicleType,
     );
   }
 }
@@ -992,6 +1005,11 @@ class TransferUtils {
           // Extract line name
           final line = td?['line'] as Map<String, dynamic>?;
           final lineName = (line?['short_name'] ?? line?['name'])?.toString();
+          // GAP #9: name-free V_LINE signal (SUBWAY/HEAVY_RAIL/RAIL/...). Carried
+          // onto the leg so VLineTable.forLine can never-late-lift a fast service
+          // reported with a slow/generic name during a blackout.
+          final vehicleType =
+              ((line?['vehicle'] as Map<String, dynamic>?)?['type'])?.toString();
 
           // Calculate stop positions along the polyline
           final stopPositions = estimateStopPositions(polylinePoints, numStops);
@@ -1020,6 +1038,7 @@ class TransferUtils {
               stopMeters: stopMeters,
               lineName: lineName,
               isMetro: _isMetroTransitStep(step),
+              vehicleType: vehicleType,
             ),
           );
         } else if (mode == 'DRIVING' || mode == 'WALKING') {
@@ -1688,6 +1707,11 @@ class TransferUtils {
                 isMetro: leg.isMetro,
                 stopNames: stopNames,
                 stopCountConfidence: 1.0,
+                // Preserve the never-late V_LINE signals through OSM enhancement
+                // (this rebuilt leg is the one tracking uses); dropping them would
+                // silently reopen the GAP #9 under-bound on the shipping path.
+                cityKey: leg.cityKey,
+                vehicleType: leg.vehicleType,
               ),
             );
           }

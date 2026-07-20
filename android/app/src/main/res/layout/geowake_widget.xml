@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GeoWake home-screen widget layout (FEATURES_SPEC §3.6-A).
+
+  Display/observer-only surface. The native provider (GeoWakeWidgetProvider)
+  binds the discrete gw_widget_* fields written by HomeWidgetBridge and wires a
+  single LAUNCH pending intent (carrying the gw_widget_deeplink URI) onto the
+  card + CTA. It never starts tracking and is never on the arm→track→alarm path.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/gw_widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/geowake_widget_bg"
+    android:padding="14dp">
+
+    <TextView
+        android:id="@+id/gw_widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/gw_widget_title"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        tools:text="Downtown office" />
+
+    <TextView
+        android:id="@+id/gw_widget_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="@color/gw_widget_subtitle"
+        android:textSize="13sp"
+        tools:text="Frequent trip · tap to arm" />
+
+    <ProgressBar
+        android:id="@+id/gw_widget_progress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="10dp"
+        android:max="100"
+        android:visibility="gone"
+        tools:progress="40"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/gw_widget_cta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/geowake_widget_cta_bg"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textColor="@color/gw_widget_on_accent"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        tools:text="Arm" />
+</LinearLayout>

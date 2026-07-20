@@ -715,6 +715,7 @@ void _broadcastSimulationState({
       toNextEventMeters: _lastComputedToNextEventMeters,
       polylineTotalMeters: _lastComputedPolylineTotalMeters,
       stepTotalMeters: _lastComputedStepTotalMeters,
+      backstopPhysicsFireAt: _alarmController.backstopPhysicsFireAt,
     ),
   );
 }

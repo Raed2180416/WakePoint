@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "fece9766553ac2aa8a122997a682ca2761bf0e12",
-  "generatedAt": "2026-07-19T05:35:17+05:30",
-  "structuralDigest": "16ab4d4b109a44839cd482cd17a7f20713038d8b",
+  "gitCommit": "9064b0e4abd89ae0d97c7063151d1b345e1d1996",
+  "generatedAt": "2026-07-19T05:57:23+05:30",
+  "structuralDigest": "5fdf3b8722637da823397425ee8992775c3890aa",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1096,
-    "edgeCount": 2140,
+    "nodeCount": 1126,
+    "edgeCount": 2186,
     "byLevel": {
       "feature": 9,
-      "file": 389,
+      "file": 402,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 663
+      "symbol": 680
     },
     "byEdgeType": {
-      "contains": 785,
-      "depends-on": 838,
+      "contains": 802,
+      "depends-on": 867,
       "references": 517
     }
   },
@@ -464,6 +464,28 @@
       "exportCount": 0
     },
     {
+      "id": "file:integration_test/alarm_chain_ondevice_test.dart",
+      "level": "file",
+      "label": "integration_test/alarm_chain_ondevice_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:integration_test/backstop_doze_ondevice_test.dart",
+      "level": "file",
+      "label": "integration_test/backstop_doze_ondevice_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:integration_test/device_alarm_integration_test.dart",
       "level": "file",
       "label": "integration_test/device_alarm_integration_test.dart",
@@ -768,8 +790,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 19,
-      "exportCount": 8
+      "importers": 22,
+      "exportCount": 9
     },
     {
       "id": "file:lib/dashboard/alarm_debouncer.dart",
@@ -1091,6 +1113,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/screens/report_problem_screen.dart",
+      "level": "file",
+      "label": "lib/screens/report_problem_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/screens/ringtones_screen.dart",
       "level": "file",
       "label": "lib/screens/ringtones_screen.dart",
@@ -1110,7 +1143,7 @@
       "role": "flutter-lib",
       "feature": "user-facing-screens",
       "importers": 2,
-      "exportCount": 1
+      "exportCount": 2
     },
     {
       "id": "file:lib/screens/splash_screen.dart",
@@ -1186,7 +1219,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 4,
       "exportCount": 2
     },
     {
@@ -1197,7 +1230,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 5,
       "exportCount": 4
     },
     {
@@ -1219,8 +1252,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 11,
-      "exportCount": 10
+      "importers": 13,
+      "exportCount": 11
     },
     {
       "id": "file:lib/services/data_asset/data_asset_pipeline.dart",
@@ -1230,7 +1263,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 4,
+      "importers": 5,
       "exportCount": 1
     },
     {
@@ -1243,6 +1276,17 @@
       "feature": "unassigned",
       "importers": 3,
       "exportCount": 3
+    },
+    {
+      "id": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "level": "file",
+      "label": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
     },
     {
       "id": "file:lib/services/data_asset/k_anonymity_filter.dart",
@@ -1516,7 +1560,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 37,
+      "importers": 39,
       "exportCount": 3
     },
     {
@@ -1802,8 +1846,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
-      "exportCount": 2
+      "importers": 5,
+      "exportCount": 4
     },
     {
       "id": "file:lib/services/share/journey_share_models.dart",
@@ -1938,6 +1982,28 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/services/telemetry/http_telemetry_sink.dart",
+      "level": "file",
+      "label": "lib/services/telemetry/http_telemetry_sink.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/telemetry/telemetry_report_builder.dart",
+      "level": "file",
+      "label": "lib/services/telemetry/telemetry_report_builder.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/services/telemetry/telemetry_service.dart",
       "level": "file",
       "label": "lib/services/telemetry/telemetry_service.dart",
@@ -1945,7 +2011,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 10,
+      "importers": 13,
       "exportCount": 6
     },
     {
@@ -2044,7 +2110,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 2
     },
     {
@@ -2154,7 +2220,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "live-tracking-runtime",
-      "importers": 43,
+      "importers": 45,
       "exportCount": 6
     },
     {
@@ -2176,7 +2242,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 1,
+      "importers": 3,
       "exportCount": 2
     },
     {
@@ -2187,7 +2253,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 8
     },
     {
@@ -2744,6 +2810,17 @@
       "id": "file:test/data_asset/dp_and_kanon_test.dart",
       "level": "file",
       "label": "test/data_asset/dp_and_kanon_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/data_asset/http_egress_sink_test.dart",
+      "level": "file",
+      "label": "test/data_asset/http_egress_sink_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -3412,6 +3489,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/notification_physics_backstop_test.dart",
+      "level": "file",
+      "label": "test/notification_physics_backstop_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/notification_service_test.dart",
       "level": "file",
       "label": "test/notification_service_test.dart",
@@ -3588,6 +3676,39 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "level": "file",
+      "label": "test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reachability/multileg_piecewise_vline_test.dart",
+      "level": "file",
+      "label": "test/reachability/multileg_piecewise_vline_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "level": "file",
+      "label": "test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/reachability/reachability_edgecases_test.dart",
       "level": "file",
       "label": "test/reachability/reachability_edgecases_test.dart",
@@ -3630,6 +3751,17 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 3
+    },
+    {
+      "id": "file:test/reachability/vline_vehicle_type_test.dart",
+      "level": "file",
+      "label": "test/reachability/vline_vehicle_type_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
     },
     {
       "id": "file:test/regression_prod_data_test.dart",
@@ -3905,17 +4037,6 @@
       "feature": "unassigned",
       "importers": 0,
       "exportCount": 1
-    },
-    {
-      "id": "file:test/scale/multi_target_scale_test.dart",
-      "level": "file",
-      "label": "test/scale/multi_target_scale_test.dart",
-      "deterministic": true,
-      "source": "map",
-      "role": "flutter-test",
-      "feature": "unassigned",
-      "importers": 0,
-      "exportCount": 3
     },
     {
       "id": "file:test/scale/reachability_scale_test.dart",
@@ -4248,6 +4369,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/telemetry/http_telemetry_sink_test.dart",
+      "level": "file",
+      "label": "test/telemetry/http_telemetry_sink_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 2
+    },
+    {
       "id": "file:test/telemetry/telemetry_edgecases_test.dart",
       "level": "file",
       "label": "test/telemetry/telemetry_edgecases_test.dart",
@@ -4449,6 +4581,17 @@
       "id": "file:test/widget/home_widget_test.dart",
       "level": "file",
       "label": "test/widget/home_widget_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/widget/widget_field_contract_test.dart",
+      "level": "file",
+      "label": "test/widget/widget_field_contract_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -5003,6 +5146,24 @@
       "relatedPaths": [
         "lib/services/stop_logic_engine.dart"
       ]
+    },
+    {
+      "id": "symbol:integration_test/alarm_chain_ondevice_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "integration_test/alarm_chain_ondevice_test.dart"
+    },
+    {
+      "id": "symbol:integration_test/backstop_doze_ondevice_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "integration_test/backstop_doze_ondevice_test.dart"
     },
     {
       "id": "symbol:integration_test/device_alarm_integration_test.dart#main",
@@ -5905,6 +6066,15 @@
       "file": "lib/core/reachability/reachability.dart"
     },
     {
+      "id": "symbol:lib/core/reachability/reachability.dart#VLineSegment",
+      "level": "symbol",
+      "label": "VLineSegment",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/core/reachability/reachability.dart"
+    },
+    {
       "id": "symbol:lib/core/reachability/reachability.dart#VLineTable",
       "level": "symbol",
       "label": "VLineTable",
@@ -6328,6 +6498,15 @@
       "file": "lib/screens/otherimpservices/recent_locations_service.dart"
     },
     {
+      "id": "symbol:lib/screens/report_problem_screen.dart#ReportProblemScreen",
+      "level": "symbol",
+      "label": "ReportProblemScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/report_problem_screen.dart"
+    },
+    {
       "id": "symbol:lib/screens/ringtones_screen.dart#availableRingtones",
       "level": "symbol",
       "label": "availableRingtones",
@@ -6353,6 +6532,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/screens/ringtones_screen.dart"
+    },
+    {
+      "id": "symbol:lib/screens/settingsdrawer.dart#kBuyMeACoffeeUrl",
+      "level": "symbol",
+      "label": "kBuyMeACoffeeUrl",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/settingsdrawer.dart"
     },
     {
       "id": "symbol:lib/screens/settingsdrawer.dart#SettingsDrawer",
@@ -6562,6 +6750,15 @@
       "file": "lib/services/data_asset/data_asset_config.dart"
     },
     {
+      "id": "symbol:lib/services/data_asset/data_asset_config.dart#kDataAssetEgressEndpoint",
+      "level": "symbol",
+      "label": "kDataAssetEgressEndpoint",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/data_asset_config.dart"
+    },
+    {
       "id": "symbol:lib/services/data_asset/data_asset_config.dart#kEpsilonPerCell",
       "level": "symbol",
       "label": "kEpsilonPerCell",
@@ -6659,6 +6856,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/data_asset/differential_privacy.dart"
+    },
+    {
+      "id": "symbol:lib/services/data_asset/http_aggregate_egress_sink.dart#HttpAggregateEgressSink",
+      "level": "symbol",
+      "label": "HttpAggregateEgressSink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/http_aggregate_egress_sink.dart"
     },
     {
       "id": "symbol:lib/services/data_asset/k_anonymity_filter.dart#KAnonymityFilter",
@@ -7687,6 +7893,15 @@
       "file": "lib/services/share/followed_rides_service.dart"
     },
     {
+      "id": "symbol:lib/services/share/guardian_service.dart#GuardianAutoSender",
+      "level": "symbol",
+      "label": "GuardianAutoSender",
+      "kind": "typedef",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/guardian_service.dart"
+    },
+    {
       "id": "symbol:lib/services/share/guardian_service.dart#GuardianDenied",
       "level": "symbol",
       "label": "GuardianDenied",
@@ -7700,6 +7915,15 @@
       "level": "symbol",
       "label": "GuardianService",
       "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/share/guardian_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/share/guardian_service.dart#GuardianUriLauncher",
+      "level": "symbol",
+      "label": "GuardianUriLauncher",
+      "kind": "typedef",
       "deterministic": true,
       "source": "map",
       "file": "lib/services/share/guardian_service.dart"
@@ -7955,6 +8179,24 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/telemetry/file_telemetry_sink.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/http_telemetry_sink.dart#HttpTelemetrySink",
+      "level": "symbol",
+      "label": "HttpTelemetrySink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/http_telemetry_sink.dart"
+    },
+    {
+      "id": "symbol:lib/services/telemetry/telemetry_report_builder.dart#TelemetryReportBuilder",
+      "level": "symbol",
+      "label": "TelemetryReportBuilder",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/telemetry/telemetry_report_builder.dart"
     },
     {
       "id": "symbol:lib/services/telemetry/telemetry_service.dart#AlarmOutcome",
@@ -9028,6 +9270,15 @@
       "file": "test/data_asset/dp_and_kanon_test.dart"
     },
     {
+      "id": "symbol:test/data_asset/http_egress_sink_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/data_asset/http_egress_sink_test.dart"
+    },
+    {
       "id": "symbol:test/data_asset/pipeline_hive_test.dart#istOffset",
       "level": "symbol",
       "label": "istOffset",
@@ -9883,6 +10134,15 @@
       "file": "test/notification_behavior_spec_test.dart"
     },
     {
+      "id": "symbol:test/notification_physics_backstop_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/notification_physics_backstop_test.dart"
+    },
+    {
       "id": "symbol:test/notification_service_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -10063,6 +10323,33 @@
       "file": "test/rapid_deviations_vm_test.dart"
     },
     {
+      "id": "symbol:test/reachability/dwell_cap_even_spacing_late_trap_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/dwell_cap_even_spacing_late_trap_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/multileg_piecewise_vline_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/multileg_piecewise_vline_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/never_late_vehicle_type_piecewise_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/never_late_vehicle_type_piecewise_test.dart"
+    },
+    {
       "id": "symbol:test/reachability/reachability_edgecases_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -10124,6 +10411,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/reachability/tightening_never_late_test.dart"
+    },
+    {
+      "id": "symbol:test/reachability/vline_vehicle_type_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/reachability/vline_vehicle_type_test.dart"
     },
     {
       "id": "symbol:test/regression_prod_data_test.dart#main",
@@ -10385,33 +10681,6 @@
       "deterministic": true,
       "source": "map",
       "file": "test/saved_routes_service_test.dart"
-    },
-    {
-      "id": "symbol:test/scale/multi_target_scale_test.dart#kExternalScaleDir",
-      "level": "symbol",
-      "label": "kExternalScaleDir",
-      "kind": "const",
-      "deterministic": true,
-      "source": "map",
-      "file": "test/scale/multi_target_scale_test.dart"
-    },
-    {
-      "id": "symbol:test/scale/multi_target_scale_test.dart#kInRepoScaleDir",
-      "level": "symbol",
-      "label": "kInRepoScaleDir",
-      "kind": "const",
-      "deterministic": true,
-      "source": "map",
-      "file": "test/scale/multi_target_scale_test.dart"
-    },
-    {
-      "id": "symbol:test/scale/multi_target_scale_test.dart#main",
-      "level": "symbol",
-      "label": "main",
-      "kind": "function",
-      "deterministic": true,
-      "source": "map",
-      "file": "test/scale/multi_target_scale_test.dart"
     },
     {
       "id": "symbol:test/scale/reachability_scale_test.dart#kExternalScaleDir",
@@ -10711,6 +10980,24 @@
       "file": "test/telemetry/file_telemetry_sink_test.dart"
     },
     {
+      "id": "symbol:test/telemetry/http_telemetry_sink_test.dart#HttpFailure",
+      "level": "symbol",
+      "label": "HttpFailure",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/http_telemetry_sink_test.dart"
+    },
+    {
+      "id": "symbol:test/telemetry/http_telemetry_sink_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/telemetry/http_telemetry_sink_test.dart"
+    },
+    {
       "id": "symbol:test/telemetry/telemetry_edgecases_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -10943,6 +11230,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/widget/home_widget_test.dart"
+    },
+    {
+      "id": "symbol:test/widget/widget_field_contract_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/widget/widget_field_contract_test.dart"
     },
     {
       "id": "symbol:test/widgets/post_arrival_card_widget_test.dart#main",
@@ -11901,6 +12197,48 @@
       "from": "file:geowake-server/test/maps.test.js",
       "to": "file:geowake-server/src/server.js",
       "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/alarm_chain_ondevice_test.dart",
+      "to": "file:lib/services/notification_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/alarm_chain_ondevice_test.dart",
+      "to": "file:lib/services/trackingservice.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/alarm_chain_ondevice_test.dart",
+      "to": "symbol:integration_test/alarm_chain_ondevice_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/backstop_doze_ondevice_test.dart",
+      "to": "file:lib/services/notification_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/backstop_doze_ondevice_test.dart",
+      "to": "file:lib/services/trackingservice.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:integration_test/backstop_doze_ondevice_test.dart",
+      "to": "symbol:integration_test/backstop_doze_ondevice_test.dart#main",
+      "type": "contains",
       "deterministic": true,
       "source": "map"
     },
@@ -13009,6 +13347,13 @@
     },
     {
       "from": "file:lib/core/reachability/reachability.dart",
+      "to": "symbol:lib/core/reachability/reachability.dart#VLineSegment",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/core/reachability/reachability.dart",
       "to": "symbol:lib/core/reachability/reachability.dart#VLineTable",
       "type": "contains",
       "deterministic": true,
@@ -13997,6 +14342,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/screens/report_problem_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/screens/splash_screen.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14048,6 +14400,13 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/services/share/guardian_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/services/share/journey_share_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14088,6 +14447,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 2
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/widget/home_widget_bridge.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/main.dart",
@@ -14344,6 +14710,13 @@
     },
     {
       "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/services/share/guardian_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
       "to": "file:lib/services/stop_logic_engine.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14401,6 +14774,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 17
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/services/widget/widget_arm_handler.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/homescreen.dart",
@@ -14808,6 +15188,20 @@
       "source": "map"
     },
     {
+      "from": "file:lib/screens/report_problem_screen.dart",
+      "to": "file:lib/services/telemetry/telemetry_report_builder.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/report_problem_screen.dart",
+      "to": "symbol:lib/screens/report_problem_screen.dart#ReportProblemScreen",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/screens/ringtones_screen.dart",
       "to": "file:lib/services/notification_service.dart",
       "type": "depends-on",
@@ -14859,6 +15253,13 @@
     },
     {
       "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "file:lib/screens/report_problem_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
       "to": "file:lib/screens/ringtones_screen.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -14898,6 +15299,13 @@
       "from": "file:lib/screens/settingsdrawer.dart",
       "to": "file:lib/widgets/monetization/pro_gate.dart",
       "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "symbol:lib/screens/settingsdrawer.dart#kBuyMeACoffeeUrl",
+      "type": "contains",
       "deterministic": true,
       "source": "map"
     },
@@ -15285,6 +15693,13 @@
     },
     {
       "from": "file:lib/services/data_asset/data_asset_config.dart",
+      "to": "symbol:lib/services/data_asset/data_asset_config.dart#kDataAssetEgressEndpoint",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/data_asset_config.dart",
       "to": "symbol:lib/services/data_asset/data_asset_config.dart#kEpsilonPerCell",
       "type": "contains",
       "deterministic": true,
@@ -15433,6 +15848,34 @@
     {
       "from": "file:lib/services/data_asset/differential_privacy.dart",
       "to": "symbol:lib/services/data_asset/differential_privacy.dart#LaplaceMechanism",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "file:lib/services/data_asset/aggregate_egress_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "file:lib/services/data_asset/aggregate_schema.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "symbol:lib/services/data_asset/http_aggregate_egress_sink.dart#HttpAggregateEgressSink",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17163,6 +17606,13 @@
     },
     {
       "from": "file:lib/services/share/guardian_service.dart",
+      "to": "symbol:lib/services/share/guardian_service.dart#GuardianAutoSender",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/guardian_service.dart",
       "to": "symbol:lib/services/share/guardian_service.dart#GuardianDenied",
       "type": "contains",
       "deterministic": true,
@@ -17171,6 +17621,13 @@
     {
       "from": "file:lib/services/share/guardian_service.dart",
       "to": "symbol:lib/services/share/guardian_service.dart#GuardianService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/share/guardian_service.dart",
+      "to": "symbol:lib/services/share/guardian_service.dart#GuardianUriLauncher",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -17495,8 +17952,43 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/telemetry/http_telemetry_sink.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/http_telemetry_sink.dart",
+      "to": "symbol:lib/services/telemetry/http_telemetry_sink.dart#HttpTelemetrySink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_report_builder.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_report_builder.dart",
+      "to": "symbol:lib/services/telemetry/telemetry_report_builder.dart#TelemetryReportBuilder",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/telemetry/telemetry_service.dart",
       "to": "file:lib/services/telemetry/file_telemetry_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/telemetry/telemetry_service.dart",
+      "to": "file:lib/services/telemetry/http_telemetry_sink.dart",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -21075,6 +21567,48 @@
       "source": "map"
     },
     {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/aggregate_egress_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/aggregate_schema.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/data_asset_pipeline.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/data_asset/http_egress_sink_test.dart",
+      "to": "symbol:test/data_asset/http_egress_sink_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/data_asset/pipeline_hive_test.dart",
       "to": "file:lib/services/data_asset/aggregate_egress_sink.dart",
       "type": "depends-on",
@@ -23187,6 +23721,20 @@
       "source": "map"
     },
     {
+      "from": "file:test/notification_physics_backstop_test.dart",
+      "to": "file:lib/services/tracking/alarm_controller.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/notification_physics_backstop_test.dart",
+      "to": "symbol:test/notification_physics_backstop_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/notification_service_test.dart",
       "to": "file:lib/services/notification_service.dart",
       "type": "depends-on",
@@ -23792,6 +24340,48 @@
       "source": "map"
     },
     {
+      "from": "file:test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/dwell_cap_even_spacing_late_trap_test.dart",
+      "to": "symbol:test/reachability/dwell_cap_even_spacing_late_trap_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/multileg_piecewise_vline_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/multileg_piecewise_vline_test.dart",
+      "to": "symbol:test/reachability/multileg_piecewise_vline_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/never_late_vehicle_type_piecewise_test.dart",
+      "to": "symbol:test/reachability/never_late_vehicle_type_piecewise_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/reachability/reachability_edgecases_test.dart",
       "to": "file:lib/core/reachability/reachability.dart",
       "type": "depends-on",
@@ -23864,6 +24454,20 @@
     {
       "from": "file:test/reachability/tightening_never_late_test.dart",
       "to": "symbol:test/reachability/tightening_never_late_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/vline_vehicle_type_test.dart",
+      "to": "file:lib/core/reachability/reachability.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/reachability/vline_vehicle_type_test.dart",
+      "to": "symbol:test/reachability/vline_vehicle_type_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -24624,34 +25228,6 @@
     {
       "from": "file:test/saved_routes_service_test.dart",
       "to": "symbol:test/saved_routes_service_test.dart#main",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/scale/multi_target_scale_test.dart",
-      "to": "file:lib/core/reachability/reachability.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/scale/multi_target_scale_test.dart",
-      "to": "symbol:test/scale/multi_target_scale_test.dart#kExternalScaleDir",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/scale/multi_target_scale_test.dart",
-      "to": "symbol:test/scale/multi_target_scale_test.dart#kInRepoScaleDir",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/scale/multi_target_scale_test.dart",
-      "to": "symbol:test/scale/multi_target_scale_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -25731,6 +26307,34 @@
       "source": "map"
     },
     {
+      "from": "file:test/telemetry/http_telemetry_sink_test.dart",
+      "to": "file:lib/services/telemetry/http_telemetry_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/http_telemetry_sink_test.dart",
+      "to": "file:lib/services/telemetry/telemetry_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/http_telemetry_sink_test.dart",
+      "to": "symbol:test/telemetry/http_telemetry_sink_test.dart#HttpFailure",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/telemetry/http_telemetry_sink_test.dart",
+      "to": "symbol:test/telemetry/http_telemetry_sink_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/telemetry/telemetry_edgecases_test.dart",
       "to": "file:lib/services/telemetry/telemetry_service.dart",
       "type": "depends-on",
@@ -26354,6 +26958,20 @@
     {
       "from": "file:test/widget/home_widget_test.dart",
       "to": "symbol:test/widget/home_widget_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widget/widget_field_contract_test.dart",
+      "to": "file:lib/services/widget/home_widget_bridge.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/widget/widget_field_contract_test.dart",
+      "to": "symbol:test/widget/widget_field_contract_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

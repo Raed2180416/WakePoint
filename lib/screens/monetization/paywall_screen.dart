@@ -37,8 +37,8 @@ const List<_ProItem> _kItems = [
   _ProItem(Icons.music_note, 'Custom & escalating alarm',
       'Your own sounds, ramping volume that won\'t let you sleep through it.',
       PaywallSource.customSound),
-  _ProItem(Icons.widgets, 'Home widget & Wear OS',
-      'One-tap arm from your home screen or wrist.', PaywallSource.widget),
+  _ProItem(Icons.widgets, 'Home widget',
+      'One-tap arm from your home screen.', PaywallSource.widget),
   _ProItem(Icons.block, 'Ad-free', 'No ads, anywhere.'),
 ];
 

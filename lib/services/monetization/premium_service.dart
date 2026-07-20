@@ -229,11 +229,10 @@ class PremiumService {
   /// Home-screen widget.
   bool get canUseWidget => isPro;
 
-  /// Wear OS / watch alarm.
-  bool get canUseWearOs => isPro;
-
-  /// Family / shared alarms (wake a companion).
-  bool get canUseFamilyAlarms => isPro;
+  // NOTE: there is deliberately NO "Wear OS" or "family/shared alarms" gate.
+  // Nothing exists behind them yet, so advertising or gating them would be false
+  // advertising. Re-add a getter here (and a paywall bullet) only once the real
+  // feature ships.
 
   /// Guardian mode — auto-share every commute with a saved contact + an
   /// "arrived safely" push. (Basic one-off share is ALWAYS free; this is the
