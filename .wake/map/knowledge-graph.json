@@ -3,13 +3,13 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "5e5c8d6fca5fff9b34c03c2784c38086b90dec30",
-    "gitTree": "ad5452cdb6281a28e3167f693682d1743f71a201",
-    "generatedAt": "2026-07-20T21:36:14+05:30",
+    "gitCommit": "4bb1bf08a117796624b70cc09dc9560ed34210af",
+    "gitTree": "c18f4adc3effeec421aa2fe28d3b9375f30bb734",
+    "generatedAt": "2026-07-20T21:42:19+05:30",
     "filesIndexed": 409,
     "dependencyEdges": 877,
     "totalExports": 694,
-    "totalImports": 1885,
+    "totalImports": 1886,
     "byRole": {
       "other": 5,
       "backend": 12,
@@ -873,6 +873,10 @@
         },
         {
           "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:patrol/patrol.dart"
         },
         {
@@ -917,7 +921,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "c5d4b4b4e142427a"
+      "contentHash": "9b06e39856043a66"
     },
     {
       "file": "lib/all_india_stops.dart",
