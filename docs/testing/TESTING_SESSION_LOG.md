@@ -341,3 +341,35 @@ emulator L1/L2 + (c) keep hunting; NOT (b) apply fixes — so findings logged, n
   (no screenshots); security Tier 2/3 not run; monetization no real IAP/restore/refund/ad-ids;
   meta: SYSTEM_MAP stale, multi_target_scale_test still deleted, ALL work UNCOMMITTED, sim-oracle
   fidelity itself never audited (critic).
+
+## Session 2026-07-20 PART 4 — GAP-CLOSING GRIND ("so deeply do all that")
+Committed checkpoints: 9947358 (protect) → 8b9295a (§7) → 3fd1a56 (security/audit) → 1a5fb25 (map/matrix).
+
+**CLOSED (software, verified):**
+- §7 build mandates ALL done + full suite 1364 GREEN: ImuReplayEngineV2.loadFromPolyline +
+  EkfTestController.loadRouteFromPolyline + GpsBlackoutWindow (§7.2); lib/testing/harness_runner.dart
+  (§7.3, proven driving an arbitrary polyline → fired/neverLate/lead=36s/ekfDrift metrics);
+  semanticLabel on 12 icon-only controls + enableFlutterDriverExtension gate (§7.1); restored
+  multi_target_scale_test (387 rides × 5 offsets = 1884 targets, never-fired=0 LATE=0).
+- Toolchain installed + RUN: MobSF (Docker) → GW-0175 allowBackup, GW-0176 exported components,
+  GW-0177 minSdk24; reFlutter/strings on release AOT → GW-0178 (GW-0010 CONFIRMED: --dart-define
+  token recoverable by plain strings in all 3 ABIs); apkleaks; Chaos Monkey first run (GW-0179,
+  no crash but black-map injection-fail); Perf cold-start 11s/PSS 267MB (GW-0180, debug/emu).
+- SIM_ORACLE_FIDELITY.md + GW-0181 (P1 FOUNDATIONAL): the never-late scale gate re-anchors to
+  TRUE position (acc=10m) and never reads noisy GPS → the dominant real LATE hazard (along-track-
+  backward fix, under-stated accuracy) is un-generatable; LATE=0 partly circular. Quantified vs the
+  14-ride recorded corpus (real hacc p99=782m vs sim 10m; 61% of a real metro ride in GPS gaps>5s).
+- SYSTEM_MAP.md + docs/system_map/{02,03,04} regenerated to HEAD.
+- ISSUES.jsonl now 183 findings.
+
+**BLOCKED / PARTIAL (honest):**
+- Real device: no hardware attached — the #1 gap, unchanged. 0/183 findings are real-device.
+- Emulator matrix (GW-0183): images 29/33/34/35 downloaded but avdmanager/emulator SDK-XML-v4
+  mismatch → new AVDs won't boot; only API-34 runs. Needs cmdline-tools/emulator version sync.
+- Tier-3 dynamic egress (GW-0182): Flutter ignores the system proxy → needs iptables-redirect +
+  Frida BoringSSL-unpinning; static egress conclusion (egress-OFF enforced, only routing-proxy +
+  share destinations) stands.
+- Patrol: patrol_cli 4.5.1 installed; a full Patrol on-device suite (the charter backbone that
+  would unblock repeatable L1/L2 + the persona committee) is a larger build not yet stood up.
+- Personas driving the RUNNING app, real IAP/restore/refund, TalkBack, foldable/tablet/Go: still
+  not done (need Patrol + real device / windowed emulator).
