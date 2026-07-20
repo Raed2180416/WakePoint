@@ -1,0 +1,33 @@
+# First-Time-User cognitive walkthrough (charter §1). Semantic targeting, not pixels.
+appId: com.geowake.app
+---
+- launchApp:
+    permissions: { all: allow }
+- takeScreenshot: p_01_first_launch
+- assertVisible: "GeoWake"
+# CW Q1: can they find where to start the primary task?
+- assertVisible:
+    text: "Enter your destination"
+    optional: true
+- tapOn:
+    text: "Enter your destination"
+- inputText: "Indiranagar"
+- takeScreenshot: p_02_search_typed
+# CW: does an autocomplete/suggestion appear they can act on?
+- tapOn:
+    text: "Indiranagar.*"
+    optional: true
+    index: 0
+- takeScreenshot: p_03_after_suggestion
+- hideKeyboard
+# explore the alarm-mode controls
+- tapOn: { text: "Distance", optional: true }
+- takeScreenshot: p_04_distance_mode
+- tapOn: { text: "Time", optional: true }
+- takeScreenshot: p_05_time_mode
+- tapOn: { text: "Metro Mode", optional: true }
+- takeScreenshot: p_06_metro_mode
+# the arm CTA
+- takeScreenshot: p_07_before_arm
+- tapOn: { text: "Wake Me!", optional: true }
+- takeScreenshot: p_08_after_wake_me
