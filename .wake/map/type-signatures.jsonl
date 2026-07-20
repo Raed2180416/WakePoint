@@ -47,7 +47,7 @@
 {"file":"integration_test/backstop_doze_ondevice_test.dart","name":"main","signature":"()"}
 {"file":"integration_test/device_alarm_integration_test.dart","name":"main","signature":"()"}
 {"file":"integration_test/patrol_alarm_test.dart","name":"_pumpFor","signature":"(PatrolIntegrationTester $, Duration total)"}
-{"file":"integration_test/patrol_alarm_test.dart","name":"_grantRuntimePermissions","signature":"(PatrolIntegrationTester $)"}
+{"file":"integration_test/patrol_alarm_test.dart","name":"_grantAll","signature":"(PatrolIntegrationTester $)"}
 {"file":"integration_test/patrol_alarm_test.dart","name":"main","signature":"()"}
 {"file":"lib/config/platform_test_flag_io.dart","name":"detectFlutterTest","signature":"()"}
 {"file":"lib/config/platform_test_flag_stub.dart","name":"detectFlutterTest","signature":"()"}
@@ -116,6 +116,7 @@
 {"file":"lib/testing/harness_runner.dart","name":"_finiteOrNull","signature":"(double v)"}
 {"file":"lib/testing/harness_runner.dart","name":"_round","signature":"(double v, int places)"}
 {"file":"lib/testing/harness_runner.dart","name":"_roundOrInf","signature":"(double v, int places)"}
+{"file":"patrol_test/test_bundle.dart","name":"main","signature":"()"}
 {"file":"test/active_route_manager_complex_test.dart","name":"main","signature":"()"}
 {"file":"test/active_route_manager_test.dart","name":"main","signature":"()"}
 {"file":"test/alarm_leg_id_stability_test.dart","name":"main","signature":"()"}

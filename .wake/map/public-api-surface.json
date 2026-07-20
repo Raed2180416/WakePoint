@@ -1989,6 +1989,12 @@
       "name": "WakepointNative"
     }
   ],
+  "patrol_test/test_bundle.dart": [
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
   "test/alarm_repro.dart": [
     {
       "kind": "function",

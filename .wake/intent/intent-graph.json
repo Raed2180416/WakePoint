@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "642b57392d9d724af47985e5b16a95a160dc2ddd",
-  "generatedAt": "2026-07-20T21:21:52+05:30",
-  "structuralDigest": "94ef606f2b84497fe39a028d4f7c6655d89544d5",
+  "gitCommit": "5e5c8d6fca5fff9b34c03c2784c38086b90dec30",
+  "generatedAt": "2026-07-20T21:36:14+05:30",
+  "structuralDigest": "ad5452cdb6281a28e3167f693682d1743f71a201",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,17 +15,17 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1145,
-    "edgeCount": 2209,
+    "nodeCount": 1147,
+    "edgeCount": 2210,
     "byLevel": {
       "feature": 9,
-      "file": 408,
+      "file": 409,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 693
+      "symbol": 694
     },
     "byEdgeType": {
-      "contains": 815,
+      "contains": 816,
       "depends-on": 877,
       "references": 517
     }
@@ -504,7 +504,7 @@
       "source": "map",
       "role": "flutter-test",
       "feature": "unassigned",
-      "importers": 0,
+      "importers": 1,
       "exportCount": 1
     },
     {
@@ -999,7 +999,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 3,
+      "importers": 2,
       "exportCount": 3
     },
     {
@@ -2403,6 +2403,17 @@
       "id": "file:packages/wakepoint_native/lib/wakepoint_native.dart",
       "level": "file",
       "label": "packages/wakepoint_native/lib/wakepoint_native.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "other",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:patrol_test/test_bundle.dart",
+      "level": "file",
+      "label": "patrol_test/test_bundle.dart",
       "deterministic": true,
       "source": "map",
       "role": "other",
@@ -8976,6 +8987,15 @@
       "file": "packages/wakepoint_native/lib/wakepoint_native.dart"
     },
     {
+      "id": "symbol:patrol_test/test_bundle.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "patrol_test/test_bundle.dart"
+    },
+    {
       "id": "symbol:test_driver/integration_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -12481,13 +12501,6 @@
       "from": "file:integration_test/device_alarm_integration_test.dart",
       "to": "symbol:integration_test/device_alarm_integration_test.dart#SimpleLocationInjector",
       "type": "contains",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:integration_test/patrol_alarm_test.dart",
-      "to": "file:lib/main.dart",
-      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },
@@ -20245,6 +20258,20 @@
     {
       "from": "file:packages/wakepoint_native/lib/wakepoint_native.dart",
       "to": "symbol:packages/wakepoint_native/lib/wakepoint_native.dart#WakepointNative",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:patrol_test/test_bundle.dart",
+      "to": "file:integration_test/patrol_alarm_test.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:patrol_test/test_bundle.dart",
+      "to": "symbol:patrol_test/test_bundle.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

@@ -373,3 +373,36 @@ Committed checkpoints: 9947358 (protect) → 8b9295a (§7) → 3fd1a56 (security
   would unblock repeatable L1/L2 + the persona committee) is a larger build not yet stood up.
 - Personas driving the RUNNING app, real IAP/restore/refund, TalkBack, foldable/tablet/Go: still
   not done (need Patrol + real device / windowed emulator).
+
+## Session 2026-07-20 PART 5 — UNBLOCK EVERYTHING (non-real-device)
+Commits: 3fd1a56 → 1a5fb25 → 2ad04b5 → 642b573 → 5e5c8d6. ISSUES.jsonl 187.
+
+**GW-0181 CROWN-JEWEL closure (mechanism + corpus + stress):**
+- MECHANISM (GW-0181, deterministic, test/reachability/never_late_along_track_gps_test.dart):
+  never-late is CONDITIONAL on reportedAccuracy >= along-track-backward-error. SAFE below,
+  LATE above (at the V_LINE limit). onAcceptedFix (reachability.dart:927) has no value guard.
+- CORPUS (GW-0186, docs/testing/GPS_ALONGTRACK_ERROR.md + scripts): ~18% of real gate-passing
+  fixes violate the precondition; 83% of backward fixes exceed their reported accuracy
+  (understatement median 3.6x, max 60x); worst shortfall 1650m; 99.6% look ON-ROUTE
+  (EKF-phantom-blind); 53% at low-speed station approaches.
+- STRESS (GW-0187, test/scale/never_late_gps_error_stress_test.dart): inject the corpus
+  backward bias on the pre-blackout anchor across all 395 rides -> LATE=0 at EVERY vector
+  (0/30/90/520/1650m). The V_LINE OVERBOUND MARGIN absorbs it (deficit recovers at
+  (V_LINE-v_true); generated rides run below V_LINE). => never-late is MORE robust than the
+  mechanism implies; residual = {backward anchor} n {train near V_LINE} n {target before recovery}.
+  Honest, nuanced, deep result — recorded to memory neverlate-oracle-alongtrack-blindspot.
+
+**Toolchain actually RUN (GW-0175..0185):** MobSF (allowBackup/exported/minSdk), reFlutter AOT
+strings (GW-0010 confirmed: token by plain strings), apkleaks, Chaos Monkey, Perf, mitmproxy
+(Flutter-proxy-ignore), reFlutter Flutter-TLS patch proven.
+
+**Infra fixes attempted, honestly BLOCKED:**
+- Emulator matrix (GW-0184): SDK dual-cmdline-tools + broken image devices.xml -> avdmanager can't
+  create AVDs. Needs clean SDK/Android Studio. Images 33/34/35 downloaded.
+- Dynamic egress (GW-0185): reFlutter output unsignable (Missing MANIFEST.MF) + black-map; static
+  egress-OFF conclusion stands.
+- Patrol: STOOD UP (pubspec config + android instrumentation runner + orchestrator +
+  androidTest/MainActivityTest 4.7.1 + patrol_alarm_test). `patrol test` BUILDS (54s) and DRIVES
+  native automation (selectFineLocation/grantPermissionWhenInUse executed) — but the run hits the
+  app.main() ads-SDK crash on this emulator (GW-0170). Rewrote the test to the lean seam
+  (no app.main) + tolerant native grants; re-run in progress. Charter backbone is now IN the repo.

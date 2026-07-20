@@ -3,15 +3,15 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "642b57392d9d724af47985e5b16a95a160dc2ddd",
-    "gitTree": "94ef606f2b84497fe39a028d4f7c6655d89544d5",
-    "generatedAt": "2026-07-20T21:21:52+05:30",
-    "filesIndexed": 408,
+    "gitCommit": "5e5c8d6fca5fff9b34c03c2784c38086b90dec30",
+    "gitTree": "ad5452cdb6281a28e3167f693682d1743f71a201",
+    "generatedAt": "2026-07-20T21:36:14+05:30",
+    "filesIndexed": 409,
     "dependencyEdges": 877,
-    "totalExports": 693,
-    "totalImports": 1880,
+    "totalExports": 694,
+    "totalImports": 1885,
     "byRole": {
-      "other": 4,
+      "other": 5,
       "backend": 12,
       "flutter-test": 211,
       "flutter-lib": 172,
@@ -865,11 +865,11 @@
         },
         {
           "kind": "static",
-          "source": "package:flutter/foundation.dart"
+          "source": "package:flutter/material.dart"
         },
         {
           "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
+          "source": "package:flutter/foundation.dart"
         },
         {
           "kind": "static",
@@ -882,10 +882,6 @@
         {
           "kind": "static",
           "source": "package:geolocator/geolocator.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/main.dart"
         },
         {
           "kind": "static",
@@ -903,7 +899,7 @@
           "signature": "(PatrolIntegrationTester $, Duration total)"
         },
         {
-          "name": "_grantRuntimePermissions",
+          "name": "_grantAll",
           "signature": "(PatrolIntegrationTester $)"
         },
         {
@@ -913,7 +909,7 @@
       ],
       "classes": [
         {
-          "name": "_GpsInjector",
+          "name": "_Injector",
           "extends": null
         }
       ],
@@ -921,7 +917,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "48585cebc121c15a"
+      "contentHash": "c5d4b4b4e142427a"
     },
     {
       "file": "lib/all_india_stops.dart",
@@ -11044,6 +11040,55 @@
       "hasSideEffects": false,
       "role": "other",
       "contentHash": "52081dfc7b5b022f"
+    },
+    {
+      "file": "patrol_test/test_bundle.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:patrol/patrol.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:patrol/src/platform/contracts/contracts.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:test_api/src/backend/invoker.dart"
+        },
+        {
+          "kind": "static",
+          "source": "../integration_test/patrol_alarm_test.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "other",
+      "contentHash": "22917ce2f605205e"
     },
     {
       "file": "test/active_route_manager_complex_test.dart",
@@ -21511,12 +21556,6 @@
     },
     {
       "from": "integration_test/patrol_alarm_test.dart",
-      "to": "lib/main.dart",
-      "source": "package:geowake2/main.dart",
-      "kind": "static"
-    },
-    {
-      "from": "integration_test/patrol_alarm_test.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
       "kind": "static"
@@ -24033,6 +24072,12 @@
       "from": "lib/widgets/widget/widget_settings_tile.dart",
       "to": "lib/widgets/monetization/pro_gate.dart",
       "source": "package:geowake2/widgets/monetization/pro_gate.dart",
+      "kind": "static"
+    },
+    {
+      "from": "patrol_test/test_bundle.dart",
+      "to": "integration_test/patrol_alarm_test.dart",
+      "source": "../integration_test/patrol_alarm_test.dart",
       "kind": "static"
     },
     {
@@ -28599,6 +28644,12 @@
       {
         "kind": "class",
         "name": "WakepointNative"
+      }
+    ],
+    "patrol_test/test_bundle.dart": [
+      {
+        "kind": "function",
+        "name": "main"
       }
     ],
     "test/alarm_repro.dart": [
