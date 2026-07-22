@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "b88ae8362e02472232bea585ecc88a5f7fc52db4",
-  "generatedAt": "2026-07-21T01:16:41+05:30",
-  "structuralDigest": "4938f13b3e521531676ef35b2517b51d4e299aac",
+  "gitCommit": "0d5c613d903996baadde4f7702df99d36431a724",
+  "generatedAt": "2026-07-21T01:20:33+05:30",
+  "structuralDigest": "e1e9af2fb659367647b9edf57c46a7230a99a819",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -16,7 +16,7 @@
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
     "nodeCount": 1147,
-    "edgeCount": 2210,
+    "edgeCount": 2211,
     "byLevel": {
       "feature": 9,
       "file": 409,
@@ -26,7 +26,7 @@
     },
     "byEdgeType": {
       "contains": 816,
-      "depends-on": 877,
+      "depends-on": 878,
       "references": 517
     }
   },
@@ -526,7 +526,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -15800,6 +15800,13 @@
       "from": "file:lib/services/alarm_player.dart",
       "to": "symbol:lib/services/alarm_player.dart#AlarmPlayer",
       "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/api_client.dart",
+      "to": "file:lib/config/app_config.dart",
+      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },

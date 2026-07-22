@@ -2152,6 +2152,14 @@ Future<void> _onStart(
     try {
       final isActive = await TrackingStateStore.isActive();
       if (isActive) {
+        // BACKLOG #14: emit reliability telemetry — the FGS was restarted by the
+        // OS after a kill. If wasCleanShutdown is false, the user did NOT stop
+        // tracking; this was an unclean OS-kill recovery.
+        final cleanShutdown = await TrackingStateStore.wasCleanShutdown();
+        TelemetryService.instance.reliability(
+          fgsSurvived: false,
+          osKilled: !cleanShutdown,
+        );
         final snapshot = await TrackingStateStore.loadSnapshot();
         if (snapshot != null) {
           dev.log(

@@ -27,7 +27,7 @@ digraph WakePoint {
   "live-tracking-runtime" -> "platform-connectivity-services" [penwidth=2.58 color="#cc7722"];
   "live-tracking-runtime" -> "routing-route-sessions" [penwidth=5.00 color="#cc7722"];
   "live-tracking-runtime" -> "wakeup-alarm-engine" [penwidth=4.17 color="#cc7722"];
-  "platform-connectivity-services" -> "app-foundation-config" [penwidth=1.00 color="#cc7722"];
+  "platform-connectivity-services" -> "app-foundation-config" [penwidth=2.00 color="#cc7722"];
   "platform-connectivity-services" -> "ekf-sensor-fusion" [penwidth=2.58 color="#cc7722"];
   "platform-connectivity-services" -> "routing-route-sessions" [penwidth=1.00 color="#cc7722"];
   "quality-simulation-testing" -> "app-foundation-config" [penwidth=3.32 color="#cc7722"];

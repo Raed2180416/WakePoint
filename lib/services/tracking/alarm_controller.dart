@@ -148,7 +148,14 @@ class AlarmController {
   // pays would push the bound below true progress and could fire late. The cap
   // stays available for per-line opt-in once stop patterns are known.
   final ReachabilityTracker _reach = ReachabilityTracker(
-    config: const ReachabilityConfig(dwellMinSeconds: 0.0),
+    // hardTMaxSeconds: 30 min belt-and-suspenders watchdog. If a GPS blackout
+    // exceeds this, fire pre-emptively rather than risk a silent no-wake from a
+    // frozen/corrupt anchor. 30 min covers the longest Indian metro tunnel
+    // (~5km @ 28m/s = ~180s) with a huge safety margin. Waking early is safe.
+    config: const ReachabilityConfig(
+      dwellMinSeconds: 0.0,
+      hardTMaxSeconds: 1800.0,
+    ),
   );
 
   /// The clock the reachability never-late math runs on. MUST be monotonic —
@@ -1590,9 +1597,27 @@ class AlarmController {
 
     // Evaluate
     try {
+      // #29: when the current leg's stopCountConfidence < 1.0 (OSM/Google
+      // diverged), prefer firing early by adding +1 to the stops-before target.
+      // This is the safe direction — a false early wake is recoverable, a missed
+      // stop is not. Only applies to stops mode.
+      double effectiveAlarmValue = context.alarmValue!;
+      if (modeEnum == AlarmMode.stops &&
+          currentLegIndex >= 0 &&
+          currentLegIndex < context.transitLegs.length) {
+        final leg = context.transitLegs[currentLegIndex];
+        if (leg.stopCountConfidence < 1.0) {
+          effectiveAlarmValue = (context.alarmValue! + 1).toDouble();
+          dev.log(
+            'STOP_COUNT_LOW_CONF: leg=${leg.lineName}, confidence='
+            '${leg.stopCountConfidence}, firing ${context.alarmValue}+1 stops early',
+            name: 'AlarmController',
+          );
+        }
+      }
       final trigger = AlarmEvaluator.evaluateCoinciding(
         mode: modeEnum,
-        userValue: context.alarmValue!,
+        userValue: effectiveAlarmValue,
         progressMeters: progressMeters,
         allEvents: activeEvents,
         firedEventIndexes: firedIndexesForKey(alarmKey),

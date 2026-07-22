@@ -3,13 +3,13 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "b88ae8362e02472232bea585ecc88a5f7fc52db4",
-    "gitTree": "4938f13b3e521531676ef35b2517b51d4e299aac",
-    "generatedAt": "2026-07-21T01:16:41+05:30",
+    "gitCommit": "0d5c613d903996baadde4f7702df99d36431a724",
+    "gitTree": "e1e9af2fb659367647b9edf57c46a7230a99a819",
+    "generatedAt": "2026-07-21T01:20:33+05:30",
     "filesIndexed": 409,
-    "dependencyEdges": 877,
+    "dependencyEdges": 878,
     "totalExports": 694,
-    "totalImports": 1886,
+    "totalImports": 1887,
     "byRole": {
       "other": 5,
       "backend": 12,
@@ -3478,7 +3478,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "939e5c41c99cb32f"
+      "contentHash": "cfbc0c3fdd04de58"
     },
     {
       "file": "lib/main_playground.dart",
@@ -4825,6 +4825,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/config/app_config.dart"
+        },
+        {
+          "kind": "static",
           "source": "dart:developer"
         }
       ],
@@ -4840,7 +4844,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f8d632ffbfd955cc"
+      "contentHash": "54a7a8545a10aa49"
     },
     {
       "file": "lib/services/data_asset/aggregate_egress_sink.dart",
@@ -5722,7 +5726,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "187fc914cd065ef6"
+      "contentHash": "29929b185bfd140c"
     },
     {
       "file": "lib/services/eta_engine.dart",
@@ -6800,7 +6804,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "dfbd77a8aca440e1"
+      "contentHash": "6e94c7feb39a1df3"
     },
     {
       "file": "lib/services/polyline_decoder.dart",
@@ -7441,7 +7445,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "34c243774d807d9d"
+      "contentHash": "ae4ec77de46fddd7"
     },
     {
       "file": "lib/services/route_metadata.dart",
@@ -9155,7 +9159,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4952b9fb93b32713"
+      "contentHash": "2e23a71eda7277a8"
     },
     {
       "file": "lib/services/tracking/arrival_hooks.dart",
@@ -9492,7 +9496,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4b6f6452ca09c249"
+      "contentHash": "0a707f07db5ce39c"
     },
     {
       "file": "lib/services/tracking/notification_updater.dart",
@@ -9782,7 +9786,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f1393139e3a930bc"
+      "contentHash": "d546d813e480f119"
     },
     {
       "file": "lib/services/tracking_termination_policy.dart",
@@ -10149,7 +10153,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "e85b62b436d01fde"
+      "contentHash": "ae5f1c6fb1071a3e"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -22612,6 +22616,12 @@
       "from": "lib/services/alarm_player.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/api_client.dart",
+      "to": "lib/config/app_config.dart",
+      "source": "package:geowake2/config/app_config.dart",
       "kind": "static"
     },
     {

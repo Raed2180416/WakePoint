@@ -106,7 +106,10 @@ flutter:
   assets:
     - assets/geowake.png
     - assets/ringtones/
-    - assets/osm/
+    # NOTE: assets/osm/bengaluru.wkp (~20MB) is NOT bundled in the release APK.
+    # It is only used by dev dashboards (deviation_dashboard, unified_dashboard)
+    # and loaded via HTTP on web or via a dev-only asset path. Bundling it
+    # inflates the APK by 20MB for all users for a dev-only feature.
     # Playground curated metro routes (~89KB): real Bengaluru Purple Line geometry
     # (curved polylines + station arc-lengths + timing) rebuilt from ride ground
     # truth. Small enough to bundle; the EKF test panel / replay engine needs it

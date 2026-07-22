@@ -374,6 +374,32 @@ class LocationStreamHandler {
     }
 
     if (routeCoords != null && routeCoords.isNotEmpty) {
+      // GAP #22: plumb remainingStopsOnMetro so the metro scheduled-ETA model
+      // (9.2 m/s + 25s dwell/stop) is actually used instead of degrading to
+      // the 0.5 m/s floor underground. Count stops remaining on legs the rider
+      // has not yet completed based on arc-progress.
+      int? remainingStops;
+      if (ctx.transitMode) {
+        final activeKey = ctx.activeManager?.activeKey;
+        final legs = _resolveTransitLegStops(ctx, activeKey);
+        if (legs.isNotEmpty) {
+          final progress = _distanceTravelledMeters;
+          int count = 0;
+          for (final leg in legs) {
+            if (!leg.legEndMeters.isFinite) continue;
+            if (progress < leg.legEndMeters) {
+              // Use the leg's own stopsRemaining for the current leg;
+              // for future legs, count all stops.
+              if (progress >= leg.legStartMeters) {
+                count += leg.stopsRemaining(progress);
+              } else {
+                count += leg.numStops;
+              }
+            }
+          }
+          if (count > 0) remainingStops = count;
+        }
+      }
       final result = ctx.etaEngine.computeEta(
         routeCoords: routeCoords,
         gps: position,
@@ -381,6 +407,7 @@ class LocationStreamHandler {
         stepBoundsMeters: ctx.stepBoundsMeters,
         stepDurationsSeconds: ctx.stepDurationsSeconds,
         totalRouteMeters: ctx.polylineTotalMeters,
+        remainingStopsOnMetro: remainingStops,
       );
       _smoothedETA = result.etaSeconds;
       _smoothedSpeed = result.vEst;
@@ -672,11 +699,24 @@ class LocationStreamHandler {
     _sensorFusionManager!.setFftEnabled(_fftEnabled);
     _sensorFusionManager!.startFusion();
     _ekfStateSubscription?.cancel();
+    DateTime? _lastEkfHealthEmit;
     _ekfStateSubscription = _sensorFusionManager!.ekfStateStream.listen((
       state,
     ) {
       _lastEkfState = state;
       onEkfUpdate?.call(state);
+      // BACKLOG #16: emit ekfHealth ~every 30s to track filter convergence,
+      // phantom rejections, and cold-start frequency in production.
+      final now = DateTime.now();
+      if (_lastEkfHealthEmit == null ||
+          now.difference(_lastEkfHealthEmit!).inSeconds >= 30) {
+        _lastEkfHealthEmit = now;
+        TelemetryService.instance.ekfHealth(
+          sigmaSMeters: state.sigmaS,
+          sigmaVMps: state.sigmaV,
+          coldStart: state.mode.name == 'coldStart',
+        );
+      }
     });
     _fusionActive = true;
   }

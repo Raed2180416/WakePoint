@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geowake2/config/app_config.dart';
 import 'dart:developer' as dev;
 
 class ApiClient {
@@ -110,8 +111,8 @@ class ApiClient {
     try {
       dev.log('🔐 Authenticating with server...', name: 'ApiClient');
 
-      // Import bundle ID from centralized config
-      const bundleId = 'com.geowake.app'; // Must match AppConfig.appBundleId
+      // Single source of truth: import from AppConfig (BACKLOG #30)
+      const bundleId = AppConfig.appBundleId;
 
       final response = await http
           .post(

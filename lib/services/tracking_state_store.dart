@@ -277,6 +277,7 @@ class TrackingStateStore {
   static const _notificationsMutedKey = 'tracking_notifications_muted_v1';
   static const _progressPayloadKey = 'gw_progress_payload_v1';
   static const _pausedKey = 'tracking_paused_v1';
+  static const _cleanShutdownKey = 'tracking_clean_shutdown_v1';
   static const _preboardingEnabledKey = 'gw_preboarding_enabled_v1';
   static const _destinationOnlyMetroTimeKey =
       'gw_destination_only_metro_time_v1';
@@ -302,6 +303,17 @@ class TrackingStateStore {
   static Future<void> setActive(bool value) async {
     final prefs = await _prefs();
     await prefs.setBool(_activeKey, value);
+    // Mark clean-shutdown state: set true on deactivate, false on activate.
+    // On OS-kill recovery, this will still be false => we know it was an
+    // unclean kill (BACKLOG #14 telemetry).
+    await prefs.setBool(_cleanShutdownKey, !value);
+  }
+
+  /// Whether the last deactivation was clean (user-initiated stop).
+  /// False on OS-kill recovery => reliability telemetry can flag it.
+  static Future<bool> wasCleanShutdown() async {
+    final prefs = await _prefs();
+    return prefs.getBool(_cleanShutdownKey) ?? true;
   }
 
   static Future<bool> isActive() async {

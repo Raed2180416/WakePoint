@@ -221,8 +221,8 @@
 <!-- platform&#45;connectivity&#45;services&#45;&gt;app&#45;foundation&#45;config -->
 <g id="edge18" class="edge">
 <title>platform&#45;connectivity&#45;services&#45;&gt;app&#45;foundation&#45;config</title>
-<path fill="none" stroke="#cc7722" d="M1388.87,-441.51C1252.43,-411.48 983.55,-352.31 840.54,-320.83"/>
-<polygon fill="#cc7722" stroke="#cc7722" points="841.62,-317.49 831.1,-318.76 840.12,-324.33 841.62,-317.49"/>
+<path fill="none" stroke="#cc7722" stroke-width="2" d="M1388.87,-441.51C1252.98,-411.6 985.71,-352.78 842.27,-321.21"/>
+<polygon fill="#cc7722" stroke="#cc7722" stroke-width="2" points="843.1,-317.81 832.58,-319.08 841.6,-324.65 843.1,-317.81"/>
 </g>
 <!-- user&#45;facing&#45;screens&#45;&gt;live&#45;tracking&#45;runtime -->
 <g id="edge32" class="edge">

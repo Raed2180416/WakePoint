@@ -355,12 +355,18 @@ class DirectionService {
 
       return directions;
     } catch (e) {
+      final msg = e.toString();
+      // COST LEAK #3: do NOT retry on ZERO_RESULTS or NO_FEASIBLE_ROUTE — these
+      // are legitimate "no route" responses, not transient errors. Retrying
+      // doubles the API cost for every unroutable destination.
+      final isNoRoute = msg.contains('No feasible route') ||
+          msg.contains('ZERO_RESULTS') ||
+          msg.contains('NO_FEASIBLE_ROUTE');
       dev.log(
         "Error fetching directions via API client: $e",
         name: "DirectionService",
       );
-      // Retry logic
-      if (!forceRefresh) {
+      if (!forceRefresh && !isNoRoute) {
         dev.log("Retrying directions fetch...", name: "DirectionService");
         return getDirections(
           startLat,
@@ -373,7 +379,7 @@ class DirectionService {
           forceRefresh: true,
         );
       }
-      throw Exception("Failed to fetch directions: $e");
+      rethrow;
     }
   }
 

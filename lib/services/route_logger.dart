@@ -20,8 +20,10 @@ class RouteLogger {
   RouteLogger._();
 
   /// Whether route logging is enabled.
-  /// Enabled by default to capture all routes for reconstruction.
-  bool enabled = true;
+  /// Disabled by default in production — raw API responses contain user
+  /// location data and accumulate indefinitely on disk. Enable only for
+  /// debugging via a build flag or debug menu.
+  bool enabled = false;
 
   /// Log directory path (lazily initialized)
   String? _logDir;
