@@ -46,6 +46,7 @@ import 'package:geowake2/core/clock/app_clock.dart';
 import 'package:geowake2/services/alarm_player.dart';
 import 'package:geowake2/services/eta_engine.dart';
 import 'package:geowake2/services/reroute_policy.dart';
+import 'package:geowake2/services/anti_theft_service.dart';
 import 'package:geowake2/services/navigation_service.dart';
 import 'package:geowake2/services/snap_to_route.dart';
 import 'package:geowake2/services/transfer_utils.dart';
@@ -543,6 +544,10 @@ class TrackingService {
     }
 
     await stopTracking();
+
+    // Stop anti-theft monitoring if active. Fire-and-forget so it can never
+    // block or fail the end-tracking cleanup.
+    unawaited(AntiTheftService.instance.stopMonitoring());
 
     // Optionally navigate back to a safe screen when not under test
     if (navigateHome && !TrackingService.isTestMode) {

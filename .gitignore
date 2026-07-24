@@ -79,3 +79,4 @@ web/maps_key.js
 
 # build artifact — never commit (100MB, exceeds GitHub limit; GW: purged from history)
 artifacts.zip
+claudesciencesession/

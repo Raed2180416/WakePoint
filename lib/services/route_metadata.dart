@@ -190,7 +190,7 @@ class RouteMetadata {
                 'maxTransfers': constraints!.maxTransfers,
               }
               : null,
-      'lineColors': lineColors.map((k, v) => MapEntry(k, v.value)),
+      'lineColors': lineColors.map((k, v) => MapEntry(k, v.toARGB32())),
       'firedEventIndices': firedEventIndices.toList(),
       'firedLegIds': firedLegIds.toList(),
       'destinationAlarmFired': destinationAlarmFired,

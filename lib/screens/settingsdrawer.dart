@@ -13,22 +13,13 @@ import 'package:geowake2/screens/ringtones_screen.dart';
 import 'package:geowake2/screens/friends_rides_screen.dart';
 import 'package:geowake2/screens/report_problem_screen.dart';
 
-/// Founder: replace `YOUR_HANDLE` with your real Buy Me a Coffee handle. Until
-/// then the tile shows a hint instead of opening the wrong page (so a supporter
-/// never funds someone else's account).
-const String kBuyMeACoffeeUrl = 'https://www.buymeacoffee.com/YOUR_HANDLE';
+const String kBuyMeACoffeeUrl = 'https://www.buymeacoffee.com/imraedinit';
 
 /// Open the support link in an external browser. Captures the messenger before
 /// the await so no BuildContext is used across the async gap.
 Future<void> _openBuyMeACoffee(BuildContext context) async {
   final messenger = ScaffoldMessenger.of(context);
   Navigator.of(context).pop(); // close the drawer first
-  if (kBuyMeACoffeeUrl.contains('YOUR_HANDLE')) {
-    messenger.showSnackBar(const SnackBar(
-      content: Text('Set your Buy Me a Coffee link (kBuyMeACoffeeUrl)'),
-    ));
-    return;
-  }
   var ok = false;
   try {
     ok = await launchUrl(
@@ -159,6 +150,26 @@ class SettingsDrawer extends StatelessWidget {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: const Text('Anti-theft mode'),
+              trailing:
+                  (MonetizationService.instance.premiumOrNull?.isPro ?? false)
+                      ? null
+                      : const ProBadge(),
+              onTap: () {
+                Navigator.of(context).pop();
+                ProGate.run(
+                  context,
+                  allowed: MonetizationService
+                          .instance.premiumOrNull?.canUseAntiTheft ??
+                      false,
+                  source: PaywallSource.antiTheft,
+                  onAllowed: () =>
+                      Navigator.of(context).pushNamed('/antiTheft'),
+                );
+              },
+            ),
             // Separate, purpose-specific consent (NOT Pro) — default-OFF, opt-in.
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
@@ -182,9 +193,9 @@ class SettingsDrawer extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.coffee_outlined),
-              title: const Text('Buy me a coffee'),
-              subtitle: const Text('Support GeoWake — keeps it ad-light'),
+              leading: const Icon(Icons.coffee, color: Colors.orange),
+              title: const Text('Buy me a coffee ☕'),
+              subtitle: const Text('Enjoying GeoWake? Say thanks with a coffee!'),
               onTap: () => _openBuyMeACoffee(context),
             ),
             ListTile(

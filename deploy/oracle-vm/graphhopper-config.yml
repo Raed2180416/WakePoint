@@ -1,0 +1,35 @@
+# GraphHopper configuration for India routing
+# Replaces Google Directions API for car/bike/foot modes
+
+graphhopper:
+  datareader.file: /data/india-south-latest.osm.pbf
+  graph.location: /data/india-south-latest.osm-gh
+
+  profiles:
+    - name: car
+      vehicle: car
+      weighting: fastest
+      max_visited_nodes: 1000000
+    - name: bike
+      vehicle: bike
+      weighting: fastest
+    - name: foot
+      vehicle: foot
+      weighting: shortest
+
+  # Enable turn-by-turn instructions
+  instructions.enabled: true
+
+  # Enable alternative routes
+  routing.ch.disabling_allowed: true
+
+  # GTFS transit support (optional — enable when GTFS data is available)
+  # transit.enable: true
+  # gtfs.file: /data/gtfs/delhi.zip
+
+  server:
+    port: 8989
+    host: 0.0.0.0
+
+  api:
+    base_path: /api

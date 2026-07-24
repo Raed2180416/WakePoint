@@ -19,9 +19,11 @@ const config = {
   // - lib/config/app_config.dart
   // - lib/services/api_client.dart
   appBundleId: process.env.APP_BUNDLE_ID || 'com.geowake.app',
+  // SECURITY: never include '*' — only the production frontend URL is allowed.
+  // Mobile apps send no Origin header and are always accepted by the CORS
+  // middleware (origin === undefined → callback(null, true)).
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || [
-    'https://geowake-production.up.railway.app',
-    '*'
+    'https://geowake-production.up.railway.app'
   ],
   
   // Rate Limiting

@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "0d5c613d903996baadde4f7702df99d36431a724",
-    "gitTree": "e1e9af2fb659367647b9edf57c46a7230a99a819",
-    "generatedAt": "2026-07-21T01:20:33+05:30",
-    "filesIndexed": 409,
-    "dependencyEdges": 878,
-    "totalExports": 694,
-    "totalImports": 1887,
+    "gitCommit": "6f4710f97cae1f21e885f877bc2a39b299ea02ff",
+    "gitTree": "6d8f852c9632fe688d071e8f3a74505371bbf622",
+    "generatedAt": "2026-07-22T08:17:58+05:30",
+    "filesIndexed": 424,
+    "dependencyEdges": 910,
+    "totalExports": 723,
+    "totalImports": 1950,
     "byRole": {
-      "other": 5,
-      "backend": 12,
-      "flutter-test": 211,
-      "flutter-lib": 172,
+      "other": 4,
+      "backend": 16,
+      "flutter-test": 212,
+      "flutter-lib": 183,
       "tool": 8,
       "platform": 1
     },
@@ -210,30 +210,6 @@
       "contentHash": "98cab44e9f7fd7ef"
     },
     {
-      "file": "claudesciencesession/code/ekf_js.js",
-      "lang": "js",
-      "exports": [],
-      "imports": [],
-      "types": [],
-      "functions": [
-        {
-          "name": "huber",
-          "signature": "(norm,d)"
-        }
-      ],
-      "classes": [
-        {
-          "name": "EKF",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": true,
-      "hasSideEffects": false,
-      "role": "other",
-      "contentHash": "39c1d0c7be738349"
-    },
-    {
       "file": "geowake-server/src/config/config.js",
       "lang": "js",
       "exports": [],
@@ -250,7 +226,47 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "641ed588ab6b41aa"
+      "contentHash": "c249b8be6cb20378"
+    },
+    {
+      "file": "geowake-server/src/controllers/aggregateController.js",
+      "lang": "js",
+      "exports": [
+        {
+          "kind": "cjs-named",
+          "name": "ingest"
+        },
+        {
+          "kind": "cjs-named",
+          "name": "getSummary"
+        },
+        {
+          "kind": "cjs-named",
+          "name": "getFlows"
+        },
+        {
+          "kind": "cjs-named",
+          "name": "getCatchment"
+        },
+        {
+          "kind": "cjs-named",
+          "name": "getStats"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "../utils/mergeEngine"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "4995bd8220516676"
     },
     {
       "file": "geowake-server/src/controllers/authController.js",
@@ -330,7 +346,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "1c149e0300e86f20"
+      "contentHash": "d14371c938dcf312"
     },
     {
       "file": "geowake-server/src/middleware/auth.js",
@@ -403,6 +419,33 @@
       "hasSideEffects": false,
       "role": "backend",
       "contentHash": "6de5b0e0e797e16e"
+    },
+    {
+      "file": "geowake-server/src/routes/aggregate.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "express"
+        },
+        {
+          "kind": "require",
+          "source": "../controllers/aggregateController"
+        },
+        {
+          "kind": "require",
+          "source": "../middleware/auth"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "d4640a8fc7c58186"
     },
     {
       "file": "geowake-server/src/routes/auth.js",
@@ -502,6 +545,10 @@
         {
           "kind": "require",
           "source": "./routes/maps"
+        },
+        {
+          "kind": "require",
+          "source": "./routes/aggregate"
         }
       ],
       "types": [],
@@ -511,7 +558,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "49988353384df43c"
+      "contentHash": "a0adf3f7130f1c4b"
     },
     {
       "file": "geowake-server/src/utils/cache.js",
@@ -543,7 +590,57 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "f15f5cc2e929f7e4"
+      "contentHash": "8122c3d6987d2633"
+    },
+    {
+      "file": "geowake-server/src/utils/mergeEngine.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [],
+      "types": [
+        {
+          "name": "const"
+        }
+      ],
+      "functions": [],
+      "classes": [
+        {
+          "name": "MergeEngine",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "d8a58685bc93bb33"
+    },
+    {
+      "file": "geowake-server/test/aggregate.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "supertest"
+        },
+        {
+          "kind": "require",
+          "source": "express"
+        },
+        {
+          "kind": "require",
+          "source": "../src/utils/mergeEngine"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "4a8e98b6a1b09585"
     },
     {
       "file": "geowake-server/test/auth.test.js",
@@ -651,10 +748,6 @@
         },
         {
           "kind": "static",
-          "source": "package:flutter/foundation.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:flutter_test/flutter_test.dart"
         },
         {
@@ -699,7 +792,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "4fc35238a2f8a7d6"
+      "contentHash": "3d002822bd93d235"
     },
     {
       "file": "integration_test/backstop_doze_ondevice_test.dart",
@@ -725,10 +818,6 @@
         },
         {
           "kind": "static",
-          "source": "package:flutter/foundation.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:flutter_test/flutter_test.dart"
         },
         {
@@ -773,7 +862,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "092e2a6f879f21ba"
+      "contentHash": "f407bf5fcb84b93c"
     },
     {
       "file": "integration_test/device_alarm_integration_test.dart",
@@ -869,10 +958,6 @@
         },
         {
           "kind": "static",
-          "source": "package:flutter/foundation.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:flutter_test/flutter_test.dart"
         },
         {
@@ -921,7 +1006,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "9b06e39856043a66"
+      "contentHash": "d8bd3b8ce1bd2167"
     },
     {
       "file": "lib/all_india_stops.dart",
@@ -2434,6 +2519,136 @@
       "contentHash": "ea5a6df5426bf5f9"
     },
     {
+      "file": "lib/dashboard/aggregate_data_dashboard.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AggregateDashboardApp"
+        },
+        {
+          "kind": "class",
+          "name": "AggregateApiClient"
+        },
+        {
+          "kind": "class",
+          "name": "AggregateDashboard"
+        },
+        {
+          "kind": "class",
+          "name": "OverviewTab"
+        },
+        {
+          "kind": "class",
+          "name": "OdFlowsTab"
+        },
+        {
+          "kind": "class",
+          "name": "CatchmentTab"
+        },
+        {
+          "kind": "class",
+          "name": "PrivacyTab"
+        },
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "AggregateDashboardApp",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "AggregateApiClient",
+          "extends": null
+        },
+        {
+          "name": "AggregateDashboard",
+          "extends": "StatefulWidget"
+        },
+        {
+          "name": "_AggregateDashboardState",
+          "extends": "State"
+        },
+        {
+          "name": "OverviewTab",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_KpiCard",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_HourlyDemandChart",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_HourBar",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "OdFlowsTab",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_FlowTile",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "CatchmentTab",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_StationBar",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "PrivacyTab",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_PrivacyRow",
+          "extends": "StatelessWidget"
+        },
+        {
+          "name": "_ErrorView",
+          "extends": "StatelessWidget"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "532cbd77d4c9a31b"
+    },
+    {
       "file": "lib/dashboard/alarm_debouncer.dart",
       "lang": "dart",
       "exports": [
@@ -3285,6 +3500,249 @@
       "contentHash": "b1175609076ff945"
     },
     {
+      "file": "lib/l10n/app_localizations.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizations"
+        },
+        {
+          "kind": "function",
+          "name": "lookupAppLocalizations"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/widgets.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_localizations/flutter_localizations.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations_bn.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations_en.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations_hi.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations_ta.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations_te.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "lookupAppLocalizations",
+          "signature": "(Locale locale)"
+        }
+      ],
+      "classes": [
+        {
+          "name": "AppLocalizations",
+          "extends": null
+        },
+        {
+          "name": "_AppLocalizationsDelegate",
+          "extends": "LocalizationsDelegate"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "da804c76cfb80660"
+    },
+    {
+      "file": "lib/l10n/app_localizations_bn.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizationsBn"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppLocalizationsBn",
+          "extends": "AppLocalizations"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "0ea6d666f72e44e8"
+    },
+    {
+      "file": "lib/l10n/app_localizations_en.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizationsEn"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppLocalizationsEn",
+          "extends": "AppLocalizations"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "087ef6efe0479c0e"
+    },
+    {
+      "file": "lib/l10n/app_localizations_hi.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizationsHi"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppLocalizationsHi",
+          "extends": "AppLocalizations"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "a37ca77b1b1fcd4b"
+    },
+    {
+      "file": "lib/l10n/app_localizations_ta.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizationsTa"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppLocalizationsTa",
+          "extends": "AppLocalizations"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "555da8a9ed665ee8"
+    },
+    {
+      "file": "lib/l10n/app_localizations_te.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AppLocalizationsTe"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:intl/intl.dart"
+        },
+        {
+          "kind": "static",
+          "source": "app_localizations.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppLocalizationsTe",
+          "extends": "AppLocalizations"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "d8c43d6fcaf58e6c"
+    },
+    {
       "file": "lib/main.dart",
       "lang": "dart",
       "exports": [
@@ -3372,6 +3830,18 @@
         },
         {
           "kind": "static",
+          "source": "services/data_asset/http_candidate_egress_sink.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/data_asset/data_asset_config.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/api_client.dart"
+        },
+        {
+          "kind": "static",
           "source": "services/widget/home_widget_bridge.dart"
         },
         {
@@ -3389,6 +3859,10 @@
         {
           "kind": "static",
           "source": "screens/report_problem_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "screens/anti_theft_setup_screen.dart"
         },
         {
           "kind": "static",
@@ -3417,6 +3891,14 @@
         {
           "kind": "static",
           "source": "services/share/share_deep_link.dart"
+        },
+        {
+          "kind": "static",
+          "source": "services/anti_theft_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "l10n/app_localizations.dart"
         },
         {
           "kind": "static",
@@ -3478,7 +3960,40 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "cfbc0c3fdd04de58"
+      "contentHash": "7f1c56132d9a0cf4"
+    },
+    {
+      "file": "lib/main_aggregate_dashboard.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "dashboard/aggregate_data_dashboard.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "2986bb63da09dbc3"
     },
     {
       "file": "lib/main_playground.dart",
@@ -3615,6 +4130,43 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "4a4f5f0fc3de72dc"
+    },
+    {
+      "file": "lib/screens/anti_theft_setup_screen.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AntiTheftSetupScreen"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/anti_theft_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AntiTheftSetupScreen",
+          "extends": "StatefulWidget"
+        },
+        {
+          "name": "_AntiTheftSetupScreenState",
+          "extends": "State"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "330c317837e4af20"
     },
     {
       "file": "lib/screens/friends_rides_screen.dart",
@@ -3818,6 +4370,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/services/anti_theft_service.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/widget/widget_arm_handler.dart"
         },
         {
@@ -3873,7 +4429,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "02fd61a9edc75f76"
+      "contentHash": "f56bfbd3c57b66d8"
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -4014,7 +4570,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "f7a644dae3341ed6"
+      "contentHash": "c1380a9ce43a1d9b"
     },
     {
       "file": "lib/screens/mobility_data_consent_screen.dart",
@@ -4134,7 +4690,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "5c07642ed6b586fe"
+      "contentHash": "4566677a48cf24a1"
     },
     {
       "file": "lib/screens/monetization/post_arrival_screen.dart",
@@ -4411,7 +4967,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "0fe4a74334c264db"
+      "contentHash": "f6b4995950143421"
     },
     {
       "file": "lib/screens/settingsdrawer.dart",
@@ -4493,7 +5049,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "d52e597396dea518"
+      "contentHash": "94e66a7c91478cf8"
     },
     {
       "file": "lib/screens/splash_screen.dart",
@@ -4798,6 +5354,68 @@
       "contentHash": "3dbe823701bc3378"
     },
     {
+      "file": "lib/services/anti_theft_service.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "AntiTheftService"
+        },
+        {
+          "kind": "enum",
+          "name": "AntiTheftSensitivity"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "dart:math"
+        },
+        {
+          "kind": "static",
+          "source": "package:battery_plus/battery_plus.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:sensors_plus/sensors_plus.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/notification_service.dart"
+        }
+      ],
+      "types": [
+        {
+          "name": "AntiTheftSensitivity",
+          "kind": "enum"
+        }
+      ],
+      "functions": [],
+      "classes": [
+        {
+          "name": "AntiTheftService",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "fd8d1b1eff827e5a"
+    },
+    {
       "file": "lib/services/api_client.dart",
       "lang": "dart",
       "exports": [
@@ -4844,7 +5462,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "54a7a8545a10aa49"
+      "contentHash": "b48974bb7aa97be8"
     },
     {
       "file": "lib/services/data_asset/aggregate_egress_sink.dart",
@@ -5003,6 +5621,10 @@
         },
         {
           "kind": "const",
+          "name": "kCandidateEgressEndpoint"
+        },
+        {
+          "kind": "const",
           "name": "kOdKAnonymityThreshold"
         },
         {
@@ -5050,6 +5672,9 @@
           "name": "kDataAssetEgressEndpoint"
         },
         {
+          "name": "kCandidateEgressEndpoint"
+        },
+        {
           "name": "kOdKAnonymityThreshold"
         },
         {
@@ -5080,7 +5705,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "8bdba04b5dfda69d"
+      "contentHash": "b092f54ec308fd1d"
     },
     {
       "file": "lib/services/data_asset/data_asset_pipeline.dart",
@@ -5118,6 +5743,10 @@
         },
         {
           "kind": "static",
+          "source": "http_candidate_egress_sink.dart"
+        },
+        {
+          "kind": "static",
           "source": "k_anonymity_filter.dart"
         },
         {
@@ -5149,7 +5778,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "46f3c83568c81b31"
+      "contentHash": "cc430d64b0e5eb46"
     },
     {
       "file": "lib/services/data_asset/differential_privacy.dart",
@@ -5249,6 +5878,67 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "8a8e0014e64163c9"
+    },
+    {
+      "file": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "class",
+          "name": "CandidateEgressSink"
+        },
+        {
+          "kind": "class",
+          "name": "NullCandidateEgressSink"
+        },
+        {
+          "kind": "class",
+          "name": "HttpCandidateEgressSink"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
+          "source": "package:http/http.dart"
+        },
+        {
+          "kind": "static",
+          "source": "aggregate_schema.dart"
+        },
+        {
+          "kind": "static",
+          "source": "data_asset_config.dart"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "CandidateEgressSink",
+          "extends": null
+        },
+        {
+          "name": "NullCandidateEgressSink",
+          "extends": null
+        },
+        {
+          "name": "HttpCandidateEgressSink",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-lib",
+      "contentHash": "282c3ee23dffd26a"
     },
     {
       "file": "lib/services/data_asset/k_anonymity_filter.dart",
@@ -6021,7 +6711,7 @@
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/api_client.dart"
+          "source": "package:geowake2/all_india_stops.dart"
         }
       ],
       "types": [],
@@ -6044,7 +6734,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "7491aeb5c4b06398"
+      "contentHash": "da801eba9e53451a"
     },
     {
       "file": "lib/services/metro_vehicle_types.dart",
@@ -6100,7 +6790,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "87232a8257e6880a"
+      "contentHash": "bf376deea46dd86c"
     },
     {
       "file": "lib/services/monetization/ad_service.dart",
@@ -6153,7 +6843,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "60b126ff46fed1e4"
+      "contentHash": "3576be15bdf946df"
     },
     {
       "file": "lib/services/monetization/monetization_service.dart",
@@ -6165,6 +6855,10 @@
         }
       ],
       "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
         {
           "kind": "static",
           "source": "package:flutter/foundation.dart"
@@ -6202,7 +6896,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c91e984e3c05b2c5"
+      "contentHash": "40e4c186b9b09830"
     },
     {
       "file": "lib/services/monetization/post_arrival_service.dart",
@@ -6320,7 +7014,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3f0ca7fd64de4f66"
+      "contentHash": "08fd49f821a0bbf0"
     },
     {
       "file": "lib/services/monetization/purchase_backend.dart",
@@ -6375,7 +7069,15 @@
         },
         {
           "kind": "static",
+          "source": "dart:developer"
+        },
+        {
+          "kind": "static",
           "source": "package:in_app_purchase/in_app_purchase.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
         },
         {
           "kind": "static",
@@ -6394,7 +7096,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "dafa5b8f7990346a"
+      "contentHash": "7dc4a1402e7885e3"
     },
     {
       "file": "lib/services/navigation_service.dart",
@@ -6789,6 +7491,10 @@
         },
         {
           "kind": "static",
+          "source": "package:uuid/uuid.dart"
+        },
+        {
+          "kind": "static",
           "source": "dart:developer"
         }
       ],
@@ -6804,7 +7510,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "6e94c7feb39a1df3"
+      "contentHash": "16c97561bc6a82fd"
     },
     {
       "file": "lib/services/polyline_decoder.dart",
@@ -7486,7 +8192,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a55ac00306dbf502"
+      "contentHash": "778b2892829e2be2"
     },
     {
       "file": "lib/services/route_queue.dart",
@@ -7560,7 +8266,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4524799338ace090"
+      "contentHash": "c2fd75d0abbba9a2"
     },
     {
       "file": "lib/services/route_session_manager.dart",
@@ -7800,7 +8506,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c68fa8d8e787645d"
+      "contentHash": "d6ecc777c8dfba87"
     },
     {
       "file": "lib/services/share/followed_rides_service.dart",
@@ -8200,7 +8906,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "5967815dc149ebbb"
+      "contentHash": "04f55aeb39c2a20d"
     },
     {
       "file": "lib/services/share/share_backend_config.dart",
@@ -8273,7 +8979,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ead6aa0ddb809f87"
+      "contentHash": "dd4c0f94171fa4d9"
     },
     {
       "file": "lib/services/share/share_link_builder.dart",
@@ -9496,7 +10202,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "0a707f07db5ce39c"
+      "contentHash": "3c35203efe150325"
     },
     {
       "file": "lib/services/tracking/notification_updater.dart",
@@ -9973,6 +10679,10 @@
         },
         {
           "kind": "static",
+          "source": "package:geowake2/services/anti_theft_service.dart"
+        },
+        {
+          "kind": "static",
           "source": "package:geowake2/services/navigation_service.dart"
         },
         {
@@ -10153,7 +10863,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ae5f1c6fb1071a3e"
+      "contentHash": "1e8fc3f02ce6810c"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -10757,7 +11467,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a1ff18572d958636"
+      "contentHash": "af22da998e157ed8"
     },
     {
       "file": "lib/widgets/post_arrival_card.dart",
@@ -10827,7 +11537,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "9574aa39c5191ed3"
+      "contentHash": "74f10e71b922e184"
     },
     {
       "file": "lib/widgets/share/guardian_settings_section.dart",
@@ -15483,7 +16193,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "84e623d9bf24b8f7"
+      "contentHash": "021c27e46fcc9b27"
     },
     {
       "file": "test/monetization/monetization_journey_test.dart",
@@ -15540,7 +16250,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "9ace79f1875c531f"
+      "contentHash": "ee2b1c54c000da15"
     },
     {
       "file": "test/monetization/monetization_service_test.dart",
@@ -15626,7 +16336,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "c69440e289c2722f"
+      "contentHash": "77223c0486abc97d"
     },
     {
       "file": "test/monetization/post_arrival_decision_test.dart",
@@ -16983,7 +17693,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "9058636ad2a8f2ea"
+      "contentHash": "78cdfb506b7dff2f"
     },
     {
       "file": "test/reachability/tightening_guards_test.dart",
@@ -18583,6 +19293,51 @@
       "contentHash": "f071ce47cf900c5d"
     },
     {
+      "file": "test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:convert"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/aggregate_schema.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/http_candidate_egress_sink.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/od_cell.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "da987722c8d055a9"
+    },
+    {
       "file": "test/services/ekf_integration/ambiguous_station_stop_test.dart",
       "lang": "dart",
       "exports": [
@@ -18837,7 +19592,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "205aa55188a39184"
+      "contentHash": "83230b285474fd6a"
     },
     {
       "file": "test/services/testing/osm_graph_test.dart",
@@ -21407,6 +22162,12 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/src/controllers/aggregateController.js",
+      "to": "geowake-server/src/utils/mergeEngine.js",
+      "source": "../utils/mergeEngine",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/controllers/authController.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
@@ -21434,6 +22195,18 @@
       "from": "geowake-server/src/middleware/security.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/src/routes/aggregate.js",
+      "to": "geowake-server/src/controllers/aggregateController.js",
+      "source": "../controllers/aggregateController",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/src/routes/aggregate.js",
+      "to": "geowake-server/src/middleware/auth.js",
+      "source": "../middleware/auth",
       "kind": "require"
     },
     {
@@ -21491,9 +22264,21 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/src/server.js",
+      "to": "geowake-server/src/routes/aggregate.js",
+      "source": "./routes/aggregate",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/utils/cache.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/aggregate.test.js",
+      "to": "geowake-server/src/utils/mergeEngine.js",
+      "source": "../src/utils/mergeEngine",
       "kind": "require"
     },
     {
@@ -21989,6 +22774,66 @@
       "kind": "static"
     },
     {
+      "from": "lib/l10n/app_localizations.dart",
+      "to": "lib/l10n/app_localizations_bn.dart",
+      "source": "app_localizations_bn.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations.dart",
+      "to": "lib/l10n/app_localizations_en.dart",
+      "source": "app_localizations_en.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations.dart",
+      "to": "lib/l10n/app_localizations_hi.dart",
+      "source": "app_localizations_hi.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations.dart",
+      "to": "lib/l10n/app_localizations_ta.dart",
+      "source": "app_localizations_ta.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations.dart",
+      "to": "lib/l10n/app_localizations_te.dart",
+      "source": "app_localizations_te.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations_bn.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "app_localizations.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations_en.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "app_localizations.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations_hi.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "app_localizations.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations_ta.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "app_localizations.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/l10n/app_localizations_te.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "app_localizations.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/main.dart",
       "to": "lib/services/trackingservice.dart",
       "source": "package:geowake2/services/trackingservice.dart",
@@ -22038,6 +22883,24 @@
     },
     {
       "from": "lib/main.dart",
+      "to": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "source": "services/data_asset/http_candidate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "services/data_asset/data_asset_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/services/api_client.dart",
+      "source": "services/api_client.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
       "to": "lib/services/widget/home_widget_bridge.dart",
       "source": "services/widget/home_widget_bridge.dart",
       "kind": "static"
@@ -22064,6 +22927,12 @@
       "from": "lib/main.dart",
       "to": "lib/screens/report_problem_screen.dart",
       "source": "screens/report_problem_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/screens/anti_theft_setup_screen.dart",
+      "source": "screens/anti_theft_setup_screen.dart",
       "kind": "static"
     },
     {
@@ -22098,6 +22967,18 @@
     },
     {
       "from": "lib/main.dart",
+      "to": "lib/services/anti_theft_service.dart",
+      "source": "services/anti_theft_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
+      "to": "lib/l10n/app_localizations.dart",
+      "source": "l10n/app_localizations.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/main.dart",
       "to": "lib/screens/maptracking.dart",
       "source": "screens/maptracking.dart",
       "kind": "static"
@@ -22127,6 +23008,12 @@
       "kind": "static"
     },
     {
+      "from": "lib/main_aggregate_dashboard.dart",
+      "to": "lib/dashboard/aggregate_data_dashboard.dart",
+      "source": "dashboard/aggregate_data_dashboard.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/main_playground.dart",
       "to": "lib/dashboard/ekf_test_panel.dart",
       "source": "dashboard/ekf_test_panel.dart",
@@ -22136,6 +23023,12 @@
       "from": "lib/main_unified_dashboard.dart",
       "to": "lib/dashboard/unified_dashboard.dart",
       "source": "dashboard/unified_dashboard.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/anti_theft_setup_screen.dart",
+      "to": "lib/services/anti_theft_service.dart",
+      "source": "package:geowake2/services/anti_theft_service.dart",
       "kind": "static"
     },
     {
@@ -22262,6 +23155,12 @@
       "from": "lib/screens/homescreen.dart",
       "to": "lib/services/share/guardian_service.dart",
       "source": "package:geowake2/services/share/guardian_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/screens/homescreen.dart",
+      "to": "lib/services/anti_theft_service.dart",
+      "source": "package:geowake2/services/anti_theft_service.dart",
       "kind": "static"
     },
     {
@@ -22619,6 +23518,12 @@
       "kind": "static"
     },
     {
+      "from": "lib/services/anti_theft_service.dart",
+      "to": "lib/services/notification_service.dart",
+      "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/services/api_client.dart",
       "to": "lib/config/app_config.dart",
       "source": "package:geowake2/config/app_config.dart",
@@ -22692,6 +23597,12 @@
     },
     {
       "from": "lib/services/data_asset/data_asset_pipeline.dart",
+      "to": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "source": "http_candidate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/data_asset_pipeline.dart",
       "to": "lib/services/data_asset/k_anonymity_filter.dart",
       "source": "k_anonymity_filter.dart",
       "kind": "static"
@@ -22740,6 +23651,18 @@
     },
     {
       "from": "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "data_asset_config.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "lib/services/data_asset/aggregate_schema.dart",
+      "source": "aggregate_schema.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/data_asset/http_candidate_egress_sink.dart",
       "to": "lib/services/data_asset/data_asset_config.dart",
       "source": "data_asset_config.dart",
       "kind": "static"
@@ -22884,8 +23807,8 @@
     },
     {
       "from": "lib/services/metro_stop_service.dart",
-      "to": "lib/services/api_client.dart",
-      "source": "package:geowake2/services/api_client.dart",
+      "to": "lib/all_india_stops.dart",
+      "source": "package:geowake2/all_india_stops.dart",
       "kind": "static"
     },
     {
@@ -23816,6 +24739,12 @@
       "from": "lib/services/trackingservice.dart",
       "to": "lib/services/reroute_policy.dart",
       "source": "package:geowake2/services/reroute_policy.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/trackingservice.dart",
+      "to": "lib/services/anti_theft_service.dart",
+      "source": "package:geowake2/services/anti_theft_service.dart",
       "kind": "static"
     },
     {
@@ -26015,6 +26944,24 @@
       "kind": "static"
     },
     {
+      "from": "test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "lib/services/data_asset/aggregate_schema.dart",
+      "source": "package:geowake2/services/data_asset/aggregate_schema.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "source": "package:geowake2/services/data_asset/http_candidate_egress_sink.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "lib/services/data_asset/od_cell.dart",
+      "source": "package:geowake2/services/data_asset/od_cell.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/services/ekf_integration/ambiguous_station_stop_test.dart",
       "to": "lib/core/ekf/ekf_orchestrator.dart",
       "source": "package:geowake2/core/ekf/ekf_orchestrator.dart",
@@ -26670,6 +27617,28 @@
     }
   ],
   "publicApi": {
+    "geowake-server/src/controllers/aggregateController.js": [
+      {
+        "kind": "cjs-named",
+        "name": "ingest"
+      },
+      {
+        "kind": "cjs-named",
+        "name": "getSummary"
+      },
+      {
+        "kind": "cjs-named",
+        "name": "getFlows"
+      },
+      {
+        "kind": "cjs-named",
+        "name": "getCatchment"
+      },
+      {
+        "kind": "cjs-named",
+        "name": "getStats"
+      }
+    ],
     "lib/all_india_stops.dart": [
       {
         "kind": "const",
@@ -27128,6 +28097,40 @@
         "name": "ReachabilityTracker"
       }
     ],
+    "lib/dashboard/aggregate_data_dashboard.dart": [
+      {
+        "kind": "class",
+        "name": "AggregateDashboardApp"
+      },
+      {
+        "kind": "class",
+        "name": "AggregateApiClient"
+      },
+      {
+        "kind": "class",
+        "name": "AggregateDashboard"
+      },
+      {
+        "kind": "class",
+        "name": "OverviewTab"
+      },
+      {
+        "kind": "class",
+        "name": "OdFlowsTab"
+      },
+      {
+        "kind": "class",
+        "name": "CatchmentTab"
+      },
+      {
+        "kind": "class",
+        "name": "PrivacyTab"
+      },
+      {
+        "kind": "function",
+        "name": "main"
+      }
+    ],
     "lib/dashboard/alarm_debouncer.dart": [
       {
         "kind": "class",
@@ -27266,6 +28269,46 @@
         "name": "DevServer"
       }
     ],
+    "lib/l10n/app_localizations.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizations"
+      },
+      {
+        "kind": "function",
+        "name": "lookupAppLocalizations"
+      }
+    ],
+    "lib/l10n/app_localizations_bn.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizationsBn"
+      }
+    ],
+    "lib/l10n/app_localizations_en.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizationsEn"
+      }
+    ],
+    "lib/l10n/app_localizations_hi.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizationsHi"
+      }
+    ],
+    "lib/l10n/app_localizations_ta.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizationsTa"
+      }
+    ],
+    "lib/l10n/app_localizations_te.dart": [
+      {
+        "kind": "class",
+        "name": "AppLocalizationsTe"
+      }
+    ],
     "lib/main.dart": [
       {
         "kind": "class",
@@ -27275,6 +28318,12 @@
         "kind": "class",
         "name": "MyAppState"
       },
+      {
+        "kind": "function",
+        "name": "main"
+      }
+    ],
+    "lib/main_aggregate_dashboard.dart": [
       {
         "kind": "function",
         "name": "main"
@@ -27306,6 +28355,12 @@
       {
         "kind": "class",
         "name": "RouteModel"
+      }
+    ],
+    "lib/screens/anti_theft_setup_screen.dart": [
+      {
+        "kind": "class",
+        "name": "AntiTheftSetupScreen"
       }
     ],
     "lib/screens/friends_rides_screen.dart": [
@@ -27454,6 +28509,16 @@
         "name": "AlarmPlayer"
       }
     ],
+    "lib/services/anti_theft_service.dart": [
+      {
+        "kind": "class",
+        "name": "AntiTheftService"
+      },
+      {
+        "kind": "enum",
+        "name": "AntiTheftSensitivity"
+      }
+    ],
     "lib/services/api_client.dart": [
       {
         "kind": "class",
@@ -27502,6 +28567,10 @@
       {
         "kind": "const",
         "name": "kDataAssetEgressEndpoint"
+      },
+      {
+        "kind": "const",
+        "name": "kCandidateEgressEndpoint"
       },
       {
         "kind": "const",
@@ -27564,6 +28633,20 @@
       {
         "kind": "class",
         "name": "HttpAggregateEgressSink"
+      }
+    ],
+    "lib/services/data_asset/http_candidate_egress_sink.dart": [
+      {
+        "kind": "class",
+        "name": "CandidateEgressSink"
+      },
+      {
+        "kind": "class",
+        "name": "NullCandidateEgressSink"
+      },
+      {
+        "kind": "class",
+        "name": "HttpCandidateEgressSink"
       }
     ],
     "lib/services/data_asset/k_anonymity_filter.dart": [
@@ -28843,7 +29926,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 40,
+      "importers": 41,
       "exports": [
         "NotificationService",
         "NotificationActionOutcome",
@@ -28908,6 +29991,24 @@
       ]
     },
     {
+      "file": "lib/services/data_asset/data_asset_config.dart",
+      "importers": 15,
+      "exports": [
+        "kDataAssetEgressEnabled",
+        "kDataAssetEgressEndpoint",
+        "kCandidateEgressEndpoint",
+        "kOdKAnonymityThreshold",
+        "kMinContributingUsersCatchment",
+        "kPerUserMaxCellsPerDay",
+        "kPerUserMaxCountPerCellPerDay",
+        "kEpsilonPerCell",
+        "kPerUserDailyEpsilonCap",
+        "kAggregateSchemaVersion",
+        "kConsentNoticeVersion",
+        "kStationSnapMaxRadiusMeters"
+      ]
+    },
+    {
       "file": "lib/services/route_registry.dart",
       "importers": 15,
       "exports": [
@@ -28935,23 +30036,6 @@
       "importers": 14,
       "exports": [
         "MonetizationService"
-      ]
-    },
-    {
-      "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 13,
-      "exports": [
-        "kDataAssetEgressEnabled",
-        "kDataAssetEgressEndpoint",
-        "kOdKAnonymityThreshold",
-        "kMinContributingUsersCatchment",
-        "kPerUserMaxCellsPerDay",
-        "kPerUserMaxCountPerCellPerDay",
-        "kEpsilonPerCell",
-        "kPerUserDailyEpsilonCap",
-        "kAggregateSchemaVersion",
-        "kConsentNoticeVersion",
-        "kStationSnapMaxRadiusMeters"
       ]
     },
     {
@@ -29021,18 +30105,8 @@
       ]
     },
     {
-      "file": "lib/services/active_route_manager.dart",
-      "importers": 9,
-      "exports": [
-        "RouteSwitchEvent",
-        "WrongDirectionAlert",
-        "ActiveRouteState",
-        "ActiveRouteManager"
-      ]
-    },
-    {
       "file": "lib/services/data_asset/od_cell.dart",
-      "importers": 9,
+      "importers": 10,
       "exports": [
         "OdCellKey",
         "OdCell",
@@ -29041,6 +30115,16 @@
         "ReleasedCell",
         "MergeBackendAuthority",
         "DayType"
+      ]
+    },
+    {
+      "file": "lib/services/active_route_manager.dart",
+      "importers": 9,
+      "exports": [
+        "RouteSwitchEvent",
+        "WrongDirectionAlert",
+        "ActiveRouteState",
+        "ActiveRouteManager"
       ]
     },
     {
@@ -29120,16 +30204,16 @@
   ],
   "topFanOut": [
     {
-      "file": "lib/services/trackingservice.dart",
-      "imports": 25
+      "file": "lib/main.dart",
+      "imports": 29
     },
     {
-      "file": "lib/main.dart",
-      "imports": 23
+      "file": "lib/services/trackingservice.dart",
+      "imports": 26
     },
     {
       "file": "lib/screens/homescreen.dart",
-      "imports": 18
+      "imports": 19
     },
     {
       "file": "lib/screens/maptracking.dart",
@@ -29157,7 +30241,7 @@
     },
     {
       "file": "lib/services/data_asset/data_asset_pipeline.dart",
-      "imports": 10
+      "imports": 11
     },
     {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
@@ -29192,6 +30276,10 @@
       "imports": 7
     },
     {
+      "file": "geowake-server/src/server.js",
+      "imports": 6
+    },
+    {
       "file": "lib/services/direction_service.dart",
       "imports": 6
     },
@@ -29208,11 +30296,11 @@
       "imports": 6
     },
     {
-      "file": "geowake-server/src/server.js",
+      "file": "lib/dashboard/deviation_simulation_controller.dart",
       "imports": 5
     },
     {
-      "file": "lib/dashboard/deviation_simulation_controller.dart",
+      "file": "lib/l10n/app_localizations.dart",
       "imports": 5
     },
     {
@@ -29233,10 +30321,6 @@
     },
     {
       "file": "test/complex_route_alarm_test.dart",
-      "imports": 5
-    },
-    {
-      "file": "test/dashboard/deviation_simulation_controller_test.dart",
       "imports": 5
     }
   ],
@@ -29375,7 +30459,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 40,
+      "importers": 41,
       "directDependents": [
         "integration_test/alarm_chain_ondevice_test.dart",
         "integration_test/backstop_doze_ondevice_test.dart",
@@ -29386,6 +30470,7 @@
         "lib/screens/ringtones_screen.dart",
         "lib/screens/splash_screen.dart",
         "lib/services/alarm_player.dart",
+        "lib/services/anti_theft_service.dart",
         "lib/services/tracking/alarm_controller.dart",
         "lib/services/tracking/foreground_bridge.dart",
         "lib/services/tracking/heartbeat_monitor.dart",
@@ -29610,6 +30695,42 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/data_asset/data_asset_config.dart",
+      "importers": 15,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/services/data_asset/aggregate_schema.dart",
+        "lib/services/data_asset/contribution_cap.dart",
+        "lib/services/data_asset/data_asset_pipeline.dart",
+        "lib/services/data_asset/differential_privacy.dart",
+        "lib/services/data_asset/http_aggregate_egress_sink.dart",
+        "lib/services/data_asset/http_candidate_egress_sink.dart",
+        "lib/services/data_asset/k_anonymity_filter.dart",
+        "lib/services/data_asset/mobility_consent_service.dart",
+        "lib/services/data_asset/od_cell.dart",
+        "lib/services/data_asset/station_binner.dart",
+        "test/data_asset/consent_test.dart",
+        "test/data_asset/dp_and_kanon_test.dart",
+        "test/data_asset/http_egress_sink_test.dart",
+        "test/data_asset/pipeline_hive_test.dart"
+      ],
+      "exportedSymbols": [
+        "kDataAssetEgressEnabled",
+        "kDataAssetEgressEndpoint",
+        "kCandidateEgressEndpoint",
+        "kOdKAnonymityThreshold",
+        "kMinContributingUsersCatchment",
+        "kPerUserMaxCellsPerDay",
+        "kPerUserMaxCountPerCellPerDay",
+        "kEpsilonPerCell",
+        "kPerUserDailyEpsilonCap",
+        "kAggregateSchemaVersion",
+        "kConsentNoticeVersion",
+        "kStationSnapMaxRadiusMeters"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/services/route_registry.dart",
       "importers": 15,
       "directDependents": [
@@ -29664,10 +30785,10 @@
       "file": "lib/services/api_client.dart",
       "importers": 14,
       "directDependents": [
+        "lib/main.dart",
         "lib/screens/homescreen.dart",
         "lib/screens/splash_screen.dart",
         "lib/services/direction_service.dart",
-        "lib/services/metro_stop_service.dart",
         "lib/services/places_service.dart",
         "test/app_config_url_alignment_test.dart",
         "test/deviation_reroute_stress_test.dart",
@@ -29705,39 +30826,6 @@
       ],
       "exportedSymbols": [
         "MonetizationService"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 13,
-      "directDependents": [
-        "lib/services/data_asset/aggregate_schema.dart",
-        "lib/services/data_asset/contribution_cap.dart",
-        "lib/services/data_asset/data_asset_pipeline.dart",
-        "lib/services/data_asset/differential_privacy.dart",
-        "lib/services/data_asset/http_aggregate_egress_sink.dart",
-        "lib/services/data_asset/k_anonymity_filter.dart",
-        "lib/services/data_asset/mobility_consent_service.dart",
-        "lib/services/data_asset/od_cell.dart",
-        "lib/services/data_asset/station_binner.dart",
-        "test/data_asset/consent_test.dart",
-        "test/data_asset/dp_and_kanon_test.dart",
-        "test/data_asset/http_egress_sink_test.dart",
-        "test/data_asset/pipeline_hive_test.dart"
-      ],
-      "exportedSymbols": [
-        "kDataAssetEgressEnabled",
-        "kDataAssetEgressEndpoint",
-        "kOdKAnonymityThreshold",
-        "kMinContributingUsersCatchment",
-        "kPerUserMaxCellsPerDay",
-        "kPerUserMaxCountPerCellPerDay",
-        "kEpsilonPerCell",
-        "kPerUserDailyEpsilonCap",
-        "kAggregateSchemaVersion",
-        "kConsentNoticeVersion",
-        "kStationSnapMaxRadiusMeters"
       ],
       "riskLevel": "critical"
     },
@@ -29894,6 +30982,32 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/data_asset/od_cell.dart",
+      "importers": 10,
+      "directDependents": [
+        "lib/services/data_asset/aggregate_schema.dart",
+        "lib/services/data_asset/contribution_cap.dart",
+        "lib/services/data_asset/data_asset_pipeline.dart",
+        "lib/services/data_asset/k_anonymity_filter.dart",
+        "lib/services/data_asset/od_aggregator.dart",
+        "lib/services/data_asset/station_binner.dart",
+        "test/data_asset/dp_and_kanon_test.dart",
+        "test/data_asset/pipeline_hive_test.dart",
+        "test/data_asset/station_binner_test.dart",
+        "test/services/data_asset/http_candidate_egress_sink_test.dart"
+      ],
+      "exportedSymbols": [
+        "OdCellKey",
+        "OdCell",
+        "StationArrivalCell",
+        "ReleaseCandidateCell",
+        "ReleasedCell",
+        "MergeBackendAuthority",
+        "DayType"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/active_route_manager.dart",
       "importers": 9,
       "directDependents": [
@@ -29912,31 +31026,6 @@
         "WrongDirectionAlert",
         "ActiveRouteState",
         "ActiveRouteManager"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/data_asset/od_cell.dart",
-      "importers": 9,
-      "directDependents": [
-        "lib/services/data_asset/aggregate_schema.dart",
-        "lib/services/data_asset/contribution_cap.dart",
-        "lib/services/data_asset/data_asset_pipeline.dart",
-        "lib/services/data_asset/k_anonymity_filter.dart",
-        "lib/services/data_asset/od_aggregator.dart",
-        "lib/services/data_asset/station_binner.dart",
-        "test/data_asset/dp_and_kanon_test.dart",
-        "test/data_asset/pipeline_hive_test.dart",
-        "test/data_asset/station_binner_test.dart"
-      ],
-      "exportedSymbols": [
-        "OdCellKey",
-        "OdCell",
-        "StationArrivalCell",
-        "ReleaseCandidateCell",
-        "ReleasedCell",
-        "MergeBackendAuthority",
-        "DayType"
       ],
       "riskLevel": "high"
     },

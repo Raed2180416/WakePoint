@@ -26,6 +26,7 @@ import 'aggregate_schema.dart';
 import 'contribution_cap.dart';
 import 'data_asset_config.dart';
 import 'differential_privacy.dart';
+import 'http_candidate_egress_sink.dart';
 import 'k_anonymity_filter.dart';
 import 'mobility_consent_service.dart';
 import 'od_aggregator.dart';
@@ -40,6 +41,7 @@ class DataAssetPipeline {
   OdAggregator? _aggregator;
   StationBinner? _binner;
   AggregateEgressSink _sink = const NullEgressSink();
+  CandidateEgressSink _candidateSink = const NullCandidateEgressSink();
   final LaplaceMechanism _laplace = LaplaceMechanism();
 
   int _nowMs() => DateTime.now().millisecondsSinceEpoch;
@@ -61,6 +63,7 @@ class DataAssetPipeline {
     OdAggregator? aggregator,
     StationBinner? binner,
     AggregateEgressSink? sink,
+    CandidateEgressSink? candidateSink,
   }) async {
     try {
       final effectiveSink = sink ?? const NullEgressSink();
@@ -70,6 +73,7 @@ class DataAssetPipeline {
         'be wired. Refusing to construct a transmitting sink.',
       );
       _sink = effectiveSink;
+      _candidateSink = candidateSink ?? const NullCandidateEgressSink();
 
       final agg = aggregator ?? OdAggregator(cap: ContributionCap());
       final cons = consent ?? MobilityConsentService();
@@ -178,6 +182,27 @@ class DataAssetPipeline {
   /// The currently wired egress sink (always [NullEgressSink] while egress is
   /// OFF). Exposed for the tripwire test.
   AggregateEgressSink get wiredSink => _sink;
+
+  /// The currently wired candidate egress sink.
+  CandidateEgressSink get wiredCandidateSink => _candidateSink;
+
+  /// Builds a release candidate on-device and uploads it to the backend merge
+  /// engine via the candidate egress sink. Consent-gated: does nothing if
+  /// sharing is disabled. Fail-open: swallows all errors.
+  Future<void> uploadCandidate() async {
+    try {
+      final consent = _consent;
+      if (!_ready || consent == null) return;
+      if (!consent.isSharingEnabled) return;
+
+      final candidate = await buildReleaseCandidate();
+      if (candidate.cells.isEmpty) return;
+
+      await _candidateSink.uploadCandidate(candidate);
+    } catch (e) {
+      dev.log('uploadCandidate swallowed: $e', name: 'DataAssetPipeline');
+    }
+  }
 
   /// Local `YYYY-MM-DD` for the trip's own wall clock (UTC-shifted by tzOffset).
   static String _localDateString(int epochMs, int tzOffsetMinutes) {

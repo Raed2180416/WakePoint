@@ -1,0 +1,146 @@
+# GeoWake Backend Stack — Oracle Cloud Always Free ARM VM
+# Deploy on: Ampere A1 (2 OCPU, 12GB RAM), Hyderabad region, Ubuntu 24.04
+# RAM budget: ~10-12GB total (2GB OS + 8-10GB services)
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in secrets
+#   2. docker compose up -d
+#   3. Caddy auto-provisions SSL certs for your domain
+
+services:
+  # ──────────────────────────────────────────────────
+  # Reverse proxy with automatic SSL (Let's Encrypt)
+  # ~50MB RAM
+  # ──────────────────────────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - geowake-api
+      - share-backend
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # Main API server (Express.js)
+  # Handles: auth, Google Maps proxy (transit/Places fallback), aggregate data
+  # ~512MB RAM
+  # ──────────────────────────────────────────────────
+  geowake-api:
+    build:
+      context: ../../geowake-server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - api_logs:/var/log/geowake
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # Journey share backend (zero-dependency Node HTTP)
+  # ~128MB RAM
+  # ──────────────────────────────────────────────────
+  share-backend:
+    build:
+      context: ../../backend/share
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env.share
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # GraphHopper — car/bike/foot routing (replaces Google Directions for car)
+  # Java-based, ARM-native. Uses India sub-region OSM extract.
+  # ~4-8GB RAM (configurable via -Xmx)
+  # ──────────────────────────────────────────────────
+  graphhopper:
+    image: israelhikingmap/graphhopper:latest
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    volumes:
+      - graphhopper_data:/data
+      - ./graphhopper-config.yml:/graphhopper/config.yml:ro
+    environment:
+      - JAVA_OPTS=-Xmx4g -Xms1g
+    command: -i /data/india-south-latest.osm.pbf -o /data/india-south-latest.osm-gh --host 0.0.0.0 --port 8989
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # Uptime Kuma — uptime monitoring + status page + alerts
+  # ~128MB RAM, Node.js + SQLite
+  # ──────────────────────────────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # n8n — workflow orchestration (1500+ integrations, AI agents, MCP)
+  # ~1-2GB RAM
+  # ──────────────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file: .env.n8n
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=Asia/Kolkata
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - geowake-net
+
+  # ──────────────────────────────────────────────────
+  # Ollama — fallback LLM (Qwen3 Coder 7B, ~5.5GB at Q4_K_M)
+  # Used when cloud API rate limits are hit or for private code
+  # ~5.5GB RAM when model loaded
+  # ──────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - geowake-net
+    # Pull model after first boot:
+    # docker exec -it geowake-ollama ollama pull qwen3-coder:7b
+
+volumes:
+  caddy_data:
+  caddy_config:
+  api_logs:
+  graphhopper_data:
+  uptime_kuma_data:
+  n8n_data:
+  ollama_models:
+
+networks:
+  geowake-net:
+    driver: bridge

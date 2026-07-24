@@ -133,7 +133,7 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 40,
+    "importers": 41,
     "directDependents": [
       "integration_test/alarm_chain_ondevice_test.dart",
       "integration_test/backstop_doze_ondevice_test.dart",
@@ -144,6 +144,7 @@
       "lib/screens/ringtones_screen.dart",
       "lib/screens/splash_screen.dart",
       "lib/services/alarm_player.dart",
+      "lib/services/anti_theft_service.dart",
       "lib/services/tracking/alarm_controller.dart",
       "lib/services/tracking/foreground_bridge.dart",
       "lib/services/tracking/heartbeat_monitor.dart",
@@ -368,6 +369,42 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/data_asset/data_asset_config.dart",
+    "importers": 15,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/differential_privacy.dart",
+      "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/mobility_consent_service.dart",
+      "lib/services/data_asset/od_cell.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/consent_test.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/http_egress_sink_test.dart",
+      "test/data_asset/pipeline_hive_test.dart"
+    ],
+    "exportedSymbols": [
+      "kDataAssetEgressEnabled",
+      "kDataAssetEgressEndpoint",
+      "kCandidateEgressEndpoint",
+      "kOdKAnonymityThreshold",
+      "kMinContributingUsersCatchment",
+      "kPerUserMaxCellsPerDay",
+      "kPerUserMaxCountPerCellPerDay",
+      "kEpsilonPerCell",
+      "kPerUserDailyEpsilonCap",
+      "kAggregateSchemaVersion",
+      "kConsentNoticeVersion",
+      "kStationSnapMaxRadiusMeters"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/route_registry.dart",
     "importers": 15,
     "directDependents": [
@@ -422,10 +459,10 @@
     "file": "lib/services/api_client.dart",
     "importers": 14,
     "directDependents": [
+      "lib/main.dart",
       "lib/screens/homescreen.dart",
       "lib/screens/splash_screen.dart",
       "lib/services/direction_service.dart",
-      "lib/services/metro_stop_service.dart",
       "lib/services/places_service.dart",
       "test/app_config_url_alignment_test.dart",
       "test/deviation_reroute_stress_test.dart",
@@ -463,39 +500,6 @@
     ],
     "exportedSymbols": [
       "MonetizationService"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/data_asset/data_asset_config.dart",
-    "importers": 13,
-    "directDependents": [
-      "lib/services/data_asset/aggregate_schema.dart",
-      "lib/services/data_asset/contribution_cap.dart",
-      "lib/services/data_asset/data_asset_pipeline.dart",
-      "lib/services/data_asset/differential_privacy.dart",
-      "lib/services/data_asset/http_aggregate_egress_sink.dart",
-      "lib/services/data_asset/k_anonymity_filter.dart",
-      "lib/services/data_asset/mobility_consent_service.dart",
-      "lib/services/data_asset/od_cell.dart",
-      "lib/services/data_asset/station_binner.dart",
-      "test/data_asset/consent_test.dart",
-      "test/data_asset/dp_and_kanon_test.dart",
-      "test/data_asset/http_egress_sink_test.dart",
-      "test/data_asset/pipeline_hive_test.dart"
-    ],
-    "exportedSymbols": [
-      "kDataAssetEgressEnabled",
-      "kDataAssetEgressEndpoint",
-      "kOdKAnonymityThreshold",
-      "kMinContributingUsersCatchment",
-      "kPerUserMaxCellsPerDay",
-      "kPerUserMaxCountPerCellPerDay",
-      "kEpsilonPerCell",
-      "kPerUserDailyEpsilonCap",
-      "kAggregateSchemaVersion",
-      "kConsentNoticeVersion",
-      "kStationSnapMaxRadiusMeters"
     ],
     "riskLevel": "critical"
   },
@@ -652,6 +656,32 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/data_asset/od_cell.dart",
+    "importers": 10,
+    "directDependents": [
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/od_aggregator.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/pipeline_hive_test.dart",
+      "test/data_asset/station_binner_test.dart",
+      "test/services/data_asset/http_candidate_egress_sink_test.dart"
+    ],
+    "exportedSymbols": [
+      "OdCellKey",
+      "OdCell",
+      "StationArrivalCell",
+      "ReleaseCandidateCell",
+      "ReleasedCell",
+      "MergeBackendAuthority",
+      "DayType"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/active_route_manager.dart",
     "importers": 9,
     "directDependents": [
@@ -670,31 +700,6 @@
       "WrongDirectionAlert",
       "ActiveRouteState",
       "ActiveRouteManager"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/data_asset/od_cell.dart",
-    "importers": 9,
-    "directDependents": [
-      "lib/services/data_asset/aggregate_schema.dart",
-      "lib/services/data_asset/contribution_cap.dart",
-      "lib/services/data_asset/data_asset_pipeline.dart",
-      "lib/services/data_asset/k_anonymity_filter.dart",
-      "lib/services/data_asset/od_aggregator.dart",
-      "lib/services/data_asset/station_binner.dart",
-      "test/data_asset/dp_and_kanon_test.dart",
-      "test/data_asset/pipeline_hive_test.dart",
-      "test/data_asset/station_binner_test.dart"
-    ],
-    "exportedSymbols": [
-      "OdCellKey",
-      "OdCell",
-      "StationArrivalCell",
-      "ReleaseCandidateCell",
-      "ReleasedCell",
-      "MergeBackendAuthority",
-      "DayType"
     ],
     "riskLevel": "high"
   },

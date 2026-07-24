@@ -38,39 +38,40 @@ void main() {
       }
     });
 
-    test('free sees low-intrusion banners on arming & map (uncapped)', () {
-      expect(
-        policy.canShow(AdPlacement.routeArming,
-            isPro: false, ridesSinceLastAd: 0),
-        isTrue,
-      );
+    test('free sees low-intrusion banners on map & post-arrival (uncapped)',
+        () {
       expect(
         policy.canShow(AdPlacement.mapTracking,
             isPro: false, ridesSinceLastAd: 0),
         isTrue,
       );
-    });
-
-    test('post-arrival interstitial respects the every-3-rides cap', () {
-      // Below the cap: suppressed.
       expect(
         policy.canShow(AdPlacement.postArrival,
+            isPro: false, ridesSinceLastAd: 0),
+        isTrue,
+      );
+    });
+
+    test('route-arming interstitial respects the every-3-rides cap', () {
+      // Below the cap: suppressed.
+      expect(
+        policy.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 0),
         isFalse,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 2),
         isFalse,
       );
       // At/above the cap: allowed.
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 3),
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 7),
         isTrue,
       );
@@ -79,12 +80,12 @@ void main() {
     test('custom frequency cap is honoured', () {
       const strict = AdPolicy(frequencyCapRides: 5);
       expect(
-        strict.canShow(AdPlacement.postArrival,
+        strict.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 4),
         isFalse,
       );
       expect(
-        strict.canShow(AdPlacement.postArrival,
+        strict.canShow(AdPlacement.routeArming,
             isPro: false, ridesSinceLastAd: 5),
         isTrue,
       );

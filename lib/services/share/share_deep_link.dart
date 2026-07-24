@@ -50,9 +50,18 @@ class ShareDeepLinkParser {
       }
 
       if (id == null || id.trim().isEmpty) return null;
+      // SECURITY: reject ids containing path separators or traversal sequences
+      // to prevent URL path injection when the id is used in backend requests.
+      final cleanId = id.trim();
+      if (cleanId.contains('/') ||
+          cleanId.contains('..') ||
+          cleanId.contains('%2e') ||
+          cleanId.contains('%2f')) {
+        return null;
+      }
       final token = uri.queryParameters['t'];
       return ShareDeepLink(
-        id: id.trim(),
+        id: cleanId,
         token: (token != null && token.isNotEmpty) ? token : null,
       );
     } catch (_) {

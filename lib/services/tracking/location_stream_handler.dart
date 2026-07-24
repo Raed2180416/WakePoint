@@ -699,7 +699,7 @@ class LocationStreamHandler {
     _sensorFusionManager!.setFftEnabled(_fftEnabled);
     _sensorFusionManager!.startFusion();
     _ekfStateSubscription?.cancel();
-    DateTime? _lastEkfHealthEmit;
+    DateTime? lastEkfHealthEmit;
     _ekfStateSubscription = _sensorFusionManager!.ekfStateStream.listen((
       state,
     ) {
@@ -708,9 +708,9 @@ class LocationStreamHandler {
       // BACKLOG #16: emit ekfHealth ~every 30s to track filter convergence,
       // phantom rejections, and cold-start frequency in production.
       final now = DateTime.now();
-      if (_lastEkfHealthEmit == null ||
-          now.difference(_lastEkfHealthEmit!).inSeconds >= 30) {
-        _lastEkfHealthEmit = now;
+      if (lastEkfHealthEmit == null ||
+          now.difference(lastEkfHealthEmit!).inSeconds >= 30) {
+        lastEkfHealthEmit = now;
         TelemetryService.instance.ekfHealth(
           sigmaSMeters: state.sigmaS,
           sigmaVMps: state.sigmaV,

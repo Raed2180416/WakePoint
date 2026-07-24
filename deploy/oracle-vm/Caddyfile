@@ -1,0 +1,25 @@
+# Replace geowake.example.com with your domain (or Oracle Cloud public IP)
+# Caddy auto-provisions SSL via Let's Encrypt
+
+geowake.example.com {
+	reverse_proxy geowake-api:3000
+}
+
+share.geowake.example.com {
+	reverse_proxy share-backend:3001
+}
+
+graphhopper.geowake.example.com {
+	reverse_proxy graphhopper:8989
+}
+
+uptime.geowake.example.com {
+	reverse_proxy uptime-kuma:3001
+}
+
+n8n.geowake.example.com {
+	reverse_proxy n8n:5678
+}
+
+# Ollama — keep internal only (no public exposure)
+# Access via Docker network from n8n/other services

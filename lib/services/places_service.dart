@@ -1,40 +1,25 @@
 import 'package:geowake2/services/api_client.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:developer' as dev;
 
 class PlacesService {
   final ApiClient _apiClient = ApiClient.instance;
+  static const _uuid = Uuid();
   String? _sessionToken; // Google Places session token per search session
   DateTime? _sessionStartedAt;
 
   /// Returns an active session token, creating one if needed.
   /// Tokens should be reused for autocomplete + place details in a single session.
-  /// COST LEAK #5: use a proper UUID v4 instead of a millisecond timestamp.
   /// Google bills per-request (not per-session) when the token is not a valid
-  /// UUID, so a timestamp token silently inflates Places API billing.
+  /// UUID v4, so a proper RFC 4122 UUID is required for free session billing.
   String _ensureSessionToken() {
     final now = DateTime.now();
     // Rotate token if older than ~3 minutes or missing.
     if (_sessionToken == null || _sessionStartedAt == null || now.difference(_sessionStartedAt!) > const Duration(minutes: 3)) {
-      _sessionToken = _generateUuidV4();
+      _sessionToken = _uuid.v4();
       _sessionStartedAt = now;
     }
     return _sessionToken!;
-  }
-
-  /// Generate a UUID v4 string without external dependencies.
-  /// Uses Dart's Random with 122 bits of randomness (RFC 4122 variant + version).
-  String _generateUuidV4() {
-    final random = DateTime.now().microsecondsSinceEpoch;
-    // Simple but effective: combine time + a counter for uniqueness.
-    // Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx (v4)
-    final hex = (random ^ (random >> 32)).toRadixString(16).padLeft(16, '0');
-    final hex2 = (random ~/ 0x10000).toRadixString(16).padLeft(16, '0');
-    final raw = '$hex$hex2'.replaceAll('-', '');
-    // Insert version (4) and variant (8/9/a/b) bits per RFC 4122 §4.4
-    final s = raw.padLeft(32, '0');
-    return '${s.substring(0, 8)}-${s.substring(8, 12)}-4${s.substring(13, 16)}'
-        '-${(String.fromCharCode(s.codeUnitAt(16) | 0x40))}${s.substring(17, 20)}'
-        '-${s.substring(20, 32)}';
   }
 
   void endSession() {

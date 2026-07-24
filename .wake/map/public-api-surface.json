@@ -1,4 +1,26 @@
 {
+  "geowake-server/src/controllers/aggregateController.js": [
+    {
+      "kind": "cjs-named",
+      "name": "ingest"
+    },
+    {
+      "kind": "cjs-named",
+      "name": "getSummary"
+    },
+    {
+      "kind": "cjs-named",
+      "name": "getFlows"
+    },
+    {
+      "kind": "cjs-named",
+      "name": "getCatchment"
+    },
+    {
+      "kind": "cjs-named",
+      "name": "getStats"
+    }
+  ],
   "lib/all_india_stops.dart": [
     {
       "kind": "const",
@@ -457,6 +479,40 @@
       "name": "ReachabilityTracker"
     }
   ],
+  "lib/dashboard/aggregate_data_dashboard.dart": [
+    {
+      "kind": "class",
+      "name": "AggregateDashboardApp"
+    },
+    {
+      "kind": "class",
+      "name": "AggregateApiClient"
+    },
+    {
+      "kind": "class",
+      "name": "AggregateDashboard"
+    },
+    {
+      "kind": "class",
+      "name": "OverviewTab"
+    },
+    {
+      "kind": "class",
+      "name": "OdFlowsTab"
+    },
+    {
+      "kind": "class",
+      "name": "CatchmentTab"
+    },
+    {
+      "kind": "class",
+      "name": "PrivacyTab"
+    },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
   "lib/dashboard/alarm_debouncer.dart": [
     {
       "kind": "class",
@@ -595,6 +651,46 @@
       "name": "DevServer"
     }
   ],
+  "lib/l10n/app_localizations.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizations"
+    },
+    {
+      "kind": "function",
+      "name": "lookupAppLocalizations"
+    }
+  ],
+  "lib/l10n/app_localizations_bn.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizationsBn"
+    }
+  ],
+  "lib/l10n/app_localizations_en.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizationsEn"
+    }
+  ],
+  "lib/l10n/app_localizations_hi.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizationsHi"
+    }
+  ],
+  "lib/l10n/app_localizations_ta.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizationsTa"
+    }
+  ],
+  "lib/l10n/app_localizations_te.dart": [
+    {
+      "kind": "class",
+      "name": "AppLocalizationsTe"
+    }
+  ],
   "lib/main.dart": [
     {
       "kind": "class",
@@ -604,6 +700,12 @@
       "kind": "class",
       "name": "MyAppState"
     },
+    {
+      "kind": "function",
+      "name": "main"
+    }
+  ],
+  "lib/main_aggregate_dashboard.dart": [
     {
       "kind": "function",
       "name": "main"
@@ -635,6 +737,12 @@
     {
       "kind": "class",
       "name": "RouteModel"
+    }
+  ],
+  "lib/screens/anti_theft_setup_screen.dart": [
+    {
+      "kind": "class",
+      "name": "AntiTheftSetupScreen"
     }
   ],
   "lib/screens/friends_rides_screen.dart": [
@@ -783,6 +891,16 @@
       "name": "AlarmPlayer"
     }
   ],
+  "lib/services/anti_theft_service.dart": [
+    {
+      "kind": "class",
+      "name": "AntiTheftService"
+    },
+    {
+      "kind": "enum",
+      "name": "AntiTheftSensitivity"
+    }
+  ],
   "lib/services/api_client.dart": [
     {
       "kind": "class",
@@ -831,6 +949,10 @@
     {
       "kind": "const",
       "name": "kDataAssetEgressEndpoint"
+    },
+    {
+      "kind": "const",
+      "name": "kCandidateEgressEndpoint"
     },
     {
       "kind": "const",
@@ -893,6 +1015,20 @@
     {
       "kind": "class",
       "name": "HttpAggregateEgressSink"
+    }
+  ],
+  "lib/services/data_asset/http_candidate_egress_sink.dart": [
+    {
+      "kind": "class",
+      "name": "CandidateEgressSink"
+    },
+    {
+      "kind": "class",
+      "name": "NullCandidateEgressSink"
+    },
+    {
+      "kind": "class",
+      "name": "HttpCandidateEgressSink"
     }
   ],
   "lib/services/data_asset/k_anonymity_filter.dart": [

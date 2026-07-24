@@ -20,14 +20,17 @@
 /// the only low-intrusion moments; the rest are listed so the policy can HARD
 /// DENY them — an ad there could compete with the alarm and is never allowed.
 enum AdPlacement {
-  /// Route-arming screen, before the trip. Banner/native, low intrusion.
+  /// Route-arming screen, before the trip. Banner + frequency-capped
+  /// interstitial (every 3 rides). The interstitial fires HERE — when the user
+  /// is starting a new ride after completing 3 — never during an ongoing trip.
   routeArming,
 
   /// Above-ground map/tracking screen. Small banner.
   mapTracking,
 
   /// Post-arrival summary the user opens AFTER they're off the train. The best
-  /// intent moment ("you've arrived at X"); interstitial/native, frequency-capped.
+  /// intent moment ("you've arrived at X"); native card / banner only — no
+  /// forced interstitial here (the user is getting off a train, time-pressured).
   postArrival,
 
   /// The alarm is ringing. NEVER an ad.
@@ -56,10 +59,12 @@ class AdPolicy {
     AdPlacement.postArrival,
   };
 
-  /// Interstitial/native surfaces subject to the every-N-rides frequency cap.
-  /// Banner surfaces (arming, map) are low-intrusion and NOT capped.
+  /// Interstitial surfaces subject to the every-N-rides frequency cap.
+  /// The 30s video fires at route-arming (start of a new ride, after 3
+  /// completed rides) — never during an ongoing trip, never at arrival.
+  /// Banner surfaces (map, post-arrival) are low-intrusion and NOT capped.
   static const Set<AdPlacement> frequencyCappedPlacements = <AdPlacement>{
-    AdPlacement.postArrival,
+    AdPlacement.routeArming,
   };
 
   /// Surfaces where an ad is NEVER permitted — the alarm and its wake path.

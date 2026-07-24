@@ -7,6 +7,8 @@
 // or prefs fail, the user is simply a free (never a broken) user, and the core
 // alarm is never affected (PremiumService.canUseCoreAlarm is always true).
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,7 +29,13 @@ class MonetizationService {
 
   late PremiumService premium;
   PurchaseBackend? _backend;
+  IapPurchaseBackend? _iapBackend;
   bool _ready = false;
+
+  /// Reactive set of product IDs with a PENDING purchase (e.g. UPI processing).
+  /// UI observes this to show "Payment processing…" banners.
+  final ValueNotifier<Set<String>> pendingPurchasesListenable =
+      ValueNotifier<Set<String>>(<String>{});
 
   /// Reactive entitlement tier. UI wraps this in a [ValueListenableBuilder] so a
   /// purchase / rewarded day-pass instantly hides ads + unlocks Pro with no
@@ -62,6 +70,7 @@ class MonetizationService {
         final iap = IapPurchaseBackend();
         await iap.init();
         _backend = iap;
+        _iapBackend = iap;
       }
       premium = PremiumService(
         backend: _backend!,
@@ -76,11 +85,20 @@ class MonetizationService {
         await premium.applyOwnedProducts(owned);
         _syncTier();
       };
+      // Wire pending purchase tracking (UPI-specific) so the UI can show
+      // "Payment processing…" banners. Critical for India payment flows.
+      _iapBackend?.onPendingChanged = (pendingIds) {
+        pendingPurchasesListenable.value = Set<String>.from(pendingIds);
+      };
       await premium.load();
       final prefs = await SharedPreferences.getInstance();
       _ridesSinceLastAd = prefs.getInt(_ridesKey) ?? 0;
       _ready = true;
       _syncTier();
+      // Reconcile purchases completed while the app wasn't running (e.g. a
+      // UPI payment that cleared overnight). Fire-and-forget so it never
+      // blocks startup. Google recommends this on every app launch.
+      unawaited(_iapBackend?.queryPastPurchases());
       // Ad SDK init is slow and non-essential — never block startup on it.
       // ignore: discarded_futures
       AdService.instance.init();
@@ -97,6 +115,9 @@ class MonetizationService {
   //    reactive [tierListenable] stays in sync. ──────────────────────────────
 
   /// Buy the one-time Pro unlock. Returns true iff granted.
+  /// Returns false on cancel, error, or timeout. For UPI pending purchases,
+  /// the [pendingPurchasesListenable] will fire so the UI can show a
+  /// "Payment processing…" banner — the purchase may still complete later.
   Future<bool> buyPro() async {
     if (!_ready) return false;
     final ok = await premium.buyPro();

@@ -62,6 +62,27 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
                           'proguard-rules.pro'
+            // Fallback to the debug keystore when no production signing key is
+            // configured in key.properties. This lets `flutter build apk --release`
+            // produce an installable lean APK for testing without a release
+            // keystore. When a real storeFile/storePassword/keyAlias/keyPassword
+            // are present in key.properties, those take precedence.
+            if (keystoreProperties['storeFile'] != null) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
+        }
+    }
+
+    signingConfigs {
+        if (keystoreProperties['storeFile'] != null) {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
         }
     }
 

@@ -16,11 +16,15 @@ import 'screens/homescreen.dart';
 import 'screens/monetization/paywall_screen.dart';
 import 'screens/mobility_data_consent_screen.dart';
 import 'services/data_asset/data_asset_pipeline.dart';
+import 'services/data_asset/http_candidate_egress_sink.dart';
+import 'services/data_asset/data_asset_config.dart';
+import 'services/api_client.dart';
 import 'services/widget/home_widget_bridge.dart';
 import 'screens/guardian_setup_screen.dart';
 import 'screens/monetization/post_arrival_screen.dart';
 import 'screens/friends_rides_screen.dart';
 import 'screens/report_problem_screen.dart';
+import 'screens/anti_theft_setup_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:app_links/app_links.dart';
 import 'services/share/share_backend_config.dart';
@@ -28,6 +32,8 @@ import 'services/share/guardian_service.dart';
 import 'services/share/journey_share_service.dart';
 import 'services/share/followed_rides_service.dart';
 import 'services/share/share_deep_link.dart';
+import 'services/anti_theft_service.dart';
+import 'l10n/app_localizations.dart';
 
 import 'screens/maptracking.dart';
 import 'screens/otherimpservices/preload_map_screen.dart';
@@ -57,8 +63,12 @@ Future<void> main() async {
         .recordError(details.exception, details.stack, fatal: false);
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    TelemetryService.instance.recordError(error, stack, fatal: true);
-    _markSessionCrashed();
+    // Platform channel errors (e.g. flutter_local_notifications NPE when the
+    // background-service context isn't ready, FGS SecurityException when location
+    // permission hasn't been granted yet) are non-fatal — the app continues fine.
+    // Record them for telemetry but do NOT mark the session as crashed, otherwise
+    // the "GeoWake hit a problem" dialog fires on every launch.
+    TelemetryService.instance.recordError(error, stack, fatal: false);
     return true; // handled — do not crash the isolate
   };
 
@@ -106,9 +116,19 @@ Future<void> main() async {
     // delay, reorder, or abort the arm→track→alarm spine. Fire-and-forget and
     // fail-open to disabled; inert unless the user is Pro + turned Guardian on.
     unawaited(GuardianService.instance.init());
+    // Anti-theft mode (Pro): load persisted enabled/sensitivity state. Inert
+    // unless the user is Pro + enabled it. Fire-and-forget, never blocks startup.
+    unawaited(AntiTheftService.instance.load());
     // On-device mobility aggregator: consent defaults OFF and egress is a no-op,
     // so init is inert until the user opts in. Never blocks startup.
-    unawaited(DataAssetPipeline.instance.init());
+    // The candidate egress sink uploads on-device ReleaseCandidateMatrix to the
+    // backend merge engine; it's a no-op while kDataAssetEgressEnabled is false.
+    unawaited(DataAssetPipeline.instance.init(
+      candidateSink: HttpCandidateEgressSink(
+        endpoint: kCandidateEgressEndpoint,
+        tokenProvider: () => ApiClient.instance.authToken,
+      ),
+    ));
 
     // Home-screen widget bridge: registers widget-tap handling and paints an
     // initial card. Fail-open — a missing/broken home_widget plugin disables the
@@ -146,7 +166,13 @@ Future<void> main() async {
     runApp(const MyApp());
   }, (Object error, StackTrace stack) {
     TelemetryService.instance.recordError(error, stack, fatal: true);
-    _markSessionCrashed();
+    // Layout assertions during the warm-up frame (e.g. "RenderBox was not laid
+    // out: RenderFractionalTranslation") are transient platform-view race
+    // conditions that self-resolve on the next frame. They are not real crashes
+    // and must not trigger the crash-report dialog on every launch.
+    final isLayoutAssertion = error is AssertionError &&
+        error.toString().contains('hasSize');
+    if (!isLayoutAssertion) _markSessionCrashed();
     dev.log('Uncaught zone error: $error', name: 'main', error: error, stackTrace: stack);
   });
 }
@@ -334,6 +360,8 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'GeoWake',
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       navigatorKey: NavigationService.navigatorKey,
       theme: isDarkMode ? AppThemes.darkTheme : AppThemes.lightTheme,
       initialRoute: '/splash',
@@ -382,6 +410,12 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
         if (settings.name == '/postArrival') {
           return MaterialPageRoute(
             builder: (_) => const PostArrivalScreen(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/antiTheft') {
+          return MaterialPageRoute(
+            builder: (_) => const AntiTheftSetupScreen(),
             settings: settings,
           );
         }

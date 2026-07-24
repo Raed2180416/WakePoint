@@ -18,6 +18,7 @@ import 'package:geowake2/services/transfer_utils.dart';
 import 'settingsdrawer.dart';
 import 'package:geowake2/services/trackingservice.dart';
 import 'package:geowake2/services/share/guardian_service.dart';
+import 'package:geowake2/services/anti_theft_service.dart';
 import 'package:geowake2/services/widget/widget_arm_handler.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -348,6 +349,14 @@ class HomeScreenState extends State<HomeScreen> {
               })
               .map((loc) => {...loc, 'isLocal': true})
               .toList();
+
+      // Cost optimization: skip remote API call for single-character queries.
+      // Google Places charges per request; 1-char queries have low signal and
+      // high volume (fast typers). Show local matches only until >= 2 chars.
+      if (query.trim().length < 2) {
+        if (mounted) setState(() => _autocompleteResults = localMatches);
+        return;
+      }
 
       try {
         final remoteResults = await _placesService.fetchAutocompleteResults(
@@ -1052,6 +1061,12 @@ class HomeScreenState extends State<HomeScreen> {
         ),
       );
 
+      // Anti-theft mode (Pro): start accelerometer+gyro monitoring if enabled.
+      // Fire-and-forget and self-gating — no-ops unless the user is Pro +
+      // enabled anti-theft. Runs AFTER startTracking() so it can never delay
+      // or fail the arm→track→alarm spine. Never throws.
+      unawaited(AntiTheftService.instance.startMonitoring());
+
       // Remember this trip (recents + frequency). Fire-and-forget — must never
       // block or fail the arming flow. Origin lets a later re-arm reuse cache.
       unawaited(
@@ -1373,18 +1388,18 @@ class HomeScreenState extends State<HomeScreen> {
     final Color searchBarFillColor =
         isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     final Color clearSearchIconColor =
-        isDarkMode ? colorScheme.onSurface.withOpacity(0.75) : Colors.black54;
+        isDarkMode ? colorScheme.onSurface.withValues(alpha: 0.75) : Colors.black54;
     final Color clearChipBg =
         isDarkMode
-            ? colorScheme.surfaceContainerHighest.withOpacity(0.45)
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.45)
             : Colors.grey.shade200;
     final Color clearChipBorder =
         isDarkMode
-            ? colorScheme.outline.withOpacity(0.5)
+            ? colorScheme.outline.withValues(alpha: 0.5)
             : Colors.grey.shade300;
     final Color clearChipIconColor =
         isDarkMode
-            ? colorScheme.onSurfaceVariant.withOpacity(0.9)
+            ? colorScheme.onSurfaceVariant.withValues(alpha: 0.9)
             : Colors.grey.shade700;
 
     return Scaffold(
@@ -1487,8 +1502,9 @@ class HomeScreenState extends State<HomeScreen> {
                                         ),
                                         onPressed: () {
                                           _searchController.clear();
-                                          if (mounted)
+                                          if (mounted) {
                                             _showTopRecentLocations();
+                                          }
                                         },
                                       )
                                       : null,

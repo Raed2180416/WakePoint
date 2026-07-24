@@ -1,8 +1,8 @@
 // lib/services/monetization/purchase_backend_impl.dart
 //
-// Concrete PurchaseBackend over `in_app_purchase`. The entitlement LOGIC lives
-// in premium_service.dart (unit-tested against FakePurchaseBackend); this is the
-// store adapter.
+// Concrete PurchaseBackend over `in_app_purchase` (v3.3.0 / Play Billing 7.1.1).
+// The entitlement LOGIC lives in premium_service.dart (unit-tested against
+// FakePurchaseBackend); this is the store adapter.
 //
 // DESIGN: FAIL-CLOSED. A purchase is reported successful ONLY when the store
 // delivers a `purchased`/`restored` status on the purchase stream — never on a
@@ -10,14 +10,30 @@
 // we never grant Pro without a real transaction (and we always completePurchase
 // so the store doesn't refund/retry).
 //
+// INDIA-SPECIFIC (UPI): UPI payments frequently enter a PENDING state that can
+// take minutes to hours to clear. We track pending purchases and expose a
+// [pendingProductIds] stream so the UI can show "Payment processing…" instead
+// of silently doing nothing. When a pending purchase clears, the stream fires
+// again with `purchased` status and entitlement is granted — even if the
+// buyOneTime() call already timed out.
+//
+// RESTORE: Uses a Completer that resolves when restored purchases arrive on the
+// stream (with a 5s timeout fallback), instead of a fixed delay.
+//
+// LAUNCH RECONCILIATION: [queryPastPurchases] is called at app start to catch
+// purchases completed while the app wasn't running (e.g. a UPI payment that
+// cleared overnight). This is the Google-recommended pattern.
+//
 // DEVICE-VERIFY: real payment flows (pending, deferred, interrupted, restore
 // across devices) can only be validated with a store sandbox account on-device.
 // The persistent stream listener here is the canonical pattern for exactly those
 // asynchronous/late-arriving purchases.
 
 import 'dart:async';
+import 'dart:developer' as dev;
 
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'purchase_backend.dart';
 
@@ -28,10 +44,23 @@ class IapPurchaseBackend implements PurchaseBackend {
   @override
   void Function(Set<String> owned)? onEntitlementChanged;
 
+  /// Fired when a purchase enters or leaves the PENDING state, so the UI can
+  /// show/hide a "Payment processing…" message. Critical for India (UPI).
+  void Function(Set<String> pendingIds)? onPendingChanged;
+
   final Set<String> _owned = <String>{};
+  final Set<String> _pendingProductIds = <String>{};
   final Map<String, Completer<bool>> _pendingBuys = <String, Completer<bool>>{};
 
+  /// Completer for restore — resolves when restored purchases arrive on stream.
+  Completer<Set<String>>? _restoreCompleter;
+
   bool _available = false;
+
+  static const String _tokenKeyPrefix = 'gw_purchase_token_';
+
+  /// Products with a currently PENDING purchase (e.g. UPI payment processing).
+  Set<String> get pendingProductIds => Set<String>.unmodifiable(_pendingProductIds);
 
   /// Set up the long-lived purchase-stream listener. Call once at app start,
   /// BEFORE reading any entitlement, so late/pending/restored purchases are
@@ -50,30 +79,77 @@ class IapPurchaseBackend implements PurchaseBackend {
   }
 
   void _onPurchases(List<PurchaseDetails> purchases) {
+    bool pendingChanged = false;
+    bool ownedChanged = false;
+
     for (final p in purchases) {
       switch (p.status) {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           _owned.add(p.productID);
+          _pendingProductIds.remove(p.productID);
+          pendingChanged = true;
+          ownedChanged = true;
           _pendingBuys[p.productID]?.complete(true);
+          // Persist purchase token for server-side verification + support.
+          _persistPurchaseToken(p);
           // Notify PremiumService EVEN IF no buy is in flight — this is the path
           // that grants Pro for a UPI/pending purchase that clears minutes after
           // buyOneTime already timed out. Without it, the user is charged but
           // stays Free until a manual restore.
-          onEntitlementChanged?.call(<String>{..._owned});
           break;
         case PurchaseStatus.error:
+          _pendingProductIds.remove(p.productID);
+          pendingChanged = true;
+          _pendingBuys[p.productID]?.complete(false);
+          if (p.error != null) {
+            dev.log('IAP purchase error: ${p.error!.code} — ${p.error!.message}',
+                name: 'IAP');
+          }
+          break;
         case PurchaseStatus.canceled:
+          _pendingProductIds.remove(p.productID);
+          pendingChanged = true;
           _pendingBuys[p.productID]?.complete(false);
           break;
         case PurchaseStatus.pending:
-          break; // wait; do not resolve
+          // UPI / bank transfer — payment initiated but not yet confirmed.
+          // Do NOT resolve the buy completer — wait for purchased or error.
+          // Track for UI feedback.
+          if (!_pendingProductIds.contains(p.productID)) {
+            _pendingProductIds.add(p.productID);
+            pendingChanged = true;
+          }
+          dev.log('IAP purchase pending for ${p.productID} — likely UPI/bank transfer',
+              name: 'IAP');
+          break;
       }
       // Always acknowledge so the store finalises the transaction.
       if (p.pendingCompletePurchase) {
         _iap.completePurchase(p);
       }
     }
+
+    if (ownedChanged) {
+      onEntitlementChanged?.call(<String>{..._owned});
+    }
+    if (pendingChanged) {
+      onPendingChanged?.call(<String>{..._pendingProductIds});
+    }
+
+    // Resolve restore completer if we got any restored purchases.
+    if (ownedChanged && _restoreCompleter != null && !_restoreCompleter!.isCompleted) {
+      _restoreCompleter!.complete(<String>{..._owned});
+    }
+  }
+
+  /// Persist the purchase token for server-side verification and support/refund
+  /// tracking. Best-effort — never blocks the purchase flow.
+  Future<void> _persistPurchaseToken(PurchaseDetails p) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('$_tokenKeyPrefix${p.productID}', p.purchaseID ?? '');
+    } catch (_) {/* best-effort */}
   }
 
   @override
@@ -94,6 +170,7 @@ class IapPurchaseBackend implements PurchaseBackend {
       );
       if (!started) return false;
       // Resolve ONLY on a real stream event; time out fail-closed.
+      // 5 minutes allows for UPI collection flows that require user action.
       return await completer.future.timeout(
         const Duration(minutes: 5),
         onTimeout: () => false,
@@ -109,12 +186,47 @@ class IapPurchaseBackend implements PurchaseBackend {
   Future<Set<String>> restore() async {
     if (!_available) return <String>{};
     try {
+      // Use a Completer that resolves when restored purchases arrive on the
+      // stream, with a timeout fallback. This is more reliable than a fixed delay.
+      _restoreCompleter = Completer<Set<String>>();
       await _iap.restorePurchases();
-      // Restored purchases arrive asynchronously on the stream; give them a beat.
-      await Future<void>.delayed(const Duration(seconds: 2));
-      return Set<String>.from(_owned);
+      // Restored purchases arrive asynchronously on the stream. Wait up to 5s
+      // for them; if none arrive, return current owned set (possibly empty).
+      return await _restoreCompleter!.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Set<String>.from(_owned),
+      );
     } catch (_) {
       return <String>{};
+    } finally {
+      _restoreCompleter = null;
+    }
+  }
+
+  /// Query existing purchases at app launch. This catches purchases completed
+  /// while the app wasn't running (e.g. a UPI payment that cleared overnight).
+  /// Google recommends calling this on every app launch / foreground.
+  ///
+  /// On the Flutter `in_app_purchase` plugin, the purchase stream replays
+  /// unconsumed purchases on listener attach, so this is partially handled by
+  /// the persistent stream. However, calling restorePurchases() with a short
+  /// timeout ensures we reconcile even if the stream missed events.
+  Future<void> queryPastPurchases() async {
+    if (!_available) return;
+    try {
+      // The plugin's restorePurchases triggers the stream to replay existing
+      // non-consumed purchases. We use a short timeout since we just want to
+      // reconcile quickly at launch.
+      _restoreCompleter = Completer<Set<String>>();
+      await _iap.restorePurchases();
+      await _restoreCompleter!.future.timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => <String>{},
+      );
+    } catch (_) {
+      // Fail-open — existing owned set is unchanged.
+    } finally {
+      _restoreCompleter = null;
     }
   }
 

@@ -88,33 +88,33 @@ void main() {
 
       void assertBannersOnAlarmNever() {
         // Low-intrusion banners are always eligible for a free user...
-        expect(eligible(AdPlacement.routeArming), isTrue);
         expect(eligible(AdPlacement.mapTracking), isTrue);
+        expect(eligible(AdPlacement.postArrival), isTrue);
         // ...and the alarm / wake / lock-screen NEVER are, at any ride count.
         for (final p in AdPolicy.alwaysForbiddenPlacements) {
           expect(eligible(p), isFalse, reason: 'no ad on the alarm path ($p)');
         }
       }
 
-      // Counter 0: below the cap → post-arrival suppressed; banners on; alarm off.
+      // Counter 0: below the cap → route-arming interstitial suppressed; banners on; alarm off.
       expect(svc.ridesSinceLastAd, 0);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.routeArming), isFalse);
       assertBannersOnAlarmNever();
 
       // Rides 1 and 2: still under the cap.
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 1);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.routeArming), isFalse);
       assertBannersOnAlarmNever();
 
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 2);
-      expect(eligible(AdPlacement.postArrival), isFalse);
+      expect(eligible(AdPlacement.routeArming), isFalse);
 
-      // Ride 3: hits the cap → the post-arrival interstitial becomes eligible.
+      // Ride 3: hits the cap → the route-arming interstitial becomes eligible.
       await svc.recordRide();
       expect(svc.ridesSinceLastAd, 3);
-      expect(eligible(AdPlacement.postArrival), isTrue);
+      expect(eligible(AdPlacement.routeArming), isTrue);
       // Crossing the cap must NOT open the alarm path or change banner rules.
       assertBannersOnAlarmNever();
 
@@ -127,8 +127,8 @@ void main() {
         () async {
       final svc = MonetizationService.instance;
       const policy = AdPolicy();
-      bool postArrivalEligible() => policy.canShow(
-            AdPlacement.postArrival,
+      bool routeArmingEligible() => policy.canShow(
+            AdPlacement.routeArming,
             isPro: svc.premium.isPro,
             ridesSinceLastAd: svc.ridesSinceLastAd,
           );
@@ -137,21 +137,21 @@ void main() {
       await svc.recordRide();
       await svc.recordRide();
       await svc.recordRide();
-      expect(postArrivalEligible(), isTrue);
+      expect(routeArmingEligible(), isTrue);
 
-      // The app shows the post-arrival ad, then resets the counter.
+      // The app shows the route-arming ad, then resets the counter.
       await svc.markAdShown();
       expect(svc.ridesSinceLastAd, 0);
       // Immediately suppressed again — no back-to-back interstitials.
-      expect(postArrivalEligible(), isFalse);
+      expect(routeArmingEligible(), isFalse);
 
       // Two more rides: still suppressed.
       await svc.recordRide();
       await svc.recordRide();
-      expect(postArrivalEligible(), isFalse);
+      expect(routeArmingEligible(), isFalse);
       // The third ride re-opens eligibility.
       await svc.recordRide();
-      expect(postArrivalEligible(), isTrue);
+      expect(routeArmingEligible(), isTrue);
     });
   });
 
@@ -227,9 +227,9 @@ void main() {
       expect(premium.isPro, isFalse);
 
       const policy = AdPolicy();
-      // While free at/above the cap, the post-arrival interstitial WOULD show.
+      // While free at/above the cap, the route-arming interstitial WOULD show.
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: premium.isPro, ridesSinceLastAd: 3),
         isTrue,
       );
@@ -297,12 +297,12 @@ void main() {
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: premium.isPro, ridesSinceLastAd: 3),
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.routeArming,
+        policy.canShow(AdPlacement.mapTracking,
             isPro: premium.isPro, ridesSinceLastAd: 0),
         isTrue,
       );
@@ -354,12 +354,12 @@ void main() {
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.postArrival,
+        policy.canShow(AdPlacement.routeArming,
             isPro: premium.isPro, ridesSinceLastAd: 3),
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.routeArming,
+        policy.canShow(AdPlacement.mapTracking,
             isPro: premium.isPro, ridesSinceLastAd: 0),
         isTrue,
       );

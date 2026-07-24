@@ -34,10 +34,9 @@ class _TrainSim {
   _TrainSim({
     required this.trueMaxMps,
     required this.stationMeters,
-    this.stepSeconds = 1.0,
     this.dwellSeconds = 0.0,
     required int seed,
-  }) : rng = math.Random(seed);
+  }) : stepSeconds = 1.0, rng = math.Random(seed);
 
   /// One tick. Returns the (t, progress) after the tick.
   void step() {

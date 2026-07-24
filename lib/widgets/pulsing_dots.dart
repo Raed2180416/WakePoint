@@ -40,7 +40,7 @@ class _PulsingDotsState extends State<PulsingDots> {
         margin: const EdgeInsets.symmetric(horizontal: 3),
         width: sizes[i],
         height: sizes[i],
-        decoration: BoxDecoration(color: widget.color.withOpacity(0.8), shape: BoxShape.circle),
+        decoration: BoxDecoration(color: widget.color.withValues(alpha: 0.8), shape: BoxShape.circle),
       )),
     );
   }

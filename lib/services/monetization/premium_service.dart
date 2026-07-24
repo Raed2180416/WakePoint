@@ -239,6 +239,11 @@ class PremiumService {
   /// automatic/continuous Pro variant.)
   bool get canUseGuardianMode => isPro;
 
+  /// Anti-theft mode — accelerometer-based phone snatch detection that triggers
+  /// a loud, continuous alarm if someone moves your phone while you sleep on
+  /// transit. Pro-only convenience feature (the core wake alarm is always free).
+  bool get canUseAntiTheft => isPro;
+
   // NOTE: there is deliberately NO "snooze" gate. A wake-before-your-stop alarm
   // must never be delayable — snoozing would make the rider miss their stop.
   // The safety behaviour for that moment is escalating RE-ALERT-until-

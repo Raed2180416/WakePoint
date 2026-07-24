@@ -52,3 +52,24 @@ jobs:
 
       - name: Full test suite (all pass)
         run: flutter test
+
+  # ──────────────────────────────────────────────────
+  # Security: secret scanning + SAST + invariant protection
+  # ──────────────────────────────────────────────────
+  security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks — secret scanning
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Semgrep — SAST + invariant protection
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: .semgrep.yml

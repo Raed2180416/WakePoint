@@ -229,7 +229,7 @@ class _RingtonesScreenState extends State<RingtonesScreen> {
           // Material and ListTile give us the standard row appearance.
           return Material(
             // Give a subtle background color to the selected item.
-            color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
             child: ListTile(
               onTap: () => _onRingtoneSelected(ringtone.assetPath), // Make the whole row tappable.
               leading: Radio<String>(

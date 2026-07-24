@@ -120,6 +120,10 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   String get _base =>
       baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
 
+  /// Sanitize a share id for use in a URL path segment. Prevents path
+  /// traversal (e.g. `../../admin`) from a malicious deep link.
+  String _safeId(String id) => Uri.encodeComponent(id.trim());
+
   @override
   Future<String?> createShare(ShareSession session) async {
     try {
@@ -149,7 +153,7 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
     try {
       await _client
           .post(
-            Uri.parse('$_base/v1/share/$shareId/ping'),
+            Uri.parse('$_base/v1/share/${_safeId(shareId)}/ping'),
             headers: _headers,
             body: jsonEncode(snapshot.toJson()),
           )
@@ -161,7 +165,7 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   Future<void> markArrived(String shareId) async {
     try {
       await _client
-          .post(Uri.parse('$_base/v1/share/$shareId/arrived'),
+          .post(Uri.parse('$_base/v1/share/${_safeId(shareId)}/arrived'),
               headers: _headers)
           .timeout(timeout);
     } catch (_) {/* best effort */}
@@ -171,7 +175,7 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   Future<void> revoke(String shareId) async {
     try {
       await _client
-          .delete(Uri.parse('$_base/v1/share/$shareId'), headers: _headers)
+          .delete(Uri.parse('$_base/v1/share/${_safeId(shareId)}'), headers: _headers)
           .timeout(timeout);
     } catch (_) {/* best effort */}
   }
@@ -182,7 +186,7 @@ class HttpShareBackend implements ShareBackend, ShareStatusReader {
   Future<ShareStatusView?> getStatus(String id) async {
     try {
       final res = await _client
-          .get(Uri.parse('$_base/v1/share/$id/status'), headers: _headers)
+          .get(Uri.parse('$_base/v1/share/${_safeId(id)}/status'), headers: _headers)
           .timeout(timeout);
       if (res.statusCode == 410) return ShareStatusView.gone(id);
       if (res.statusCode == 404) return null;

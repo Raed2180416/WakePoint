@@ -20,6 +20,7 @@ digraph WakePoint {
   "quality-simulation-testing" [label="Quality, Simulation & Test Infrastructure\n(12 files)"];
   "WakePoint" -> "quality-simulation-testing";
   "app-foundation-config" -> "live-tracking-runtime" [penwidth=1.00 color="#cc7722"];
+  "app-foundation-config" -> "platform-connectivity-services" [penwidth=1.00 color="#cc7722"];
   "app-foundation-config" -> "user-facing-screens" [penwidth=3.32 color="#cc7722"];
   "ekf-sensor-fusion" -> "app-foundation-config" [penwidth=1.00 color="#cc7722"];
   "live-tracking-runtime" -> "app-foundation-config" [penwidth=3.00 color="#cc7722"];
@@ -27,7 +28,7 @@ digraph WakePoint {
   "live-tracking-runtime" -> "platform-connectivity-services" [penwidth=2.58 color="#cc7722"];
   "live-tracking-runtime" -> "routing-route-sessions" [penwidth=5.00 color="#cc7722"];
   "live-tracking-runtime" -> "wakeup-alarm-engine" [penwidth=4.17 color="#cc7722"];
-  "platform-connectivity-services" -> "app-foundation-config" [penwidth=2.00 color="#cc7722"];
+  "platform-connectivity-services" -> "app-foundation-config" [penwidth=2.58 color="#cc7722"];
   "platform-connectivity-services" -> "ekf-sensor-fusion" [penwidth=2.58 color="#cc7722"];
   "platform-connectivity-services" -> "routing-route-sessions" [penwidth=1.00 color="#cc7722"];
   "quality-simulation-testing" -> "app-foundation-config" [penwidth=3.32 color="#cc7722"];

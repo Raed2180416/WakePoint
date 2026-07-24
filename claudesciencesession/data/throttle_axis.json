@@ -1,1 +1,0 @@
-{"regimes": ["foreground", "doze_batched", "throttled"], "effective_hz": {"foreground": 100.0, "doze_batched": 50.0, "throttled": 10.0}, "rationale": "wake alarm runs screen-off; Android Doze/iOS batch or collapse sensor rate. 100Hz results are optimistic."}

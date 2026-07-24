@@ -93,18 +93,18 @@ void main() {
     test('behaviour is identical to raw math for purely north-south segments',
         () {
       // Pure N-S segment: no longitude delta, so cos(lat) must cancel out.
-      final ns_a = const LatLng(60.000, 10.000);
-      final ns_b = const LatLng(60.002, 10.000);
-      final ns_p = const LatLng(60.0011, 10.020); // off to the east
+      final nsA = const LatLng(60.000, 10.000);
+      final nsB = const LatLng(60.002, 10.000);
+      final nsP = const LatLng(60.0011, 10.020); // off to the east
 
-      final got = projectPointOnSegment(ns_a, ns_b, ns_p);
-      final raw = _oldRaw(ns_a, ns_b, ns_p);
+      final got = projectPointOnSegment(nsA, nsB, nsP);
+      final raw = _oldRaw(nsA, nsB, nsP);
 
       expect(got.t, closeTo(raw.t, 1e-12));
       expect(got.point.latitude, closeTo(raw.snapped.latitude, 1e-12));
       // Snapped longitude stays pinned to the meridian either way.
-      expect(got.point.longitude, closeTo(ns_a.longitude, 1e-12));
-      expect(raw.snapped.longitude, closeTo(ns_a.longitude, 1e-12));
+      expect(got.point.longitude, closeTo(nsA.longitude, 1e-12));
+      expect(raw.snapped.longitude, closeTo(nsA.longitude, 1e-12));
     });
 
     test('clamps the parameter to the segment endpoints', () {

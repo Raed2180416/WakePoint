@@ -26,17 +26,14 @@ class RouteEntry {
     required this.points,
     DateTime? createdAt,
     DateTime? lastUsed,
-    int usageCount = 0,
-    int? lastSnapIndex,
-    double? lastProgressMeters,
+    this.usageCount = 0,
+    this.lastSnapIndex,
+    this.lastProgressMeters,
   }) : createdAt = createdAt ?? DateTime.now(),
        lastUsed = lastUsed ?? DateTime.now(),
-       usageCount = usageCount,
        bbox = _computeBounds(points),
        lengthMeters = _computeLength(points),
-       cumMeters = _computeCum(points),
-       lastSnapIndex = lastSnapIndex,
-       lastProgressMeters = lastProgressMeters;
+       cumMeters = _computeCum(points);
 
   static LatLngBounds _computeBounds(List<LatLng> pts) {
     if (pts.isEmpty) {

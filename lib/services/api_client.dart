@@ -36,6 +36,9 @@ class ApiClient {
   /// Public accessor for the base URL (used by tests/config validation).
   static String get baseUrl => _baseUrl;
 
+  /// Public accessor for the current auth token (used by candidate egress sink).
+  String? get authToken => _authToken;
+
   String? _authToken;
   String? _deviceId;
   DateTime? _tokenExpiration;

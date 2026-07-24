@@ -19,6 +19,7 @@ enum PaywallSource {
   customSound,
   widget,
   postArrival,
+  antiTheft,
 }
 
 /// The one gate every premium tap goes through.

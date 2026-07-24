@@ -1,0 +1,152 @@
+# GeoWake Critical Invariant Protection Rules
+# These rules flag PRs that touch critical alarm/consent/monetization logic
+# for mandatory human review. The AI agent must NEVER autonomously change these.
+
+rules:
+  # ──────────────────────────────────────────────────
+  # Core alarm must stay free — never gate behind Pro
+  # ──────────────────────────────────────────────────
+  - id: geowake-no-pro-gate-on-core-alarm
+    message: "CRITICAL INVARIANT: Core alarm features must never be gated behind Pro. This change touches premium_service.dart — requires human review."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/monetization/premium_service.dart"
+    patterns:
+      - pattern: canUseCoreAlarm
+      - pattern-not-inside: "// ... test code ..."
+    metadata:
+      invariant: "Core alarm is always free"
+      source: AGENTS.md
+
+  - id: geowake-no-pro-gate-on-backstop
+    message: "CRITICAL INVARIANT: canUseBackstopAlarm must never be gated behind Pro."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/monetization/premium_service.dart"
+    patterns:
+      - pattern: canUseBackstopAlarm
+    metadata:
+      invariant: "Core alarm is always free"
+      source: AGENTS.md
+
+  - id: geowake-no-pro-gate-on-reliability
+    message: "CRITICAL INVARIANT: canUseBasicReliability must never be gated behind Pro."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/monetization/premium_service.dart"
+    patterns:
+      - pattern: canUseBasicReliability
+    metadata:
+      invariant: "Core alarm is always free"
+      source: AGENTS.md
+
+  - id: geowake-no-pro-gate-on-single-route
+    message: "CRITICAL INVARIANT: canUseSingleActiveRoute must never be gated behind Pro."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/monetization/premium_service.dart"
+    patterns:
+      - pattern: canUseSingleActiveRoute
+    metadata:
+      invariant: "Core alarm is always free"
+      source: AGENTS.md
+
+  # ──────────────────────────────────────────────────
+  # Consent must stay default-OFF
+  # ──────────────────────────────────────────────────
+  - id: geowake-consent-default-off
+    message: "CRITICAL INVARIANT: Mobility data sharing consent must default to OFF (false). Review required."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/data_asset/mobility_consent_service.dart"
+    patterns:
+      - pattern: "true"
+      - inside: "bool.*default.*=.*"
+    metadata:
+      invariant: "Consent is default-OFF"
+      source: AGENTS.md
+
+  # ──────────────────────────────────────────────────
+  # Never-late guarantee — replay harness must not be weakened
+  # ──────────────────────────────────────────────────
+  - id: geowake-never-late-test-protection
+    message: "CRITICAL INVARIANT: Never-late replay harness test — changes require human review."
+    severity: WARNING
+    languages: [dart]
+    paths:
+      include:
+        - "test/ekf/replay_harness_test.dart"
+    pattern: test
+    metadata:
+      invariant: "Never-late guarantee"
+      source: AGENTS.md
+
+  # ──────────────────────────────────────────────────
+  # No snooze — alarm must never be delayable
+  # ──────────────────────────────────────────────────
+  - id: geowake-no-snooze
+    message: "CRITICAL INVARIANT: A wake alarm must never be delayable (no snooze). Use escalating re-alert instead."
+    severity: ERROR
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/notification_service.dart"
+    patterns:
+      - pattern: snooze
+      - pattern: delay
+    metadata:
+      invariant: "No snooze"
+      source: AGENTS.md
+
+  # ──────────────────────────────────────────────────
+  # Fail-open for Pro features — Pro failure must not affect core alarm
+  # ──────────────────────────────────────────────────
+  - id: geowake-fail-open-pro-features
+    message: "REVIEW: Pro feature error handling — ensure this fails open (degrades gracefully) without affecting core alarm."
+    severity: WARNING
+    languages: [dart]
+    paths:
+      include:
+        - "lib/services/anti_theft_service.dart"
+        - "lib/services/share/guardian_service.dart"
+        - "lib/services/monetization/monetization_service.dart"
+    patterns:
+      - pattern: catch
+    metadata:
+      invariant: "Fail-open for Pro features"
+      source: AGENTS.md
+
+  # ──────────────────────────────────────────────────
+  # No leaked API keys in source
+  # ──────────────────────────────────────────────────
+  - id: geowake-no-leaked-api-keys
+    message: "SECURITY: Google Maps API key detected in source. Keys must be in key.properties (gitignored) or environment variables only."
+    severity: ERROR
+    languages: [dart, javascript, typescript, yaml, json, groovy]
+    patterns:
+      - pattern: AIzaSy[A-Za-z0-9_\-]{33}
+    metadata:
+      category: security
+      source: build.gradle leak incident
+
+  # ──────────────────────────────────────────────────
+  # No hardcoded Railway URLs — should be configurable
+  # ──────────────────────────────────────────────────
+  - id: geowake-no-hardcoded-railway-url
+    message: "CONFIG: Railway URL hardcoded — should use --dart-define or environment variable for portability."
+    severity: WARNING
+    languages: [dart]
+    patterns:
+      - pattern: "up.railway.app"
+    metadata:
+      category: portability

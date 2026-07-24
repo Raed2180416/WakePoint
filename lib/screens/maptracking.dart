@@ -1131,7 +1131,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       left: 12,
                       right: 12,
                       child: Material(
-                        color: Colors.black.withOpacity(0.5), // Translucent bg.
+                        color: Colors.black.withValues(alpha: 0.5), // Translucent bg.
                         borderRadius: BorderRadius.circular(8),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
@@ -1184,7 +1184,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                         right: 12,
                         bottom: 12,
                         child: Material(
-                          color: Colors.deepOrange.withOpacity(0.92),
+                          color: Colors.deepOrange.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(8),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(

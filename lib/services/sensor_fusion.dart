@@ -84,13 +84,11 @@ class SensorFusionManager {
 
   SensorFusionManager({
     required LatLng initialPosition,
-    Stream<AccelerometerEvent>? accelerometerStream,
-    Stream<GyroscopeEvent>? gyroscopeStream,
+    this.accelerometerStream,
+    this.gyroscopeStream,
     RouteGeometry? routeGeometry,
     bool enableEkf = false,
-  }) : accelerometerStream = accelerometerStream,
-       gyroscopeStream = gyroscopeStream,
-       _routeGeometry = routeGeometry,
+  }) : _routeGeometry = routeGeometry,
        _enableEkf = enableEkf {
     _initialLat = initialPosition.latitude;
     _initialLon = initialPosition.longitude;

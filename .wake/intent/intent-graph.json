@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "0d5c613d903996baadde4f7702df99d36431a724",
-  "generatedAt": "2026-07-21T01:20:33+05:30",
-  "structuralDigest": "e1e9af2fb659367647b9edf57c46a7230a99a819",
+  "gitCommit": "6f4710f97cae1f21e885f877bc2a39b299ea02ff",
+  "generatedAt": "2026-07-22T08:17:58+05:30",
+  "structuralDigest": "6d8f852c9632fe688d071e8f3a74505371bbf622",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1147,
-    "edgeCount": 2211,
+    "nodeCount": 1191,
+    "edgeCount": 2272,
     "byLevel": {
       "feature": 9,
-      "file": 409,
+      "file": 424,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 694
+      "symbol": 723
     },
     "byEdgeType": {
-      "contains": 816,
-      "depends-on": 878,
+      "contains": 845,
+      "depends-on": 910,
       "references": 517
     }
   },
@@ -321,17 +321,6 @@
       "exportCount": 0
     },
     {
-      "id": "file:claudesciencesession/code/ekf_js.js",
-      "level": "file",
-      "label": "claudesciencesession/code/ekf_js.js",
-      "deterministic": true,
-      "source": "map",
-      "role": "other",
-      "feature": "unassigned",
-      "importers": 0,
-      "exportCount": 0
-    },
-    {
       "id": "file:geowake-server/src/config/config.js",
       "level": "file",
       "label": "geowake-server/src/config/config.js",
@@ -341,6 +330,17 @@
       "feature": "backend-api-gateway",
       "importers": 6,
       "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/controllers/aggregateController.js",
+      "level": "file",
+      "label": "geowake-server/src/controllers/aggregateController.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 5
     },
     {
       "id": "file:geowake-server/src/controllers/authController.js",
@@ -372,7 +372,7 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 0
     },
     {
@@ -384,6 +384,17 @@
       "role": "backend",
       "feature": "backend-api-gateway",
       "importers": 3,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/routes/aggregate.js",
+      "level": "file",
+      "label": "geowake-server/src/routes/aggregate.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 1,
       "exportCount": 0
     },
     {
@@ -428,6 +439,28 @@
       "role": "backend",
       "feature": "backend-api-gateway",
       "importers": 2,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/utils/mergeEngine.js",
+      "level": "file",
+      "label": "geowake-server/src/utils/mergeEngine.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/test/aggregate.test.js",
+      "level": "file",
+      "label": "geowake-server/test/aggregate.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 0,
       "exportCount": 0
     },
     {
@@ -515,7 +548,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "app-foundation-config",
-      "importers": 5,
+      "importers": 6,
       "exportCount": 1
     },
     {
@@ -805,6 +838,17 @@
       "exportCount": 9
     },
     {
+      "id": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "level": "file",
+      "label": "lib/dashboard/aggregate_data_dashboard.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 8
+    },
+    {
       "id": "file:lib/dashboard/alarm_debouncer.dart",
       "level": "file",
       "label": "lib/dashboard/alarm_debouncer.dart",
@@ -970,6 +1014,83 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/l10n/app_localizations_bn.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations_bn.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/l10n/app_localizations_en.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations_en.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/l10n/app_localizations_hi.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations_hi.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/l10n/app_localizations_ta.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations_ta.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/l10n/app_localizations_te.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations_te.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
+    },
+    {
+      "id": "file:lib/l10n/app_localizations.dart",
+      "level": "file",
+      "label": "lib/l10n/app_localizations.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 6,
+      "exportCount": 2
+    },
+    {
+      "id": "file:lib/main_aggregate_dashboard.dart",
+      "level": "file",
+      "label": "lib/main_aggregate_dashboard.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:lib/main_playground.dart",
       "level": "file",
       "label": "lib/main_playground.dart",
@@ -1023,6 +1144,17 @@
       "feature": "app-foundation-config",
       "importers": 3,
       "exportCount": 2
+    },
+    {
+      "id": "file:lib/screens/anti_theft_setup_screen.dart",
+      "level": "file",
+      "label": "lib/screens/anti_theft_setup_screen.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 1,
+      "exportCount": 1
     },
     {
       "id": "file:lib/screens/friends_rides_screen.dart",
@@ -1212,6 +1344,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:lib/services/anti_theft_service.dart",
+      "level": "file",
+      "label": "lib/services/anti_theft_service.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 4,
+      "exportCount": 2
+    },
+    {
       "id": "file:lib/services/api_client.dart",
       "level": "file",
       "label": "lib/services/api_client.dart",
@@ -1241,7 +1384,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 5,
+      "importers": 7,
       "exportCount": 4
     },
     {
@@ -1263,8 +1406,8 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 13,
-      "exportCount": 11
+      "importers": 15,
+      "exportCount": 12
     },
     {
       "id": "file:lib/services/data_asset/data_asset_pipeline.dart",
@@ -1298,6 +1441,17 @@
       "feature": "unassigned",
       "importers": 1,
       "exportCount": 1
+    },
+    {
+      "id": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "level": "file",
+      "label": "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-lib",
+      "feature": "unassigned",
+      "importers": 3,
+      "exportCount": 3
     },
     {
       "id": "file:lib/services/data_asset/k_anonymity_filter.dart",
@@ -1351,7 +1505,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 9,
+      "importers": 10,
       "exportCount": 7
     },
     {
@@ -1571,7 +1725,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 40,
+      "importers": 41,
       "exportCount": 3
     },
     {
@@ -4138,6 +4292,17 @@
       "exportCount": 2
     },
     {
+      "id": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "level": "file",
+      "label": "test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/services/ekf_integration/ambiguous_station_stop_test.dart",
       "level": "file",
       "label": "test/services/ekf_integration/ambiguous_station_stop_test.dart",
@@ -5225,6 +5390,51 @@
       ]
     },
     {
+      "id": "symbol:geowake-server/src/controllers/aggregateController.js#getCatchment",
+      "level": "symbol",
+      "label": "getCatchment",
+      "kind": "cjs-named",
+      "deterministic": true,
+      "source": "map",
+      "file": "geowake-server/src/controllers/aggregateController.js"
+    },
+    {
+      "id": "symbol:geowake-server/src/controllers/aggregateController.js#getFlows",
+      "level": "symbol",
+      "label": "getFlows",
+      "kind": "cjs-named",
+      "deterministic": true,
+      "source": "map",
+      "file": "geowake-server/src/controllers/aggregateController.js"
+    },
+    {
+      "id": "symbol:geowake-server/src/controllers/aggregateController.js#getStats",
+      "level": "symbol",
+      "label": "getStats",
+      "kind": "cjs-named",
+      "deterministic": true,
+      "source": "map",
+      "file": "geowake-server/src/controllers/aggregateController.js"
+    },
+    {
+      "id": "symbol:geowake-server/src/controllers/aggregateController.js#getSummary",
+      "level": "symbol",
+      "label": "getSummary",
+      "kind": "cjs-named",
+      "deterministic": true,
+      "source": "map",
+      "file": "geowake-server/src/controllers/aggregateController.js"
+    },
+    {
+      "id": "symbol:geowake-server/src/controllers/aggregateController.js#ingest",
+      "level": "symbol",
+      "label": "ingest",
+      "kind": "cjs-named",
+      "deterministic": true,
+      "source": "map",
+      "file": "geowake-server/src/controllers/aggregateController.js"
+    },
+    {
       "id": "symbol:integration_test/alarm_chain_ondevice_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -6179,6 +6389,78 @@
       "file": "lib/core/reachability/reachability.dart"
     },
     {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateApiClient",
+      "level": "symbol",
+      "label": "AggregateApiClient",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateDashboard",
+      "level": "symbol",
+      "label": "AggregateDashboard",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateDashboardApp",
+      "level": "symbol",
+      "label": "AggregateDashboardApp",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#CatchmentTab",
+      "level": "symbol",
+      "label": "CatchmentTab",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#OdFlowsTab",
+      "level": "symbol",
+      "label": "OdFlowsTab",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#OverviewTab",
+      "level": "symbol",
+      "label": "OverviewTab",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
+      "id": "symbol:lib/dashboard/aggregate_data_dashboard.dart#PrivacyTab",
+      "level": "symbol",
+      "label": "PrivacyTab",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/dashboard/aggregate_data_dashboard.dart"
+    },
+    {
       "id": "symbol:lib/dashboard/alarm_debouncer.dart#AlarmDebouncer",
       "level": "symbol",
       "label": "AlarmDebouncer",
@@ -6422,6 +6704,78 @@
       "file": "lib/debug/dev_server.dart"
     },
     {
+      "id": "symbol:lib/l10n/app_localizations_bn.dart#AppLocalizationsBn",
+      "level": "symbol",
+      "label": "AppLocalizationsBn",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations_bn.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations_en.dart#AppLocalizationsEn",
+      "level": "symbol",
+      "label": "AppLocalizationsEn",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations_en.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations_hi.dart#AppLocalizationsHi",
+      "level": "symbol",
+      "label": "AppLocalizationsHi",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations_hi.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations_ta.dart#AppLocalizationsTa",
+      "level": "symbol",
+      "label": "AppLocalizationsTa",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations_ta.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations_te.dart#AppLocalizationsTe",
+      "level": "symbol",
+      "label": "AppLocalizationsTe",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations_te.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations.dart#AppLocalizations",
+      "level": "symbol",
+      "label": "AppLocalizations",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations.dart"
+    },
+    {
+      "id": "symbol:lib/l10n/app_localizations.dart#lookupAppLocalizations",
+      "level": "symbol",
+      "label": "lookupAppLocalizations",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/l10n/app_localizations.dart"
+    },
+    {
+      "id": "symbol:lib/main_aggregate_dashboard.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/main_aggregate_dashboard.dart"
+    },
+    {
       "id": "symbol:lib/main_playground.dart#main",
       "level": "symbol",
       "label": "main",
@@ -6492,6 +6846,15 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/models/route_models.dart"
+    },
+    {
+      "id": "symbol:lib/screens/anti_theft_setup_screen.dart#AntiTheftSetupScreen",
+      "level": "symbol",
+      "label": "AntiTheftSetupScreen",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/anti_theft_setup_screen.dart"
     },
     {
       "id": "symbol:lib/screens/friends_rides_screen.dart#FriendsRidesScreen",
@@ -6746,6 +7109,24 @@
       "file": "lib/services/alarm_player.dart"
     },
     {
+      "id": "symbol:lib/services/anti_theft_service.dart#AntiTheftSensitivity",
+      "level": "symbol",
+      "label": "AntiTheftSensitivity",
+      "kind": "enum",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/anti_theft_service.dart"
+    },
+    {
+      "id": "symbol:lib/services/anti_theft_service.dart#AntiTheftService",
+      "level": "symbol",
+      "label": "AntiTheftService",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/anti_theft_service.dart"
+    },
+    {
       "id": "symbol:lib/services/api_client.dart#ApiClient",
       "level": "symbol",
       "label": "ApiClient",
@@ -6821,6 +7202,15 @@
       "id": "symbol:lib/services/data_asset/data_asset_config.dart#kAggregateSchemaVersion",
       "level": "symbol",
       "label": "kAggregateSchemaVersion",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/data_asset_config.dart"
+    },
+    {
+      "id": "symbol:lib/services/data_asset/data_asset_config.dart#kCandidateEgressEndpoint",
+      "level": "symbol",
+      "label": "kCandidateEgressEndpoint",
       "kind": "const",
       "deterministic": true,
       "source": "map",
@@ -6960,6 +7350,33 @@
       "deterministic": true,
       "source": "map",
       "file": "lib/services/data_asset/http_aggregate_egress_sink.dart"
+    },
+    {
+      "id": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#CandidateEgressSink",
+      "level": "symbol",
+      "label": "CandidateEgressSink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/http_candidate_egress_sink.dart"
+    },
+    {
+      "id": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#HttpCandidateEgressSink",
+      "level": "symbol",
+      "label": "HttpCandidateEgressSink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/http_candidate_egress_sink.dart"
+    },
+    {
+      "id": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#NullCandidateEgressSink",
+      "level": "symbol",
+      "label": "NullCandidateEgressSink",
+      "kind": "class",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/services/data_asset/http_candidate_egress_sink.dart"
     },
     {
       "id": "symbol:lib/services/data_asset/k_anonymity_filter.dart#KAnonymityFilter",
@@ -10931,6 +11348,15 @@
       "file": "test/sensor_fusion_test.dart"
     },
     {
+      "id": "symbol:test/services/data_asset/http_candidate_egress_sink_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/data_asset/http_candidate_egress_sink_test.dart"
+    },
+    {
       "id": "symbol:test/services/ekf_integration/ambiguous_station_stop_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -12271,6 +12697,48 @@
       "source": "map"
     },
     {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "file:geowake-server/src/utils/mergeEngine.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "symbol:geowake-server/src/controllers/aggregateController.js#getCatchment",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "symbol:geowake-server/src/controllers/aggregateController.js#getFlows",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "symbol:geowake-server/src/controllers/aggregateController.js#getStats",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "symbol:geowake-server/src/controllers/aggregateController.js#getSummary",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/controllers/aggregateController.js",
+      "to": "symbol:geowake-server/src/controllers/aggregateController.js#ingest",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:geowake-server/src/controllers/authController.js",
       "to": "file:geowake-server/src/config/config.js",
       "type": "depends-on",
@@ -12301,6 +12769,20 @@
     {
       "from": "file:geowake-server/src/middleware/security.js",
       "to": "file:geowake-server/src/config/config.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/routes/aggregate.js",
+      "to": "file:geowake-server/src/controllers/aggregateController.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/routes/aggregate.js",
+      "to": "file:geowake-server/src/middleware/auth.js",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -12356,6 +12838,13 @@
     },
     {
       "from": "file:geowake-server/src/server.js",
+      "to": "file:geowake-server/src/routes/aggregate.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/server.js",
       "to": "file:geowake-server/src/routes/auth.js",
       "type": "depends-on",
       "deterministic": true,
@@ -12371,6 +12860,13 @@
     {
       "from": "file:geowake-server/src/utils/cache.js",
       "to": "file:geowake-server/src/config/config.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/aggregate.test.js",
+      "to": "file:geowake-server/src/utils/mergeEngine.js",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -13591,6 +14087,62 @@
       "source": "map"
     },
     {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateApiClient",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateDashboard",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#AggregateDashboardApp",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#CatchmentTab",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#OdFlowsTab",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#OverviewTab",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "to": "symbol:lib/dashboard/aggregate_data_dashboard.dart#PrivacyTab",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/dashboard/alarm_debouncer.dart",
       "to": "symbol:lib/dashboard/alarm_debouncer.dart#AlarmDebouncer",
       "type": "contains",
@@ -14441,6 +14993,139 @@
       "source": "map"
     },
     {
+      "from": "file:lib/l10n/app_localizations_bn.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_bn.dart",
+      "to": "symbol:lib/l10n/app_localizations_bn.dart#AppLocalizationsBn",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_en.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_en.dart",
+      "to": "symbol:lib/l10n/app_localizations_en.dart#AppLocalizationsEn",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_hi.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_hi.dart",
+      "to": "symbol:lib/l10n/app_localizations_hi.dart#AppLocalizationsHi",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_ta.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_ta.dart",
+      "to": "symbol:lib/l10n/app_localizations_ta.dart#AppLocalizationsTa",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_te.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations_te.dart",
+      "to": "symbol:lib/l10n/app_localizations_te.dart#AppLocalizationsTe",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "file:lib/l10n/app_localizations_bn.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "file:lib/l10n/app_localizations_en.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "file:lib/l10n/app_localizations_hi.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "file:lib/l10n/app_localizations_ta.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "file:lib/l10n/app_localizations_te.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "symbol:lib/l10n/app_localizations.dart#AppLocalizations",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/l10n/app_localizations.dart",
+      "to": "symbol:lib/l10n/app_localizations.dart#lookupAppLocalizations",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main_aggregate_dashboard.dart",
+      "to": "file:lib/dashboard/aggregate_data_dashboard.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main_aggregate_dashboard.dart",
+      "to": "symbol:lib/main_aggregate_dashboard.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/main_playground.dart",
       "to": "file:lib/dashboard/ekf_test_panel.dart",
       "type": "depends-on",
@@ -14473,6 +15158,20 @@
       "from": "file:lib/main_unified_dashboard.dart",
       "to": "symbol:lib/main_unified_dashboard.dart#main",
       "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/l10n/app_localizations.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/screens/anti_theft_setup_screen.dart",
+      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },
@@ -14595,7 +15294,35 @@
     },
     {
       "from": "file:lib/main.dart",
+      "to": "file:lib/services/anti_theft_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/api_client.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
       "to": "file:lib/services/data_asset/data_asset_pipeline.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/main.dart",
+      "to": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -14744,6 +15471,20 @@
       "source": "map"
     },
     {
+      "from": "file:lib/screens/anti_theft_setup_screen.dart",
+      "to": "file:lib/services/anti_theft_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/anti_theft_setup_screen.dart",
+      "to": "symbol:lib/screens/anti_theft_setup_screen.dart#AntiTheftSetupScreen",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/screens/friends_rides_screen.dart",
       "to": "file:lib/services/share/followed_rides_service.dart",
       "type": "depends-on",
@@ -14835,6 +15576,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 3
+    },
+    {
+      "from": "file:lib/screens/homescreen.dart",
+      "to": "file:lib/services/anti_theft_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/screens/homescreen.dart",
@@ -15804,6 +16552,27 @@
       "source": "map"
     },
     {
+      "from": "file:lib/services/anti_theft_service.dart",
+      "to": "file:lib/services/notification_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/anti_theft_service.dart",
+      "to": "symbol:lib/services/anti_theft_service.dart#AntiTheftSensitivity",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/anti_theft_service.dart",
+      "to": "symbol:lib/services/anti_theft_service.dart#AntiTheftService",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:lib/services/api_client.dart",
       "to": "file:lib/config/app_config.dart",
       "type": "depends-on",
@@ -15917,6 +16686,13 @@
     },
     {
       "from": "file:lib/services/data_asset/data_asset_config.dart",
+      "to": "symbol:lib/services/data_asset/data_asset_config.dart#kCandidateEgressEndpoint",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/data_asset_config.dart",
       "to": "symbol:lib/services/data_asset/data_asset_config.dart#kConsentNoticeVersion",
       "type": "contains",
       "deterministic": true,
@@ -16022,6 +16798,13 @@
     },
     {
       "from": "file:lib/services/data_asset/data_asset_pipeline.dart",
+      "to": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/data_asset_pipeline.dart",
       "to": "file:lib/services/data_asset/k_anonymity_filter.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -16114,6 +16897,41 @@
     {
       "from": "file:lib/services/data_asset/http_aggregate_egress_sink.dart",
       "to": "symbol:lib/services/data_asset/http_aggregate_egress_sink.dart#HttpAggregateEgressSink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "file:lib/services/data_asset/aggregate_schema.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#CandidateEgressSink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#HttpCandidateEgressSink",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "to": "symbol:lib/services/data_asset/http_candidate_egress_sink.dart#NullCandidateEgressSink",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -16614,7 +17432,7 @@
     },
     {
       "from": "file:lib/services/metro_stop_service.dart",
-      "to": "file:lib/services/api_client.dart",
+      "to": "file:lib/all_india_stops.dart",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -19422,6 +20240,13 @@
       "deterministic": true,
       "source": "scip",
       "weight": 2
+    },
+    {
+      "from": "file:lib/services/trackingservice.dart",
+      "to": "file:lib/services/anti_theft_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
     },
     {
       "from": "file:lib/services/trackingservice.dart",
@@ -25656,6 +26481,34 @@
     {
       "from": "file:test/sensor_fusion_test.dart",
       "to": "symbol:test/sensor_fusion_test.dart#SensorFusionManager",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/aggregate_schema.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/http_candidate_egress_sink.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "file:lib/services/data_asset/od_cell.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
+      "to": "symbol:test/services/data_asset/http_candidate_egress_sink_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

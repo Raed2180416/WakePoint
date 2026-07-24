@@ -28,7 +28,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:label="GeoWake"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

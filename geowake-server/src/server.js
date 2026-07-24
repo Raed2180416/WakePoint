@@ -12,6 +12,7 @@ const { slowDownRules, handleRateLimitError } = require('./middleware/security')
 // Import routes
 const authRoutes = require('./routes/auth');
 const mapsRoutes = require('./routes/maps');
+const aggregateRoutes = require('./routes/aggregate');
 
 const app = express();
 
@@ -82,9 +83,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'GeoWake Server is running',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    environment: config.nodeEnv
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -93,6 +92,9 @@ app.use('/api/auth', authRoutes);
 
 // Protected API routes (require authentication)
 app.use('/api/maps', authenticateDevice, mapsRoutes);
+
+// Aggregate data routes (ingest requires auth, dashboard endpoints are public)
+app.use('/api/aggregate', aggregateRoutes);
 
 // ================================
 // ERROR HANDLING
@@ -103,8 +105,7 @@ app.use('/api/maps', authenticateDevice, mapsRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Endpoint not found',
-    path: req.originalUrl
+    error: 'Endpoint not found'
   });
 });
 // Rate limit error handler

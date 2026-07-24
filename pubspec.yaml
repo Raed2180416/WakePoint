@@ -43,11 +43,10 @@ dependencies:
 
   # Google Maps & Places
   google_maps_flutter: ^2.2.5
-  google_places_flutter: ^2.0.0
 
   # Ads & In-app purchases
   google_mobile_ads: ^6.0.0
-  in_app_purchase: ^3.2.1
+  in_app_purchase: ^3.3.0
   # Premium/paywall + share surfaces (Terms/Privacy links, last-mile deep-links,
   # viral journey share). Standard, widely-used, no native config beyond queries.
   url_launcher: ^6.3.0
@@ -68,6 +67,11 @@ dependencies:
   # rejected — FontWeight lacks primitive equality). 8.x fixes this; the
   # GoogleFonts.* API used by the app is unchanged.
   google_fonts: ^8.1.0
+
+  # Localization (all Indian languages + 58 major world languages)
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   # HTTP API calls
   http: ^1.4.0
@@ -102,6 +106,7 @@ patrol:
     package_name: com.geowake.app
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/geowake.png

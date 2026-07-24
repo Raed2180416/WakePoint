@@ -28,6 +28,11 @@ const bool kDataAssetEgressEnabled = false;
 /// §5/§6). Until then it is a documented no-op.
 const String kDataAssetEgressEndpoint = '';
 
+/// Endpoint for the candidate egress sink (device → server merge engine).
+/// POSTs ReleaseCandidateMatrix JSON to /ingest. Empty by default; set when
+/// the merge backend is live.
+const String kCandidateEgressEndpoint = 'https://geowake-production.up.railway.app/api/aggregate';
+
 /// k for origin-destination cell suppression (Google's "100 rule"). A cell with
 /// fewer than this many *contributing users* is dropped, never released.
 const int kOdKAnonymityThreshold = 100;

@@ -91,8 +91,9 @@ class AdService {
     }
   }
 
-  /// Show an interstitial at a permitted, frequency-capped placement (post-arrival
-  /// summary only). No-op (returns false) when policy forbids. Never throws.
+  /// Show an interstitial at a permitted, frequency-capped placement
+  /// (route-arming only, every 3 rides). No-op (returns false) when policy
+  /// forbids. Never throws, never during an ongoing trip.
   Future<bool> maybeShowInterstitial({
     required AdPlacement placement,
     required PremiumService premium,

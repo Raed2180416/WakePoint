@@ -10,11 +10,13 @@ class CacheManager {
       useClones: false // Better performance
     });
     
-    // Log cache statistics
-    setInterval(() => {
-      const stats = this.cache.getStats();
-      console.log(`📊 Cache Stats - Keys: ${stats.keys}, Hits: ${stats.hits}, Misses: ${stats.misses}`);
-    }, 5 * 60 * 1000); // Every 5 minutes
+    // Log cache statistics in development only
+    if (config.nodeEnv !== 'production') {
+      setInterval(() => {
+        const stats = this.cache.getStats();
+        console.log(`📊 Cache Stats - Keys: ${stats.keys}, Hits: ${stats.hits}, Misses: ${stats.misses}`);
+      }, 5 * 60 * 1000); // Every 5 minutes
+    }
   }
   
   // Generate cache key for different types of requests
@@ -45,10 +47,13 @@ class CacheManager {
     const key = this.generateKey(type, params);
     const result = this.cache.get(key);
     
-    if (result) {
-      console.log(`🎯 Cache HIT for ${type}: ${key}`);
-    } else {
-      console.log(`❌ Cache MISS for ${type}: ${key}`);
+    // Only log cache hit/miss in development to avoid I/O overhead in production
+    if (config.nodeEnv !== 'production') {
+      if (result) {
+        console.log(`🎯 Cache HIT for ${type}: ${key}`);
+      } else {
+        console.log(`❌ Cache MISS for ${type}: ${key}`);
+      }
     }
     
     return result;
@@ -60,7 +65,9 @@ class CacheManager {
     const ttl = config.cacheTimeouts[type] || 300; // Default 5 minutes
     
     this.cache.set(key, data, ttl);
-    console.log(`💾 Cached ${type} for ${ttl}s: ${key}`);
+    if (config.nodeEnv !== 'production') {
+      console.log(`💾 Cached ${type} for ${ttl}s: ${key}`);
+    }
     
     return true;
   }

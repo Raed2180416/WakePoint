@@ -37,18 +37,20 @@ const googleApiProxy = async (req, res, { url, params, type }) => {
 
     const httpStatus = apiStatus === 'OVER_QUERY_LIMIT' ? 429 : 502;
     console.error(`❌ Google Maps API returned non-success status at ${url}: ${apiStatus}`);
+    const isDev = config.nodeEnv === 'development';
     return res.status(httpStatus).json({
       success: false,
       error: 'An error occurred while fetching data from Google Maps API.',
       status: apiStatus || 'UNKNOWN_ERROR',
-      details: response.data?.error_message || 'Upstream Google Maps API returned a non-success status.'
+      ...(isDev && { details: response.data?.error_message || 'Upstream Google Maps API returned a non-success status.' })
     });
   } catch (error) {
     console.error(`❌ Google Maps API Error at ${url}:`, error.response ? error.response.data : error.message);
+    const isDev = config.nodeEnv === 'development';
     res.status(error.response?.status || 500).json({
       success: false,
       error: 'An error occurred while fetching data from Google Maps API.',
-      details: error.response?.data?.error_message || 'Internal server error.'
+      ...(isDev && { details: error.response?.data?.error_message || 'Internal server error.' })
     });
   }
 };
@@ -56,6 +58,13 @@ const googleApiProxy = async (req, res, { url, params, type }) => {
 // Handler for Directions API
 const getDirections = (req, res) => {
   const { origin, destination, mode, transit_mode, departure_time } = req.body;
+  // Input validation: reject missing required fields
+  if (!origin || !destination) {
+    return res.status(400).json({
+      success: false,
+      error: 'origin and destination are required.'
+    });
+  }
   const params = { origin, destination, mode, transit_mode };
   if (departure_time !== undefined && departure_time !== null) {
     params.departure_time = departure_time;
@@ -70,6 +79,13 @@ const getDirections = (req, res) => {
 // Handler for Autocomplete API
 const getAutocomplete = (req, res) => {
   const { input, sessiontoken, location, components } = req.body;
+  // Input validation: reject missing required field
+  if (!input || typeof input !== 'string') {
+    return res.status(400).json({
+      success: false,
+      error: 'input is required.'
+    });
+  }
   const params = { input, sessiontoken, location, components };
   googleApiProxy(req, res, {
     url: config.googleMapsUrls.places,
@@ -81,6 +97,13 @@ const getAutocomplete = (req, res) => {
 // Handler for Place Details API
 const getPlaceDetails = (req, res) => {
   const { place_id, sessiontoken } = req.body;
+  // Input validation: reject missing required field
+  if (!place_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'place_id is required.'
+    });
+  }
   const params = { place_id, sessiontoken, fields: 'name,geometry,formatted_address' };
   googleApiProxy(req, res, {
     url: config.googleMapsUrls.placeDetails,
@@ -92,6 +115,13 @@ const getPlaceDetails = (req, res) => {
 // Handler for Geocoding API
 const getGeocoding = (req, res) => {
   const { address } = req.body;
+  // Input validation: reject missing required field
+  if (!address) {
+    return res.status(400).json({
+      success: false,
+      error: 'address is required.'
+    });
+  }
   const params = { address };
   googleApiProxy(req, res, {
     url: config.googleMapsUrls.geocoding,
@@ -103,6 +133,13 @@ const getGeocoding = (req, res) => {
 // Handler for Nearby Search API
 const getNearbySearch = (req, res) => {
   const { location, radius, type } = req.body; // location should be "lat,lng"
+  // Input validation: reject missing required field
+  if (!location) {
+    return res.status(400).json({
+      success: false,
+      error: 'location is required.'
+    });
+  }
   const params = { location, radius, type };
   googleApiProxy(req, res, {
     url: config.googleMapsUrls.nearbySearch,
