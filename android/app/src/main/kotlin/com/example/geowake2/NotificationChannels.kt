@@ -86,35 +86,8 @@ object NotificationChannels {
             try { setBypassDnd(true) } catch (t: Throwable) { /* no policy access: no-op */ }
         }
 
-        // Course-alert channel: the "you may be heading the WRONG way / boarded the
-        // opposite train" heads-up. This must actually reach a dozing rider, so it
-        // vibrates, makes a sound, and bypasses DND — but at NOTIFICATION usage (not
-        // full ALARM volume) and single-shot (no insistent loop), because
-        // wrong-direction detection can false-positive and must not blast the rider
-        // awake on a brief GPS glitch. Whether this should escalate to a full wake
-        // alarm is a tunable product decision (see 01_launch_readiness.md).
-        val courseAlertChannel = NotificationChannel(
-            "geowake_course_alert_channel_v1",
-            "GeoWake Direction Alerts",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Heads-up when you may be heading away from your stop"
-            enableVibration(true)
-            vibrationPattern = longArrayOf(0, 400, 200, 400)
-            setSound(
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            try { setBypassDnd(true) } catch (t: Throwable) { /* no policy access: no-op */ }
-        }
-
         nm.createNotificationChannel(trackingChannel)
         nm.createNotificationChannel(alarmChannel)
         nm.createNotificationChannel(backstopChannel)
-        nm.createNotificationChannel(courseAlertChannel)
     }
 }

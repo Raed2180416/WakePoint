@@ -408,11 +408,6 @@ class NotificationService {
   static const int _alarmNotificationId = 0;
   static const int _progressNotificationId = 888;
   static const int _pausedNotificationId = 889;
-  // Wrong-direction heads-up alert. Distinct id so it never collides with the
-  // alarm (0), progress (888), paused (889) or ETA backstop (991).
-  static const int _wrongDirectionNotificationId = 890;
-  // Throttle timestamp so wrong-direction alerts don't spam the rider.
-  static DateTime? _lastWrongDirectionAlertAt;
 
   // Flag to prevent duplicate alarm overlays
   bool _alarmCurrentlyShowing = false;
@@ -1022,94 +1017,12 @@ class NotificationService {
     }
   }
 
-  /// Post a high-importance heads-up alert warning the rider they may be
-  /// travelling AWAY from their destination (e.g. boarded the opposite-direction
-  /// train). This protects the half-asleep rider — highest value, small effort.
-  ///
-  /// Uses the high-priority alarm channel so it surfaces as a heads-up banner,
-  /// but with no alarm sound/vibration (this is a nudge, not the wake alarm).
-  /// Throttled by [minInterval] so a sustained wrong-direction episode does not
-  /// spam repeated banners.
-  Future<void> showWrongDirectionAlert({
-    String? destinationName,
-    Duration minInterval = const Duration(minutes: 2),
-  }) async {
-    final String dest =
-        (destinationName != null && destinationName.trim().isNotEmpty)
-            ? destinationName.trim()
-            : 'your destination';
-    final String title = 'Check your direction';
-    final String body = 'Wrong direction? You may be heading away from $dest.';
-
-    // Test-mode observability: record without throttling so tests can assert.
-    if (isTestMode) {
-      try {
-        testRecordedNotifications.add({
-          'id': _wrongDirectionNotificationId,
-          'title': title,
-          'body': body,
-          'payload': 'wrong_direction',
-          'ts': DateTime.now().toIso8601String(),
-        });
-      } catch (_) {}
-      if (testOnShowNotification != null) {
-        try {
-          await testOnShowNotification!(
-            _wrongDirectionNotificationId,
-            title,
-            body,
-            'wrong_direction',
-          );
-        } catch (_) {}
-      }
-      return;
-    }
-
-    // Throttle real notifications.
-    final now = DateTime.now();
-    final last = _lastWrongDirectionAlertAt;
-    if (last != null && now.difference(last) < minInterval) {
-      return;
-    }
-    _lastWrongDirectionAlertAt = now;
-
-    try {
-      final androidDetails = AndroidNotificationDetails(
-        // Dedicated course-alert channel (created natively in NotificationChannels):
-        // sound + vibration + DND bypass so a DOZING rider who boarded the wrong
-        // train actually gets alerted — the whole point of the feature. It was
-        // previously silent (playSound/enableVibration false on the silent alarm
-        // channel), so under Do-Not-Disturb the protected rider got nothing.
-        // Single-shot at NOTIFICATION usage (not the insistent full wake alarm),
-        // because wrong-direction detection can false-positive.
-        'geowake_course_alert_channel_v1',
-        'GeoWake Direction Alerts',
-        channelDescription: 'Heads-up when you may be heading away from your stop',
-        importance: Importance.high,
-        priority: Priority.high,
-        playSound: true,
-        enableVibration: true,
-        autoCancel: true,
-        onlyAlertOnce: false,
-        visibility: NotificationVisibility.public,
-        category: AndroidNotificationCategory.reminder,
-        ticker: title,
-      );
-      final details = NotificationDetails(android: androidDetails);
-      await _notificationsPlugin.show(
-        _wrongDirectionNotificationId,
-        title,
-        body,
-        details,
-        payload: 'wrong_direction',
-      );
-    } catch (e) {
-      dev.log(
-        'showWrongDirectionAlert failed: $e',
-        name: 'NotificationService',
-      );
-    }
-  }
+  // Wrong-direction / wrong-train detection is a BACKGROUND signal only — there
+  // is deliberately no user-facing alert. The detection (ActiveRouteManager ->
+  // wrongDirectionStream) keeps running for core logic to consume and adjust as
+  // needed, but it must never notify/wake the rider: it can false-positive on
+  // brief GPS noise, and a false wake would erode trust in the real alarm. The
+  // former showWrongDirectionAlert() and its dedicated channel were removed.
 
   /// Re-post the alarm notification without re-triggering sound/vibration/fullscreen.
   /// This is used to make the alarm effectively non-dismissible on newer Android

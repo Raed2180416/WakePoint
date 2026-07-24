@@ -1750,15 +1750,14 @@ void _handleBackgroundStartTracking({
     }
   });
 
-  // G14/G15: consume wrong-direction alerts and warn the (possibly asleep)
-  // rider they may be heading away from their stop. NotificationService
-  // throttles so a sustained episode does not spam banners.
+  // G14/G15: wrong-direction / wrong-train detection stays a BACKGROUND signal
+  // only — deliberately no user-facing alert. Detection can false-positive on
+  // brief GPS noise, so it must never wake/alert the rider; it is kept on the
+  // stream (ActiveRouteManager keeps emitting regardless of listeners) for core
+  // logic to consume and adjust as needed. Recorded here for diagnosability.
   _wrongDirSub?.cancel();
   _wrongDirSub = _sessionManager.wrongDirectionStream.listen((_) {
-    // ignore: discarded_futures
-    NotificationService().showWrongDirectionAlert(
-      destinationName: _destinationName,
-    );
+    trackingLog.debug('wrong-direction detected (background signal, no alert)');
   });
 
   // Persist session-active flag for restore flows.
@@ -1995,15 +1994,11 @@ Future<void> _onStart(
     }
   });
 
-  // G14/G15: consume wrong-direction alerts and warn the (possibly asleep)
-  // rider they may be heading away from their stop. NotificationService
-  // throttles so a sustained episode does not spam banners.
+  // G14/G15: wrong-direction detection is a BACKGROUND signal only — no
+  // user-facing alert (see the other subscription site for the rationale).
   _wrongDirSub?.cancel();
   _wrongDirSub = _sessionManager.wrongDirectionStream.listen((_) {
-    // ignore: discarded_futures
-    NotificationService().showWrongDirectionAlert(
-      destinationName: _destinationName,
-    );
+    trackingLog.debug('wrong-direction detected (background signal, no alert)');
   });
 
   // Initialize ETA engine

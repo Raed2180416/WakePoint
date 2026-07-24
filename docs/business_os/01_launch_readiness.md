@@ -87,6 +87,17 @@ Verified against an actual Gradle release build, not just unit tests:
 - App size (41MB arm64) is on the larger side for India's low-storage devices;
   not a blocker, but a candidate for later trimming (asset/font audit).
 
+## 3c. Product decisions (recorded so audits don't re-flag them)
+
+- **Wrong-direction / wrong-train detection is a BACKGROUND signal only — no
+  user alert (decided 2026-07-24).** The deep-dive flagged the old silent
+  notification as a gap; the decision is *not* to alert the rider at all.
+  Rationale: the detector can false-positive on brief GPS noise, and a false
+  wake would erode trust in the real alarm. The detection keeps running
+  (`ActiveRouteManager.wrongDirectionStream`) and is available for core logic to
+  consume and adjust as needed — it just never notifies. `showWrongDirectionAlert`
+  and its channel were removed.
+
 ## 4. Quality gates that must stay green (CI-enforced)
 
 `flutter analyze lib/` (0 errors), never-late replay harness, reachability
