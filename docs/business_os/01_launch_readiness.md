@@ -14,8 +14,13 @@ reflects work done this session.
 | 4 | startTracking armed UI even when background isolate never ACKed | ✅ fixed (escalate + telemetry) |
 | 5 | Release build silently fell back to debug signing | ✅ fixed (hard-fail for .aab / -PgeowakeRelease) |
 | 6 | In-app privacy policy URL was a dead domain; no policy hosted | ⚠️ app wired to Railway /legal/*; **routes + real policy content must go live** |
-| 7 | Server: anyone could mint a JWT and drain the Google Maps budget | 🔧 in progress (quota + kill-switch + per-jti caps) |
+| 7 | Server: anyone could mint a JWT and drain the Google Maps budget | ✅ fixed (kill-switch + per-family quota + per-jti caps; 55/55 jest; commit 3746a0b) |
 | 8 | Uncommitted diff referenced untracked impl files (broken clone) | ✅ fixed (commit 16f06ce) |
+
+**7 of 8 P0s closed in code.** #6 (privacy policy) is code-complete — the app
+links live `/legal/*` routes on the backend; the only remaining step is
+deploying the backend so those URLs resolve publicly, plus your review of the
+policy copy (contact + effective date are env-overridable).
 
 ## 2. Play compliance (must be true before submission)
 
