@@ -3,9 +3,9 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "0841147bed88db485892f2bf62aca9e5294a7f93",
-    "gitTree": "ee1c0f1c783ad4b05e98891cc0cf85851e925727",
-    "generatedAt": "2026-07-24T07:01:37+05:30",
+    "gitCommit": "848ec40f67c9ba447c95cf224b452f513ae5c600",
+    "gitTree": "c2c752dafc33a100aa2119c9c1ea0a7110c2b5b9",
+    "generatedAt": "2026-07-24T07:06:53+05:30",
     "filesIndexed": 435,
     "dependencyEdges": 932,
     "totalExports": 728,
@@ -7451,7 +7451,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a8b322307fb75f80"
+      "contentHash": "891ab64ec5832398"
     },
     {
       "file": "lib/services/oem_autostart_service.dart",

@@ -1075,14 +1075,20 @@ class NotificationService {
 
     try {
       final androidDetails = AndroidNotificationDetails(
-        'geowake_alarm_channel_v4',
-        'GeoWake Alarms (High Priority)',
-        channelDescription: 'Wrong-direction heads-up alerts',
+        // Dedicated course-alert channel (created natively in NotificationChannels):
+        // sound + vibration + DND bypass so a DOZING rider who boarded the wrong
+        // train actually gets alerted — the whole point of the feature. It was
+        // previously silent (playSound/enableVibration false on the silent alarm
+        // channel), so under Do-Not-Disturb the protected rider got nothing.
+        // Single-shot at NOTIFICATION usage (not the insistent full wake alarm),
+        // because wrong-direction detection can false-positive.
+        'geowake_course_alert_channel_v1',
+        'GeoWake Direction Alerts',
+        channelDescription: 'Heads-up when you may be heading away from your stop',
         importance: Importance.high,
         priority: Priority.high,
-        // Not the wake alarm: no custom sound and no insistent/ongoing flags.
-        playSound: false,
-        enableVibration: false,
+        playSound: true,
+        enableVibration: true,
         autoCancel: true,
         onlyAlertOnce: false,
         visibility: NotificationVisibility.public,

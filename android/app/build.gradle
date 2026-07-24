@@ -41,7 +41,11 @@ android {
         // ROTATE the exposed key AIzaSyC0v...XHw0 and put the new one in key.properties.
         manifestPlaceholders = [
             googleMapsApiKey: keystoreProperties['googleMapsApiKey'] ?: '',
-            applicationName: 'io.flutter.app.FlutterApplication'
+            // Custom Application (extends FlutterApplication) that creates the
+            // notification channels in onCreate — for EVERY process start, so the
+            // backstop alarm channel exists even when the exact-alarm backstop
+            // fires from the background service after a reboot with no UI launch.
+            applicationName: 'com.example.geowake2.GeoWakeApplication'
         ]
     }
 
