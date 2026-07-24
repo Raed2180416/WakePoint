@@ -401,6 +401,10 @@ class AntiTheftService {
             'Stop the alarm if you have your phone.',
         allowContinueTracking: false,
         playSound: true,
+        // Auxiliary Pro alarm — must never cancel/override the core destination
+        // wake alarm (invariant #4). NotificationService suppresses it when the
+        // destination alarm is already active/fired.
+        isCoreAlarm: false,
       );
     } catch (e) {
       dev.log('Anti-theft alarm trigger failed: $e', name: 'AntiTheft');

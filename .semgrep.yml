@@ -65,13 +65,12 @@ rules:
   - id: geowake-consent-default-off
     message: "CRITICAL INVARIANT: Mobility data sharing consent must default to OFF (false). Review required."
     severity: ERROR
-    languages: [dart]
+    languages: [generic]
     paths:
       include:
         - "lib/services/data_asset/mobility_consent_service.dart"
     patterns:
-      - pattern: "true"
-      - inside: "bool.*default.*=.*"
+      - pattern-regex: '(consent|optIn|enabled|sharing)\w*\s*=\s*true'
     metadata:
       invariant: "Consent is default-OFF"
       source: AGENTS.md
@@ -102,8 +101,9 @@ rules:
       include:
         - "lib/services/notification_service.dart"
     patterns:
-      - pattern: snooze
-      - pattern: delay
+      - pattern-either:
+          - pattern: snooze
+          - pattern: Snooze
     metadata:
       invariant: "No snooze"
       source: AGENTS.md
@@ -132,9 +132,11 @@ rules:
   - id: geowake-no-leaked-api-keys
     message: "SECURITY: Google Maps API key detected in source. Keys must be in key.properties (gitignored) or environment variables only."
     severity: ERROR
-    languages: [dart, javascript, typescript, yaml, json, groovy]
+    # generic = raw text matching over every scanned file (including .gradle,
+    # which this semgrep version has no dedicated language for).
+    languages: [generic]
     patterns:
-      - pattern: AIzaSy[A-Za-z0-9_\-]{33}
+      - pattern-regex: 'AIzaSy[A-Za-z0-9_\-]{33}'
     metadata:
       category: security
       source: build.gradle leak incident
@@ -145,8 +147,13 @@ rules:
   - id: geowake-no-hardcoded-railway-url
     message: "CONFIG: Railway URL hardcoded — should use --dart-define or environment variable for portability."
     severity: WARNING
-    languages: [dart]
+    languages: [generic]
+    paths:
+      include:
+        # Client code only: the server's own CORS allowlist legitimately names
+        # its deployed Railway origin.
+        - "lib/"
     patterns:
-      - pattern: "up.railway.app"
+      - pattern-regex: 'up\.railway\.app'
     metadata:
       category: portability

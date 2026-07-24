@@ -12,8 +12,17 @@ import 'package:geowake2/services/tracking_state_store.dart';
 import 'package:geowake2/screens/ringtones_screen.dart';
 import 'package:geowake2/screens/friends_rides_screen.dart';
 import 'package:geowake2/screens/report_problem_screen.dart';
+import 'package:geowake2/services/data_asset/data_asset_config.dart';
 
 const String kBuyMeACoffeeUrl = 'https://www.buymeacoffee.com/imraedinit';
+
+/// Live privacy policy URL (served by the backend). Overridable at build time
+/// once a branded domain exists; kept in one place so the paywall and settings
+/// drawer never drift apart.
+const String kPrivacyPolicyUrl = String.fromEnvironment(
+  'GEOWAKE_PRIVACY_URL',
+  defaultValue: 'https://geowake-production.up.railway.app/legal/privacy',
+);
 
 /// Open the support link in an external browser. Captures the messenger before
 /// the await so no BuildContext is used across the async gap.
@@ -171,12 +180,33 @@ class SettingsDrawer extends StatelessWidget {
               },
             ),
             // Separate, purpose-specific consent (NOT Pro) — default-OFF, opt-in.
+            // Hidden until the data pipeline is actually live: while egress is
+            // disabled the consent screen would ask users to opt into something
+            // that cannot happen, and it still carries unfilled DPO/Data-Board
+            // legal placeholders. Gating the entry point on the same compile
+            // flag that guards egress keeps the promise and the plumbing in
+            // lockstep, and keeps the screen out of Play review until its legal
+            // copy is finalized.
+            if (kDataAssetEgressEnabled)
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: const Text('Anonymous data sharing'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushNamed('/dataConsent');
+                },
+              ),
+            // Privacy policy — required to be reachable in-app for a
+            // location-permission app (Play Data Safety + prominent disclosure
+            // must link a live policy). Served by the always-on backend.
             ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Anonymous data sharing'),
+              leading: const Icon(Icons.policy_outlined),
+              title: const Text('Privacy Policy'),
               onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushNamed('/dataConsent');
+                launchUrl(
+                  Uri.parse(kPrivacyPolicyUrl),
+                  mode: LaunchMode.externalApplication,
+                );
               },
             ),
             const Divider(),

@@ -274,12 +274,14 @@ class TelemetryService {
     bool? osKilled,
     bool? dozeEntered,
     bool? backstopFired,
+    bool? startAckFailed,
   }) =>
       _emit(TelemetryEventType.reliability, {
         if (fgsSurvived != null) 'fgs_survived': fgsSurvived,
         if (osKilled != null) 'os_killed': osKilled,
         if (dozeEntered != null) 'doze': dozeEntered,
         if (backstopFired != null) 'backstop_fired': backstopFired,
+        if (startAckFailed != null) 'start_ack_failed': startAckFailed,
       });
 
   void reachabilityActivated({

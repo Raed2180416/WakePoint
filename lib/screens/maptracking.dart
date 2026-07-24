@@ -23,7 +23,6 @@ import 'package:geowake2/services/alarm_player.dart'; // Alarm control.
 import 'package:flutter_background_service/flutter_background_service.dart'; // Notify service when stopping alarm.
 import 'package:geowake2/services/location_manager.dart'; // For broadcasting device position.
 import 'package:geowake2/services/tracking_state_store.dart'; // Snapshot fallback for mode.
-import 'package:geowake2/services/notification_service.dart'; // Real alarm path for post-arrival re-alert.
 import 'package:geowake2/services/tracking/arrival_hooks.dart'; // Fire-and-forget post-arrival fan-out.
 import '../widgets/share/share_journey_action.dart'; // Free "Share ride status" AppBar action.
 
@@ -97,11 +96,6 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   Timer? _gpsFreshnessTimer; // Periodically checks position freshness.
   // GPS is considered lost once no position has arrived for this long.
   static const Duration _gpsStaleAfter = Duration(seconds: 12);
-
-  // Post-arrival re-alert (snooze): if the rider dismisses the destination
-  // alarm but is still on board, re-fire the real alarm once after a short wait.
-  Timer? _snoozeTimer; // Pending one-shot re-alert.
-  bool _snoozeUsed = false; // Ensures we only re-alert once (never loop).
 
   @override
   void initState() {
@@ -178,59 +172,6 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       setState(() {
         _finalAlarmActive = next;
       });
-    }
-  }
-
-  /// SNOOZE the destination alarm: silence it now but keep tracking, and arm a
-  /// one-shot re-alert in case the rider is still on board and hasn't gotten
-  /// off. Deliberately one-time so it can never suppress a needed alarm.
-  Future<void> _onSnoozePressed() async {
-    // Silence the currently-playing alarm without ending the session.
-    await AlarmPlayer.stop();
-    try {
-      FlutterBackgroundService().invoke('stopAlarm');
-    } catch (e) {
-      dev.log('Failed to send stopAlarm to service: $e', name: 'MapTracking');
-    }
-
-    _snoozeUsed = true;
-    _snoozeTimer?.cancel();
-    _snoozeTimer = Timer(const Duration(seconds: 60), _maybeReAlert);
-
-    if (!mounted) return;
-    setState(() {}); // Hide the SNOOZE button now that it is used.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          "Snoozed — we'll re-check in a minute in case you're still on board.",
-        ),
-      ),
-    );
-  }
-
-  /// Fire the REAL alarm once more if the rider still appears to be travelling
-  /// (session active and not manually ended). Over-alerting is safe; never
-  /// suppress a needed alarm.
-  Future<void> _maybeReAlert() async {
-    _snoozeTimer = null;
-    if (!mounted || _isEndingTracking) return;
-
-    // Safety: only re-alert while a session is still active (the rider didn't
-    // end tracking in the meantime).
-    try {
-      final active = await TrackingStateStore.isActive();
-      if (!active) return;
-    } catch (_) {}
-
-    try {
-      await NotificationService().showWakeUpAlarm(
-        title: 'Still heading past ${_destinationName ?? 'your stop'}',
-        body: "You may not have gotten off yet — wake up!",
-        allowContinueTracking: false,
-        playSound: true,
-      );
-    } catch (e) {
-      dev.log('Post-arrival re-alert failed: $e', name: 'MapTracking');
     }
   }
 
@@ -1031,7 +972,6 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
     _simulatedLocationSub?.cancel(); // Stop simulated position stream.
     _etaSub?.cancel(); // Stop ETA stream.
     _gpsFreshnessTimer?.cancel(); // Stop GPS-freshness watcher.
-    _snoozeTimer?.cancel(); // Stop pending re-alert.
     super.dispose(); // Parent cleanup.
   }
 
@@ -1306,38 +1246,13 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                 style: TextStyle(fontSize: 14),
                               ),
                               const SizedBox(height: 16),
+                              // No snooze — by design. A wake alarm must never
+                              // be delayable (a half-asleep rider silencing it
+                              // and dozing off is the exact catastrophe this
+                              // product prevents). The only offered action is
+                              // the conscious, terminal one: End tracking.
                               Row(
                                 children: [
-                                  // SNOOZE: dismiss the alarm sound but keep
-                                  // tracking, and re-fire once shortly in case
-                                  // the rider is still on board. One-shot only.
-                                  if (!_snoozeUsed) ...[
-                                    Expanded(
-                                      child: Semantics(
-                                        label: 'Snooze alarm',
-                                        identifier: 'snooze_button',
-                                        child: ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: cs.secondaryContainer,
-                                          foregroundColor:
-                                              cs.onSecondaryContainer,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 16,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        onPressed: _onSnoozePressed,
-                                        icon: const Icon(Icons.snooze, size: 24),
-                                        label: const Text('SNOOZE'),
-                                      ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
                                   Expanded(
                                     child: Semantics(
                                       label: 'End tracking',
@@ -1349,7 +1264,6 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                                         setState(() {
                                           _isEndingTracking = true;
                                         });
-                                        _snoozeTimer?.cancel();
 
                                         // Stop alarm sounds and vibration
                                         await AlarmPlayer.stop();

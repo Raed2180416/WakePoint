@@ -19,8 +19,17 @@ import '../../widgets/monetization/pro_gate.dart';
 
 /// Founder-hosted policy URLs (External Needs §4). Safe placeholders until the
 /// real pages exist — the buttons no-op gracefully if the URL can't open.
-const String _kPrivacyUrl = 'https://geowake.app/privacy';
-const String _kTermsUrl = 'https://geowake.app/terms';
+// Served as static pages by the always-on Railway backend (see
+// geowake-server/src/server.js /legal routes). geowake.app did not resolve;
+// this domain is live. Override at build time once a branded domain exists.
+const String _kPrivacyUrl = String.fromEnvironment(
+  'GEOWAKE_PRIVACY_URL',
+  defaultValue: 'https://geowake-production.up.railway.app/legal/privacy',
+);
+const String _kTermsUrl = String.fromEnvironment(
+  'GEOWAKE_TERMS_URL',
+  defaultValue: 'https://geowake-production.up.railway.app/legal/terms',
+);
 
 class _ProItem {
   final IconData icon;

@@ -133,14 +133,13 @@
   },
   {
     "file": "lib/services/notification_service.dart",
-    "importers": 41,
+    "importers": 40,
     "directDependents": [
       "integration_test/alarm_chain_ondevice_test.dart",
       "integration_test/backstop_doze_ondevice_test.dart",
       "integration_test/device_alarm_integration_test.dart",
       "integration_test/patrol_alarm_test.dart",
       "lib/debug/demo_tools.dart",
-      "lib/screens/maptracking.dart",
       "lib/screens/ringtones_screen.dart",
       "lib/screens/splash_screen.dart",
       "lib/services/alarm_player.dart",
@@ -370,9 +369,10 @@
   },
   {
     "file": "lib/services/data_asset/data_asset_config.dart",
-    "importers": 15,
+    "importers": 16,
     "directDependents": [
       "lib/main.dart",
+      "lib/screens/settingsdrawer.dart",
       "lib/services/data_asset/aggregate_schema.dart",
       "lib/services/data_asset/contribution_cap.dart",
       "lib/services/data_asset/data_asset_pipeline.dart",
@@ -401,6 +401,31 @@
       "kAggregateSchemaVersion",
       "kConsentNoticeVersion",
       "kStationSnapMaxRadiusMeters"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/monetization/monetization_service.dart",
+    "importers": 15,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/tracking/arrival_hooks.dart",
+      "lib/services/widget/home_widget_bridge.dart",
+      "lib/services/widget/widget_arm_handler.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart"
+    ],
+    "exportedSymbols": [
+      "MonetizationService"
     ],
     "riskLevel": "critical"
   },
@@ -476,30 +501,6 @@
     ],
     "exportedSymbols": [
       "ApiClient"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/monetization/monetization_service.dart",
-    "importers": 14,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/screens/guardian_setup_screen.dart",
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/screens/monetization/post_arrival_screen.dart",
-      "lib/screens/settingsdrawer.dart",
-      "lib/services/share/guardian_service.dart",
-      "lib/services/tracking/arrival_hooks.dart",
-      "lib/services/widget/home_widget_bridge.dart",
-      "lib/services/widget/widget_arm_handler.dart",
-      "lib/widgets/gated_banner_ad.dart",
-      "lib/widgets/share/guardian_settings_section.dart",
-      "lib/widgets/widget/widget_settings_tile.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart"
-    ],
-    "exportedSymbols": [
-      "MonetizationService"
     ],
     "riskLevel": "critical"
   },

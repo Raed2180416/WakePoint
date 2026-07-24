@@ -208,8 +208,24 @@ class TrackingService {
   Stream<Position> get locationStream => _locationCtrl.stream;
   Stream<double?> get etaSecondsStream => _etaCtrl.stream;
 
-  Future<void> initializeService() async {
-    if (isTestMode) return;
+  // Memoized so arming can await readiness: splash kicks this off
+  // fire-and-forget, but a fast-tapping user could reach startTracking()
+  // before configure() finished — the service would start unconfigured and
+  // the session would silently never track. Re-invoking is a no-op once the
+  // in-flight future exists; a failed attempt clears it so retry is possible.
+  Future<void>? _initServiceFuture;
+
+  Future<void> initializeService() {
+    if (isTestMode) return Future.value();
+    return _initServiceFuture ??= _initializeServiceImpl().catchError((
+      Object e,
+    ) {
+      _initServiceFuture = null;
+      throw e;
+    });
+  }
+
+  Future<void> _initializeServiceImpl() async {
     _ensureAckListenersRegistered(); // Ensure bridge is wired up
     await _service?.configure(
       androidConfiguration: AndroidConfiguration(
@@ -287,6 +303,14 @@ class TrackingService {
       await _onStart(TestServiceInstance(), initialData: params);
       return;
     }
+    // Defense-in-depth for the splash/arm race: make sure configure() has
+    // actually completed before starting the service. Memoized, so this is a
+    // no-op in the normal path and only blocks when the user out-raced init.
+    try {
+      await initializeService().timeout(const Duration(seconds: 5));
+    } catch (e) {
+      trackingLog.error('initializeService before start failed', error: e);
+    }
     if (!await (_service?.isRunning() ?? Future.value(false))) {
       await _service?.startService();
     }
@@ -320,11 +344,36 @@ class TrackingService {
       ackEvent: 'startTrackingAck',
     );
     if (!acked) {
-      // Fallback: best-effort invoke (older background or unexpected ack failures)
+      // The background isolate never ACKed within the retry budget (~2.9s).
+      // Without escalation the UI arms while nothing tracks — the worst
+      // possible failure for a wake-up product. Record it durably, then try a
+      // full service (re)start + one more acked handshake before falling back
+      // to a blind invoke.
+      TelemetryService.instance.reliability(startAckFailed: true);
+      trackingLog.error(
+        'startTracking not ACKed by background isolate; attempting recovery',
+      );
+      bool recovered = false;
       try {
-        _service?.invoke('startTracking', params);
+        if (!await (_service?.isRunning() ?? Future.value(false))) {
+          await _service?.startService();
+        }
+        recovered = await _invokeWithAckRetry(
+          method: 'startTracking',
+          args: params,
+          ackEvent: 'startTrackingAck',
+        );
       } catch (e) {
-        trackingLog.error('startTracking fallback invoke failed', error: e);
+        trackingLog.error('startTracking recovery attempt failed', error: e);
+      }
+      if (!recovered) {
+        // Last resort: best-effort invoke (older background or unexpected ack
+        // failures). The startAckFailed telemetry above keeps this diagnosable.
+        try {
+          _service?.invoke('startTracking', params);
+        } catch (e) {
+          trackingLog.error('startTracking fallback invoke failed', error: e);
+        }
       }
     }
     // Start sending heartbeats to background service

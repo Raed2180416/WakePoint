@@ -16,8 +16,13 @@
     <!-- G2: prompt user to exempt app from Doze/battery optimization -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- G5: OS-scheduled exact-alarm ETA backstop (survives process death) -->
+    <!-- SCHEDULE_EXACT_ALARM only (user grants via the "Alarms & reminders"
+         settings toggle, requested in-app). USE_EXACT_ALARM was deliberately
+         dropped: Play restricts it to apps whose CORE function is an alarm
+         clock/timer/calendar, and a reviewer classifying GeoWake as transit
+         tracking-with-an-alarm could reject the declaration late in review.
+         One extra settings toggle beats a policy-appeal cycle at launch. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- G4: re-arm background service + backstop after device reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- G9a: allow the alarm channel to bypass Do-Not-Disturb where the user has

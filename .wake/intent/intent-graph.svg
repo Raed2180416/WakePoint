@@ -233,8 +233,8 @@
 <!-- user&#45;facing&#45;screens&#45;&gt;wakeup&#45;alarm&#45;engine -->
 <g id="edge36" class="edge">
 <title>user&#45;facing&#45;screens&#45;&gt;wakeup&#45;alarm&#45;engine</title>
-<path fill="none" stroke="#cc7722" stroke-width="3.32" d="M1028.42,-186C1123.96,-186 1288.27,-186 1388.1,-186"/>
-<polygon fill="#cc7722" stroke="#cc7722" stroke-width="3.32" points="1387.93,-189.5 1397.93,-186 1387.93,-182.5 1387.93,-189.5"/>
+<path fill="none" stroke="#cc7722" stroke-width="3" d="M1028.42,-186C1124.05,-186 1288.6,-186 1388.41,-186"/>
+<polygon fill="#cc7722" stroke="#cc7722" stroke-width="3" points="1388.41,-189.5 1398.41,-186 1388.41,-182.5 1388.41,-189.5"/>
 </g>
 <!-- user&#45;facing&#45;screens&#45;&gt;routing&#45;route&#45;sessions -->
 <g id="edge35" class="edge">

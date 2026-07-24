@@ -835,6 +835,10 @@
     {
       "kind": "const",
       "name": "kBuyMeACoffeeUrl"
+    },
+    {
+      "kind": "const",
+      "name": "kPrivacyPolicyUrl"
     }
   ],
   "lib/screens/splash_screen.dart": [

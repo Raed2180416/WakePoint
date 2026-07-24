@@ -104,13 +104,23 @@ class PermissionService {
     PermissionStatus status = await Permission.locationAlways.status;
     if (status.isGranted) return true;
 
-    // For background location, we can show a rationale dialog as well.
+    // Play "prominent disclosure" for background location: this dialog MUST be
+    // shown in-app immediately before the OS "all the time" prompt, must state
+    // that location is collected even when the app is closed/not in use, must
+    // name the single purpose (the wake alarm), must promise no other use, and
+    // must offer a real decline. Wording is kept in lockstep with the hosted
+    // privacy policy — a mismatch here is a top Play rejection cause.
     final bool didAgree = await _showRationaleDialog(
-        "Enable Background Tracking",
-        "For GeoWake to work reliably even when the app isn't open, please allow location access 'all the time'."
+      "Allow location \"all the time\"",
+      "GeoWake collects your location in the background — even when the app is "
+          "closed or not in use — for one purpose only: to track your transit "
+          "journey and sound the wake-up alarm before your stop.\n\n"
+          "Your location is never used for advertising and never sold. On the "
+          "next screen, choose \"Allow all the time\" to enable the alarm while "
+          "you sleep. You can decline and still use GeoWake with the screen on.",
     );
     if (!didAgree) return false;
-    
+
     status = await Permission.locationAlways.request();
     return status.isGranted;
   }

@@ -48,8 +48,12 @@ class MobilityConsentCopy {
 
   static const String ageConfirmLabel = 'I confirm I am 18 or older';
 
+  // Honest present-tense: while the pipeline is inert (kDataAssetEgressEnabled
+  // == false) nothing leaves the device, so this must not promise future
+  // contribution. It records the preference locally only.
   static const String enabledSnack =
-      'Thanks — GeoWake will contribute anonymous, noise-added station counts.';
+      'Saved. Your preference to share anonymous, noise-added station counts '
+      'is on. Nothing is shared unless and until GeoWake turns the pipeline on.';
 
   static const String withdrawnSnack =
       'Stopped. GeoWake deleted the anonymous stats stored on this device.';

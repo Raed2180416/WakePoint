@@ -62,14 +62,33 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
                           'proguard-rules.pro'
-            // Fallback to the debug keystore when no production signing key is
-            // configured in key.properties. This lets `flutter build apk --release`
-            // produce an installable lean APK for testing without a release
-            // keystore. When a real storeFile/storePassword/keyAlias/keyPassword
-            // are present in key.properties, those take precedence.
+            // Signing policy:
+            //  - Real release keystore in key.properties  -> sign with it.
+            //  - No keystore                               -> fall back to the
+            //    debug key so `flutter build apk --release` still produces an
+            //    installable lean APK for local testing.
+            //  - BUT a Play-bound artifact (an .aab bundle task, or an explicit
+            //    -PgeowakeRelease=true) MUST NEVER be debug-signed — Play
+            //    rejects debug-signed uploads and a debug key must never reach
+            //    users. In that case, fail the build loudly instead.
             if (keystoreProperties['storeFile'] != null) {
                 signingConfig signingConfigs.release
             } else {
+                def wantsBundle = gradle.startParameter.taskNames.any {
+                    it.toLowerCase().contains('bundle')
+                }
+                def forceRelease = project.hasProperty('geowakeRelease') &&
+                    project.property('geowakeRelease').toString().toBoolean()
+                if (wantsBundle || forceRelease) {
+                    throw new GradleException(
+                        "Refusing to build a Play release artifact with the DEBUG " +
+                        "signing key. Configure a real release keystore in " +
+                        "android/key.properties (storeFile/storePassword/keyAlias/" +
+                        "keyPassword) before building an .aab or passing " +
+                        "-PgeowakeRelease=true.")
+                }
+                println("WARNING: no release keystore in key.properties — this " +
+                    "release build is DEBUG-SIGNED and is for local testing ONLY.")
                 signingConfig signingConfigs.debug
             }
         }

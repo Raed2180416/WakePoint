@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "6f4710f97cae1f21e885f877bc2a39b299ea02ff",
-  "generatedAt": "2026-07-22T08:17:58+05:30",
-  "structuralDigest": "6d8f852c9632fe688d071e8f3a74505371bbf622",
+  "gitCommit": "16f06ce6ee13372cca18de01bab5e0953ac4fe9b",
+  "generatedAt": "2026-07-24T06:04:30+05:30",
+  "structuralDigest": "014548fcb6acaa58ea4c02ca4bb8901cb5fc4880",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1191,
-    "edgeCount": 2272,
+    "nodeCount": 1192,
+    "edgeCount": 2274,
     "byLevel": {
       "feature": 9,
       "file": 424,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 723
+      "symbol": 724
     },
     "byEdgeType": {
-      "contains": 845,
-      "depends-on": 910,
+      "contains": 846,
+      "depends-on": 911,
       "references": 517
     }
   },
@@ -1286,7 +1286,7 @@
       "role": "flutter-lib",
       "feature": "user-facing-screens",
       "importers": 2,
-      "exportCount": 2
+      "exportCount": 3
     },
     {
       "id": "file:lib/screens/splash_screen.dart",
@@ -1406,7 +1406,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 15,
+      "importers": 16,
       "exportCount": 12
     },
     {
@@ -1659,7 +1659,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 14,
+      "importers": 15,
       "exportCount": 1
     },
     {
@@ -1725,7 +1725,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 41,
+      "importers": 40,
       "exportCount": 3
     },
     {
@@ -6995,6 +6995,15 @@
       "id": "symbol:lib/screens/settingsdrawer.dart#kBuyMeACoffeeUrl",
       "level": "symbol",
       "label": "kBuyMeACoffeeUrl",
+      "kind": "const",
+      "deterministic": true,
+      "source": "map",
+      "file": "lib/screens/settingsdrawer.dart"
+    },
+    {
+      "id": "symbol:lib/screens/settingsdrawer.dart#kPrivacyPolicyUrl",
+      "level": "symbol",
+      "label": "kPrivacyPolicyUrl",
       "kind": "const",
       "deterministic": true,
       "source": "map",
@@ -15881,13 +15890,6 @@
     },
     {
       "from": "file:lib/screens/maptracking.dart",
-      "to": "file:lib/services/notification_service.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:lib/screens/maptracking.dart",
       "to": "file:lib/services/polyline_decoder.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -16254,6 +16256,13 @@
     },
     {
       "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
       "to": "file:lib/services/monetization/monetization_service.dart",
       "type": "depends-on",
       "deterministic": true,
@@ -16284,6 +16293,13 @@
     {
       "from": "file:lib/screens/settingsdrawer.dart",
       "to": "symbol:lib/screens/settingsdrawer.dart#kBuyMeACoffeeUrl",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/screens/settingsdrawer.dart",
+      "to": "symbol:lib/screens/settingsdrawer.dart#kPrivacyPolicyUrl",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -16526,6 +16542,13 @@
       "from": "file:lib/services/alarm_haptics.dart",
       "to": "symbol:lib/services/alarm_haptics.dart#AlarmHaptics",
       "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:lib/services/alarm_player.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
       "deterministic": true,
       "source": "map"
     },

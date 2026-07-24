@@ -561,6 +561,11 @@ class NotificationService {
     }
     // 2. Ensure notification is gone (redundant safety)
     await _cancelAlarmNotificationOnly();
+    // Also clear the OS backstop (id 991): after a process-death cold start it
+    // is the thing ringing (FLAG_INSISTENT), and it is NOT covered by
+    // _alarmNotificationId — without this, dismissing the alarm leaves the
+    // backstop looping with no way to silence it (ongoing + no-clear).
+    await cancelEtaBackstop();
 
     try {
       await TrackingStateStore.setAlarmFired(false);
@@ -611,6 +616,29 @@ class NotificationService {
       },
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
+
+    // Process-death recovery: when the OS backstop (or any alarm notification)
+    // LAUNCHED the app, the tap is NOT delivered to
+    // onDidReceiveNotificationResponse — it is only available here. Without
+    // this, a rider woken by the backstop after an OEM kill opens the app to a
+    // normal home screen with the backstop still ringing and no way to stop
+    // it. Route the launch response through the exact same handler as a warm
+    // tap, after the first frame so the navigator exists.
+    try {
+      final launch = await _notificationsPlugin
+          .getNotificationAppLaunchDetails();
+      final resp = launch?.notificationResponse;
+      if ((launch?.didNotificationLaunchApp ?? false) && resp != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          unawaited(handleNotificationResponse(resp));
+        });
+      }
+    } catch (e) {
+      dev.log(
+        'Notification launch-details check failed: $e',
+        name: 'NotificationService',
+      );
+    }
 
     // Explicitly request Android notification permission (Android 13+)
     try {
@@ -688,13 +716,31 @@ class NotificationService {
     );
   }
 
-  // This is the main function to trigger the alarm
+  /// Invariant #4 decision (pure, unit-testable): an auxiliary (non-core)
+  /// alarm — e.g. anti-theft — must never cancel/override or fire alongside the
+  /// core destination wake alarm. Suppress it whenever an alarm is already
+  /// presenting or the destination alarm has already fired this session. The
+  /// core alarm is never suppressed by this rule.
+  static bool shouldSuppressAuxiliaryAlarm({
+    required bool isCoreAlarm,
+    required bool alarmCurrentlyShowing,
+    required bool destinationAlarmFired,
+  }) {
+    if (isCoreAlarm) return false;
+    return alarmCurrentlyShowing || destinationAlarmFired;
+  }
+
   // This is the main function to trigger the alarm
   Future<void> showWakeUpAlarm({
     required String title,
     required String body,
     bool allowContinueTracking = true,
     bool playSound = true, // Default to true for backward compatibility
+    // Distinguishes the core destination wake alarm from auxiliary (Pro) alarms
+    // like anti-theft. Invariant #4: a Pro feature must never affect the core
+    // alarm — so an auxiliary alarm may NOT cancel/override a destination alarm
+    // that is already presenting, and the core alarm always wins a collision.
+    bool isCoreAlarm = true,
   }) async {
     // Test-mode observability: always record, and call optional hook when present
     if (isTestMode || testOnShowWakeUpAlarm != null) {
@@ -723,7 +769,29 @@ class NotificationService {
       name: 'NotificationService',
     );
 
-    // Prevent duplicate overlays
+    // An auxiliary (non-core) alarm must never override a presenting alarm:
+    // if the core destination wake alarm is already sounding, the rider is
+    // already being woken and the core alarm must not be cancelled/replaced by
+    // e.g. anti-theft (invariant #4). Auxiliary alarms also never fire once the
+    // destination alarm has fired for this session.
+    if (!isCoreAlarm) {
+      bool destFired = false;
+      try {
+        destFired = await TrackingStateStore.isAlarmFired();
+      } catch (_) {}
+      if (shouldSuppressAuxiliaryAlarm(
+        isCoreAlarm: isCoreAlarm,
+        alarmCurrentlyShowing: _alarmCurrentlyShowing,
+        destinationAlarmFired: destFired,
+      )) {
+        dev.log(
+          'Auxiliary alarm suppressed — core alarm already active/fired.',
+          name: 'NotificationService',
+        );
+        return;
+      }
+    }
+
     // Prevent duplicate overlays
     if (_alarmCurrentlyShowing) {
       if (allowContinueTracking) {
@@ -917,6 +985,14 @@ class NotificationService {
             visibility: NotificationVisibility.public,
             category: AndroidNotificationCategory.alarm,
             audioAttributesUsage: AudioAttributesUsage.alarm,
+            // This fires precisely when NO app process exists to loop audio, so
+            // the notification itself must do the waking: FLAG_INSISTENT (4)
+            // loops the channel's system alarm tone until the rider dismisses
+            // it, FLAG_NO_CLEAR (32) survives "Clear all". A once-only chime
+            // cannot wake a sleeping rider — parity with the primary alarm.
+            ongoing: true,
+            autoCancel: false,
+            additionalFlags: Int32List.fromList([4, 32]),
           );
       final NotificationDetails details = NotificationDetails(
         android: androidDetails,

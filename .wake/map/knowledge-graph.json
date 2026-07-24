@@ -3,13 +3,13 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "6f4710f97cae1f21e885f877bc2a39b299ea02ff",
-    "gitTree": "6d8f852c9632fe688d071e8f3a74505371bbf622",
-    "generatedAt": "2026-07-22T08:17:58+05:30",
+    "gitCommit": "16f06ce6ee13372cca18de01bab5e0953ac4fe9b",
+    "gitTree": "014548fcb6acaa58ea4c02ca4bb8901cb5fc4880",
+    "generatedAt": "2026-07-24T06:04:30+05:30",
     "filesIndexed": 424,
-    "dependencyEdges": 910,
-    "totalExports": 723,
-    "totalImports": 1950,
+    "dependencyEdges": 911,
+    "totalExports": 724,
+    "totalImports": 1955,
     "byRole": {
       "other": 4,
       "backend": 16,
@@ -226,7 +226,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "c249b8be6cb20378"
+      "contentHash": "d750ee14ffc135d0"
     },
     {
       "file": "geowake-server/src/controllers/aggregateController.js",
@@ -279,6 +279,10 @@
         },
         {
           "kind": "require",
+          "source": "crypto"
+        },
+        {
+          "kind": "require",
           "source": "../config/config"
         }
       ],
@@ -294,7 +298,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "878f466022d67eec"
+      "contentHash": "58f2ffb6fd9d321d"
     },
     {
       "file": "geowake-server/src/controllers/mapsController.js",
@@ -378,7 +382,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "e5df8ad74fe3262e"
+      "contentHash": "51539e2b27bd1471"
     },
     {
       "file": "geowake-server/src/middleware/security.js",
@@ -418,7 +422,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "6de5b0e0e797e16e"
+      "contentHash": "b50055ee3ec4fdc1"
     },
     {
       "file": "geowake-server/src/routes/aggregate.js",
@@ -490,6 +494,10 @@
         {
           "kind": "require",
           "source": "../middleware/security"
+        },
+        {
+          "kind": "require",
+          "source": "../middleware/mapsGuard"
         }
       ],
       "types": [],
@@ -499,7 +507,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "f407e70e0d324bb7"
+      "contentHash": "264a071de78bfa4d"
     },
     {
       "file": "geowake-server/src/server.js",
@@ -540,6 +548,10 @@
         },
         {
           "kind": "require",
+          "source": "./middleware/mapsGuard"
+        },
+        {
+          "kind": "require",
           "source": "./routes/auth"
         },
         {
@@ -558,7 +570,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "a0adf3f7130f1c4b"
+      "contentHash": "4fbf76502439ec01"
     },
     {
       "file": "geowake-server/src/utils/cache.js",
@@ -590,7 +602,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "8122c3d6987d2633"
+      "contentHash": "07fe036bcc79b08b"
     },
     {
       "file": "geowake-server/src/utils/mergeEngine.js",
@@ -672,6 +684,10 @@
       "imports": [
         {
           "kind": "require",
+          "source": "axios"
+        },
+        {
+          "kind": "require",
           "source": "supertest"
         },
         {
@@ -686,7 +702,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "5ed423d5604e445c"
+      "contentHash": "992042f5ec39c334"
     },
     {
       "file": "geowake-server/test/maps_error_body.test.js",
@@ -4535,10 +4551,6 @@
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/notification_service.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:geowake2/services/tracking/arrival_hooks.dart"
         },
         {
@@ -4570,7 +4582,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c1380a9ce43a1d9b"
+      "contentHash": "87276f96e55f64ef"
     },
     {
       "file": "lib/screens/mobility_data_consent_screen.dart",
@@ -4690,7 +4702,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "4566677a48cf24a1"
+      "contentHash": "1683bc7129be15b5"
     },
     {
       "file": "lib/screens/monetization/post_arrival_screen.dart",
@@ -4980,6 +4992,10 @@
         {
           "kind": "const",
           "name": "kBuyMeACoffeeUrl"
+        },
+        {
+          "kind": "const",
+          "name": "kPrivacyPolicyUrl"
         }
       ],
       "imports": [
@@ -5018,6 +5034,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/screens/report_problem_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/data_asset_config.dart"
         }
       ],
       "types": [],
@@ -5044,12 +5064,15 @@
       "constants": [
         {
           "name": "kBuyMeACoffeeUrl"
+        },
+        {
+          "name": "kPrivacyPolicyUrl"
         }
       ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "94e66a7c91478cf8"
+      "contentHash": "b2bcdfbfa5b0befa"
     },
     {
       "file": "lib/screens/splash_screen.dart",
@@ -5337,6 +5360,10 @@
         {
           "kind": "static",
           "source": "package:geowake2/services/notification_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
         }
       ],
       "types": [],
@@ -5351,7 +5378,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3dbe823701bc3378"
+      "contentHash": "3a4006b129b228db"
     },
     {
       "file": "lib/services/anti_theft_service.dart",
@@ -5413,7 +5440,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "fd8d1b1eff827e5a"
+      "contentHash": "a28c2f67c0db5883"
     },
     {
       "file": "lib/services/api_client.dart",
@@ -5995,7 +6022,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "9404a55fc845d7c9"
+      "contentHash": "7a61f45cfef4d7e5"
     },
     {
       "file": "lib/services/data_asset/mobility_consent_service.dart",
@@ -7096,7 +7123,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "7dc4a1402e7885e3"
+      "contentHash": "c134e814884ed2b5"
     },
     {
       "file": "lib/services/navigation_service.dart",
@@ -7240,7 +7267,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "a75cc8f7a5f92eac"
+      "contentHash": "a8b322307fb75f80"
     },
     {
       "file": "lib/services/oem_autostart_service.dart",
@@ -7473,7 +7500,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "ad7feb6603e6fe48"
+      "contentHash": "e377f41e37080cd3"
     },
     {
       "file": "lib/services/places_service.dart",
@@ -9446,7 +9473,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "13e10a3d49275be7"
+      "contentHash": "b5c8a89d6fc13c03"
     },
     {
       "file": "lib/services/telemetry/telemetry_session.dart",
@@ -10863,7 +10890,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "1e8fc3f02ce6810c"
+      "contentHash": "53406866a4d12322"
     },
     {
       "file": "lib/services/transfer_utils.dart",
@@ -16758,7 +16785,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "9cac02c4a6622237"
+      "contentHash": "24e85a577ac8c2a3"
     },
     {
       "file": "test/notification_tap_navigation_widget_test.dart",
@@ -23279,12 +23306,6 @@
     },
     {
       "from": "lib/screens/maptracking.dart",
-      "to": "lib/services/notification_service.dart",
-      "source": "package:geowake2/services/notification_service.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/screens/maptracking.dart",
       "to": "lib/services/tracking/arrival_hooks.dart",
       "source": "package:geowake2/services/tracking/arrival_hooks.dart",
       "kind": "static"
@@ -23440,6 +23461,12 @@
       "kind": "static"
     },
     {
+      "from": "lib/screens/settingsdrawer.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "package:geowake2/services/data_asset/data_asset_config.dart",
+      "kind": "static"
+    },
+    {
       "from": "lib/screens/splash_screen.dart",
       "to": "lib/services/tracking_state_store.dart",
       "source": "package:geowake2/services/tracking_state_store.dart",
@@ -23515,6 +23542,12 @@
       "from": "lib/services/alarm_player.dart",
       "to": "lib/services/notification_service.dart",
       "source": "package:geowake2/services/notification_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "lib/services/alarm_player.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
       "kind": "static"
     },
     {
@@ -28453,6 +28486,10 @@
       {
         "kind": "const",
         "name": "kBuyMeACoffeeUrl"
+      },
+      {
+        "kind": "const",
+        "name": "kPrivacyPolicyUrl"
       }
     ],
     "lib/screens/splash_screen.dart": [
@@ -29926,7 +29963,7 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 41,
+      "importers": 40,
       "exports": [
         "NotificationService",
         "NotificationActionOutcome",
@@ -29992,7 +30029,7 @@
     },
     {
       "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 15,
+      "importers": 16,
       "exports": [
         "kDataAssetEgressEnabled",
         "kDataAssetEgressEndpoint",
@@ -30006,6 +30043,13 @@
         "kAggregateSchemaVersion",
         "kConsentNoticeVersion",
         "kStationSnapMaxRadiusMeters"
+      ]
+    },
+    {
+      "file": "lib/services/monetization/monetization_service.dart",
+      "importers": 15,
+      "exports": [
+        "MonetizationService"
       ]
     },
     {
@@ -30029,13 +30073,6 @@
       "importers": 14,
       "exports": [
         "ApiClient"
-      ]
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 14,
-      "exports": [
-        "MonetizationService"
       ]
     },
     {
@@ -30217,7 +30254,7 @@
     },
     {
       "file": "lib/screens/maptracking.dart",
-      "imports": 18
+      "imports": 17
     },
     {
       "file": "lib/dashboard/unified_dashboard.dart",
@@ -30264,12 +30301,12 @@
       "imports": 8
     },
     {
-      "file": "lib/services/tracking/tracking.dart",
+      "file": "lib/screens/settingsdrawer.dart",
       "imports": 8
     },
     {
-      "file": "lib/screens/settingsdrawer.dart",
-      "imports": 7
+      "file": "lib/services/tracking/tracking.dart",
+      "imports": 8
     },
     {
       "file": "lib/services/widget/home_widget_bridge.dart",
@@ -30459,14 +30496,13 @@
     },
     {
       "file": "lib/services/notification_service.dart",
-      "importers": 41,
+      "importers": 40,
       "directDependents": [
         "integration_test/alarm_chain_ondevice_test.dart",
         "integration_test/backstop_doze_ondevice_test.dart",
         "integration_test/device_alarm_integration_test.dart",
         "integration_test/patrol_alarm_test.dart",
         "lib/debug/demo_tools.dart",
-        "lib/screens/maptracking.dart",
         "lib/screens/ringtones_screen.dart",
         "lib/screens/splash_screen.dart",
         "lib/services/alarm_player.dart",
@@ -30696,9 +30732,10 @@
     },
     {
       "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 15,
+      "importers": 16,
       "directDependents": [
         "lib/main.dart",
+        "lib/screens/settingsdrawer.dart",
         "lib/services/data_asset/aggregate_schema.dart",
         "lib/services/data_asset/contribution_cap.dart",
         "lib/services/data_asset/data_asset_pipeline.dart",
@@ -30727,6 +30764,31 @@
         "kAggregateSchemaVersion",
         "kConsentNoticeVersion",
         "kStationSnapMaxRadiusMeters"
+      ],
+      "riskLevel": "critical"
+    },
+    {
+      "file": "lib/services/monetization/monetization_service.dart",
+      "importers": 15,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/alarm_player.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/tracking/arrival_hooks.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
+        "lib/widgets/gated_banner_ad.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart"
+      ],
+      "exportedSymbols": [
+        "MonetizationService"
       ],
       "riskLevel": "critical"
     },
@@ -30802,30 +30864,6 @@
       ],
       "exportedSymbols": [
         "ApiClient"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 14,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/screens/guardian_setup_screen.dart",
-        "lib/screens/monetization/paywall_screen.dart",
-        "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/screens/settingsdrawer.dart",
-        "lib/services/share/guardian_service.dart",
-        "lib/services/tracking/arrival_hooks.dart",
-        "lib/services/widget/home_widget_bridge.dart",
-        "lib/services/widget/widget_arm_handler.dart",
-        "lib/widgets/gated_banner_ad.dart",
-        "lib/widgets/share/guardian_settings_section.dart",
-        "lib/widgets/widget/widget_settings_tile.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart"
-      ],
-      "exportedSymbols": [
-        "MonetizationService"
       ],
       "riskLevel": "critical"
     },
