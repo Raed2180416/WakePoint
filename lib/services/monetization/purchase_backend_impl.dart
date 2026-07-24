@@ -202,6 +202,38 @@ class IapPurchaseBackend implements PurchaseBackend {
   }
 
   @override
+  Future<bool> buyConsumable(String productId) async {
+    if (!_available) return false;
+    Completer<bool>? completer;
+    try {
+      final resp = await _iap.queryProductDetails({productId});
+      if (resp.productDetails.isEmpty) return false;
+      final product = resp.productDetails.firstWhere(
+        (d) => d.id == productId,
+        orElse: () => resp.productDetails.first,
+      );
+      completer = Completer<bool>();
+      _pendingBuys[productId] = completer;
+      // autoConsume so the pass is consumed on the store side and can be
+      // re-bought next period (prepaid repurchase). Same fail-closed handshake
+      // as buyOneTime: resolve only on a real stream event, time out to false.
+      final started = await _iap.buyConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+        autoConsume: true,
+      );
+      if (!started) return false;
+      return await completer.future.timeout(
+        const Duration(minutes: 5),
+        onTimeout: () => false,
+      );
+    } catch (_) {
+      return false;
+    } finally {
+      if (completer != null) _pendingBuys.remove(productId);
+    }
+  }
+
+  @override
   Future<Set<String>> restore() async {
     if (!_available) return <String>{};
     // Own completer for THIS call — never shared with a concurrent

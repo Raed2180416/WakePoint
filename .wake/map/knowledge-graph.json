@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756",
-    "gitTree": "de8fb536dd937fcfa82b1499ec19ffcc67df96f2",
-    "generatedAt": "2026-07-24T06:38:39+05:30",
-    "filesIndexed": 434,
-    "dependencyEdges": 930,
-    "totalExports": 727,
-    "totalImports": 1990,
+    "gitCommit": "5877dee569bc5dee80b98398bdcd79d3f705b596",
+    "gitTree": "83db160d76d2a36b64bd65035fed60576254ff0d",
+    "generatedAt": "2026-07-24T06:42:45+05:30",
+    "filesIndexed": 435,
+    "dependencyEdges": 932,
+    "totalExports": 728,
+    "totalImports": 1993,
     "byRole": {
       "other": 4,
       "backend": 22,
-      "flutter-test": 217,
+      "flutter-test": 218,
       "flutter-lib": 182,
       "tool": 8,
       "platform": 1
@@ -4845,12 +4845,20 @@
           "extends": null
         },
         {
+          "name": "_Pass",
+          "extends": null
+        },
+        {
           "name": "GeoWakePaywallScreen",
           "extends": "StatefulWidget"
         },
         {
           "name": "_GeoWakePaywallScreenState",
           "extends": "State"
+        },
+        {
+          "name": "_PassTile",
+          "extends": "StatelessWidget"
         },
         {
           "name": "_ValueRow",
@@ -4870,12 +4878,15 @@
         },
         {
           "name": "_kItems"
+        },
+        {
+          "name": "_kPasses"
         }
       ],
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "1683bc7129be15b5"
+      "contentHash": "ff006933c43ee549"
     },
     {
       "file": "lib/screens/monetization/post_arrival_screen.dart",
@@ -7096,7 +7107,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "40e4c186b9b09830"
+      "contentHash": "59542b5d6b96033c"
     },
     {
       "file": "lib/services/monetization/post_arrival_service.dart",
@@ -7214,7 +7225,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "637a0e0e73efb8bc"
+      "contentHash": "52df9f1d259e750c"
     },
     {
       "file": "lib/services/monetization/purchase_backend.dart",
@@ -7296,7 +7307,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "c134e814884ed2b5"
+      "contentHash": "0ba98ecf1125db01"
     },
     {
       "file": "lib/services/navigation_service.dart",
@@ -16496,6 +16507,43 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "46d6c1af48ad76b1"
+    },
+    {
+      "file": "test/monetization/pass_ladder_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/premium_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/purchase_backend.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "a231bf44b6b88366"
     },
     {
       "file": "test/monetization/post_arrival_decision_test.dart",
@@ -26771,6 +26819,18 @@
       "kind": "static"
     },
     {
+      "from": "test/monetization/pass_ladder_test.dart",
+      "to": "lib/services/monetization/premium_service.dart",
+      "source": "package:geowake2/services/monetization/premium_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/pass_ladder_test.dart",
+      "to": "lib/services/monetization/purchase_backend.dart",
+      "source": "package:geowake2/services/monetization/purchase_backend.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/monetization/post_arrival_decision_test.dart",
       "to": "lib/screens/monetization/post_arrival_screen.dart",
       "source": "package:geowake2/screens/monetization/post_arrival_screen.dart",
@@ -30527,19 +30587,19 @@
       ]
     },
     {
-      "file": "lib/services/api_client.dart",
-      "importers": 15,
-      "exports": [
-        "ApiClient"
-      ]
-    },
-    {
       "file": "lib/services/monetization/premium_service.dart",
-      "importers": 15,
+      "importers": 16,
       "exports": [
         "PremiumProducts",
         "PremiumService",
         "EntitlementTier"
+      ]
+    },
+    {
+      "file": "lib/services/api_client.dart",
+      "importers": 15,
+      "exports": [
+        "ApiClient"
       ]
     },
     {
@@ -30571,6 +30631,14 @@
       ]
     },
     {
+      "file": "lib/services/monetization/purchase_backend.dart",
+      "importers": 12,
+      "exports": [
+        "PurchaseBackend",
+        "FakePurchaseBackend"
+      ]
+    },
+    {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
       "importers": 11,
       "exports": [
@@ -30584,14 +30652,6 @@
       "exports": [
         "DirectionService",
         "ModeInfo"
-      ]
-    },
-    {
-      "file": "lib/services/monetization/purchase_backend.dart",
-      "importers": 11,
-      "exports": [
-        "PurchaseBackend",
-        "FakePurchaseBackend"
       ]
     },
     {
@@ -31274,6 +31334,34 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/monetization/premium_service.dart",
+      "importers": 16,
+      "directDependents": [
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/services/monetization/ad_service.dart",
+        "lib/services/monetization/monetization_service.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/late_purchase_grant_test.dart",
+        "test/monetization/monetization_edgecases_test.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/monetization_test.dart",
+        "test/monetization/pass_ladder_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/premium_gates_wave0_test.dart",
+        "test/services/alarm_player_test.dart"
+      ],
+      "exportedSymbols": [
+        "PremiumProducts",
+        "PremiumService",
+        "EntitlementTier"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/services/api_client.dart",
       "importers": 15,
       "directDependents": [
@@ -31295,33 +31383,6 @@
       ],
       "exportedSymbols": [
         "ApiClient"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/monetization/premium_service.dart",
-      "importers": 15,
-      "directDependents": [
-        "lib/screens/guardian_setup_screen.dart",
-        "lib/screens/monetization/paywall_screen.dart",
-        "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/services/monetization/ad_service.dart",
-        "lib/services/monetization/monetization_service.dart",
-        "lib/widgets/share/guardian_settings_section.dart",
-        "lib/widgets/widget/widget_settings_tile.dart",
-        "test/monetization/late_purchase_grant_test.dart",
-        "test/monetization/monetization_edgecases_test.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart",
-        "test/monetization/monetization_test.dart",
-        "test/monetization/post_arrival_interstitial_test.dart",
-        "test/monetization/premium_gates_wave0_test.dart",
-        "test/services/alarm_player_test.dart"
-      ],
-      "exportedSymbols": [
-        "PremiumProducts",
-        "PremiumService",
-        "EntitlementTier"
       ],
       "riskLevel": "critical"
     },
@@ -31405,6 +31466,29 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/monetization/purchase_backend.dart",
+      "importers": 12,
+      "directDependents": [
+        "lib/services/monetization/monetization_service.dart",
+        "lib/services/monetization/premium_service.dart",
+        "lib/services/monetization/purchase_backend_impl.dart",
+        "test/monetization/late_purchase_grant_test.dart",
+        "test/monetization/monetization_edgecases_test.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/monetization_test.dart",
+        "test/monetization/pass_ladder_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/premium_gates_wave0_test.dart",
+        "test/services/alarm_player_test.dart"
+      ],
+      "exportedSymbols": [
+        "PurchaseBackend",
+        "FakePurchaseBackend"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/ekf/ekf_orchestrator.dart",
       "importers": 11,
       "directDependents": [
@@ -31445,28 +31529,6 @@
       "exportedSymbols": [
         "DirectionService",
         "ModeInfo"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/monetization/purchase_backend.dart",
-      "importers": 11,
-      "directDependents": [
-        "lib/services/monetization/monetization_service.dart",
-        "lib/services/monetization/premium_service.dart",
-        "lib/services/monetization/purchase_backend_impl.dart",
-        "test/monetization/late_purchase_grant_test.dart",
-        "test/monetization/monetization_edgecases_test.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart",
-        "test/monetization/monetization_test.dart",
-        "test/monetization/post_arrival_interstitial_test.dart",
-        "test/monetization/premium_gates_wave0_test.dart",
-        "test/services/alarm_player_test.dart"
-      ],
-      "exportedSymbols": [
-        "PurchaseBackend",
-        "FakePurchaseBackend"
       ],
       "riskLevel": "critical"
     },

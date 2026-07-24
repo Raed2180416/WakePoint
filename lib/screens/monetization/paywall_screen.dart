@@ -5,6 +5,11 @@
 // reminds the user the never-late alarm is free forever — Pro is convenience,
 // never safety.
 //
+// PRICING: a prepaid pass ladder (₹7 daily / ₹35 weekly / ₹99 monthly / ₹899
+// yearly). All prepaid, no auto-renew — every purchase is a plain one-time UPI
+// charge (no RBI e-mandate), and each pass grants full Pro for its duration.
+// See PASS_PRICING_ANALYSIS.md and docs/business_os/03_monetization.md.
+//
 // INDIA-SPECIFIC UX: Shows a "Payment processing…" banner when a UPI purchase
 // is in PENDING state, with clear messaging that Pro will unlock automatically
 // once payment clears. Distinguishes cancel vs error in snackbar messages.
@@ -17,11 +22,9 @@ import '../../services/monetization/monetization_service.dart';
 import '../../services/monetization/premium_service.dart';
 import '../../widgets/monetization/pro_gate.dart';
 
-/// Founder-hosted policy URLs (External Needs §4). Safe placeholders until the
-/// real pages exist — the buttons no-op gracefully if the URL can't open.
 // Served as static pages by the always-on Railway backend (see
-// geowake-server/src/server.js /legal routes). geowake.app did not resolve;
-// this domain is live. Override at build time once a branded domain exists.
+// geowake-server/src/routes/legal.js). geowake.app did not resolve; this domain
+// is live. Override at build time once a branded domain exists.
 const String _kPrivacyUrl = String.fromEnvironment(
   'GEOWAKE_PRIVACY_URL',
   defaultValue: 'https://geowake-production.up.railway.app/legal/privacy',
@@ -58,6 +61,24 @@ const List<_ProItem> _kItems = [
   _ProItem(Icons.block, 'Ad-free', 'No ads, anywhere.'),
 ];
 
+/// A prepaid pass option in the ladder.
+class _Pass {
+  final String sku;
+  final String label; // "Monthly"
+  final String duration; // "30 days"
+  final String fallbackPrice; // shown if store metadata is unavailable
+  final String? badge; // "Popular" / "Best value"
+  const _Pass(this.sku, this.label, this.duration, this.fallbackPrice,
+      [this.badge]);
+}
+
+const List<_Pass> _kPasses = [
+  _Pass(PremiumProducts.proDaily, 'Daily', '1 day', '₹7'),
+  _Pass(PremiumProducts.proWeekly, 'Weekly', '7 days', '₹35'),
+  _Pass(PremiumProducts.proMonthly, 'Monthly', '30 days', '₹99', 'Popular'),
+  _Pass(PremiumProducts.proYearly, 'Yearly', '365 days', '₹899', 'Best value'),
+];
+
 class GeoWakePaywallScreen extends StatefulWidget {
   const GeoWakePaywallScreen({super.key});
 
@@ -67,34 +88,45 @@ class GeoWakePaywallScreen extends StatefulWidget {
 
 class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
   final _mon = MonetizationService.instance;
-  String _price = MonetizationService.proPriceFallback;
+
+  // Live store prices per SKU, seeded with the hardcoded fallbacks so the UI is
+  // never blank while store metadata loads.
+  final Map<String, String> _prices = {
+    for (final p in _kPasses) p.sku: p.fallbackPrice,
+  };
+
+  // Default selection: Monthly — the anchor tier the ladder funnels toward.
+  String _selectedSku = PremiumProducts.proMonthly;
   bool _busy = false;
   bool _restoreBusy = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPrice();
+    _loadPrices();
   }
 
-  Future<void> _loadPrice() async {
-    final p = await _mon.proPriceOrFallback();
-    if (mounted) setState(() => _price = p);
+  Future<void> _loadPrices() async {
+    for (final p in _kPasses) {
+      final price = await _mon.priceOrFallback(p.sku, p.fallbackPrice);
+      if (!mounted) return;
+      setState(() => _prices[p.sku] = price);
+    }
   }
 
-  Future<void> _buy() async {
+  Future<void> _buySelected() async {
     if (_busy) return;
     setState(() => _busy = true);
-    final ok = await _mon.buyPro();
+    final sku = _selectedSku;
+    final ok = await _mon.buyPass(sku);
     if (!mounted) return;
     setState(() => _busy = false);
     if (ok) {
       _snack('Welcome to GeoWake Pro 🎉');
       Navigator.of(context).maybePop();
     } else {
-      // Check if the purchase is pending (UPI) — different message.
       final pending = _mon.pendingPurchasesListenable.value;
-      if (pending.contains(PremiumService.proProductId)) {
+      if (pending.contains(sku)) {
         _snack('Payment processing — Pro will unlock automatically once it clears.');
       } else {
         _snack('Purchase didn\'t complete. You can try again anytime.');
@@ -108,9 +140,11 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
     final owned = await _mon.restorePurchases();
     if (!mounted) return;
     setState(() => _restoreBusy = false);
+    // Restore recovers a legacy one-time unlock; prepaid passes are consumed and
+    // not restorable, so a "nothing found" here is expected for pass users.
     _snack(owned.contains(PremiumService.proProductId)
         ? 'Pro restored ✓'
-        : 'No previous purchase found.');
+        : 'No restorable purchase found. Passes renew by buying again.');
   }
 
   Future<void> _watchForDayPass() async {
@@ -126,8 +160,7 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
   }
 
   void _snack(String m) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(m)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
   }
 
   Future<void> _open(String url) async {
@@ -154,14 +187,14 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
-              // Hero headline
               Text('Your commute on autopilot.',
                   style: text.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   )),
               const SizedBox(height: 4),
               Text(
-                'One-time purchase. Yours forever. No subscription.',
+                'Pick a pass. No auto-renew — it simply ends, and you renew '
+                'whenever you like.',
                 style: text.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -189,14 +222,14 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
               ),
               const SizedBox(height: 16),
 
-              // UPI pending purchase banner — shows when a UPI payment is
-              // processing. Critical for India where UPI is the dominant rail.
+              // UPI pending purchase banner — shows when the selected pass's UPI
+              // payment is processing. Critical for India (UPI is dominant).
               ValueListenableBuilder<Set<String>>(
                 valueListenable: _mon.pendingPurchasesListenable,
                 builder: (context, pending, _) {
-                  if (!pending.contains(PremiumService.proProductId)) {
-                    return const SizedBox.shrink();
-                  }
+                  final hasPendingPass =
+                      pending.any((id) => _prices.containsKey(id));
+                  if (!hasPendingPass) return const SizedBox.shrink();
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(14),
@@ -252,11 +285,27 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
               // Benefits list
               for (final item in _kItems)
                 _ValueRow(item: item, highlight: item.source == source),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // CTA button
+              // ── Pass ladder ──────────────────────────────────────────────
+              Text('Choose your pass',
+                  style: text.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              for (final pass in _kPasses)
+                _PassTile(
+                  pass: pass,
+                  price: _prices[pass.sku] ?? pass.fallbackPrice,
+                  selected: pass.sku == _selectedSku,
+                  onTap: _busy
+                      ? null
+                      : () => setState(() => _selectedSku = pass.sku),
+                ),
+              const SizedBox(height: 16),
+
+              // CTA — buys the selected pass.
               FilledButton(
-                onPressed: _busy ? null : _buy,
+                onPressed: _busy ? null : _buySelected,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -273,13 +322,13 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
                         ),
                       )
                     : Text(
-                        'Unlock forever — $_price',
+                        'Get ${_selectedLabel()} — ${_prices[_selectedSku] ?? ''}',
                         style: const TextStyle(fontSize: 16),
                       ),
               ),
               const SizedBox(height: 8),
 
-              // Rewarded day pass
+              // Rewarded day pass — the FREE path to Pro.
               if (_mon.premiumOrNull?.isPro == false)
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _watchForDayPass,
@@ -308,6 +357,95 @@ class _GeoWakePaywallScreenState extends State<GeoWakePaywallScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  String _selectedLabel() {
+    for (final p in _kPasses) {
+      if (p.sku == _selectedSku) return '${p.label} Pro';
+    }
+    return 'Pro';
+  }
+}
+
+class _PassTile extends StatelessWidget {
+  final _Pass pass;
+  final String price;
+  final bool selected;
+  final VoidCallback? onTap;
+  const _PassTile({
+    required this.pass,
+    required this.price,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '${pass.label} pass, $price for ${pass.duration}',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: selected
+                ? scheme.primaryContainer
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected
+                  ? scheme.primary
+                  : scheme.outlineVariant.withValues(alpha: 0.5),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Row(children: [
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: selected ? scheme.primary : scheme.onSurfaceVariant,
+              size: 22,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Row(children: [
+                Text(pass.label,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 15)),
+                const SizedBox(width: 8),
+                Text('· ${pass.duration}',
+                    style: TextStyle(
+                        fontSize: 12, color: scheme.onSurfaceVariant)),
+                if (pass.badge != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: scheme.tertiary,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text(pass.badge!,
+                        style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: scheme.onTertiary)),
+                  ),
+                ],
+              ]),
+            ),
+            Text(price,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 15)),
+          ]),
+        ),
       ),
     );
   }

@@ -24,8 +24,26 @@ import 'package:geowake2/services/monetization/purchase_backend.dart';
 /// Store product ids. Kept here (not in the SDK layer) so tests and policy code
 /// can reference them without importing `in_app_purchase`.
 class PremiumProducts {
-  /// The one-time, non-consumable Pro unlock. Lead SKU for India.
+  /// Prepaid pass ladder (consumable products). Each grants full Pro for its
+  /// duration, then lapses; the user re-buys to renew (no auto-renew, so no RBI
+  /// e-mandate friction — every purchase is a plain one-time UPI charge). See
+  /// PASS_PRICING_ANALYSIS.md and docs/business_os/03_monetization.md.
+  static const String proDaily = 'geowake_pro_daily'; // ₹7, 24h
+  static const String proWeekly = 'geowake_pro_weekly'; // ₹35, 7d
+  static const String proMonthly = 'geowake_pro_monthly'; // ₹99, 30d
+  static const String proYearly = 'geowake_pro_yearly'; // ₹899, 365d
+
+  /// The one-time, non-consumable Pro unlock. Held for v2 as a "lifer" SKU;
+  /// still honoured if owned so an existing purchaser never loses Pro.
   static const String proOneTime = 'geowake_pro_onetime';
+
+  /// The prepaid pass SKUs, in ladder order (for the paywall).
+  static const List<String> passLadder = <String>[
+    proDaily,
+    proWeekly,
+    proMonthly,
+    proYearly,
+  ];
 }
 
 /// Coarse entitlement tier for UI / analytics.
@@ -133,6 +151,39 @@ class PremiumService {
     final ok = await _backend.buyOneTime(proProductId);
     if (ok) {
       _proOwned = true;
+      await _persist();
+    }
+    return ok;
+  }
+
+  /// The Pro duration granted by each prepaid pass SKU. Unknown ids fall back to
+  /// the shortest (daily) so a mis-wired SKU can never over-grant.
+  static Duration passDurationFor(String productId) {
+    switch (productId) {
+      case PremiumProducts.proDaily:
+        return const Duration(hours: 24);
+      case PremiumProducts.proWeekly:
+        return const Duration(days: 7);
+      case PremiumProducts.proMonthly:
+        return const Duration(days: 30);
+      case PremiumProducts.proYearly:
+        return const Duration(days: 365);
+      default:
+        return const Duration(hours: 24);
+    }
+  }
+
+  /// Buy a prepaid pass (daily/weekly/monthly/yearly). The product is CONSUMABLE
+  /// so it can be re-bought each period. On a confirmed purchase, extends the
+  /// time-based Pro entitlement by the pass duration (extends, never shortens —
+  /// same field the rewarded day-pass uses, so `isPro` needs no change). Only
+  /// [PremiumProducts.passLadder] ids are accepted. Returns true iff granted.
+  Future<bool> buyPass(String productId) async {
+    if (!PremiumProducts.passLadder.contains(productId)) return false;
+    final ok = await _backend.buyConsumable(productId);
+    if (ok) {
+      final expiry = _nowMs() + passDurationFor(productId).inMilliseconds;
+      if (expiry > _dayPassExpiryMs) _dayPassExpiryMs = expiry;
       await _persist();
     }
     return ok;

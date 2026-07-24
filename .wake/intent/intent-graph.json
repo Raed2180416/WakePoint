@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756",
-  "generatedAt": "2026-07-24T06:38:39+05:30",
-  "structuralDigest": "de8fb536dd937fcfa82b1499ec19ffcc67df96f2",
+  "gitCommit": "5877dee569bc5dee80b98398bdcd79d3f705b596",
+  "generatedAt": "2026-07-24T06:42:45+05:30",
+  "structuralDigest": "83db160d76d2a36b64bd65035fed60576254ff0d",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1205,
-    "edgeCount": 2296,
+    "nodeCount": 1207,
+    "edgeCount": 2299,
     "byLevel": {
       "feature": 9,
-      "file": 434,
+      "file": 435,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 727
+      "symbol": 728
     },
     "byEdgeType": {
-      "contains": 849,
-      "depends-on": 930,
+      "contains": 850,
+      "depends-on": 932,
       "references": 517
     }
   },
@@ -1747,7 +1747,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 15,
+      "importers": 16,
       "exportCount": 3
     },
     {
@@ -1769,7 +1769,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 11,
+      "importers": 12,
       "exportCount": 2
     },
     {
@@ -3635,6 +3635,17 @@
       "id": "file:test/monetization/monetization_test.dart",
       "level": "file",
       "label": "test/monetization/monetization_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/pass_ladder_test.dart",
+      "level": "file",
+      "label": "test/monetization/pass_ladder_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -10691,6 +10702,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/monetization/monetization_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/pass_ladder_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/pass_ladder_test.dart"
     },
     {
       "id": "symbol:test/monetization/post_arrival_decision_test.dart#main",
@@ -24807,6 +24827,27 @@
     {
       "from": "file:test/monetization/monetization_test.dart",
       "to": "symbol:test/monetization/monetization_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/pass_ladder_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/pass_ladder_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/pass_ladder_test.dart",
+      "to": "symbol:test/monetization/pass_ladder_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

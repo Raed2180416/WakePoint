@@ -30,6 +30,16 @@ abstract class PurchaseBackend {
   /// user-cancel; genuine errors may throw and are handled by the caller.
   Future<bool> buyOneTime(String productId);
 
+  /// Attempt a CONSUMABLE purchase of [productId] — the prepaid pass model
+  /// (daily/weekly/monthly/yearly). The product is purchased AND consumed so the
+  /// same pass can be bought again next period (prepaid repurchase). Because it
+  /// is consumed, a pass is NEVER returned by [restore]; the granted time-based
+  /// entitlement is what persists locally, not store ownership.
+  ///
+  /// Returns `true` iff the purchase completed. Returns `false` (not throw) on
+  /// user-cancel; genuine errors may throw and are handled by the caller.
+  Future<bool> buyConsumable(String productId);
+
   /// Restore previously-owned non-consumable purchases (e.g. after reinstall or
   /// on a new device signed into the same store account).
   ///
@@ -57,6 +67,9 @@ class FakePurchaseBackend implements PurchaseBackend {
 
   /// When `true`, [buyOneTime] throws (simulates a billing error).
   bool throwOnBuy;
+
+  /// Call log — product ids passed to [buyConsumable] (prepaid passes), in order.
+  final List<String> consumableBuyCalls = <String>[];
 
   /// When `true`, [restore] throws (simulates a restore error).
   bool throwOnRestore;
@@ -92,6 +105,17 @@ class FakePurchaseBackend implements PurchaseBackend {
     _owned.add(productId);
     onEntitlementChanged?.call(<String>{..._owned});
     return true;
+  }
+
+  @override
+  Future<bool> buyConsumable(String productId) async {
+    consumableBuyCalls.add(productId);
+    if (throwOnBuy) {
+      throw StateError('FakePurchaseBackend: consumable buy failed for $productId');
+    }
+    // A consumable is consumed immediately, so it does NOT persist in [_owned]
+    // (unlike a non-consumable). The caller grants time-based entitlement.
+    return buyShouldSucceed;
   }
 
   /// Test hook: simulate a PENDING purchase clearing AFTER buyOneTime gave up —

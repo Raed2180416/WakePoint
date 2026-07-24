@@ -433,6 +433,34 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/monetization/premium_service.dart",
+    "importers": 16,
+    "directDependents": [
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/services/monetization/monetization_service.dart",
+      "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/pass_ladder_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart",
+      "test/services/alarm_player_test.dart"
+    ],
+    "exportedSymbols": [
+      "PremiumProducts",
+      "PremiumService",
+      "EntitlementTier"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/services/api_client.dart",
     "importers": 15,
     "directDependents": [
@@ -454,33 +482,6 @@
     ],
     "exportedSymbols": [
       "ApiClient"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/monetization/premium_service.dart",
-    "importers": 15,
-    "directDependents": [
-      "lib/screens/guardian_setup_screen.dart",
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/screens/monetization/post_arrival_screen.dart",
-      "lib/services/monetization/ad_service.dart",
-      "lib/services/monetization/monetization_service.dart",
-      "lib/widgets/share/guardian_settings_section.dart",
-      "lib/widgets/widget/widget_settings_tile.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart",
-      "test/monetization/post_arrival_interstitial_test.dart",
-      "test/monetization/premium_gates_wave0_test.dart",
-      "test/services/alarm_player_test.dart"
-    ],
-    "exportedSymbols": [
-      "PremiumProducts",
-      "PremiumService",
-      "EntitlementTier"
     ],
     "riskLevel": "critical"
   },
@@ -564,6 +565,29 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/monetization/purchase_backend.dart",
+    "importers": 12,
+    "directDependents": [
+      "lib/services/monetization/monetization_service.dart",
+      "lib/services/monetization/premium_service.dart",
+      "lib/services/monetization/purchase_backend_impl.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/pass_ladder_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart",
+      "test/services/alarm_player_test.dart"
+    ],
+    "exportedSymbols": [
+      "PurchaseBackend",
+      "FakePurchaseBackend"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/core/ekf/ekf_orchestrator.dart",
     "importers": 11,
     "directDependents": [
@@ -604,28 +628,6 @@
     "exportedSymbols": [
       "DirectionService",
       "ModeInfo"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/monetization/purchase_backend.dart",
-    "importers": 11,
-    "directDependents": [
-      "lib/services/monetization/monetization_service.dart",
-      "lib/services/monetization/premium_service.dart",
-      "lib/services/monetization/purchase_backend_impl.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart",
-      "test/monetization/post_arrival_interstitial_test.dart",
-      "test/monetization/premium_gates_wave0_test.dart",
-      "test/services/alarm_player_test.dart"
-    ],
-    "exportedSymbols": [
-      "PurchaseBackend",
-      "FakePurchaseBackend"
     ],
     "riskLevel": "critical"
   },

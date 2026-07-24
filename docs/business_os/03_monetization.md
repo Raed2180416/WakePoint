@@ -17,10 +17,29 @@ in v2.
 single one-time unlock + rewarded day-pass. `monetization_service.dart:28`
 (`proPriceFallback = '₹199'`), `premium_service.dart` (`proOneTime`).
 
-**Status: UNDECIDED — Plan B is merely what's currently coded, not a verdict.**
-My earlier draft of this file wrongly "committed" to B and dismissed A citing
-Citymapper. That was an overreach and the Citymapper point was weak (see §2).
-Corrected below.
+**DECISION (2026-07-24, Raed): Plan A — the full prepaid pass ladder.**
+₹7 daily · ₹35 weekly · ₹99 monthly · ₹899 yearly, all prepaid, each unlocking
+full Pro for its duration, coexisting with the free rewarded day-pass. Lifetime
+(₹1,950/₹2,400) held for v2. `PASS_PRICING_ANALYSIS.md` is the build spec (§7 =
+implementation path, §8 = paywall UX). Plan B (₹199 one-time) is what the code
+ships *today* and is the fallback if the ladder proves too heavy — but the
+target is the ladder.
+
+Implementation state: **BUILT** (2026-07-24). `premium_service.dart` now defines
+the 4 SKUs (`proDaily/Weekly/Monthly/Yearly` + `passLadder`), `buyPass()`
+(consumable, grants time-based Pro via the shared expiry field — extends, never
+shortens), `passDurationFor()`; the billing seam has `buyConsumable`
+(auto-consume, so passes re-buy each period); `monetization_service.buyPass()`
++ `priceOrFallback()` facade; and the paywall renders the selectable ladder
+(Monthly pre-selected, per-SKU store prices with ₹7/35/99/899 fallbacks, UPI
+pending handling, rewarded day-pass + restore kept). 9 pass-ladder tests green.
+The legacy one-time (`proOneTime`) is retained + restorable so no existing
+purchaser loses Pro. **Remaining (user action): create the 4 consumable SKUs in
+Play Console** — see `01_launch_readiness.md`.
+
+> Historical note: an earlier draft of this file wrongly "committed" to Plan B
+> and dismissed A citing Citymapper. That was an overreach and the Citymapper
+> point was weak (§2). Kept below for the honest tradeoff record.
 
 ## 1. The honest tradeoff (fact-checked, `research/monetization_benchmarks.md`)
 

@@ -26,6 +26,11 @@ reflects work done this session.
       36). Regression-test Android 16 behavior changes first.
 - [ ] **Real AdMob app ID + unit IDs** wired via build config (test IDs ship
       zero revenue — user must create AdMob account).
+- [ ] **Create the 4 prepaid pass SKUs in Play Console** as *consumable* in-app
+      products (not subscriptions): `geowake_pro_daily` ₹7, `geowake_pro_weekly`
+      ₹35, `geowake_pro_monthly` ₹99, `geowake_pro_yearly` ₹899. The ladder
+      paywall + entitlement logic are built and tested; they just need the SKUs
+      to exist. (Optional: keep the legacy `geowake_pro_onetime` for restores.)
 - [ ] **Privacy policy live** at the wired URL, matching the app's real data
       behavior (location, Guardian share, ads SDK; mobility pipeline is inert).
 - [ ] Play Console: Permissions Declaration Form (background location, single

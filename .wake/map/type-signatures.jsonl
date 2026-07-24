@@ -264,6 +264,7 @@
 {"file":"test/monetization/monetization_journey_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_service_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/pass_ladder_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_decision_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_interstitial_test.dart","name":"_host","signature":"(PostArrivalCard card)"}
 {"file":"test/monetization/post_arrival_interstitial_test.dart","name":"main","signature":"()"}

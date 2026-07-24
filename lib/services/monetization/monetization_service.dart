@@ -24,7 +24,9 @@ class MonetizationService {
   static const String _ridesKey = 'gw_rides_since_last_ad';
 
   /// Hardcoded fallback price shown if the store metadata is unavailable, so the
-  /// paywall CTA never blanks. Matches the Play Console SKU list price (₹199).
+  /// paywall CTA never blanks. Retained for the legacy one-time SKU; the pass
+  /// ladder carries its own per-SKU fallbacks in the paywall. Play Console must
+  /// have consumable SKUs geowake_pro_daily/weekly/monthly/yearly at ₹7/35/99/899.
   static const String proPriceFallback = '₹199';
 
   late PremiumService premium;
@@ -133,6 +135,17 @@ class MonetizationService {
     return owned;
   }
 
+  /// Buy a prepaid pass (daily/weekly/monthly/yearly — [PremiumProducts.passLadder]).
+  /// Consumable, so it can be re-bought each period. Returns true iff granted.
+  /// Like [buyPro], a UPI-pending purchase resolves false here but may still
+  /// clear later via [pendingPurchasesListenable] → entitlement stream.
+  Future<bool> buyPass(String productId) async {
+    if (!_ready) return false;
+    final ok = await premium.buyPass(productId);
+    _syncTier();
+    return ok;
+  }
+
   /// Grant a rewarded "Pro for a day" pass (call after a rewarded video completes).
   Future<void> grantRewardedDayPass({
     Duration duration = PremiumService.rewardedDayPassDuration,
@@ -140,6 +153,16 @@ class MonetizationService {
     if (!_ready) return;
     await premium.grantRewardedDayPass(duration: duration);
     _syncTier();
+  }
+
+  /// Localized price for a specific SKU (pass ladder or one-time), falling back
+  /// to [fallback] if store metadata is unavailable so the paywall never blanks.
+  Future<String> priceOrFallback(String productId, String fallback) async {
+    try {
+      final p = await _backend?.queryPrice(productId);
+      if (p != null && p.trim().isNotEmpty) return p;
+    } catch (_) {/* fall through */}
+    return fallback;
   }
 
   /// Localized Pro price string, falling back to [proPriceFallback] if the store
