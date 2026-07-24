@@ -3,9 +3,9 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "e7b5b641d9f28da205ef03f4d0321fc2ee89a657",
-    "gitTree": "8748d380bf9744f9f1ec6cff46631d2e64fb431b",
-    "generatedAt": "2026-07-24T06:22:55+05:30",
+    "gitCommit": "fb5159cd5993eb2222a7709967d67e7785705dd3",
+    "gitTree": "90caabe94e0c7b07cb6c5caf3dd6742ebf073694",
+    "generatedAt": "2026-07-24T06:25:50+05:30",
     "filesIndexed": 424,
     "dependencyEdges": 911,
     "totalExports": 724,
@@ -8394,7 +8394,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "21de015edc01ef38"
+      "contentHash": "9e95dc9e159c13a2"
     },
     {
       "file": "lib/services/saved_route.dart",
