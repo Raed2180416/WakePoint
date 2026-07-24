@@ -68,6 +68,25 @@ Filed as work items (not launch-blocking, but track):
 - docs/PRIVACY.md accuracy (omits 2 default data flows; stale k-anon threshold)
   — reconcile with the hosted policy before submission.
 
+## 3b. Real-build validation (2026-07-24, on this machine)
+
+Verified against an actual Gradle release build, not just unit tests:
+- `flutter build apk --release` → **succeeds** (76MB universal; **41MB per-ABI
+  arm64**, which is what Play delivers via the AAB split). Tree-shaking + R8
+  shrink + proguard did NOT break the notification/alarm plugins.
+- Shipped APK manifest (via `aapt2 dump permissions`) confirms the fix landed:
+  `SCHEDULE_EXACT_ALARM` present, **`USE_EXACT_ALARM` absent (count 0)**,
+  background-location + FSI + FGS(location, mediaPlayback) all correct.
+- `flutter build appbundle --release` (a Play upload) **correctly refuses** to
+  build with the debug key ("Refusing to build a Play release artifact…") —
+  the P0 signing guard works in the direction that matters.
+- Still to validate on-device (the connected phone / gw33 AVD): the alarm
+  actually fires through DND/locked-screen after the snooze-removal + insistent-
+  backstop + cold-start-recovery changes (integration_test/*_ondevice_test.dart,
+  patrol_alarm_test) — noise-generating, run deliberately.
+- App size (41MB arm64) is on the larger side for India's low-storage devices;
+  not a blocker, but a candidate for later trimming (asset/font audit).
+
 ## 4. Quality gates that must stay green (CI-enforced)
 
 `flutter analyze lib/` (0 errors), never-late replay harness, reachability
