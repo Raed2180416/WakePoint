@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "d0d76e5a391f62bcb6bc9a41cc66c46709762224",
-  "generatedAt": "2026-07-24T08:15:14+05:30",
-  "structuralDigest": "2e65fa382077bdb8daa08e353918f27df5cd4673",
+  "gitCommit": "f95692932f8d6051f3b56e742de91e49c9144e3e",
+  "generatedAt": "2026-07-24T08:35:44+05:30",
+  "structuralDigest": "6dd79b130fa9fa837f959ffb5266eb656bd45c95",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",

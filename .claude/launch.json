@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "unified-dashboard",
+      "runtimeExecutable": "/home/raed/flutter/bin/flutter",
+      "runtimeArgs": [
+        "run",
+        "-d",
+        "web-server",
+        "-t",
+        "lib/main_unified_dashboard.dart",
+        "--web-port",
+        "3000",
+        "--web-hostname",
+        "127.0.0.1"
+      ],
+      "port": 3000
+    }
+  ]
+}
