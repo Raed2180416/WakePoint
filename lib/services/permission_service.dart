@@ -122,6 +122,24 @@ class PermissionService {
     if (!didAgree) return false;
 
     status = await Permission.locationAlways.request();
+    if (status.isGranted) return true;
+
+    // Android 11+ (API 30+): the OS will NOT grant "Allow all the time" from an
+    // in-app prompt — request() returns denied and the user must pick it in
+    // system Settings. Without this fallback the background permission is
+    // effectively ungrantable on modern Android (the alarm then can't fire with
+    // the app closed). Route the user to Settings with a clear instruction.
+    final bool goToSettings = await _showRationaleDialog(
+      "One more step",
+      "Android only lets you enable \"Allow all the time\" from Settings. Open "
+          "GeoWake's Location permission and choose \"Allow all the time\" so the "
+          "alarm can wake you while the app is closed.",
+    );
+    if (goToSettings) {
+      await openAppSettings();
+      // Re-read after the user returns from Settings.
+      status = await Permission.locationAlways.status;
+    }
     return status.isGranted;
   }
 

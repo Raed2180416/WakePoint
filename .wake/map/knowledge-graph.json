@@ -3,9 +3,9 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "16f06ce6ee13372cca18de01bab5e0953ac4fe9b",
-    "gitTree": "014548fcb6acaa58ea4c02ca4bb8901cb5fc4880",
-    "generatedAt": "2026-07-24T06:04:30+05:30",
+    "gitCommit": "e7b5b641d9f28da205ef03f4d0321fc2ee89a657",
+    "gitTree": "8748d380bf9744f9f1ec6cff46631d2e64fb431b",
+    "generatedAt": "2026-07-24T06:22:55+05:30",
     "filesIndexed": 424,
     "dependencyEdges": 911,
     "totalExports": 724,
@@ -5489,7 +5489,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b48974bb7aa97be8"
+      "contentHash": "c4aea7b8ea4dd4ba"
     },
     {
       "file": "lib/services/data_asset/aggregate_egress_sink.dart",
@@ -5732,7 +5732,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "b092f54ec308fd1d"
+      "contentHash": "b6eadbe9171332f7"
     },
     {
       "file": "lib/services/data_asset/data_asset_pipeline.dart",
@@ -7500,7 +7500,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "e377f41e37080cd3"
+      "contentHash": "622587ee91b077c6"
     },
     {
       "file": "lib/services/places_service.dart",
@@ -7537,7 +7537,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "16c97561bc6a82fd"
+      "contentHash": "9b99d6ec5e923bc6"
     },
     {
       "file": "lib/services/polyline_decoder.dart",
@@ -8394,7 +8394,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "e1869d09a3e3fd97"
+      "contentHash": "21de015edc01ef38"
     },
     {
       "file": "lib/services/saved_route.dart",
