@@ -185,7 +185,7 @@
   },
   {
     "file": "lib/core/ekf/ekf_types.dart",
-    "importers": 26,
+    "importers": 27,
     "directDependents": [
       "lib/core/ekf/ekf_logger.dart",
       "lib/core/ekf/ekf_orchestrator.dart",
@@ -205,6 +205,7 @@
       "test/core/ekf/ekf_test_controller_wiring_test.dart",
       "test/core/ekf/motion_classifier_test.dart",
       "test/core/ekf/tilt_filter_test.dart",
+      "test/core/ekf/zupt_degraded_gating_test.dart",
       "test/core/ekf/zupt_detector_test.dart",
       "test/ekf/replay_harness_test.dart",
       "test/integration/ekf_logged_data_test.dart",

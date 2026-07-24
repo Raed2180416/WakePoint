@@ -57,22 +57,36 @@ class ZuptDetector {
     // Real physical stops show accelVar < 0.15, gyroVar < 0.05 consistently.
     final imuUltraQuiet = accelVariance < 0.15 && gyroVariance < 0.05;
     
-    // ZUPT can trigger if:
-    // - IMU is quiet AND velocity is low (primary path - normal mode)
-    // - OR motion classifier says stationary AND velocity is low (classifier path)
-    // - OR IMU is ULTRA-quiet during degraded mode (velocity-independent during DR)
+    // ZUPT trigger paths differ by GPS state, because EKF velocity is only
+    // trustworthy when GPS has recently corroborated it:
     //
-    // The ultra-quiet path is critical because during GPS dropout, EKF velocity
-    // can drift to 2-3 m/s even when physically stopped. Without this path,
-    // ZUPT never fires and position error grows unbounded.
+    // NORMAL mode (GPS present):
+    // - IMU quiet AND velocity low (primary), OR
+    // - motion classifier says stationary AND velocity low.
     //
-    // Note: Ultra-quiet thresholds are much tighter than normal to prevent
-    // false positives during smooth cruising (which has imuQuiet but not imuUltraQuiet).
+    // DEGRADED mode (GPS dropout): velocity is untrustworthy in BOTH
+    // directions — it can drift UP (bias) even when stopped, and it can be
+    // pinned LOW when never learned. The pinned-low case is the proven
+    // real-ride failure (Majestic 2025-12-21 fixture): GPS lost ~25s after
+    // boarding, before cruise speed was learned, so `velocityLow` stayed true
+    // and smooth in-tunnel cruising passed `imuQuiet` — ZUPT confirmed at
+    // t=44/51/77/78/104s while the train was PROVABLY moving between stations,
+    // pinning v to 0 and freezing the estimate ~1.3 km behind truth
+    // (see docs/business_os/research/underground_validation_execution.md).
+    // So in degraded mode the velocity-gated paths are INVALID: only the
+    // ULTRA-quiet signature corroborated by the motion classifier may confirm.
+    // The same real ride shows cruise segments passing ultra-quiet thresholds
+    // alone (accelVar ~0.07, gyroVar ~0.025) but with motion=vehicle — the
+    // motionHint requirement is what rejects them. Missing a real dwell this
+    // way only loses a tightening anchor (σ grows honestly, the association
+    // window widens, GPS re-anchors on tunnel exit); a FALSE anchor corrupts
+    // the estimate with false confidence. Never-late is independent
+    // (reachability bounds progress regardless).
     final degradedUltraQuietPath = isDegraded && imuUltraQuiet && motionHint;
-    
-    final meets = (imuQuiet && velocityLow) || 
-                  (motionHint && velocityLow) ||
-                  degradedUltraQuietPath;
+
+    final meets = isDegraded
+        ? degradedUltraQuietPath
+        : (imuQuiet && velocityLow) || (motionHint && velocityLow);
 
     if (!meets) {
       _conditionStart = null;

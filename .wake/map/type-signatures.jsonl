@@ -155,6 +155,7 @@
 {"file":"test/core/ekf/route_geometry_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/station_association_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/tilt_filter_test.dart","name":"main","signature":"()"}
+{"file":"test/core/ekf/zupt_degraded_gating_test.dart","name":"main","signature":"()"}
 {"file":"test/core/ekf/zupt_detector_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard/constraint_event_integration_test.dart","name":"main","signature":"()"}
 {"file":"test/dashboard/constraint_logger_test.dart","name":"main","signature":"()"}
@@ -201,6 +202,7 @@
 {"file":"test/ekf/replay_harness_test.dart","name":"printScorecard","signature":"(RunResult r)"}
 {"file":"test/ekf/replay_harness_test.dart","name":"printCombinedTable","signature":"(List<RunResult> results, List<String> errors)"}
 {"file":"test/ekf/replay_harness_test.dart","name":"main","signature":"()"}
+{"file":"test/ekf/underground_drift_probe_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_engine_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_sigma_floor_test.dart","name":"main","signature":"()"}
 {"file":"test/eta_utils_test.dart","name":"main","signature":"()"}

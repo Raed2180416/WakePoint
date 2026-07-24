@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "b1b30f52b0b702e7d664927fb3dea144b9de5b57",
-    "gitTree": "a2ab3886d7543be416b52366bf4514afd04ae281",
-    "generatedAt": "2026-07-24T07:33:06+05:30",
-    "filesIndexed": 435,
-    "dependencyEdges": 932,
-    "totalExports": 728,
-    "totalImports": 1993,
+    "gitCommit": "d0d76e5a391f62bcb6bc9a41cc66c46709762224",
+    "gitTree": "2e65fa382077bdb8daa08e353918f27df5cd4673",
+    "generatedAt": "2026-07-24T08:15:14+05:30",
+    "filesIndexed": 437,
+    "dependencyEdges": 935,
+    "totalExports": 730,
+    "totalImports": 1998,
     "byRole": {
       "other": 4,
       "backend": 22,
-      "flutter-test": 218,
+      "flutter-test": 220,
       "flutter-lib": 182,
       "tool": 8,
       "platform": 1
@@ -2469,7 +2469,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "36527a18216942d2"
+      "contentHash": "564817b46767160f"
     },
     {
       "file": "lib/core/logging/app_logger.dart",
@@ -13155,6 +13155,43 @@
       "contentHash": "07c6ac9a09e95020"
     },
     {
+      "file": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/ekf/ekf_types.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/core/ekf/zupt_detector.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "5c1a10ddfc6e0a95"
+    },
+    {
       "file": "test/core/ekf/zupt_detector_test.dart",
       "lang": "dart",
       "exports": [
@@ -14555,7 +14592,40 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "760f981712e6eb3c"
+      "contentHash": "cb1929a593d9f60f"
+    },
+    {
+      "file": "test/ekf/underground_drift_probe_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "replay_harness_test.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "85a4fde5c8fa9a47"
     },
     {
       "file": "test/eta_engine_test.dart",
@@ -25877,6 +25947,18 @@
       "kind": "static"
     },
     {
+      "from": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "to": "lib/core/ekf/ekf_types.dart",
+      "source": "package:geowake2/core/ekf/ekf_types.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "to": "lib/core/ekf/zupt_detector.dart",
+      "source": "package:geowake2/core/ekf/zupt_detector.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/core/ekf/zupt_detector_test.dart",
       "to": "lib/core/ekf/ekf_types.dart",
       "source": "package:geowake2/core/ekf/ekf_types.dart",
@@ -26330,6 +26412,12 @@
       "from": "test/ekf/replay_harness_test.dart",
       "to": "lib/services/transfer_utils.dart",
       "source": "package:geowake2/services/transfer_utils.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/ekf/underground_drift_probe_test.dart",
+      "to": "test/ekf/replay_harness_test.dart",
+      "source": "replay_harness_test.dart",
       "kind": "static"
     },
     {
@@ -30506,7 +30594,7 @@
     },
     {
       "file": "lib/core/ekf/ekf_types.dart",
-      "importers": 26,
+      "importers": 27,
       "exports": [
         "EkfPublicState",
         "ImuSample",
@@ -31086,7 +31174,7 @@
     },
     {
       "file": "lib/core/ekf/ekf_types.dart",
-      "importers": 26,
+      "importers": 27,
       "directDependents": [
         "lib/core/ekf/ekf_logger.dart",
         "lib/core/ekf/ekf_orchestrator.dart",
@@ -31106,6 +31194,7 @@
         "test/core/ekf/ekf_test_controller_wiring_test.dart",
         "test/core/ekf/motion_classifier_test.dart",
         "test/core/ekf/tilt_filter_test.dart",
+        "test/core/ekf/zupt_degraded_gating_test.dart",
         "test/core/ekf/zupt_detector_test.dart",
         "test/ekf/replay_harness_test.dart",
         "test/integration/ekf_logged_data_test.dart",

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "b1b30f52b0b702e7d664927fb3dea144b9de5b57",
-  "generatedAt": "2026-07-24T07:33:06+05:30",
-  "structuralDigest": "a2ab3886d7543be416b52366bf4514afd04ae281",
+  "gitCommit": "d0d76e5a391f62bcb6bc9a41cc66c46709762224",
+  "generatedAt": "2026-07-24T08:15:14+05:30",
+  "structuralDigest": "2e65fa382077bdb8daa08e353918f27df5cd4673",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1207,
-    "edgeCount": 2299,
+    "nodeCount": 1211,
+    "edgeCount": 2304,
     "byLevel": {
       "feature": 9,
-      "file": 435,
+      "file": 437,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 728
+      "symbol": 730
     },
     "byEdgeType": {
-      "contains": 850,
-      "depends-on": 932,
+      "contains": 852,
+      "depends-on": 935,
       "references": 517
     }
   },
@@ -790,7 +790,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "ekf-sensor-fusion",
-      "importers": 26,
+      "importers": 27,
       "exportCount": 10
     },
     {
@@ -878,7 +878,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 1
     },
     {
@@ -2928,6 +2928,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/core/ekf/zupt_degraded_gating_test.dart",
+      "level": "file",
+      "label": "test/core/ekf/zupt_degraded_gating_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/core/ekf/zupt_detector_test.dart",
       "level": "file",
       "label": "test/core/ekf/zupt_detector_test.dart",
@@ -3221,8 +3232,19 @@
       "source": "map",
       "role": "flutter-test",
       "feature": "unassigned",
-      "importers": 0,
+      "importers": 1,
       "exportCount": 10
+    },
+    {
+      "id": "file:test/ekf/underground_drift_probe_test.dart",
+      "level": "file",
+      "label": "test/ekf/underground_drift_probe_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
     },
     {
       "id": "file:test/eta_engine_test.dart",
@@ -9822,6 +9844,15 @@
       "file": "test/core/ekf/tilt_filter_test.dart"
     },
     {
+      "id": "symbol:test/core/ekf/zupt_degraded_gating_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/core/ekf/zupt_degraded_gating_test.dart"
+    },
+    {
       "id": "symbol:test/core/ekf/zupt_detector_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -10207,6 +10238,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/ekf/replay_harness_test.dart"
+    },
+    {
+      "id": "symbol:test/ekf/underground_drift_probe_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/ekf/underground_drift_probe_test.dart"
     },
     {
       "id": "symbol:test/eta_engine_test.dart#main",
@@ -22431,6 +22471,27 @@
       "source": "map"
     },
     {
+      "from": "file:test/core/ekf/zupt_degraded_gating_test.dart",
+      "to": "file:lib/core/ekf/ekf_types.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/core/ekf/zupt_degraded_gating_test.dart",
+      "to": "file:lib/core/ekf/zupt_detector.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/core/ekf/zupt_degraded_gating_test.dart",
+      "to": "symbol:test/core/ekf/zupt_degraded_gating_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/core/ekf/zupt_detector_test.dart",
       "to": "file:lib/core/ekf/ekf_types.dart",
       "type": "depends-on",
@@ -23595,6 +23656,20 @@
     {
       "from": "file:test/ekf/replay_harness_test.dart",
       "to": "symbol:test/ekf/replay_harness_test.dart#ScenarioKind",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ekf/underground_drift_probe_test.dart",
+      "to": "file:test/ekf/replay_harness_test.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/ekf/underground_drift_probe_test.dart",
+      "to": "symbol:test/ekf/underground_drift_probe_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

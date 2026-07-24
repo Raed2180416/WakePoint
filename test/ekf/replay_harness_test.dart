@@ -463,7 +463,12 @@ Duration _dur(double tSeconds) => Duration(microseconds: (tSeconds * 1e6).round(
 // evaluator (production behavior). When false, reachability is disabled so the
 // harness can A/B prove the bound only ever fires earlier, never later.
 RunResult runReplay(String basename,
-    {ScenarioConfig? config, bool useReachability = true}) {
+    {ScenarioConfig? config,
+    bool useReachability = true,
+    // Diagnostic seam: lets a probe attach orchestrator hooks (onLog,
+    // onStationSnapConfirmed, publicState sampling) without altering replay
+    // behaviour. Null in all gate tests.
+    void Function(EkfOrchestrator orch)? onOrchestrator}) {
   final cfg = config ?? ScenarioConfig.primary();
   AppLogger.minLevel = LogLevel.error; // silence evaluator dev.log spam
 
@@ -521,6 +526,7 @@ RunResult runReplay(String basename,
   final stepStops = <double>[0.0, intermediate.length.toDouble()];
 
   final orch = EkfOrchestrator(route: route, logVerbosity: 0);
+  onOrchestrator?.call(orch);
   final metrics = EkfMetrics();
 
   // P0 REACHABILITY PROTECTION LEVEL wiring (production-equivalent).
