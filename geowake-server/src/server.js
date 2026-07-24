@@ -14,6 +14,7 @@ const { killSwitch, perTokenQuotaGuard } = require('./middleware/mapsGuard');
 const authRoutes = require('./routes/auth');
 const mapsRoutes = require('./routes/maps');
 const aggregateRoutes = require('./routes/aggregate');
+const legalRoutes = require('./routes/legal');
 
 const app = express();
 
@@ -102,6 +103,10 @@ app.use('/api/maps', killSwitch, authenticateDevice, perTokenQuotaGuard, mapsRou
 
 // Aggregate data routes (ingest requires auth, dashboard endpoints are public)
 app.use('/api/aggregate', aggregateRoutes);
+
+// Public legal pages (privacy policy + terms) — the app links these and Play
+// requires a reachable privacy policy. No auth; served as static HTML.
+app.use('/legal', legalRoutes);
 
 // ================================
 // ERROR HANDLING

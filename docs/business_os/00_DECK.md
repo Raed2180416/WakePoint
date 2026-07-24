@@ -46,9 +46,11 @@ DND-breaking wake alarm with tunnel-proof positioning** — that's the moat.
 
 ## The business in one screen
 
-- **Revenue that's real:** ₹199 one-time Pro via UPI (~₹169 net), + marginal
-  free-tier ads. Everything else (B2B data, corporate safety) is deferred or
-  dead until a named pilot exists — see `03`.
+- **Revenue:** an OPEN decision between your prepaid pass ladder
+  (₹7/₹35/₹99/₹899, `PASS_PRICING_ANALYSIS.md`) and the ₹199 one-time the code
+  ships today — see `03` for the honest tradeoff (both are UPI-friendly; passes
+  win on recurring LTV, one-time wins on simplicity). Plus marginal free-tier
+  ads. B2B data is dead for planning; corporate safety deferred until a pilot.
 - **Cost that matters:** Google Maps is the only thing that scales into real
   money (~$1–1.5k/mo at 10k DAU, ~$13–18k/mo at 100k DAU on India pricing). The
   replacement stack lands the same behavior for ~$10–50/mo then ~$150–300/mo —

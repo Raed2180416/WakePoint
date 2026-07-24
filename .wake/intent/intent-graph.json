@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "53c59c9b514ef350b4a459d44eb17762edf7960d",
-  "generatedAt": "2026-07-24T06:27:09+05:30",
-  "structuralDigest": "e3049cacf9b3b57c7d578eadbe10e5e29b42ed75",
+  "gitCommit": "3746a0b9d5da4ad9e2e41b40c086ffe2bab64fc5",
+  "generatedAt": "2026-07-24T06:34:41+05:30",
+  "structuralDigest": "4a128c2b6e24697ced7abeefbb64d5bfa5a3f88d",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1192,
-    "edgeCount": 2275,
+    "nodeCount": 1193,
+    "edgeCount": 2276,
     "byLevel": {
       "feature": 9,
-      "file": 427,
+      "file": 428,
       "repo": 1,
       "subfeature": 34,
       "symbol": 721
     },
     "byEdgeType": {
       "contains": 843,
-      "depends-on": 915,
+      "depends-on": 916,
       "references": 517
     }
   },
@@ -416,6 +416,17 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
+      "importers": 1,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/routes/legal.js",
+      "level": "file",
+      "label": "geowake-server/src/routes/legal.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
       "importers": 1,
       "exportCount": 0
     },
@@ -12889,6 +12900,13 @@
     {
       "from": "file:geowake-server/src/server.js",
       "to": "file:geowake-server/src/routes/auth.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/server.js",
+      "to": "file:geowake-server/src/routes/legal.js",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"

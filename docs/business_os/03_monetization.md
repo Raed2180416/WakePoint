@@ -1,80 +1,96 @@
-# Business OS — Monetization Decisions
+# Business OS — Monetization
 
-Decisions here override the older MONETIZATION_ANALYSIS.md / PASS_PRICING_ANALYSIS.md
-where they conflict — those explored options; this file commits, based on
-fact-checked July-2026 research (`research/monetization_benchmarks.md`).
+> This chapter tracks a decision that is **yours** (Raed's), not the audit's.
+> Two developed plans exist; this file lays out the honest tradeoff and records
+> which one is active. It does NOT overrule `PASS_PRICING_ANALYSIS.md` — that is
+> the detailed spec for the pass model and stays the source of truth for it.
 
-## 1. The committed model at launch
+## 0. The open decision (pick one; drives IAP product setup + paywall UX)
 
-| Tier | Price | Contains |
+**Plan A — Prepaid pass ladder** (your plan, `PASS_PRICING_ANALYSIS.md`):
+₹7 daily · ₹35 weekly · ₹99 monthly · ₹899 yearly, all **prepaid** (not
+auto-renewing, so no RBI e-mandate friction), each unlocking full Pro for its
+duration, coexisting with the rewarded day-pass. Optional ₹1,950/₹2,400 lifetime
+in v2.
+
+**Plan B — ₹199 one-time Pro** (what the code ships today):
+single one-time unlock + rewarded day-pass. `monetization_service.dart:28`
+(`proPriceFallback = '₹199'`), `premium_service.dart` (`proOneTime`).
+
+**Status: UNDECIDED — Plan B is merely what's currently coded, not a verdict.**
+My earlier draft of this file wrongly "committed" to B and dismissed A citing
+Citymapper. That was an overreach and the Citymapper point was weak (see §2).
+Corrected below.
+
+## 1. The honest tradeoff (fact-checked, `research/monetization_benchmarks.md`)
+
+| | Plan A — Prepaid passes | Plan B — ₹199 one-time |
 |---|---|---|
-| Free | ₹0 | Core alarm, never-late + EKF, transfers, single route, journey share, ads (banner + capped interstitial) |
-| Pro | **₹199 one-time** | Ad-free, custom sounds + escalating volume, widget, Guardian, anti-theft |
-| Day pass | rewarded ad | 24h of Pro — as a **conversion nudge**, not a revenue line |
+| India payment fit | ✅ Each pass is a **one-time UPI** charge — no card wall, no auto-renew mandate | ✅ Same — one-time UPI |
+| Recurring revenue | ✅ Yes (repurchase) — higher LTV | ❌ One-time per user forever |
+| Conversion | Higher (₹7 entry vs ₹199) — est. 3–5% vs ~1% | Lower entry-to-pay |
+| Modelled Y1 (their projection) | ₹2.8–3.6L realistic / ₹77–85L optimistic | ₹1.8–2.6L / ₹22–30L |
+| Complexity | 4 SKUs + prepaid-expiry logic + paywall ladder UX | Already built, simplest |
+| Main risk | Repurchase friction (prepaid churn); ₹7 "cheap" signal; 15% cut thin on ₹7 | Leaves recurring revenue on the table |
+| Google 15% cut | Applies per purchase (₹5.95 net on ₹7) | ₹169 net on ₹199 |
 
-Why this and not the subscription/pass-ladder ideas from the July 23 docs:
+### Where my numbers were wrong before
+- **Citymapper does NOT kill Plan A.** What failed (2023) was an *auto-renewing
+  MaaS subscription bundle* — a different animal from a prepaid impulse-pass
+  ladder. Its post-acquisition "pay to remove ads" survivor supports *keeping a
+  free core*, which BOTH plans do. It is not evidence against prepaid passes.
+- **The card-penetration argument doesn't favour B over A.** Prepaid passes are
+  also one-time UPI charges, so they clear India's ~8% card wall just as well.
+  UPI is the reason A is even viable.
 
-- **Citymapper precedent (verified):** the most prominent transit app in the
-  world tried a paid bundle subscription, killed it (June 2023), got acquired
-  in a fire sale, and the surviving paid feature is exactly "remove ads."
-  Simple survives in this category.
-- **India mechanics (verified):** UPI is first-class on Play for one-time
-  purchases; card penetration ~8% makes card-gated trials (the global
-  high-conversion pattern) inapplicable. One-time ₹199 via UPI nets **~₹169**
-  (15% fee, unchanged for India until Sept 30, 2027).
-- **Subscriptions for safety features later, not now:** recurring Guardian
-  pricing is plausible but adds RBI e-mandate friction and support burden; do
-  it only after Pro conversion data exists (decision gate: ≥25k installs AND
-  ≥1% conversion, revisit then).
-- Planning number for conversion: **<2%** free→Pro (no India benchmark exists;
-  budget pessimistically, celebrate upside).
+### What the research genuinely does say
+- One-time/lifetime plans are a *growing* minority (6.4%→10.3% of plan types
+  '23→'25) and suit utility apps — B is defensible, not wrong.
+- No India-specific, utility-category conversion benchmark exists for either —
+  both projections are estimates; treat the pass-mix ratios as assumptions.
+- The pass model's real enemy is **prepaid repurchase churn** (the user must
+  actively re-buy) — the monthly/yearly tiers are what make it compound, so the
+  ladder only wins if it funnels daily→monthly.
 
-## 2. Revenue tracks — real vs deferred vs dead (fact-checked)
+## 2. My recommendation (a recommendation, not a decision)
 
-| Track | Status | Rationale |
-|---|---|---|
-| ₹199 Pro (UPI) | **REAL — the business** | Defensible, precedented, low-friction in India |
-| Free-tier ads | **REAL but marginal** | India eCPM 5–15× below Tier-1; GeoWake is screen-off-during-use — impression volume is structurally low. Needs real AdMob IDs (user action). |
-| Rewarded day pass | **REAL as funnel** | Fractions of ₹ per view; value = demonstrating Pro before asking ₹199 |
-| Corporate commute-safety B2B | **DEFERRED — plausible** | Global comp $2–15/seat/mo exists; needs one named pilot before it's a track. Revisit at 50k installs. |
-| B2B mobility-data licensing | **DEAD for planning** | No Indian buyer market found; MoHUA/IUDX/Parivahan are building FREE open-data infra that competes; DPDP raises the compliance bar. Keep the pipeline opt-in, dormant, zero-egress. Never in projections without a named buyer. |
-| Acquisition | **Not a plan, an outcome** | WhereIsMyTrain monetized via Google acquisition; being the best metro-precision alarm is the only way that door opens. |
+**Ship Plan A (prepaid ladder), but launch a reduced 2-SKU version of it** to
+avoid decision-paralysis and SKU overhead at v1:
+- **₹99 monthly** (the anchor / core revenue driver) + **₹899 yearly** (LTV
+  capture), both prepaid, both unlock full Pro.
+- Keep the **rewarded day-pass** as the free on-ramp (replaces the ₹7 daily's
+  funnel job without a paid micro-SKU whose 15% cut is brutal).
+- Add **₹7 daily / ₹35 weekly** in a fast-follow once the monthly funnel is
+  proven, and consider ₹199 one-time or ₹1,950 lifetime as a "lifer" SKU later.
 
-## 3. Positioning that sells Pro (from `research/competitors_2026.md`)
+This gets the recurring-revenue upside of your plan with less launch risk than
+the full 4-SKU ladder, and it's a strict superset of what's coded (add SKUs,
+don't remove the one-time path). But if you want the full ladder at launch, or
+prefer to keep it dead-simple with just ₹199, both are legitimate — **your
+call.** Whatever you pick, I'll wire the SKUs, paywall, and prepaid-expiry
+logic (`PASS_PRICING_ANALYSIS.md §7` has the implementation path).
 
-The claim no competitor can make, verbatim for store + paywall:
-**"Actually wakes you — through silent mode, through Do Not Disturb, even
-underground where GPS dies."**
+## 3. What's NOT in question (both plans keep these)
 
-- WhereIsMyTrain (500M installs, Google-owned): cell-tower alarm built for
-  long-distance rail — not metro station spacing, not tunnels. Don't attack
-  its reliability; own the metro niche it structurally can't serve.
-- Moovit (3.4★): verified top complaint is aggressive full-screen ads →
-  "no full-screen ads while you sleep" is evidenced differentiation.
-- Pixel Transit Mode (Mar 2026): a manual DND filter, not a wake alarm
-  ("fails where it matters" — Android Authority). Google-ships-it risk is
-  real but today nothing from Google wakes a sleeping rider.
-- Official metro apps: no alarm at all; a 377-upvote BMRCL review has begged
-  for this since 2020. Use that as social proof.
-- Guardian/anti-theft: the India-specific emotional wedge (family safety,
-  phone snatching) — the paywall hero after ad-free.
+- Free core forever (invariant #1).
+- Rewarded day-pass as the conversion nudge.
+- Ads on free tier, never on the tracking/alarm screen; real AdMob IDs needed
+  (test IDs ship ₹0 — user action).
+- B2B mobility-data licensing is **dead for planning** (no India buyer market;
+  govt builds free open-data; DPDP compliance cost) — keep the pipeline opt-in,
+  dormant, zero-egress. Corporate commute-safety B2B is deferred-plausible,
+  needs a named pilot.
 
-## 4. Ad implementation guardrails
+## 4. Positioning that sells any paid tier (`research/competitors_2026.md`)
 
-- Real AdMob account + unit IDs = launch-blocking user action (test IDs ship
-  zero revenue). IDs must come from build config, not hardcoded.
-- Never: ads on the tracking/alarm screen, lockscreen ads, interstitials
-  during arming flow → both Play-policy risk and product-trust poison.
-  Interstitial cap: on route completion, ≥3 rides apart (the audited
-  "every 3 rides" logic must actually be wired — see audit findings).
-- Ads OFF for Pro and day-pass holders, verified by test.
+**"Actually wakes you — through silent mode, Do Not Disturb, even underground
+where GPS dies."** No competitor pairs a DND-breaking wake alarm with
+tunnel-proof positioning. Moovit's verified top complaint is aggressive ads →
+"no full-screen ads while you sleep." A 377-upvote BMRCL review has begged for
+this feature since 2020. Guardian/anti-theft are the India-specific safety wedge.
 
-## 5. KPIs the autopilot watches (post-launch weekly report)
+## 5. KPIs (post-launch weekly autopilot report)
 
-installs, D1/D7/D30 retention, rides tracked/user/week, successful-wake rate
-(the product KPI), free→Pro conversion, ARPDAU (ads), refund rate,
-share-links sent → installs (viral K), review rating trend.
-
-Kill criteria / pivots: if conversion <0.3% at 50k installs → paywall UX work
-before price experiments. If successful-wake rate <99% on any device cohort →
-engineering sprint beats all growth work (the product IS the wake rate).
+installs, D1/D7/D30 retention, rides/user/week, **successful-wake rate** (the
+product KPI), pay conversion (by SKU if Plan A), repurchase rate (Plan A),
+ARPDAU, refund rate, share-link→install (viral K), rating trend.

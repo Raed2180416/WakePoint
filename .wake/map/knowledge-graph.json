@@ -3,16 +3,16 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "53c59c9b514ef350b4a459d44eb17762edf7960d",
-    "gitTree": "e3049cacf9b3b57c7d578eadbe10e5e29b42ed75",
-    "generatedAt": "2026-07-24T06:27:09+05:30",
-    "filesIndexed": 427,
-    "dependencyEdges": 915,
+    "gitCommit": "3746a0b9d5da4ad9e2e41b40c086ffe2bab64fc5",
+    "gitTree": "4a128c2b6e24697ced7abeefbb64d5bfa5a3f88d",
+    "generatedAt": "2026-07-24T06:34:41+05:30",
+    "filesIndexed": 428,
+    "dependencyEdges": 916,
     "totalExports": 721,
-    "totalImports": 1959,
+    "totalImports": 1961,
     "byRole": {
       "other": 4,
-      "backend": 21,
+      "backend": 22,
       "flutter-test": 211,
       "flutter-lib": 182,
       "tool": 8,
@@ -515,6 +515,34 @@
       "contentHash": "7201b9a33e931ce9"
     },
     {
+      "file": "geowake-server/src/routes/legal.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "express"
+        }
+      ],
+      "types": [
+        {
+          "name": "html"
+        }
+      ],
+      "functions": [
+        {
+          "name": "shell",
+          "signature": "(title, body) =>"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "098d061d018d3648"
+    },
+    {
       "file": "geowake-server/src/routes/maps.js",
       "lang": "js",
       "exports": [],
@@ -597,6 +625,10 @@
         {
           "kind": "require",
           "source": "./routes/aggregate"
+        },
+        {
+          "kind": "require",
+          "source": "./routes/legal"
         }
       ],
       "types": [],
@@ -606,7 +638,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "4fbf76502439ec01"
+      "contentHash": "ac03d51cd9d2ab1f"
     },
     {
       "file": "geowake-server/src/utils/cache.js",
@@ -22376,6 +22408,12 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/src/server.js",
+      "to": "geowake-server/src/routes/legal.js",
+      "source": "./routes/legal",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/utils/cache.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
@@ -30362,6 +30400,10 @@
       "imports": 9
     },
     {
+      "file": "geowake-server/src/server.js",
+      "imports": 8
+    },
+    {
       "file": "lib/core/ekf/ekf_test_controller.dart",
       "imports": 8
     },
@@ -30376,10 +30418,6 @@
     {
       "file": "lib/services/tracking/tracking.dart",
       "imports": 8
-    },
-    {
-      "file": "geowake-server/src/server.js",
-      "imports": 7
     },
     {
       "file": "lib/services/widget/home_widget_bridge.dart",

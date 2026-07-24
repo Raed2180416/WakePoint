@@ -41,6 +41,7 @@
 {"file":"geowake-server/src/middleware/security.js","name":"createRateLimit","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"createSlowDown","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"handleRateLimitError","signature":"(err, req, res, next) =>"}
+{"file":"geowake-server/src/routes/legal.js","name":"shell","signature":"(title, body) =>"}
 {"file":"geowake-server/test/cost_protection_quota.test.js","name":"mintToken","signature":"()"}
 {"file":"geowake-server/test/maps_error_body.test.js","name":"makeReqRes","signature":"(body)"}
 {"file":"geowake-server/test/maps_error_body.test.js","name":"callDirections","signature":"(body)"}
