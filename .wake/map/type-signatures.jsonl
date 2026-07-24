@@ -35,9 +35,13 @@
 {"file":"geowake-server/src/controllers/mapsController.js","name":"getNearbySearch","signature":"(req, res) =>"}
 {"file":"geowake-server/src/middleware/auth.js","name":"authenticateDevice","signature":"(req, res, next) =>"}
 {"file":"geowake-server/src/middleware/auth.js","name":"generateDeviceToken","signature":"(deviceId, appVersion = '1.0.0') =>"}
+{"file":"geowake-server/src/middleware/mapsGuard.js","name":"killSwitch","signature":"(req, res, next) =>"}
+{"file":"geowake-server/src/middleware/mapsGuard.js","name":"familyQuotaGuard","signature":"(family) =>"}
+{"file":"geowake-server/src/middleware/mapsGuard.js","name":"perTokenQuotaGuard","signature":"(req, res, next) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"createRateLimit","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"createSlowDown","signature":"(options) =>"}
 {"file":"geowake-server/src/middleware/security.js","name":"handleRateLimitError","signature":"(err, req, res, next) =>"}
+{"file":"geowake-server/test/cost_protection_quota.test.js","name":"mintToken","signature":"()"}
 {"file":"geowake-server/test/maps_error_body.test.js","name":"makeReqRes","signature":"(body)"}
 {"file":"geowake-server/test/maps_error_body.test.js","name":"callDirections","signature":"(body)"}
 {"file":"integration_test/alarm_chain_ondevice_test.dart","name":"_pumpFor","signature":"(WidgetTester tester, Duration total)"}
@@ -342,7 +346,6 @@
 {"file":"test/route_cache_transit_variant_test.dart","name":"main","signature":"()"}
 {"file":"test/route_events_test.dart","name":"main","signature":"()"}
 {"file":"test/route_journey_fixes_test.dart","name":"main","signature":"()"}
-{"file":"test/route_metadata_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_lru_eviction_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_test.dart","name":"main","signature":"()"}
 {"file":"test/route_registry_upsert_replace_test.dart","name":"main","signature":"()"}

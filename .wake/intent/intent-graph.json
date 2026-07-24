@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "fb5159cd5993eb2222a7709967d67e7785705dd3",
-  "generatedAt": "2026-07-24T06:25:50+05:30",
-  "structuralDigest": "90caabe94e0c7b07cb6c5caf3dd6742ebf073694",
+  "gitCommit": "53c59c9b514ef350b4a459d44eb17762edf7960d",
+  "generatedAt": "2026-07-24T06:27:09+05:30",
+  "structuralDigest": "e3049cacf9b3b57c7d578eadbe10e5e29b42ed75",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -16,17 +16,17 @@
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
     "nodeCount": 1192,
-    "edgeCount": 2274,
+    "edgeCount": 2275,
     "byLevel": {
       "feature": 9,
-      "file": 424,
+      "file": 427,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 724
+      "symbol": 721
     },
     "byEdgeType": {
-      "contains": 846,
-      "depends-on": 911,
+      "contains": 843,
+      "depends-on": 915,
       "references": 517
     }
   },
@@ -328,7 +328,7 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
-      "importers": 6,
+      "importers": 7,
       "exportCount": 0
     },
     {
@@ -372,6 +372,17 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
+      "importers": 2,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/middleware/mapsGuard.js",
+      "level": "file",
+      "label": "geowake-server/src/middleware/mapsGuard.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
       "importers": 2,
       "exportCount": 0
     },
@@ -427,7 +438,7 @@
       "source": "map",
       "role": "backend",
       "feature": "backend-api-gateway",
-      "importers": 2,
+      "importers": 5,
       "exportCount": 0
     },
     {
@@ -445,6 +456,17 @@
       "id": "file:geowake-server/src/utils/mergeEngine.js",
       "level": "file",
       "label": "geowake-server/src/utils/mergeEngine.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 2,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/src/utils/quotaTracker.js",
+      "level": "file",
+      "label": "geowake-server/src/utils/quotaTracker.js",
       "deterministic": true,
       "source": "map",
       "role": "backend",
@@ -475,6 +497,28 @@
       "exportCount": 0
     },
     {
+      "id": "file:geowake-server/test/cost_protection_kill_switch.test.js",
+      "level": "file",
+      "label": "geowake-server/test/cost_protection_kill_switch.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/test/cost_protection_quota.test.js",
+      "level": "file",
+      "label": "geowake-server/test/cost_protection_quota.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
+    },
+    {
       "id": "file:geowake-server/test/maps_error_body.test.js",
       "level": "file",
       "label": "geowake-server/test/maps_error_body.test.js",
@@ -489,6 +533,17 @@
       "id": "file:geowake-server/test/maps.test.js",
       "level": "file",
       "label": "geowake-server/test/maps.test.js",
+      "deterministic": true,
+      "source": "map",
+      "role": "backend",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 0
+    },
+    {
+      "id": "file:geowake-server/test/token_issuance_rate_limit.test.js",
+      "level": "file",
+      "label": "geowake-server/test/token_issuance_rate_limit.test.js",
       "deterministic": true,
       "source": "map",
       "role": "backend",
@@ -1879,7 +1934,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 6,
+      "importers": 4,
       "exportCount": 2
     },
     {
@@ -1914,17 +1969,6 @@
       "feature": "routing-route-sessions",
       "importers": 1,
       "exportCount": 1
-    },
-    {
-      "id": "file:lib/services/route_metadata.dart",
-      "level": "file",
-      "label": "lib/services/route_metadata.dart",
-      "deterministic": true,
-      "source": "map",
-      "role": "flutter-lib",
-      "feature": "unassigned",
-      "importers": 2,
-      "exportCount": 2
     },
     {
       "id": "file:lib/services/route_queue.dart",
@@ -4174,17 +4218,6 @@
       "id": "file:test/route_journey_fixes_test.dart",
       "level": "file",
       "label": "test/route_journey_fixes_test.dart",
-      "deterministic": true,
-      "source": "map",
-      "role": "flutter-test",
-      "feature": "unassigned",
-      "importers": 0,
-      "exportCount": 1
-    },
-    {
-      "id": "file:test/route_metadata_test.dart",
-      "level": "file",
-      "label": "test/route_metadata_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -8306,24 +8339,6 @@
       "file": "lib/services/route_logger.dart"
     },
     {
-      "id": "symbol:lib/services/route_metadata.dart#RouteMetadata",
-      "level": "symbol",
-      "label": "RouteMetadata",
-      "kind": "class",
-      "deterministic": true,
-      "source": "map",
-      "file": "lib/services/route_metadata.dart"
-    },
-    {
-      "id": "symbol:lib/services/route_metadata.dart#RouteMetadataManager",
-      "level": "symbol",
-      "label": "RouteMetadataManager",
-      "kind": "class",
-      "deterministic": true,
-      "source": "map",
-      "file": "lib/services/route_metadata.dart"
-    },
-    {
       "id": "symbol:lib/services/route_queue.dart#RouteQueue",
       "level": "symbol",
       "label": "RouteQueue",
@@ -11204,15 +11219,6 @@
       "file": "test/route_journey_fixes_test.dart"
     },
     {
-      "id": "symbol:test/route_metadata_test.dart#main",
-      "level": "symbol",
-      "label": "main",
-      "kind": "function",
-      "deterministic": true,
-      "source": "map",
-      "file": "test/route_metadata_test.dart"
-    },
-    {
       "id": "symbol:test/route_registry_lru_eviction_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -12776,6 +12782,20 @@
       "source": "map"
     },
     {
+      "from": "file:geowake-server/src/middleware/mapsGuard.js",
+      "to": "file:geowake-server/src/config/config.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/middleware/mapsGuard.js",
+      "to": "file:geowake-server/src/utils/quotaTracker.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:geowake-server/src/middleware/security.js",
       "to": "file:geowake-server/src/config/config.js",
       "type": "depends-on",
@@ -12819,6 +12839,13 @@
     },
     {
       "from": "file:geowake-server/src/routes/maps.js",
+      "to": "file:geowake-server/src/middleware/mapsGuard.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/routes/maps.js",
       "to": "file:geowake-server/src/middleware/security.js",
       "type": "depends-on",
       "deterministic": true,
@@ -12834,6 +12861,13 @@
     {
       "from": "file:geowake-server/src/server.js",
       "to": "file:geowake-server/src/middleware/auth.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/src/server.js",
+      "to": "file:geowake-server/src/middleware/mapsGuard.js",
       "type": "depends-on",
       "deterministic": true,
       "source": "map"
@@ -12888,6 +12922,27 @@
       "source": "map"
     },
     {
+      "from": "file:geowake-server/test/cost_protection_kill_switch.test.js",
+      "to": "file:geowake-server/src/server.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/cost_protection_quota.test.js",
+      "to": "file:geowake-server/src/server.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/cost_protection_quota.test.js",
+      "to": "file:geowake-server/src/utils/quotaTracker.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:geowake-server/test/maps_error_body.test.js",
       "to": "file:geowake-server/src/controllers/mapsController.js",
       "type": "depends-on",
@@ -12903,6 +12958,13 @@
     },
     {
       "from": "file:geowake-server/test/maps.test.js",
+      "to": "file:geowake-server/src/server.js",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:geowake-server/test/token_issuance_rate_limit.test.js",
       "to": "file:geowake-server/src/server.js",
       "type": "depends-on",
       "deterministic": true,
@@ -18232,31 +18294,10 @@
     {
       "from": "file:lib/services/route_metadata.dart",
       "to": "file:lib/services/reroute_constraints.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:lib/services/route_metadata.dart",
-      "to": "file:lib/services/reroute_constraints.dart",
       "type": "references",
       "deterministic": true,
       "source": "scip",
       "weight": 10
-    },
-    {
-      "from": "file:lib/services/route_metadata.dart",
-      "to": "symbol:lib/services/route_metadata.dart#RouteMetadata",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:lib/services/route_metadata.dart",
-      "to": "symbol:lib/services/route_metadata.dart#RouteMetadataManager",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
     },
     {
       "from": "file:lib/services/route_queue.dart",
@@ -26034,13 +26075,6 @@
     {
       "from": "file:test/reroute_chain_integration_test.dart",
       "to": "file:lib/services/route_metadata.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/reroute_chain_integration_test.dart",
-      "to": "file:lib/services/route_metadata.dart",
       "type": "references",
       "deterministic": true,
       "source": "scip",
@@ -26252,13 +26286,6 @@
     {
       "from": "file:test/route_metadata_test.dart",
       "to": "file:lib/services/reroute_constraints.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/route_metadata_test.dart",
-      "to": "file:lib/services/reroute_constraints.dart",
       "type": "references",
       "deterministic": true,
       "source": "scip",
@@ -26267,24 +26294,10 @@
     {
       "from": "file:test/route_metadata_test.dart",
       "to": "file:lib/services/route_metadata.dart",
-      "type": "depends-on",
-      "deterministic": true,
-      "source": "map"
-    },
-    {
-      "from": "file:test/route_metadata_test.dart",
-      "to": "file:lib/services/route_metadata.dart",
       "type": "references",
       "deterministic": true,
       "source": "scip",
       "weight": 36
-    },
-    {
-      "from": "file:test/route_metadata_test.dart",
-      "to": "symbol:test/route_metadata_test.dart#main",
-      "type": "contains",
-      "deterministic": true,
-      "source": "map"
     },
     {
       "from": "file:test/route_registry_lru_eviction_test.dart",

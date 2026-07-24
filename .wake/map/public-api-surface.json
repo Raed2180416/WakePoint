@@ -1525,16 +1525,6 @@
       "name": "RouteLogger"
     }
   ],
-  "lib/services/route_metadata.dart": [
-    {
-      "kind": "class",
-      "name": "RouteMetadata"
-    },
-    {
-      "kind": "class",
-      "name": "RouteMetadataManager"
-    }
-  ],
   "lib/services/route_queue.dart": [
     {
       "kind": "class",

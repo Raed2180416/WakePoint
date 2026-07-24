@@ -73,3 +73,39 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: .semgrep.yml
+
+  # ──────────────────────────────────────────────────
+  # geowake-server (Node/Express): Jest test suite gate.
+  # Was previously written but never run in CI (ci-test-gates audit finding) —
+  # this closes that gap, including coverage for the wallet-protection
+  # cost-guards (server-cost-security finding).
+  # ──────────────────────────────────────────────────
+  server-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: geowake-server
+    env:
+      # Fake, non-secret test values only — config.js hard-exits at require
+      # time if these are missing (fires for Jest too). APP_BUNDLE_ID matches
+      # what the pre-existing test suite already hardcodes.
+      GOOGLE_MAPS_API_KEY: test-maps-key
+      JWT_SECRET: test-jwt-secret-at-least-32-characters-long
+      APP_BUNDLE_ID: com.yourcompany.geowake2
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+          cache-dependency-path: geowake-server/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      - name: Jest test suite
+        run: npx jest --silent

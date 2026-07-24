@@ -28,9 +28,13 @@ const authenticateDevice = (req, res, next) => {
     }
     
     req.device = {
-      id: decoded.deviceId,
+      // decoded.deviceId is legacy/unused (no issuer sets it); decoded.jti is
+      // the random per-token identity set at mint time (authController.js) and
+      // is what middleware/mapsGuard.js's perTokenQuotaGuard rate-limits on.
+      id: decoded.jti || decoded.deviceId,
       bundleId: decoded.bundleId,
-      appVersion: decoded.appVersion
+      appVersion: decoded.appVersion,
+      jti: decoded.jti
     };
     
     next();

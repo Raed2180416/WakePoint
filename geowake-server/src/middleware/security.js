@@ -50,8 +50,14 @@ const rateLimitRules = {
     max: config.maxRequestsPerMinute,
   }),
   auth: createRateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20 // Stricter limit for token generation
+    windowMs: 60 * 60 * 1000, // 1 hour
+    // Tightened per server-cost-security audit: bundleId is public, so a
+    // successfully-minted token is the real capability an attacker needs to
+    // start burning billed Maps quota — cap how many can be minted per IP
+    // per hour. Only successful mints count (skipFailedRequests) since a
+    // rejected 401 attempt grants no capability.
+    max: config.authTokenRateLimitPerHour,
+    skipFailedRequests: true
   }),
   maps: createRateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour

@@ -3,18 +3,18 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "fb5159cd5993eb2222a7709967d67e7785705dd3",
-    "gitTree": "90caabe94e0c7b07cb6c5caf3dd6742ebf073694",
-    "generatedAt": "2026-07-24T06:25:50+05:30",
-    "filesIndexed": 424,
-    "dependencyEdges": 911,
-    "totalExports": 724,
-    "totalImports": 1955,
+    "gitCommit": "53c59c9b514ef350b4a459d44eb17762edf7960d",
+    "gitTree": "e3049cacf9b3b57c7d578eadbe10e5e29b42ed75",
+    "generatedAt": "2026-07-24T06:27:09+05:30",
+    "filesIndexed": 427,
+    "dependencyEdges": 915,
+    "totalExports": 721,
+    "totalImports": 1959,
     "byRole": {
       "other": 4,
-      "backend": 16,
-      "flutter-test": 212,
-      "flutter-lib": 183,
+      "backend": 21,
+      "flutter-test": 211,
+      "flutter-lib": 182,
       "tool": 8,
       "platform": 1
     },
@@ -385,6 +385,42 @@
       "contentHash": "51539e2b27bd1471"
     },
     {
+      "file": "geowake-server/src/middleware/mapsGuard.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "../config/config"
+        },
+        {
+          "kind": "require",
+          "source": "../utils/quotaTracker"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "killSwitch",
+          "signature": "(req, res, next) =>"
+        },
+        {
+          "name": "familyQuotaGuard",
+          "signature": "(family) =>"
+        },
+        {
+          "name": "perTokenQuotaGuard",
+          "signature": "(req, res, next) =>"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "5894e7f7d5e971c6"
+    },
+    {
       "file": "geowake-server/src/middleware/security.js",
       "lang": "js",
       "exports": [],
@@ -602,7 +638,7 @@
       "hasDefaultExport": true,
       "hasSideEffects": false,
       "role": "backend",
-      "contentHash": "07fe036bcc79b08b"
+      "contentHash": "b85739f83c912e93"
     },
     {
       "file": "geowake-server/src/utils/mergeEngine.js",
@@ -626,6 +662,25 @@
       "hasSideEffects": false,
       "role": "backend",
       "contentHash": "d8a58685bc93bb33"
+    },
+    {
+      "file": "geowake-server/src/utils/quotaTracker.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [],
+      "types": [],
+      "functions": [],
+      "classes": [
+        {
+          "name": "QuotaTracker",
+          "extends": null
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": true,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "895dcf3231a3b4cb"
     },
     {
       "file": "geowake-server/test/aggregate.test.js",
@@ -676,6 +731,69 @@
       "hasSideEffects": false,
       "role": "backend",
       "contentHash": "9952c40a39971b35"
+    },
+    {
+      "file": "geowake-server/test/cost_protection_kill_switch.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "axios"
+        },
+        {
+          "kind": "require",
+          "source": "supertest"
+        },
+        {
+          "kind": "require",
+          "source": "../src/server"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "1a65524bd1314ce8"
+    },
+    {
+      "file": "geowake-server/test/cost_protection_quota.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "axios"
+        },
+        {
+          "kind": "require",
+          "source": "supertest"
+        },
+        {
+          "kind": "require",
+          "source": "../src/server"
+        },
+        {
+          "kind": "require",
+          "source": "../src/utils/quotaTracker"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "mintToken",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "95cf7f59333d9b8b"
     },
     {
       "file": "geowake-server/test/maps.test.js",
@@ -739,6 +857,29 @@
       "hasSideEffects": false,
       "role": "backend",
       "contentHash": "ccac0d1f1f8067ec"
+    },
+    {
+      "file": "geowake-server/test/token_issuance_rate_limit.test.js",
+      "lang": "js",
+      "exports": [],
+      "imports": [
+        {
+          "kind": "require",
+          "source": "supertest"
+        },
+        {
+          "kind": "require",
+          "source": "../src/server"
+        }
+      ],
+      "types": [],
+      "functions": [],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "backend",
+      "contentHash": "3f576127606e6f37"
     },
     {
       "file": "integration_test/alarm_chain_ondevice_test.dart",
@@ -4791,7 +4932,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "9f38a4d0c9b925a5"
+      "contentHash": "6ddc956b9c7f5668"
     },
     {
       "file": "lib/screens/otherimpservices/preload_map_screen.dart",
@@ -6817,7 +6958,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "bf376deea46dd86c"
+      "contentHash": "f07197ec7d7af408"
     },
     {
       "file": "lib/services/monetization/ad_service.dart",
@@ -6870,7 +7011,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3576be15bdf946df"
+      "contentHash": "a4e0d1099a4fc957"
     },
     {
       "file": "lib/services/monetization/monetization_service.dart",
@@ -8179,47 +8320,6 @@
       "hasSideEffects": false,
       "role": "flutter-lib",
       "contentHash": "ae4ec77de46fddd7"
-    },
-    {
-      "file": "lib/services/route_metadata.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "class",
-          "name": "RouteMetadata"
-        },
-        {
-          "kind": "class",
-          "name": "RouteMetadataManager"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter/material.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/reroute_constraints.dart"
-        }
-      ],
-      "types": [],
-      "functions": [],
-      "classes": [
-        {
-          "name": "RouteMetadata",
-          "extends": null
-        },
-        {
-          "name": "RouteMetadataManager",
-          "extends": null
-        }
-      ],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-lib",
-      "contentHash": "778b2892829e2be2"
     },
     {
       "file": "lib/services/route_queue.dart",
@@ -16220,7 +16320,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "021c27e46fcc9b27"
+      "contentHash": "a838dfbec9bb1582"
     },
     {
       "file": "test/monetization/monetization_journey_test.dart",
@@ -16277,7 +16377,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "ee2b1c54c000da15"
+      "contentHash": "2fea0ae3673e7a52"
     },
     {
       "file": "test/monetization/monetization_service_test.dart",
@@ -16363,7 +16463,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "77223c0486abc97d"
+      "contentHash": "46d6c1af48ad76b1"
     },
     {
       "file": "test/monetization/post_arrival_decision_test.dart",
@@ -18461,10 +18561,6 @@
         },
         {
           "kind": "static",
-          "source": "package:geowake2/services/route_metadata.dart"
-        },
-        {
-          "kind": "static",
           "source": "package:google_maps_flutter/google_maps_flutter.dart"
         }
       ],
@@ -18492,7 +18588,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-test",
-      "contentHash": "bfae489286596d35"
+      "contentHash": "38ec54708397b9b1"
     },
     {
       "file": "test/reroute_constraints_test.dart",
@@ -18808,47 +18904,6 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "00955c21f3538865"
-    },
-    {
-      "file": "test/route_metadata_test.dart",
-      "lang": "dart",
-      "exports": [
-        {
-          "kind": "function",
-          "name": "main"
-        }
-      ],
-      "imports": [
-        {
-          "kind": "static",
-          "source": "package:flutter_test/flutter_test.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/route_metadata.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:geowake2/services/reroute_constraints.dart"
-        },
-        {
-          "kind": "static",
-          "source": "package:flutter/material.dart"
-        }
-      ],
-      "types": [],
-      "functions": [
-        {
-          "name": "main",
-          "signature": "()"
-        }
-      ],
-      "classes": [],
-      "constants": [],
-      "hasDefaultExport": false,
-      "hasSideEffects": false,
-      "role": "flutter-test",
-      "contentHash": "fecad89b96abe070"
     },
     {
       "file": "test/route_registry_lru_eviction_test.dart",
@@ -22219,6 +22274,18 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/src/middleware/mapsGuard.js",
+      "to": "geowake-server/src/config/config.js",
+      "source": "../config/config",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/src/middleware/mapsGuard.js",
+      "to": "geowake-server/src/utils/quotaTracker.js",
+      "source": "../utils/quotaTracker",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/middleware/security.js",
       "to": "geowake-server/src/config/config.js",
       "source": "../config/config",
@@ -22261,6 +22328,12 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/src/routes/maps.js",
+      "to": "geowake-server/src/middleware/mapsGuard.js",
+      "source": "../middleware/mapsGuard",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/src/server.js",
       "to": "geowake-server/src/config/config.js",
       "source": "./config/config",
@@ -22276,6 +22349,12 @@
       "from": "geowake-server/src/server.js",
       "to": "geowake-server/src/middleware/security.js",
       "source": "./middleware/security",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/src/server.js",
+      "to": "geowake-server/src/middleware/mapsGuard.js",
+      "source": "./middleware/mapsGuard",
       "kind": "require"
     },
     {
@@ -22315,6 +22394,24 @@
       "kind": "require"
     },
     {
+      "from": "geowake-server/test/cost_protection_kill_switch.test.js",
+      "to": "geowake-server/src/server.js",
+      "source": "../src/server",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/cost_protection_quota.test.js",
+      "to": "geowake-server/src/server.js",
+      "source": "../src/server",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/cost_protection_quota.test.js",
+      "to": "geowake-server/src/utils/quotaTracker.js",
+      "source": "../src/utils/quotaTracker",
+      "kind": "require"
+    },
+    {
       "from": "geowake-server/test/maps.test.js",
       "to": "geowake-server/src/server.js",
       "source": "../src/server",
@@ -22330,6 +22427,12 @@
       "from": "geowake-server/test/maps_error_body.test.js",
       "to": "geowake-server/src/controllers/mapsController.js",
       "source": "../src/controllers/mapsController",
+      "kind": "require"
+    },
+    {
+      "from": "geowake-server/test/token_issuance_rate_limit.test.js",
+      "to": "geowake-server/src/server.js",
+      "source": "../src/server",
       "kind": "require"
     },
     {
@@ -24010,12 +24113,6 @@
       "from": "lib/services/reroute_policy.dart",
       "to": "lib/dashboard/constraint_logger.dart",
       "source": "package:geowake2/dashboard/constraint_logger.dart",
-      "kind": "static"
-    },
-    {
-      "from": "lib/services/route_metadata.dart",
-      "to": "lib/services/reroute_constraints.dart",
-      "source": "package:geowake2/services/reroute_constraints.dart",
       "kind": "static"
     },
     {
@@ -26833,12 +26930,6 @@
       "kind": "static"
     },
     {
-      "from": "test/reroute_chain_integration_test.dart",
-      "to": "lib/services/route_metadata.dart",
-      "source": "package:geowake2/services/route_metadata.dart",
-      "kind": "static"
-    },
-    {
       "from": "test/reroute_constraints_test.dart",
       "to": "lib/services/reroute_constraints.dart",
       "source": "package:geowake2/services/reroute_constraints.dart",
@@ -26902,18 +26993,6 @@
       "from": "test/route_journey_fixes_test.dart",
       "to": "lib/services/transfer_utils.dart",
       "source": "package:geowake2/services/transfer_utils.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/route_metadata_test.dart",
-      "to": "lib/services/route_metadata.dart",
-      "source": "package:geowake2/services/route_metadata.dart",
-      "kind": "static"
-    },
-    {
-      "from": "test/route_metadata_test.dart",
-      "to": "lib/services/reroute_constraints.dart",
-      "source": "package:geowake2/services/reroute_constraints.dart",
       "kind": "static"
     },
     {
@@ -29176,16 +29255,6 @@
         "name": "RouteLogger"
       }
     ],
-    "lib/services/route_metadata.dart": [
-      {
-        "kind": "class",
-        "name": "RouteMetadata"
-      },
-      {
-        "kind": "class",
-        "name": "RouteMetadataManager"
-      }
-    ],
     "lib/services/route_queue.dart": [
       {
         "kind": "class",
@@ -30309,12 +30378,12 @@
       "imports": 8
     },
     {
-      "file": "lib/services/widget/home_widget_bridge.dart",
+      "file": "geowake-server/src/server.js",
       "imports": 7
     },
     {
-      "file": "geowake-server/src/server.js",
-      "imports": 6
+      "file": "lib/services/widget/home_widget_bridge.dart",
+      "imports": 7
     },
     {
       "file": "lib/services/direction_service.dart",

@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const config = require('./config/config');
 const { authenticateDevice } = require('./middleware/auth');
 const { slowDownRules, handleRateLimitError } = require('./middleware/security');
+const { killSwitch, perTokenQuotaGuard } = require('./middleware/mapsGuard');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -83,6 +84,8 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'GeoWake Server is running',
+    version: '1.0.0',
+    environment: config.nodeEnv,
     timestamp: new Date().toISOString()
   });
 });
@@ -90,8 +93,12 @@ app.get('/api/health', (req, res) => {
 // Authentication routes (no auth required)
 app.use('/api/auth', authRoutes);
 
-// Protected API routes (require authentication)
-app.use('/api/maps', authenticateDevice, mapsRoutes);
+// Protected API routes (require authentication).
+// Order matters: killSwitch short-circuits before auth/quota work; quota
+// caps run after authenticateDevice (perTokenQuotaGuard needs req.device.jti)
+// and before mapsRoutes' own per-family quota + per-IP rate limit + the
+// actual Google Maps calls. See middleware/mapsGuard.js.
+app.use('/api/maps', killSwitch, authenticateDevice, perTokenQuotaGuard, mapsRoutes);
 
 // Aggregate data routes (ingest requires auth, dashboard endpoints are public)
 app.use('/api/aggregate', aggregateRoutes);
@@ -105,7 +112,8 @@ app.use('/api/aggregate', aggregateRoutes);
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    error: 'Endpoint not found'
+    error: 'Endpoint not found',
+    path: req.originalUrl
   });
 });
 // Rate limit error handler
@@ -131,34 +139,43 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ================================
 
-const server = app.listen(config.port, () => {
-  console.log('\n🌍 ================================');
-  console.log('🚀 GeoWake API Server Started!');
-  console.log('🌍 ================================');
-  console.log(`📍 Environment: ${config.nodeEnv}`);
-  console.log(`🌐 Port: ${config.port}`);
-  console.log(`🔑 Google Maps API: ${config.googleMapsApiKey ? '✅ Configured' : '❌ Missing'}`);
-  console.log(`🛡️  JWT Secret: ${config.jwtSecret ? '✅ Configured' : '❌ Missing'}`);
-  console.log(`📱 Bundle ID: ${config.appBundleId}`);
-  console.log(`⏰ Started at: ${new Date().toISOString()}`);
-  console.log('🌍 ================================\n');
-  
-  // Graceful shutdown handling
-  process.on('SIGINT', () => {
-    console.log('\n🛑 Received SIGINT, shutting down gracefully...');
-    server.close(() => {
-      console.log('✅ Server closed successfully');
-      process.exit(0);
+// Only bind a port when this file is run directly (`node src/server.js`),
+// not when it's required as a module (e.g. by the Jest/supertest test
+// suite, which spins up its own ephemeral listener per test via
+// `request(app)`). Without this guard, every test file that requires this
+// module tries to bind the same hardcoded config.port, and — since Jest
+// runs test files in parallel processes — whichever one loses the race
+// fails with EADDRINUSE instead of running its tests.
+if (require.main === module) {
+  const server = app.listen(config.port, () => {
+    console.log('\n🌍 ================================');
+    console.log('🚀 GeoWake API Server Started!');
+    console.log('🌍 ================================');
+    console.log(`📍 Environment: ${config.nodeEnv}`);
+    console.log(`🌐 Port: ${config.port}`);
+    console.log(`🔑 Google Maps API: ${config.googleMapsApiKey ? '✅ Configured' : '❌ Missing'}`);
+    console.log(`🛡️  JWT Secret: ${config.jwtSecret ? '✅ Configured' : '❌ Missing'}`);
+    console.log(`📱 Bundle ID: ${config.appBundleId}`);
+    console.log(`⏰ Started at: ${new Date().toISOString()}`);
+    console.log('🌍 ================================\n');
+
+    // Graceful shutdown handling
+    process.on('SIGINT', () => {
+      console.log('\n🛑 Received SIGINT, shutting down gracefully...');
+      server.close(() => {
+        console.log('✅ Server closed successfully');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGTERM', () => {
+      console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
+      server.close(() => {
+        console.log('✅ Server closed successfully');
+        process.exit(0);
+      });
     });
   });
-  
-  process.on('SIGTERM', () => {
-    console.log('\n🛑 Received SIGTERM, shutting down gracefully...');
-    server.close(() => {
-      console.log('✅ Server closed successfully');
-      process.exit(0);
-    });
-  });
-});
+}
 
 module.exports = app;

@@ -1,22 +1,34 @@
 /**
  * Maps API Tests
- * 
+ *
  * Tests for the Google Maps proxy endpoints including directions,
  * autocomplete, place details, geocoding, and nearby search.
+ *
+ * axios is mocked so these run hermetically (no real, billed Google Maps
+ * calls and no dependence on network access / a real API key in CI). Default
+ * mock resolves to a Google "OK" body; individual tests override it where
+ * they need to exercise the upstream-error path.
  */
 
+jest.mock('axios');
+const axios = require('axios');
 const request = require('supertest');
 const app = require('../src/server');
 
 describe('Maps API', () => {
   let validToken;
 
+  beforeEach(() => {
+    axios.get.mockReset();
+    axios.get.mockResolvedValue({ status: 200, data: { status: 'OK' } });
+  });
+
   // Get a valid token before running tests
   beforeAll(async () => {
     const response = await request(app)
       .post('/api/auth/token')
       .send({ bundleId: 'com.yourcompany.geowake2' });
-    
+
     validToken = response.body.token;
   });
 
@@ -337,6 +349,12 @@ describe('Maps API', () => {
     });
 
     test('should handle malformed coordinates', async () => {
+      // Passes client-side validation (both fields present) but Google's own
+      // API flags the values as invalid — mapsController surfaces any
+      // non-OK/ZERO_RESULTS/OVER_QUERY_LIMIT Google status as 502 (see
+      // maps_error_body.test.js for the dedicated coverage of that mapping).
+      axios.get.mockResolvedValueOnce({ status: 200, data: { status: 'INVALID_REQUEST' } });
+
       const response = await request(app)
         .post('/api/maps/directions')
         .set('Authorization', `Bearer ${validToken}`)
@@ -348,7 +366,7 @@ describe('Maps API', () => {
         .expect('Content-Type', /json/);
 
       // Should return error
-      expect([400, 500]).toContain(response.status);
+      expect([400, 500, 502]).toContain(response.status);
     });
   });
 });

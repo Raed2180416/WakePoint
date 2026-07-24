@@ -29,7 +29,42 @@ const config = {
   // Rate Limiting
   maxRequestsPerHour: parseInt(process.env.MAX_REQUESTS_PER_HOUR) || 1000,
   maxRequestsPerMinute: parseInt(process.env.MAX_REQUESTS_PER_MINUTE) || 100,
-  
+  // Tightened /api/auth/token issuance limit (per IP, successful mints only —
+  // see middleware/security.js `auth` rule + skipFailedRequests). A self-minted
+  // token is the capability an attacker needs to start burning Maps quota, so
+  // capping how many can be minted per hour matters more than IP-limiting the
+  // maps calls themselves (already covered by rateLimitRules.maps below).
+  authTokenRateLimitPerHour: parseInt(process.env.AUTH_TOKEN_RATE_LIMIT_PER_HOUR) || 10,
+
+  // ============================================================
+  // WALLET PROTECTION (server-cost-security audit finding):
+  // geowake-server proxies billed Google Maps APIs. bundleId alone is public
+  // (it's the Play Store package id) so anyone can mint a token via
+  // POST /api/auth/token and start calling /api/maps/*. These settings bound
+  // the resulting financial exposure independently of device attestation
+  // (which is a separate, larger fast-follow — see authController.js comment).
+  // ============================================================
+  //
+  // Global daily request budget per Google API family, enforced in
+  // middleware/mapsGuard.js BEFORE any outbound Google Maps call.
+  // LIMITATION: counters are tracked in-memory per process (see
+  // utils/quotaTracker.js). A multi-instance/horizontally-scaled deployment
+  // needs shared storage (Redis, a DB row, etc.) for a true global cap —
+  // today each replica enforces its own independent copy of these limits.
+  dailyQuotas: {
+    directions: parseInt(process.env.DAILY_QUOTA_DIRECTIONS) || 2000,
+    places: parseInt(process.env.DAILY_QUOTA_PLACES) || 2000,
+    geocoding: parseInt(process.env.DAILY_QUOTA_GEOCODING) || 2000,
+    nearby: parseInt(process.env.DAILY_QUOTA_NEARBY) || 2000
+  },
+  // Per-device (JWT jti) daily cap, so a single self-minted token can't alone
+  // exhaust the global family budget above.
+  dailyQuotaPerToken: parseInt(process.env.DAILY_QUOTA_PER_TOKEN) || 200,
+  // Kill switch: set MAPS_PROXY_DISABLED=true (e.g. via a Railway env var
+  // change) to make every /api/maps/* route return 503 immediately — a
+  // runaway bill can be stopped without a deploy.
+  mapsProxyDisabled: process.env.MAPS_PROXY_DISABLED === 'true',
+
   // Cache Settings
   cacheTimeouts: {
     directions: 5 * 60, // 5 minutes

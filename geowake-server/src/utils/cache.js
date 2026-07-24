@@ -7,15 +7,26 @@ class CacheManager {
     this.cache = new NodeCache({
       stdTTL: 300, // Default 5 minutes
       checkperiod: 120, // Check for expired keys every 2 minutes
-      useClones: false // Better performance
+      useClones: false, // Better performance
+      // server-cost-security: cache keys are built from client-supplied
+      // request params (origin/destination/input/address/... in generateKey
+      // below), so without a bound an attacker holding one token could send
+      // many distinct junk queries to inflate server memory indefinitely.
+      // node-cache throws ECACHEFULL once this is hit; set() below catches
+      // that and just skips caching rather than failing the request.
+      maxKeys: parseInt(process.env.CACHE_MAX_KEYS) || 2000
     });
     
     // Log cache statistics in development only
     if (config.nodeEnv !== 'production') {
-      setInterval(() => {
+      const statsInterval = setInterval(() => {
         const stats = this.cache.getStats();
         console.log(`📊 Cache Stats - Keys: ${stats.keys}, Hits: ${stats.hits}, Misses: ${stats.misses}`);
       }, 5 * 60 * 1000); // Every 5 minutes
+      // Don't let this timer keep the process (or a Jest worker) alive on
+      // its own — it's a nice-to-have log, not something that should block
+      // a clean shutdown/exit.
+      if (typeof statsInterval.unref === 'function') statsInterval.unref();
     }
   }
   
@@ -63,12 +74,23 @@ class CacheManager {
   set(type, params, data) {
     const key = this.generateKey(type, params);
     const ttl = config.cacheTimeouts[type] || 300; // Default 5 minutes
-    
-    this.cache.set(key, data, ttl);
+
+    try {
+      this.cache.set(key, data, ttl);
+    } catch (err) {
+      // node-cache throws (ECACHEFULL) once maxKeys is exceeded. Skip caching
+      // rather than failing the request — the caller still gets a valid,
+      // just-uncached response.
+      if (config.nodeEnv !== 'production') {
+        console.warn(`⚠️  Cache set skipped (${err.message || err}) for ${type}: ${key}`);
+      }
+      return false;
+    }
+
     if (config.nodeEnv !== 'production') {
       console.log(`💾 Cached ${type} for ${ttl}s: ${key}`);
     }
-    
+
     return true;
   }
   
