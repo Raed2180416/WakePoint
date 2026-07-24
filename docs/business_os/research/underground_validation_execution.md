@@ -287,3 +287,54 @@ Three files, in dependency order, all outside the HARD RULE (no flutter/opencode
    a. Extend `RunResult` (class at :337-420) with 4 new fields: `List<double?> blindWindowEntryS`, `blindWindowExitS`, `blindWindowTrueAtEntry`, `blindWindowTrueAtExit` - populate them in `runReplay()` right where `windowEntryS`/`windowExitS` are already filled (:768-769), by additionally calling `gt.at(win[0])`/`gt.at(win[1])` (the `_GroundTruth` object already in scope), and thread them into the `RunResult(...)` constructor call at :893.
    b. Add ONE new test block after the existing COLD_START test (:1151-1184), named e.g. `'TASK 4: REAL TUNNEL GEOMETRY - Purple Line Majestic underground gate'`, that: (i) hardcodes or globs the 6 new basenames; (ii) for each, calls `runReplay(basename, useReachability: true)` and asserts `expect(r.isLate, isFalse, reason: '<basename> must not fire late under the real Majestic tunnel blackout')`; (iii) calls `runReplay(basename, useReachability: false)` as the discriminating cross-check and asserts it is EITHER late OR never-fires (mirroring :1176-1184) with a comment that a fixture failing this cross-check has no evidentiary value (the net isn't doing anything); (iv) re-reads the fixture's own JSON (`jsonDecode(File('test/fixtures/replay/$basename.json').readAsStringSync())`) to pull `honesty.blind_window_gt_100s` and, when true, prints the drift/rmse fields prefixed `'[UNVALIDATED >100s - logic-only, see SYNTH_GENERATOR_DESIGN.md §4]'` instead of asserting on them, enforcing the firewall in code rather than relying on a reader noticing a flag; (v) for the one non-firewalled fixture (`single_interstation_gap_majestic_to_central_college`), additionally assert the along-track re-acquisition error `(r.blindWindowExitS[0]! - r.blindWindowTrueAtExit[0]!).abs()` is finite and print it as the one real accuracy-adjacent number this matrix can honestly produce today (still not a validated claim without a real-ride comparison, but a concrete, reproducible measurement).
    No new test file is created; Tasks 1 and 3 (existing, unmodified) automatically pick up the 6 new fixtures once step 2 commits them, giving free additional never-late-gate and monotonicity coverage with zero extra code.
+---
+
+## EXECUTED RESULT (2026-07-24) — honest measured verdict
+
+Ran the real Namma Metro rides through the EKF replay harness. Added a
+self-contained test (`test/ekf/replay_harness_test.dart` → "REAL underground
+ride — ZUPT/station-cadence keeps position tight through tunnel"), skips in CI
+where the external rides aren't committed.
+
+### Never-late: PROVEN on real underground data ✓
+- NEVER-LATE GATE: **0 late / 0 never-fired** across all rides incl. both real
+  Namma recordings.
+- Real Majestic ride, ALL GPS withheld (full-tunnel worst case): fires
+  never-late, margin +1609s. Reachability net is a proven monotone safety net.
+
+### Precise underground positioning: NOT achieved — the real finding ✗
+Measured along-track error at GPS-denied (underground) stations, natural run
+(surface GPS + real blind windows + IMU/ZUPT active):
+- **Majestic ride**: max **1330.9 m** drift (Sir M. Visvesvaraya / Central
+  College, first deep tunnel). Never-late held (margin 320.7s).
+- **Nallur ride**: max **3068.3 m** drift across 7 GPS-denied stations.
+  Never-late held (margin 663.2s).
+
+The error **accumulates instead of resetting at each station** — i.e. the
+ZUPT + StationAssociation anchoring is NOT reliably re-snapping underground.
+
+### Likely root cause (from code reading — to confirm with diagnostics + data)
+A positive-feedback failure in the snap gate (`ekf_orchestrator.dart:513-575`,
+`station_association.dart`):
+1. StationAssociation's candidate window is `3·σ_s + margin(σ_s)`.
+2. During a long tunnel, dead-reckoning drift grows σ_s.
+3. A large σ_s widens the window past a full station spacing (~1 km) → MULTIPLE
+   candidates → snap rejected (or degraded-nearest picks the wrong/ passed
+   station → non-monotonic → rejected by the confidence gate `σ_after ≤ 60m`).
+4. No snap → drift keeps growing → window stays wide. It never recovers until
+   GPS returns.
+
+So the mechanism works when drift is small (Halasuru: +304m) but fails once
+drift crosses ~a station spacing — exactly the deep/long tunnels it's for.
+
+### What this means for the product (honest)
+- The **promise ("never late") holds** underground on real data — the rider is
+  protected by the physics safety net regardless of EKF drift.
+- But the **underground wake is CONSERVATIVE (early)**, not precise, because the
+  EKF position can't be trusted mid-long-tunnel. For a destination right after a
+  long tunnel, the safety net fires early rather than the EKF firing precisely.
+- This is the #1 underground reliability item. Fixing it (robustifying the snap
+  gate against accumulated drift — e.g. cadence/step-count-based station
+  counting that doesn't depend on absolute σ, per the SubwayPS/MLoc literature)
+  needs more real underground data to validate safely — see the data-hunt
+  workflow. Do NOT blind-tune it: the never-late guarantee must not regress.
