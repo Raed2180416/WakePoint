@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geowake2/services/reroute_constraints.dart';
 import 'package:geowake2/services/tracking_termination_policy.dart';
-import 'package:geowake2/services/route_metadata.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 /// Integration tests for the reroute chain:
@@ -10,8 +9,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 /// These tests verify the components work together correctly.
 void main() {
   group('Reroute Chain Integration', () {
-    group('RerouteConstraints + RouteMetadata', () {
-      test('constraints from metadata used for validation', () {
+    group('RerouteConstraints', () {
+      test('constraints validate new route candidates', () {
         // Simulate: User started with transit mode, stops alarm
         final constraints = RerouteConstraints(
           alarmMode: 'stops',
@@ -19,20 +18,14 @@ void main() {
           transitMode: true,
         );
 
-        final metadata = RouteMetadata.original(
-          routeKey: 'transit_route_1',
-          constraints: constraints,
-          stopsRemaining: 10,
-        );
-
         // New route candidate (transit with 8 stops - valid)
         final validRoute = _buildTransitDirections(stops: 8);
-        final validResult = metadata.constraints!.validate(validRoute);
+        final validResult = constraints.validate(validRoute);
         expect(validResult.isValid, isTrue);
 
         // New route candidate (only 3 stops - invalid, user needs 5)
         final invalidRoute = _buildTransitDirections(stops: 3);
-        final invalidResult = metadata.constraints!.validate(invalidRoute);
+        final invalidResult = constraints.validate(invalidRoute);
         expect(invalidResult.isValid, isFalse);
       });
 
@@ -124,16 +117,10 @@ void main() {
           transitMode: true,
         );
 
-        final metadata = RouteMetadata.original(
-          routeKey: 'original_transit',
-          constraints: constraints,
-          stopsRemaining: 10,
-        );
-
         // Simulate: Deviation detected, reroute triggered
         // New route fetched (transit with 10 stops)
         final newRoute = _buildTransitDirections(stops: 10);
-        final validation = metadata.constraints!.validate(newRoute);
+        final validation = constraints.validate(newRoute);
 
         // Route should be valid
         expect(validation.isValid, isTrue);
@@ -181,39 +168,6 @@ void main() {
 
         expect(failedAttempts, 4);
         expect(decision.shouldTerminate, isTrue);
-      });
-    });
-
-    group('RouteMetadata Event Tracking', () {
-      test('tracks fired events correctly', () {
-        final metadata = RouteMetadata.original(
-          routeKey: 'event_test',
-          stopsRemaining: 10,
-        );
-
-        // Mark some events as fired
-        metadata.markEventFired(0);
-        metadata.markEventFired(1);
-        metadata.markEventFired(2);
-
-        expect(metadata.hasEventFired(0), isTrue);
-        expect(metadata.hasEventFired(1), isTrue);
-        expect(metadata.hasEventFired(2), isTrue);
-        expect(metadata.hasEventFired(5), isFalse);
-      });
-
-      test('tracks fired legs correctly', () {
-        final metadata = RouteMetadata.original(
-          routeKey: 'leg_test',
-          stopsRemaining: 5,
-        );
-
-        metadata.markLegFired('leg_0');
-        metadata.markLegFired('leg_1');
-
-        expect(metadata.hasLegFired('leg_0'), isTrue);
-        expect(metadata.hasLegFired('leg_1'), isTrue);
-        expect(metadata.hasLegFired('leg_2'), isFalse);
       });
     });
 

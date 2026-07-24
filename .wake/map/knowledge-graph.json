@@ -3,17 +3,17 @@
     "schemaVersion": "wakepoint-deterministic-index-v1",
     "repoRoot": ".",
     "packageName": "geowake2",
-    "gitCommit": "3746a0b9d5da4ad9e2e41b40c086ffe2bab64fc5",
-    "gitTree": "4a128c2b6e24697ced7abeefbb64d5bfa5a3f88d",
-    "generatedAt": "2026-07-24T06:34:41+05:30",
-    "filesIndexed": 428,
-    "dependencyEdges": 916,
-    "totalExports": 721,
-    "totalImports": 1961,
+    "gitCommit": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756",
+    "gitTree": "de8fb536dd937fcfa82b1499ec19ffcc67df96f2",
+    "generatedAt": "2026-07-24T06:38:39+05:30",
+    "filesIndexed": 434,
+    "dependencyEdges": 930,
+    "totalExports": 727,
+    "totalImports": 1990,
     "byRole": {
       "other": 4,
       "backend": 22,
-      "flutter-test": 211,
+      "flutter-test": 217,
       "flutter-lib": 182,
       "tool": 8,
       "platform": 1
@@ -7214,7 +7214,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "08fd49f821a0bbf0"
+      "contentHash": "637a0e0e73efb8bc"
     },
     {
       "file": "lib/services/monetization/purchase_backend.dart",
@@ -7251,7 +7251,7 @@
       "hasDefaultExport": false,
       "hasSideEffects": false,
       "role": "flutter-lib",
-      "contentHash": "3e8db6aa25e2c641"
+      "contentHash": "18c883951c1438dc"
     },
     {
       "file": "lib/services/monetization/purchase_backend_impl.dart",
@@ -16535,6 +16535,67 @@
       "contentHash": "341cdfbec06efcbc"
     },
     {
+      "file": "test/monetization/post_arrival_interstitial_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/screens/monetization/post_arrival_screen.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/post_arrival_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/premium_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/purchase_backend.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_host",
+          "signature": "(PostArrivalCard card)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "515cde9135e24a91"
+    },
+    {
       "file": "test/monetization/post_arrival_screen_widget_test.dart",
       "lang": "dart",
       "exports": [
@@ -16648,6 +16709,68 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "e80eef8e1d0497a5"
+    },
+    {
+      "file": "test/monetization/purchase_backend_impl_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "dart:async"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/foundation.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter/material.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/purchase_backend_impl.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "_restored",
+          "signature": "(String productId)"
+        },
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [
+        {
+          "name": "_FakeIapPlatform",
+          "extends": "InAppPurchasePlatform"
+        }
+      ],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "b5dde763afb5b0d5"
     },
     {
       "file": "test/multiple_switch_point_alarm_test.dart",
@@ -19407,6 +19530,92 @@
       "contentHash": "f071ce47cf900c5d"
     },
     {
+      "file": "test/services/alarm_player_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:shared_preferences/shared_preferences.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/alarm_player.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/monetization_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/premium_service.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/monetization/purchase_backend.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [
+        {
+          "name": "_customRingtone"
+        }
+      ],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "c4bf6463155fbc6c"
+    },
+    {
+      "file": "test/services/data_asset/data_asset_config_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/data_asset/data_asset_config.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "52383d3f2a32487a"
+    },
+    {
       "file": "test/services/data_asset/http_candidate_egress_sink_test.dart",
       "lang": "dart",
       "exports": [
@@ -19660,6 +19869,43 @@
       "contentHash": "bf78ece626f3d137"
     },
     {
+      "file": "test/services/places_service_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/api_client.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/places_service.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "7b77465fc7c17ac1"
+    },
+    {
       "file": "test/services/projection_correction_test.dart",
       "lang": "dart",
       "exports": [
@@ -19707,6 +19953,43 @@
       "hasSideEffects": false,
       "role": "flutter-test",
       "contentHash": "83230b285474fd6a"
+    },
+    {
+      "file": "test/services/route_session_manager_test.dart",
+      "lang": "dart",
+      "exports": [
+        {
+          "kind": "function",
+          "name": "main"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "static",
+          "source": "package:flutter_test/flutter_test.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:google_maps_flutter/google_maps_flutter.dart"
+        },
+        {
+          "kind": "static",
+          "source": "package:geowake2/services/route_session_manager.dart"
+        }
+      ],
+      "types": [],
+      "functions": [
+        {
+          "name": "main",
+          "signature": "()"
+        }
+      ],
+      "classes": [],
+      "constants": [],
+      "hasDefaultExport": false,
+      "hasSideEffects": false,
+      "role": "flutter-test",
+      "contentHash": "e34123929b38f643"
     },
     {
       "file": "test/services/testing/osm_graph_test.dart",
@@ -26500,6 +26783,36 @@
       "kind": "static"
     },
     {
+      "from": "test/monetization/post_arrival_interstitial_test.dart",
+      "to": "lib/screens/monetization/post_arrival_screen.dart",
+      "source": "package:geowake2/screens/monetization/post_arrival_screen.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_interstitial_test.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_interstitial_test.dart",
+      "to": "lib/services/monetization/post_arrival_service.dart",
+      "source": "package:geowake2/services/monetization/post_arrival_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_interstitial_test.dart",
+      "to": "lib/services/monetization/premium_service.dart",
+      "source": "package:geowake2/services/monetization/premium_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/post_arrival_interstitial_test.dart",
+      "to": "lib/services/monetization/purchase_backend.dart",
+      "source": "package:geowake2/services/monetization/purchase_backend.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/monetization/post_arrival_screen_widget_test.dart",
       "to": "lib/screens/monetization/post_arrival_screen.dart",
       "source": "package:geowake2/screens/monetization/post_arrival_screen.dart",
@@ -26527,6 +26840,12 @@
       "from": "test/monetization/premium_gates_wave0_test.dart",
       "to": "lib/services/monetization/purchase_backend.dart",
       "source": "package:geowake2/services/monetization/purchase_backend.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/monetization/purchase_backend_impl_test.dart",
+      "to": "lib/services/monetization/purchase_backend_impl.dart",
+      "source": "package:geowake2/services/monetization/purchase_backend_impl.dart",
       "kind": "static"
     },
     {
@@ -27094,6 +27413,36 @@
       "kind": "static"
     },
     {
+      "from": "test/services/alarm_player_test.dart",
+      "to": "lib/services/alarm_player.dart",
+      "source": "package:geowake2/services/alarm_player.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/alarm_player_test.dart",
+      "to": "lib/services/monetization/monetization_service.dart",
+      "source": "package:geowake2/services/monetization/monetization_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/alarm_player_test.dart",
+      "to": "lib/services/monetization/premium_service.dart",
+      "source": "package:geowake2/services/monetization/premium_service.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/alarm_player_test.dart",
+      "to": "lib/services/monetization/purchase_backend.dart",
+      "source": "package:geowake2/services/monetization/purchase_backend.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/data_asset/data_asset_config_test.dart",
+      "to": "lib/services/data_asset/data_asset_config.dart",
+      "source": "package:geowake2/services/data_asset/data_asset_config.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/services/data_asset/http_candidate_egress_sink_test.dart",
       "to": "lib/services/data_asset/aggregate_schema.dart",
       "source": "package:geowake2/services/data_asset/aggregate_schema.dart",
@@ -27220,6 +27569,18 @@
       "kind": "static"
     },
     {
+      "from": "test/services/places_service_test.dart",
+      "to": "lib/services/api_client.dart",
+      "source": "package:geowake2/services/api_client.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/places_service_test.dart",
+      "to": "lib/services/places_service.dart",
+      "source": "package:geowake2/services/places_service.dart",
+      "kind": "static"
+    },
+    {
       "from": "test/services/projection_correction_test.dart",
       "to": "lib/services/polyline_decoder.dart",
       "source": "package:geowake2/services/polyline_decoder.dart",
@@ -27229,6 +27590,12 @@
       "from": "test/services/projection_correction_test.dart",
       "to": "lib/services/stop_matcher.dart",
       "source": "package:geowake2/services/stop_matcher.dart",
+      "kind": "static"
+    },
+    {
+      "from": "test/services/route_session_manager_test.dart",
+      "to": "lib/services/route_session_manager.dart",
+      "source": "package:geowake2/services/route_session_manager.dart",
       "kind": "static"
     },
     {
@@ -30128,15 +30495,8 @@
       ]
     },
     {
-      "file": "lib/core/ekf/route_geometry.dart",
-      "importers": 16,
-      "exports": [
-        "RouteGeometry"
-      ]
-    },
-    {
       "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 16,
+      "importers": 17,
       "exports": [
         "kDataAssetEgressEnabled",
         "kDataAssetEgressEndpoint",
@@ -30154,9 +30514,32 @@
     },
     {
       "file": "lib/services/monetization/monetization_service.dart",
-      "importers": 15,
+      "importers": 17,
       "exports": [
         "MonetizationService"
+      ]
+    },
+    {
+      "file": "lib/core/ekf/route_geometry.dart",
+      "importers": 16,
+      "exports": [
+        "RouteGeometry"
+      ]
+    },
+    {
+      "file": "lib/services/api_client.dart",
+      "importers": 15,
+      "exports": [
+        "ApiClient"
+      ]
+    },
+    {
+      "file": "lib/services/monetization/premium_service.dart",
+      "importers": 15,
+      "exports": [
+        "PremiumProducts",
+        "PremiumService",
+        "EntitlementTier"
       ]
     },
     {
@@ -30173,22 +30556,6 @@
       "exports": [
         "AppClock",
         "DateTimeClockExtension"
-      ]
-    },
-    {
-      "file": "lib/services/api_client.dart",
-      "importers": 14,
-      "exports": [
-        "ApiClient"
-      ]
-    },
-    {
-      "file": "lib/services/monetization/premium_service.dart",
-      "importers": 13,
-      "exports": [
-        "PremiumProducts",
-        "PremiumService",
-        "EntitlementTier"
       ]
     },
     {
@@ -30217,6 +30584,14 @@
       "exports": [
         "DirectionService",
         "ModeInfo"
+      ]
+    },
+    {
+      "file": "lib/services/monetization/purchase_backend.dart",
+      "importers": 11,
+      "exports": [
+        "PurchaseBackend",
+        "FakePurchaseBackend"
       ]
     },
     {
@@ -30272,11 +30647,10 @@
       ]
     },
     {
-      "file": "lib/services/monetization/purchase_backend.dart",
+      "file": "lib/services/alarm_player.dart",
       "importers": 9,
       "exports": [
-        "PurchaseBackend",
-        "FakePurchaseBackend"
+        "AlarmPlayer"
       ]
     },
     {
@@ -30308,13 +30682,6 @@
       ]
     },
     {
-      "file": "lib/services/alarm_player.dart",
-      "importers": 8,
-      "exports": [
-        "AlarmPlayer"
-      ]
-    },
-    {
       "file": "lib/services/location_manager.dart",
       "importers": 8,
       "exports": [
@@ -30330,19 +30697,23 @@
       ]
     },
     {
+      "file": "lib/services/monetization/post_arrival_service.dart",
+      "importers": 8,
+      "exports": [
+        "LastMileOption",
+        "PostArrivalActionKind",
+        "PostArrivalAction",
+        "PostArrivalPrivacyError",
+        "PostArrivalCard",
+        "PostArrivalService"
+      ]
+    },
+    {
       "file": "lib/services/route_cache.dart",
       "importers": 8,
       "exports": [
         "RouteCacheEntry",
         "RouteCache"
-      ]
-    },
-    {
-      "file": "lib/services/snap_to_route.dart",
-      "importers": 8,
-      "exports": [
-        "SnapResult",
-        "SnapToRouteEngine"
       ]
     }
   ],
@@ -30812,6 +31183,71 @@
       "riskLevel": "critical"
     },
     {
+      "file": "lib/services/data_asset/data_asset_config.dart",
+      "importers": 17,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/data_asset/aggregate_schema.dart",
+        "lib/services/data_asset/contribution_cap.dart",
+        "lib/services/data_asset/data_asset_pipeline.dart",
+        "lib/services/data_asset/differential_privacy.dart",
+        "lib/services/data_asset/http_aggregate_egress_sink.dart",
+        "lib/services/data_asset/http_candidate_egress_sink.dart",
+        "lib/services/data_asset/k_anonymity_filter.dart",
+        "lib/services/data_asset/mobility_consent_service.dart",
+        "lib/services/data_asset/od_cell.dart",
+        "lib/services/data_asset/station_binner.dart",
+        "test/data_asset/consent_test.dart",
+        "test/data_asset/dp_and_kanon_test.dart",
+        "test/data_asset/http_egress_sink_test.dart",
+        "test/data_asset/pipeline_hive_test.dart",
+        "test/services/data_asset/data_asset_config_test.dart"
+      ],
+      "exportedSymbols": [
+        "kDataAssetEgressEnabled",
+        "kDataAssetEgressEndpoint",
+        "kCandidateEgressEndpoint",
+        "kOdKAnonymityThreshold",
+        "kMinContributingUsersCatchment",
+        "kPerUserMaxCellsPerDay",
+        "kPerUserMaxCountPerCellPerDay",
+        "kEpsilonPerCell",
+        "kPerUserDailyEpsilonCap",
+        "kAggregateSchemaVersion",
+        "kConsentNoticeVersion",
+        "kStationSnapMaxRadiusMeters"
+      ],
+      "riskLevel": "critical"
+    },
+    {
+      "file": "lib/services/monetization/monetization_service.dart",
+      "importers": 17,
+      "directDependents": [
+        "lib/main.dart",
+        "lib/screens/guardian_setup_screen.dart",
+        "lib/screens/monetization/paywall_screen.dart",
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/screens/settingsdrawer.dart",
+        "lib/services/alarm_player.dart",
+        "lib/services/share/guardian_service.dart",
+        "lib/services/tracking/arrival_hooks.dart",
+        "lib/services/widget/home_widget_bridge.dart",
+        "lib/services/widget/widget_arm_handler.dart",
+        "lib/widgets/gated_banner_ad.dart",
+        "lib/widgets/share/guardian_settings_section.dart",
+        "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/services/alarm_player_test.dart"
+      ],
+      "exportedSymbols": [
+        "MonetizationService"
+      ],
+      "riskLevel": "critical"
+    },
+    {
       "file": "lib/core/ekf/route_geometry.dart",
       "importers": 16,
       "directDependents": [
@@ -30838,64 +31274,54 @@
       "riskLevel": "critical"
     },
     {
-      "file": "lib/services/data_asset/data_asset_config.dart",
-      "importers": 16,
+      "file": "lib/services/api_client.dart",
+      "importers": 15,
       "directDependents": [
         "lib/main.dart",
-        "lib/screens/settingsdrawer.dart",
-        "lib/services/data_asset/aggregate_schema.dart",
-        "lib/services/data_asset/contribution_cap.dart",
-        "lib/services/data_asset/data_asset_pipeline.dart",
-        "lib/services/data_asset/differential_privacy.dart",
-        "lib/services/data_asset/http_aggregate_egress_sink.dart",
-        "lib/services/data_asset/http_candidate_egress_sink.dart",
-        "lib/services/data_asset/k_anonymity_filter.dart",
-        "lib/services/data_asset/mobility_consent_service.dart",
-        "lib/services/data_asset/od_cell.dart",
-        "lib/services/data_asset/station_binner.dart",
-        "test/data_asset/consent_test.dart",
-        "test/data_asset/dp_and_kanon_test.dart",
-        "test/data_asset/http_egress_sink_test.dart",
-        "test/data_asset/pipeline_hive_test.dart"
+        "lib/screens/homescreen.dart",
+        "lib/screens/splash_screen.dart",
+        "lib/services/direction_service.dart",
+        "lib/services/places_service.dart",
+        "test/app_config_url_alignment_test.dart",
+        "test/deviation_reroute_stress_test.dart",
+        "test/direction_service_behavior_test.dart",
+        "test/hybrid_eta_time_test.dart",
+        "test/places_session_token_test.dart",
+        "test/route_cache_integration_test.dart",
+        "test/services/places_service_test.dart",
+        "test/simplified_polyline_present_test.dart",
+        "test/tracking_service_reroute_integration_test.dart",
+        "test/tracking_service_route_activation_test.dart"
       ],
       "exportedSymbols": [
-        "kDataAssetEgressEnabled",
-        "kDataAssetEgressEndpoint",
-        "kCandidateEgressEndpoint",
-        "kOdKAnonymityThreshold",
-        "kMinContributingUsersCatchment",
-        "kPerUserMaxCellsPerDay",
-        "kPerUserMaxCountPerCellPerDay",
-        "kEpsilonPerCell",
-        "kPerUserDailyEpsilonCap",
-        "kAggregateSchemaVersion",
-        "kConsentNoticeVersion",
-        "kStationSnapMaxRadiusMeters"
+        "ApiClient"
       ],
       "riskLevel": "critical"
     },
     {
-      "file": "lib/services/monetization/monetization_service.dart",
+      "file": "lib/services/monetization/premium_service.dart",
       "importers": 15,
       "directDependents": [
-        "lib/main.dart",
         "lib/screens/guardian_setup_screen.dart",
         "lib/screens/monetization/paywall_screen.dart",
         "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/screens/settingsdrawer.dart",
-        "lib/services/alarm_player.dart",
-        "lib/services/share/guardian_service.dart",
-        "lib/services/tracking/arrival_hooks.dart",
-        "lib/services/widget/home_widget_bridge.dart",
-        "lib/services/widget/widget_arm_handler.dart",
-        "lib/widgets/gated_banner_ad.dart",
+        "lib/services/monetization/ad_service.dart",
+        "lib/services/monetization/monetization_service.dart",
         "lib/widgets/share/guardian_settings_section.dart",
         "lib/widgets/widget/widget_settings_tile.dart",
+        "test/monetization/late_purchase_grant_test.dart",
+        "test/monetization/monetization_edgecases_test.dart",
         "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart"
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/monetization_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/premium_gates_wave0_test.dart",
+        "test/services/alarm_player_test.dart"
       ],
       "exportedSymbols": [
-        "MonetizationService"
+        "PremiumProducts",
+        "PremiumService",
+        "EntitlementTier"
       ],
       "riskLevel": "critical"
     },
@@ -30947,55 +31373,6 @@
       "exportedSymbols": [
         "AppClock",
         "DateTimeClockExtension"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/api_client.dart",
-      "importers": 14,
-      "directDependents": [
-        "lib/main.dart",
-        "lib/screens/homescreen.dart",
-        "lib/screens/splash_screen.dart",
-        "lib/services/direction_service.dart",
-        "lib/services/places_service.dart",
-        "test/app_config_url_alignment_test.dart",
-        "test/deviation_reroute_stress_test.dart",
-        "test/direction_service_behavior_test.dart",
-        "test/hybrid_eta_time_test.dart",
-        "test/places_session_token_test.dart",
-        "test/route_cache_integration_test.dart",
-        "test/simplified_polyline_present_test.dart",
-        "test/tracking_service_reroute_integration_test.dart",
-        "test/tracking_service_route_activation_test.dart"
-      ],
-      "exportedSymbols": [
-        "ApiClient"
-      ],
-      "riskLevel": "critical"
-    },
-    {
-      "file": "lib/services/monetization/premium_service.dart",
-      "importers": 13,
-      "directDependents": [
-        "lib/screens/guardian_setup_screen.dart",
-        "lib/screens/monetization/paywall_screen.dart",
-        "lib/screens/monetization/post_arrival_screen.dart",
-        "lib/services/monetization/ad_service.dart",
-        "lib/services/monetization/monetization_service.dart",
-        "lib/widgets/share/guardian_settings_section.dart",
-        "lib/widgets/widget/widget_settings_tile.dart",
-        "test/monetization/late_purchase_grant_test.dart",
-        "test/monetization/monetization_edgecases_test.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart",
-        "test/monetization/monetization_test.dart",
-        "test/monetization/premium_gates_wave0_test.dart"
-      ],
-      "exportedSymbols": [
-        "PremiumProducts",
-        "PremiumService",
-        "EntitlementTier"
       ],
       "riskLevel": "critical"
     },
@@ -31068,6 +31445,28 @@
       "exportedSymbols": [
         "DirectionService",
         "ModeInfo"
+      ],
+      "riskLevel": "critical"
+    },
+    {
+      "file": "lib/services/monetization/purchase_backend.dart",
+      "importers": 11,
+      "directDependents": [
+        "lib/services/monetization/monetization_service.dart",
+        "lib/services/monetization/premium_service.dart",
+        "lib/services/monetization/purchase_backend_impl.dart",
+        "test/monetization/late_purchase_grant_test.dart",
+        "test/monetization/monetization_edgecases_test.dart",
+        "test/monetization/monetization_journey_test.dart",
+        "test/monetization/monetization_service_test.dart",
+        "test/monetization/monetization_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/premium_gates_wave0_test.dart",
+        "test/services/alarm_player_test.dart"
+      ],
+      "exportedSymbols": [
+        "PurchaseBackend",
+        "FakePurchaseBackend"
       ],
       "riskLevel": "critical"
     },
@@ -31175,22 +31574,21 @@
       "riskLevel": "high"
     },
     {
-      "file": "lib/services/monetization/purchase_backend.dart",
+      "file": "lib/services/alarm_player.dart",
       "importers": 9,
       "directDependents": [
-        "lib/services/monetization/monetization_service.dart",
-        "lib/services/monetization/premium_service.dart",
-        "lib/services/monetization/purchase_backend_impl.dart",
-        "test/monetization/late_purchase_grant_test.dart",
-        "test/monetization/monetization_edgecases_test.dart",
-        "test/monetization/monetization_journey_test.dart",
-        "test/monetization/monetization_service_test.dart",
-        "test/monetization/monetization_test.dart",
-        "test/monetization/premium_gates_wave0_test.dart"
+        "lib/debug/demo_tools.dart",
+        "lib/screens/maptracking.dart",
+        "lib/services/notification_service.dart",
+        "lib/services/tracking/alarm_controller.dart",
+        "lib/services/tracking/background_handlers.dart",
+        "lib/services/trackingservice.dart",
+        "test/services/alarm_player_test.dart",
+        "test/simulated_route_integration_test.dart",
+        "test/stop_end_tracking_vm_test.dart"
       ],
       "exportedSymbols": [
-        "PurchaseBackend",
-        "FakePurchaseBackend"
+        "AlarmPlayer"
       ],
       "riskLevel": "high"
     },
@@ -31258,24 +31656,6 @@
       "riskLevel": "high"
     },
     {
-      "file": "lib/services/alarm_player.dart",
-      "importers": 8,
-      "directDependents": [
-        "lib/debug/demo_tools.dart",
-        "lib/screens/maptracking.dart",
-        "lib/services/notification_service.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/tracking/background_handlers.dart",
-        "lib/services/trackingservice.dart",
-        "test/simulated_route_integration_test.dart",
-        "test/stop_end_tracking_vm_test.dart"
-      ],
-      "exportedSymbols": [
-        "AlarmPlayer"
-      ],
-      "riskLevel": "high"
-    },
-    {
       "file": "lib/services/location_manager.dart",
       "importers": 8,
       "directDependents": [
@@ -31313,6 +31693,29 @@
       "riskLevel": "high"
     },
     {
+      "file": "lib/services/monetization/post_arrival_service.dart",
+      "importers": 8,
+      "directDependents": [
+        "lib/screens/monetization/post_arrival_screen.dart",
+        "lib/widgets/post_arrival_card.dart",
+        "test/monetization/monetization_edgecases_test.dart",
+        "test/monetization/post_arrival_decision_test.dart",
+        "test/monetization/post_arrival_interstitial_test.dart",
+        "test/monetization/post_arrival_screen_widget_test.dart",
+        "test/monetization/post_arrival_test.dart",
+        "test/widgets/post_arrival_card_widget_test.dart"
+      ],
+      "exportedSymbols": [
+        "LastMileOption",
+        "PostArrivalActionKind",
+        "PostArrivalAction",
+        "PostArrivalPrivacyError",
+        "PostArrivalCard",
+        "PostArrivalService"
+      ],
+      "riskLevel": "high"
+    },
+    {
       "file": "lib/services/route_cache.dart",
       "importers": 8,
       "directDependents": [
@@ -31328,25 +31731,6 @@
       "exportedSymbols": [
         "RouteCacheEntry",
         "RouteCache"
-      ],
-      "riskLevel": "high"
-    },
-    {
-      "file": "lib/services/snap_to_route.dart",
-      "importers": 8,
-      "directDependents": [
-        "lib/screens/maptracking.dart",
-        "lib/services/active_route_manager.dart",
-        "lib/services/route_session_manager.dart",
-        "lib/services/tracking/alarm_context_builder.dart",
-        "lib/services/tracking/alarm_controller.dart",
-        "lib/services/trackingservice.dart",
-        "test/maptracking_eta_distance_test.dart",
-        "test/snap_to_route_test.dart"
-      ],
-      "exportedSymbols": [
-        "SnapResult",
-        "SnapToRouteEngine"
       ],
       "riskLevel": "high"
     }

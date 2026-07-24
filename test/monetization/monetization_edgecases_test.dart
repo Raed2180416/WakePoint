@@ -444,7 +444,7 @@ void main() {
       };
       expected.forEach((rides, show) {
         expect(
-          policy.canShow(AdPlacement.routeArming,
+          policy.canShow(AdPlacement.postArrival,
               isPro: false, ridesSinceLastAd: rides),
           show,
           reason: 'cap=3, rides=$rides should be ${show ? "shown" : "suppressed"}',
@@ -456,7 +456,7 @@ void main() {
       const policy = AdPolicy();
       for (final rides in const [-1, -3, -1000]) {
         expect(
-          policy.canShow(AdPlacement.routeArming,
+          policy.canShow(AdPlacement.postArrival,
               isPro: false, ridesSinceLastAd: rides),
           isFalse,
           reason: 'a negative counter is below any cap',
@@ -466,7 +466,7 @@ void main() {
 
     test('low-intrusion banners ignore the ride counter entirely', () {
       const policy = AdPolicy();
-      for (final p in const [AdPlacement.mapTracking, AdPlacement.postArrival]) {
+      for (final p in const [AdPlacement.mapTracking, AdPlacement.routeArming]) {
         for (final rides in const [-100, 0, 1, 2, 999999]) {
           expect(
             policy.canShow(p, isPro: false, ridesSinceLastAd: rides),
@@ -481,12 +481,12 @@ void main() {
         () {
       const policy = AdPolicy(frequencyCapRides: 0);
       expect(
-        policy.canShow(AdPlacement.routeArming,
+        policy.canShow(AdPlacement.postArrival,
             isPro: false, ridesSinceLastAd: 0),
         isTrue,
       );
       expect(
-        policy.canShow(AdPlacement.routeArming,
+        policy.canShow(AdPlacement.postArrival,
             isPro: true, ridesSinceLastAd: 0),
         isFalse,
       );

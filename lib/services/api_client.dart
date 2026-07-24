@@ -36,7 +36,13 @@ class ApiClient {
   /// Public accessor for the base URL (used by tests/config validation).
   static String get baseUrl => _baseUrl;
 
-  /// Public accessor for the current auth token (used by candidate egress sink).
+  /// The live device auth token, as a Bearer header value for the (currently
+  /// disabled, see kDataAssetEgressEnabled) candidate egress sink's
+  /// tokenProvider — its ONLY intended consumer (main.dart). Do NOT widen use
+  /// of this getter: no logging, no telemetry payloads, no new call sites.
+  /// If a future feature needs to prove device identity to a new sink,
+  /// prefer a purpose-built, narrowly-scoped provider over reading this raw
+  /// token directly.
   String? get authToken => _authToken;
 
   String? _authToken;

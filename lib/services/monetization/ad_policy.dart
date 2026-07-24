@@ -20,17 +20,21 @@
 /// the only low-intrusion moments; the rest are listed so the policy can HARD
 /// DENY them — an ad there could compete with the alarm and is never allowed.
 enum AdPlacement {
-  /// Route-arming screen, before the trip. Banner + frequency-capped
-  /// interstitial (every 3 rides). The interstitial fires HERE — when the user
-  /// is starting a new ride after completing 3 — never during an ongoing trip.
+  /// Route-arming screen, before the trip. Small banner only — never an
+  /// interstitial here (the user is about to start a time-pressured trip).
   routeArming,
 
   /// Above-ground map/tracking screen. Small banner.
   mapTracking,
 
-  /// Post-arrival summary the user opens AFTER they're off the train. The best
-  /// intent moment ("you've arrived at X"); native card / banner only — no
-  /// forced interstitial here (the user is getting off a train, time-pressured).
+  /// Post-arrival summary the user opens AFTER tracking has fully ended and
+  /// the wake alarm is dismissed — never during tracking/alarm. Banner +
+  /// frequency-capped interstitial (every 3 rides, MONETIZATION §1's "every 3
+  /// rides" floor). The interstitial fires HERE, after the user is already
+  /// safely off the train with the journey complete, never mid-trip and never
+  /// competing with the free share row or the opt-in rewarded day-pass offer
+  /// also shown on this screen (the interstitial is skipped whenever the user
+  /// engages the rewarded flow instead — see post_arrival_screen.dart).
   postArrival,
 
   /// The alarm is ringing. NEVER an ad.
@@ -60,11 +64,12 @@ class AdPolicy {
   };
 
   /// Interstitial surfaces subject to the every-N-rides frequency cap.
-  /// The 30s video fires at route-arming (start of a new ride, after 3
-  /// completed rides) — never during an ongoing trip, never at arrival.
-  /// Banner surfaces (map, post-arrival) are low-intrusion and NOT capped.
+  /// The interstitial fires at post-arrival (after tracking has fully ended
+  /// and the alarm is dismissed, on every 3rd completed ride) — never during
+  /// an ongoing trip, never on the alarm/wake path. Banner surfaces
+  /// (route-arming, map) are low-intrusion and NOT capped.
   static const Set<AdPlacement> frequencyCappedPlacements = <AdPlacement>{
-    AdPlacement.routeArming,
+    AdPlacement.postArrival,
   };
 
   /// Surfaces where an ad is NEVER permitted — the alarm and its wake path.

@@ -17,8 +17,11 @@
 // again with `purchased` status and entitlement is granted — even if the
 // buyOneTime() call already timed out.
 //
-// RESTORE: Uses a Completer that resolves when restored purchases arrive on the
-// stream (with a 5s timeout fallback), instead of a fixed delay.
+// RESTORE: Each restore()/queryPastPurchases() call gets its OWN completer
+// (queued in _restoreWaiters) that resolves when restored purchases arrive on
+// the stream, with a timeout fallback — instead of a fixed delay. This is
+// what lets launch-time reconciliation and a user-triggered restore run
+// concurrently without one call clobbering or stealing the other's signal.
 //
 // LAUNCH RECONCILIATION: [queryPastPurchases] is called at app start to catch
 // purchases completed while the app wasn't running (e.g. a UPI payment that
@@ -52,8 +55,18 @@ class IapPurchaseBackend implements PurchaseBackend {
   final Set<String> _pendingProductIds = <String>{};
   final Map<String, Completer<bool>> _pendingBuys = <String, Completer<bool>>{};
 
-  /// Completer for restore — resolves when restored purchases arrive on stream.
-  Completer<Set<String>>? _restoreCompleter;
+  /// Pending restore-completion waiters. `restore()` (user-triggered) and
+  /// `queryPastPurchases()` (launch-time reconciliation, fired unawaited from
+  /// MonetizationService.init on every app start) can be in flight
+  /// concurrently — e.g. the user taps "Restore purchase" within seconds of a
+  /// cold start. Each call registers its OWN completer here instead of
+  /// sharing a single field, so a fast call's `finally` can never null out a
+  /// slower call's still-pending completer (the original bug: both methods
+  /// wrote the same `_restoreCompleter` field, so whichever call started
+  /// second silently clobbered the first's reference, and the first call's
+  /// `finally` could null the field out from under the second). `_onPurchases`
+  /// completes and clears every pending waiter on any owned-set change.
+  final List<Completer<Set<String>>> _restoreWaiters = <Completer<Set<String>>>[];
 
   bool _available = false;
 
@@ -137,9 +150,15 @@ class IapPurchaseBackend implements PurchaseBackend {
       onPendingChanged?.call(<String>{..._pendingProductIds});
     }
 
-    // Resolve restore completer if we got any restored purchases.
-    if (ownedChanged && _restoreCompleter != null && !_restoreCompleter!.isCompleted) {
-      _restoreCompleter!.complete(<String>{..._owned});
+    // Resolve every pending restore()/queryPastPurchases() waiter if we got
+    // any restored purchases. Each in-flight call has its own completer, so
+    // this never leaves a concurrent caller waiting on a wrong/cleared field.
+    if (ownedChanged && _restoreWaiters.isNotEmpty) {
+      final owned = <String>{..._owned};
+      for (final waiter in _restoreWaiters) {
+        if (!waiter.isCompleted) waiter.complete(owned);
+      }
+      _restoreWaiters.clear();
     }
   }
 
@@ -185,21 +204,24 @@ class IapPurchaseBackend implements PurchaseBackend {
   @override
   Future<Set<String>> restore() async {
     if (!_available) return <String>{};
+    // Own completer for THIS call — never shared with a concurrent
+    // queryPastPurchases()/restore() invocation (see _restoreWaiters doc).
+    final completer = Completer<Set<String>>();
+    _restoreWaiters.add(completer);
     try {
-      // Use a Completer that resolves when restored purchases arrive on the
-      // stream, with a timeout fallback. This is more reliable than a fixed delay.
-      _restoreCompleter = Completer<Set<String>>();
+      // Resolves when restored purchases arrive on the stream, with a timeout
+      // fallback. This is more reliable than a fixed delay.
       await _iap.restorePurchases();
       // Restored purchases arrive asynchronously on the stream. Wait up to 5s
       // for them; if none arrive, return current owned set (possibly empty).
-      return await _restoreCompleter!.future.timeout(
+      return await completer.future.timeout(
         const Duration(seconds: 5),
         onTimeout: () => Set<String>.from(_owned),
       );
     } catch (_) {
       return <String>{};
     } finally {
-      _restoreCompleter = null;
+      _restoreWaiters.remove(completer);
     }
   }
 
@@ -213,20 +235,23 @@ class IapPurchaseBackend implements PurchaseBackend {
   /// timeout ensures we reconcile even if the stream missed events.
   Future<void> queryPastPurchases() async {
     if (!_available) return;
+    // Own completer for THIS call — see _restoreWaiters doc for why this must
+    // never be a single shared field with restore().
+    final completer = Completer<Set<String>>();
+    _restoreWaiters.add(completer);
     try {
       // The plugin's restorePurchases triggers the stream to replay existing
       // non-consumed purchases. We use a short timeout since we just want to
       // reconcile quickly at launch.
-      _restoreCompleter = Completer<Set<String>>();
       await _iap.restorePurchases();
-      await _restoreCompleter!.future.timeout(
+      await completer.future.timeout(
         const Duration(seconds: 3),
         onTimeout: () => <String>{},
       );
     } catch (_) {
       // Fail-open — existing owned set is unchanged.
     } finally {
-      _restoreCompleter = null;
+      _restoreWaiters.remove(completer);
     }
   }
 

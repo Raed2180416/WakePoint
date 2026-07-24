@@ -65,7 +65,15 @@ class PlacesService {
     }
   }
   
-  /// Fetches detailed information about a place through your secure server
+  /// Fetches detailed information about a place through your secure server.
+  ///
+  /// Per Google's Places session-token billing rules, a session token covers
+  /// exactly one autocomplete-then-details flow: it must be discarded once
+  /// Place Details is called, so the NEXT autocomplete search starts a fresh
+  /// (correctly billed) session rather than reusing this now-closed one for
+  /// up to 3 more minutes. End the session unconditionally after the Details
+  /// call — whether it succeeded, returned nothing, or threw — so a caller
+  /// can never accidentally keep billing against a closed session.
   Future<Map<String, dynamic>?> fetchPlaceDetails(String placeId) async {
     try {
       final token = _ensureSessionToken();
@@ -82,6 +90,8 @@ class PlacesService {
     } catch (e) {
       dev.log("Error fetching place details: $e", name: "PlacesService");
       return null;
+    } finally {
+      endSession();
     }
   }
 }

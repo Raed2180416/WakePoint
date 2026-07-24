@@ -5,12 +5,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geowake2/services/notification_service.dart';
+import 'package:geowake2/services/monetization/monetization_service.dart';
 
 class AlarmPlayer {
+  /// The free, always-available alarm sound. Playback falls back to this
+  /// whenever no custom ringtone is selected OR the entitlement that unlocked
+  /// custom ringtones (Pro / an active rewarded day-pass) has lapsed — the
+  /// alarm itself must never silently break or go quiet because a day-pass
+  /// expired, so it fails toward this default rather than toward silence.
+  static const String defaultRingtoneAsset =
+      'assets/ringtones/(One UI) Asteroid.ogg';
+
   static AudioPlayer? _player;
   static bool _initialized = false;
   static bool _audioAvailable = true; // set false if plugin missing
   static final ValueNotifier<bool> isPlaying = ValueNotifier<bool>(false);
+
+  // Resolved asset path from the most recent playSelected() call. The real
+  // audioplayers plugin channel isn't available headless, so this is the
+  // observable seam tests use to verify the default-vs-custom-ringtone
+  // entitlement fallback without mocking the platform channel.
+  static String? _lastResolvedAssetPath;
+  @visibleForTesting
+  static String? get lastResolvedAssetPathForTests => _lastResolvedAssetPath;
 
   // G8: native hook that fires when a routed BT/wired headset disconnects
   // (Android AudioManager.ACTION_AUDIO_BECOMING_NOISY). See MainActivity.kt.
@@ -92,13 +109,26 @@ class AlarmPlayer {
     await _ensureInit();
 
     // Try to read selected ringtone, but don't fail tests if plugin missing
-    String assetPath = 'assets/ringtones/(One UI) Asteroid.ogg';
+    String assetPath = defaultRingtoneAsset;
     try {
       final prefs = await SharedPreferences.getInstance();
-      assetPath = prefs.getString('selected_ringtone') ?? assetPath;
+      final saved = prefs.getString('selected_ringtone');
+      // A custom ringtone is only honored while the entitlement that unlocked
+      // it (Pro / an active rewarded day-pass) is CURRENTLY active. The
+      // selection can outlive a lapsed day-pass in prefs (nothing clears it
+      // on expiry), so re-check at play-time rather than trusting the saved
+      // value — and fail toward the default sound, never toward a silently
+      // broken/unentitled alarm.
+      if (saved != null) {
+        final canUseCustom =
+            MonetizationService.instance.premiumOrNull?.canUseCustomAlarmSounds ??
+                false;
+        assetPath = canUseCustom ? saved : defaultRingtoneAsset;
+      }
     } catch (_) {
       // SharedPreferences not available in unit tests without mocks
     }
+    _lastResolvedAssetPath = assetPath;
 
     if (_audioAvailable && _player != null) {
       try {

@@ -342,6 +342,71 @@
     "riskLevel": "critical"
   },
   {
+    "file": "lib/services/data_asset/data_asset_config.dart",
+    "importers": 17,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/services/data_asset/aggregate_schema.dart",
+      "lib/services/data_asset/contribution_cap.dart",
+      "lib/services/data_asset/data_asset_pipeline.dart",
+      "lib/services/data_asset/differential_privacy.dart",
+      "lib/services/data_asset/http_aggregate_egress_sink.dart",
+      "lib/services/data_asset/http_candidate_egress_sink.dart",
+      "lib/services/data_asset/k_anonymity_filter.dart",
+      "lib/services/data_asset/mobility_consent_service.dart",
+      "lib/services/data_asset/od_cell.dart",
+      "lib/services/data_asset/station_binner.dart",
+      "test/data_asset/consent_test.dart",
+      "test/data_asset/dp_and_kanon_test.dart",
+      "test/data_asset/http_egress_sink_test.dart",
+      "test/data_asset/pipeline_hive_test.dart",
+      "test/services/data_asset/data_asset_config_test.dart"
+    ],
+    "exportedSymbols": [
+      "kDataAssetEgressEnabled",
+      "kDataAssetEgressEndpoint",
+      "kCandidateEgressEndpoint",
+      "kOdKAnonymityThreshold",
+      "kMinContributingUsersCatchment",
+      "kPerUserMaxCellsPerDay",
+      "kPerUserMaxCountPerCellPerDay",
+      "kEpsilonPerCell",
+      "kPerUserDailyEpsilonCap",
+      "kAggregateSchemaVersion",
+      "kConsentNoticeVersion",
+      "kStationSnapMaxRadiusMeters"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/monetization/monetization_service.dart",
+    "importers": 17,
+    "directDependents": [
+      "lib/main.dart",
+      "lib/screens/guardian_setup_screen.dart",
+      "lib/screens/monetization/paywall_screen.dart",
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/screens/settingsdrawer.dart",
+      "lib/services/alarm_player.dart",
+      "lib/services/share/guardian_service.dart",
+      "lib/services/tracking/arrival_hooks.dart",
+      "lib/services/widget/home_widget_bridge.dart",
+      "lib/services/widget/widget_arm_handler.dart",
+      "lib/widgets/gated_banner_ad.dart",
+      "lib/widgets/share/guardian_settings_section.dart",
+      "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/services/alarm_player_test.dart"
+    ],
+    "exportedSymbols": [
+      "MonetizationService"
+    ],
+    "riskLevel": "critical"
+  },
+  {
     "file": "lib/core/ekf/route_geometry.dart",
     "importers": 16,
     "directDependents": [
@@ -368,64 +433,54 @@
     "riskLevel": "critical"
   },
   {
-    "file": "lib/services/data_asset/data_asset_config.dart",
-    "importers": 16,
+    "file": "lib/services/api_client.dart",
+    "importers": 15,
     "directDependents": [
       "lib/main.dart",
-      "lib/screens/settingsdrawer.dart",
-      "lib/services/data_asset/aggregate_schema.dart",
-      "lib/services/data_asset/contribution_cap.dart",
-      "lib/services/data_asset/data_asset_pipeline.dart",
-      "lib/services/data_asset/differential_privacy.dart",
-      "lib/services/data_asset/http_aggregate_egress_sink.dart",
-      "lib/services/data_asset/http_candidate_egress_sink.dart",
-      "lib/services/data_asset/k_anonymity_filter.dart",
-      "lib/services/data_asset/mobility_consent_service.dart",
-      "lib/services/data_asset/od_cell.dart",
-      "lib/services/data_asset/station_binner.dart",
-      "test/data_asset/consent_test.dart",
-      "test/data_asset/dp_and_kanon_test.dart",
-      "test/data_asset/http_egress_sink_test.dart",
-      "test/data_asset/pipeline_hive_test.dart"
+      "lib/screens/homescreen.dart",
+      "lib/screens/splash_screen.dart",
+      "lib/services/direction_service.dart",
+      "lib/services/places_service.dart",
+      "test/app_config_url_alignment_test.dart",
+      "test/deviation_reroute_stress_test.dart",
+      "test/direction_service_behavior_test.dart",
+      "test/hybrid_eta_time_test.dart",
+      "test/places_session_token_test.dart",
+      "test/route_cache_integration_test.dart",
+      "test/services/places_service_test.dart",
+      "test/simplified_polyline_present_test.dart",
+      "test/tracking_service_reroute_integration_test.dart",
+      "test/tracking_service_route_activation_test.dart"
     ],
     "exportedSymbols": [
-      "kDataAssetEgressEnabled",
-      "kDataAssetEgressEndpoint",
-      "kCandidateEgressEndpoint",
-      "kOdKAnonymityThreshold",
-      "kMinContributingUsersCatchment",
-      "kPerUserMaxCellsPerDay",
-      "kPerUserMaxCountPerCellPerDay",
-      "kEpsilonPerCell",
-      "kPerUserDailyEpsilonCap",
-      "kAggregateSchemaVersion",
-      "kConsentNoticeVersion",
-      "kStationSnapMaxRadiusMeters"
+      "ApiClient"
     ],
     "riskLevel": "critical"
   },
   {
-    "file": "lib/services/monetization/monetization_service.dart",
+    "file": "lib/services/monetization/premium_service.dart",
     "importers": 15,
     "directDependents": [
-      "lib/main.dart",
       "lib/screens/guardian_setup_screen.dart",
       "lib/screens/monetization/paywall_screen.dart",
       "lib/screens/monetization/post_arrival_screen.dart",
-      "lib/screens/settingsdrawer.dart",
-      "lib/services/alarm_player.dart",
-      "lib/services/share/guardian_service.dart",
-      "lib/services/tracking/arrival_hooks.dart",
-      "lib/services/widget/home_widget_bridge.dart",
-      "lib/services/widget/widget_arm_handler.dart",
-      "lib/widgets/gated_banner_ad.dart",
+      "lib/services/monetization/ad_service.dart",
+      "lib/services/monetization/monetization_service.dart",
       "lib/widgets/share/guardian_settings_section.dart",
       "lib/widgets/widget/widget_settings_tile.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
       "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart"
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart",
+      "test/services/alarm_player_test.dart"
     ],
     "exportedSymbols": [
-      "MonetizationService"
+      "PremiumProducts",
+      "PremiumService",
+      "EntitlementTier"
     ],
     "riskLevel": "critical"
   },
@@ -477,55 +532,6 @@
     "exportedSymbols": [
       "AppClock",
       "DateTimeClockExtension"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/api_client.dart",
-    "importers": 14,
-    "directDependents": [
-      "lib/main.dart",
-      "lib/screens/homescreen.dart",
-      "lib/screens/splash_screen.dart",
-      "lib/services/direction_service.dart",
-      "lib/services/places_service.dart",
-      "test/app_config_url_alignment_test.dart",
-      "test/deviation_reroute_stress_test.dart",
-      "test/direction_service_behavior_test.dart",
-      "test/hybrid_eta_time_test.dart",
-      "test/places_session_token_test.dart",
-      "test/route_cache_integration_test.dart",
-      "test/simplified_polyline_present_test.dart",
-      "test/tracking_service_reroute_integration_test.dart",
-      "test/tracking_service_route_activation_test.dart"
-    ],
-    "exportedSymbols": [
-      "ApiClient"
-    ],
-    "riskLevel": "critical"
-  },
-  {
-    "file": "lib/services/monetization/premium_service.dart",
-    "importers": 13,
-    "directDependents": [
-      "lib/screens/guardian_setup_screen.dart",
-      "lib/screens/monetization/paywall_screen.dart",
-      "lib/screens/monetization/post_arrival_screen.dart",
-      "lib/services/monetization/ad_service.dart",
-      "lib/services/monetization/monetization_service.dart",
-      "lib/widgets/share/guardian_settings_section.dart",
-      "lib/widgets/widget/widget_settings_tile.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart",
-      "test/monetization/premium_gates_wave0_test.dart"
-    ],
-    "exportedSymbols": [
-      "PremiumProducts",
-      "PremiumService",
-      "EntitlementTier"
     ],
     "riskLevel": "critical"
   },
@@ -598,6 +604,28 @@
     "exportedSymbols": [
       "DirectionService",
       "ModeInfo"
+    ],
+    "riskLevel": "critical"
+  },
+  {
+    "file": "lib/services/monetization/purchase_backend.dart",
+    "importers": 11,
+    "directDependents": [
+      "lib/services/monetization/monetization_service.dart",
+      "lib/services/monetization/premium_service.dart",
+      "lib/services/monetization/purchase_backend_impl.dart",
+      "test/monetization/late_purchase_grant_test.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/monetization_journey_test.dart",
+      "test/monetization/monetization_service_test.dart",
+      "test/monetization/monetization_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/monetization/premium_gates_wave0_test.dart",
+      "test/services/alarm_player_test.dart"
+    ],
+    "exportedSymbols": [
+      "PurchaseBackend",
+      "FakePurchaseBackend"
     ],
     "riskLevel": "critical"
   },
@@ -705,22 +733,21 @@
     "riskLevel": "high"
   },
   {
-    "file": "lib/services/monetization/purchase_backend.dart",
+    "file": "lib/services/alarm_player.dart",
     "importers": 9,
     "directDependents": [
-      "lib/services/monetization/monetization_service.dart",
-      "lib/services/monetization/premium_service.dart",
-      "lib/services/monetization/purchase_backend_impl.dart",
-      "test/monetization/late_purchase_grant_test.dart",
-      "test/monetization/monetization_edgecases_test.dart",
-      "test/monetization/monetization_journey_test.dart",
-      "test/monetization/monetization_service_test.dart",
-      "test/monetization/monetization_test.dart",
-      "test/monetization/premium_gates_wave0_test.dart"
+      "lib/debug/demo_tools.dart",
+      "lib/screens/maptracking.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/tracking/alarm_controller.dart",
+      "lib/services/tracking/background_handlers.dart",
+      "lib/services/trackingservice.dart",
+      "test/services/alarm_player_test.dart",
+      "test/simulated_route_integration_test.dart",
+      "test/stop_end_tracking_vm_test.dart"
     ],
     "exportedSymbols": [
-      "PurchaseBackend",
-      "FakePurchaseBackend"
+      "AlarmPlayer"
     ],
     "riskLevel": "high"
   },
@@ -788,24 +815,6 @@
     "riskLevel": "high"
   },
   {
-    "file": "lib/services/alarm_player.dart",
-    "importers": 8,
-    "directDependents": [
-      "lib/debug/demo_tools.dart",
-      "lib/screens/maptracking.dart",
-      "lib/services/notification_service.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/tracking/background_handlers.dart",
-      "lib/services/trackingservice.dart",
-      "test/simulated_route_integration_test.dart",
-      "test/stop_end_tracking_vm_test.dart"
-    ],
-    "exportedSymbols": [
-      "AlarmPlayer"
-    ],
-    "riskLevel": "high"
-  },
-  {
     "file": "lib/services/location_manager.dart",
     "importers": 8,
     "directDependents": [
@@ -843,6 +852,29 @@
     "riskLevel": "high"
   },
   {
+    "file": "lib/services/monetization/post_arrival_service.dart",
+    "importers": 8,
+    "directDependents": [
+      "lib/screens/monetization/post_arrival_screen.dart",
+      "lib/widgets/post_arrival_card.dart",
+      "test/monetization/monetization_edgecases_test.dart",
+      "test/monetization/post_arrival_decision_test.dart",
+      "test/monetization/post_arrival_interstitial_test.dart",
+      "test/monetization/post_arrival_screen_widget_test.dart",
+      "test/monetization/post_arrival_test.dart",
+      "test/widgets/post_arrival_card_widget_test.dart"
+    ],
+    "exportedSymbols": [
+      "LastMileOption",
+      "PostArrivalActionKind",
+      "PostArrivalAction",
+      "PostArrivalPrivacyError",
+      "PostArrivalCard",
+      "PostArrivalService"
+    ],
+    "riskLevel": "high"
+  },
+  {
     "file": "lib/services/route_cache.dart",
     "importers": 8,
     "directDependents": [
@@ -858,25 +890,6 @@
     "exportedSymbols": [
       "RouteCacheEntry",
       "RouteCache"
-    ],
-    "riskLevel": "high"
-  },
-  {
-    "file": "lib/services/snap_to_route.dart",
-    "importers": 8,
-    "directDependents": [
-      "lib/screens/maptracking.dart",
-      "lib/services/active_route_manager.dart",
-      "lib/services/route_session_manager.dart",
-      "lib/services/tracking/alarm_context_builder.dart",
-      "lib/services/tracking/alarm_controller.dart",
-      "lib/services/trackingservice.dart",
-      "test/maptracking_eta_distance_test.dart",
-      "test/snap_to_route_test.dart"
-    ],
-    "exportedSymbols": [
-      "SnapResult",
-      "SnapToRouteEngine"
     ],
     "riskLevel": "high"
   }

@@ -265,10 +265,14 @@
 {"file":"test/monetization/monetization_service_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/monetization_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_decision_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/post_arrival_interstitial_test.dart","name":"_host","signature":"(PostArrivalCard card)"}
+{"file":"test/monetization/post_arrival_interstitial_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_screen_widget_test.dart","name":"_host","signature":"(PostArrivalCard card)"}
 {"file":"test/monetization/post_arrival_screen_widget_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/post_arrival_test.dart","name":"main","signature":"()"}
 {"file":"test/monetization/premium_gates_wave0_test.dart","name":"main","signature":"()"}
+{"file":"test/monetization/purchase_backend_impl_test.dart","name":"_restored","signature":"(String productId)"}
+{"file":"test/monetization/purchase_backend_impl_test.dart","name":"main","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"syntheticMultiTransferDirections","signature":"()"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"encodePolyline","signature":"(List<LatLng> points)"}
 {"file":"test/multiple_switch_point_alarm_test.dart","name":"_encode","signature":"(int v, StringBuffer str)"}
@@ -365,14 +369,18 @@
 {"file":"test/scale/reachability_scale_test.dart","name":"main","signature":"()"}
 {"file":"test/segment_builder_test.dart","name":"main","signature":"()"}
 {"file":"test/sensor_fusion_test.dart","name":"main","signature":"()"}
+{"file":"test/services/alarm_player_test.dart","name":"main","signature":"()"}
+{"file":"test/services/data_asset/data_asset_config_test.dart","name":"main","signature":"()"}
 {"file":"test/services/data_asset/http_candidate_egress_sink_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/ambiguous_station_stop_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/gps_recovery_large_innovation_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/gps_recovery_large_innovation_test.dart","name":"_pointAtFraction","signature":"(RouteGeometry geom, double frac)"}
 {"file":"test/services/ekf_integration/long_tunnel_no_stops_test.dart","name":"main","signature":"()"}
 {"file":"test/services/ekf_integration/smooth_acceleration_test.dart","name":"main","signature":"()"}
+{"file":"test/services/places_service_test.dart","name":"main","signature":"()"}
 {"file":"test/services/projection_correction_test.dart","name":"_toRad","signature":"(double deg)"}
 {"file":"test/services/projection_correction_test.dart","name":"main","signature":"()"}
+{"file":"test/services/route_session_manager_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/osm_graph_test.dart","name":"main","signature":"()"}
 {"file":"test/services/testing/osm_graph_test.dart","name":"_createMinimalWkpFile","signature":"()"}
 {"file":"test/services/testing/pathfinder_test.dart","name":"main","signature":"()"}

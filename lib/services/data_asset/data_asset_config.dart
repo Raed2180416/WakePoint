@@ -29,9 +29,19 @@ const bool kDataAssetEgressEnabled = false;
 const String kDataAssetEgressEndpoint = '';
 
 /// Endpoint for the candidate egress sink (device → server merge engine).
-/// POSTs ReleaseCandidateMatrix JSON to /ingest. Empty by default; set when
-/// the merge backend is live.
-const String kCandidateEgressEndpoint = 'https://geowake-production.up.railway.app/api/aggregate';
+/// POSTs ReleaseCandidateMatrix JSON to /ingest. Defaults to EMPTY ('' =
+/// inert — HttpCandidateEgressSink no-ops on an empty endpoint) unless
+/// supplied at build time via --dart-define=GEOWAKE_CANDIDATE_EGRESS_ENDPOINT=...,
+/// mirroring how GEOWAKE_TELEMETRY_URL is wired in main.dart. This is
+/// defense-in-depth alongside [kDataAssetEgressEnabled] and runtime
+/// consent-gating: a production build that forgets to pass the dart-define
+/// still ships with no live URL baked in, rather than unconditionally
+/// pointing at a real endpoint and relying solely on one runtime flag to
+/// stay inert.
+const String kCandidateEgressEndpoint = String.fromEnvironment(
+  'GEOWAKE_CANDIDATE_EGRESS_ENDPOINT',
+  defaultValue: '',
+);
 
 /// k for origin-destination cell suppression (Google's "100 rule"). A cell with
 /// fewer than this many *contributing users* is dropped, never released.

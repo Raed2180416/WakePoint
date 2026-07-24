@@ -1,8 +1,8 @@
 {
   "schemaVersion": "wakepoint-intent-graph-v1",
-  "gitCommit": "3746a0b9d5da4ad9e2e41b40c086ffe2bab64fc5",
-  "generatedAt": "2026-07-24T06:34:41+05:30",
-  "structuralDigest": "4a128c2b6e24697ced7abeefbb64d5bfa5a3f88d",
+  "gitCommit": "936d283b3e7f2d4c70a9375f95b7ee9f149c4756",
+  "generatedAt": "2026-07-24T06:38:39+05:30",
+  "structuralDigest": "de8fb536dd937fcfa82b1499ec19ffcc67df96f2",
   "featuresSource": "llm-authored",
   "levels": [
     "repo",
@@ -15,18 +15,18 @@
     "repoIntent": "WakePoint (Flutter package geowake2) is a metro/transit wake-up alarm that reliably fires an alarm as a rider approaches their destination station, transfer point, or mode-change — even in tunnels and deep-metro segments where GPS is degraded or absent. It fuses live GPS with a route-constrained 1-D Extended Kalman Filter for dead-reckoning, snaps position onto Google Directions routes, and evaluates geometric per-leg alarm triggers delivered through Android/iOS full-screen notifications that survive app-swipe on a separate background isolate. A thin Node/Express backend proxies all Google Maps calls so the API key never ships on the device. Developer web dashboards and a mocking-free test suite exercise the whole pipeline deterministically over synthetic GPS/IMU inputs and time-warped virtual time.",
     "northStar": "Wake the rider at the right station — reliably, even underground with no GPS.",
     "featureCount": 9,
-    "nodeCount": 1193,
-    "edgeCount": 2276,
+    "nodeCount": 1205,
+    "edgeCount": 2296,
     "byLevel": {
       "feature": 9,
-      "file": 428,
+      "file": 434,
       "repo": 1,
       "subfeature": 34,
-      "symbol": 721
+      "symbol": 727
     },
     "byEdgeType": {
-      "contains": 843,
-      "depends-on": 916,
+      "contains": 849,
+      "depends-on": 930,
       "references": 517
     }
   },
@@ -1296,7 +1296,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 3,
+      "importers": 4,
       "exportCount": 2
     },
     {
@@ -1406,7 +1406,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "wakeup-alarm-engine",
-      "importers": 8,
+      "importers": 9,
       "exportCount": 1
     },
     {
@@ -1428,7 +1428,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "platform-connectivity-services",
-      "importers": 14,
+      "importers": 15,
       "exportCount": 1
     },
     {
@@ -1472,7 +1472,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 16,
+      "importers": 17,
       "exportCount": 12
     },
     {
@@ -1725,7 +1725,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 15,
+      "importers": 17,
       "exportCount": 1
     },
     {
@@ -1736,7 +1736,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 7,
+      "importers": 8,
       "exportCount": 6
     },
     {
@@ -1747,7 +1747,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 13,
+      "importers": 15,
       "exportCount": 3
     },
     {
@@ -1758,7 +1758,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -1769,7 +1769,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "unassigned",
-      "importers": 9,
+      "importers": 11,
       "exportCount": 2
     },
     {
@@ -1846,7 +1846,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "platform-connectivity-services",
-      "importers": 2,
+      "importers": 3,
       "exportCount": 1
     },
     {
@@ -2011,7 +2011,7 @@
       "source": "map",
       "role": "flutter-lib",
       "feature": "routing-route-sessions",
-      "importers": 1,
+      "importers": 2,
       "exportCount": 1
     },
     {
@@ -3654,6 +3654,17 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "level": "file",
+      "label": "test/monetization/post_arrival_interstitial_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/monetization/post_arrival_screen_widget_test.dart",
       "level": "file",
       "label": "test/monetization/post_arrival_screen_widget_test.dart",
@@ -3679,6 +3690,17 @@
       "id": "file:test/monetization/premium_gates_wave0_test.dart",
       "level": "file",
       "label": "test/monetization/premium_gates_wave0_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/monetization/purchase_backend_impl_test.dart",
+      "level": "file",
+      "label": "test/monetization/purchase_backend_impl_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -4336,6 +4358,28 @@
       "exportCount": 2
     },
     {
+      "id": "file:test/services/alarm_player_test.dart",
+      "level": "file",
+      "label": "test/services/alarm_player_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/services/data_asset/data_asset_config_test.dart",
+      "level": "file",
+      "label": "test/services/data_asset/data_asset_config_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
       "level": "file",
       "label": "test/services/data_asset/http_candidate_egress_sink_test.dart",
@@ -4391,9 +4435,31 @@
       "exportCount": 1
     },
     {
+      "id": "file:test/services/places_service_test.dart",
+      "level": "file",
+      "label": "test/services/places_service_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
       "id": "file:test/services/projection_correction_test.dart",
       "level": "file",
       "label": "test/services/projection_correction_test.dart",
+      "deterministic": true,
+      "source": "map",
+      "role": "flutter-test",
+      "feature": "unassigned",
+      "importers": 0,
+      "exportCount": 1
+    },
+    {
+      "id": "file:test/services/route_session_manager_test.dart",
+      "level": "file",
+      "label": "test/services/route_session_manager_test.dart",
       "deterministic": true,
       "source": "map",
       "role": "flutter-test",
@@ -10636,6 +10702,15 @@
       "file": "test/monetization/post_arrival_decision_test.dart"
     },
     {
+      "id": "symbol:test/monetization/post_arrival_interstitial_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/post_arrival_interstitial_test.dart"
+    },
+    {
       "id": "symbol:test/monetization/post_arrival_screen_widget_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -10661,6 +10736,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/monetization/premium_gates_wave0_test.dart"
+    },
+    {
+      "id": "symbol:test/monetization/purchase_backend_impl_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/monetization/purchase_backend_impl_test.dart"
     },
     {
       "id": "symbol:test/multiple_switch_point_alarm_test.dart#encodePolyline",
@@ -11374,6 +11458,24 @@
       "file": "test/sensor_fusion_test.dart"
     },
     {
+      "id": "symbol:test/services/alarm_player_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/alarm_player_test.dart"
+    },
+    {
+      "id": "symbol:test/services/data_asset/data_asset_config_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/data_asset/data_asset_config_test.dart"
+    },
+    {
       "id": "symbol:test/services/data_asset/http_candidate_egress_sink_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -11419,6 +11521,15 @@
       "file": "test/services/ekf_integration/smooth_acceleration_test.dart"
     },
     {
+      "id": "symbol:test/services/places_service_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/places_service_test.dart"
+    },
+    {
       "id": "symbol:test/services/projection_correction_test.dart#main",
       "level": "symbol",
       "label": "main",
@@ -11426,6 +11537,15 @@
       "deterministic": true,
       "source": "map",
       "file": "test/services/projection_correction_test.dart"
+    },
+    {
+      "id": "symbol:test/services/route_session_manager_test.dart#main",
+      "level": "symbol",
+      "label": "main",
+      "kind": "function",
+      "deterministic": true,
+      "source": "map",
+      "file": "test/services/route_session_manager_test.dart"
     },
     {
       "id": "symbol:test/services/testing/osm_graph_test.dart#main",
@@ -24713,6 +24833,48 @@
       "source": "map"
     },
     {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "file:lib/screens/monetization/post_arrival_screen.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "file:lib/services/monetization/post_arrival_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/post_arrival_interstitial_test.dart",
+      "to": "symbol:test/monetization/post_arrival_interstitial_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/monetization/post_arrival_screen_widget_test.dart",
       "to": "file:lib/screens/monetization/post_arrival_screen.dart",
       "type": "depends-on",
@@ -24764,6 +24926,20 @@
     {
       "from": "file:test/monetization/premium_gates_wave0_test.dart",
       "to": "symbol:test/monetization/premium_gates_wave0_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/purchase_backend_impl_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend_impl.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/monetization/purchase_backend_impl_test.dart",
+      "to": "symbol:test/monetization/purchase_backend_impl_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"
@@ -26540,6 +26716,55 @@
       "source": "map"
     },
     {
+      "from": "file:test/services/alarm_player_test.dart",
+      "to": "file:lib/services/alarm_player.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/alarm_player_test.dart",
+      "to": "file:lib/services/monetization/monetization_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/alarm_player_test.dart",
+      "to": "file:lib/services/monetization/premium_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/alarm_player_test.dart",
+      "to": "file:lib/services/monetization/purchase_backend.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/alarm_player_test.dart",
+      "to": "symbol:test/services/alarm_player_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/data_asset_config_test.dart",
+      "to": "file:lib/services/data_asset/data_asset_config.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/data_asset/data_asset_config_test.dart",
+      "to": "symbol:test/services/data_asset/data_asset_config_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/services/data_asset/http_candidate_egress_sink_test.dart",
       "to": "file:lib/services/data_asset/aggregate_schema.dart",
       "type": "depends-on",
@@ -26866,6 +27091,27 @@
       "source": "map"
     },
     {
+      "from": "file:test/services/places_service_test.dart",
+      "to": "file:lib/services/api_client.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/places_service_test.dart",
+      "to": "file:lib/services/places_service.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/places_service_test.dart",
+      "to": "symbol:test/services/places_service_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
       "from": "file:test/services/projection_correction_test.dart",
       "to": "file:lib/services/polyline_decoder.dart",
       "type": "depends-on",
@@ -26882,6 +27128,20 @@
     {
       "from": "file:test/services/projection_correction_test.dart",
       "to": "symbol:test/services/projection_correction_test.dart#main",
+      "type": "contains",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/route_session_manager_test.dart",
+      "to": "file:lib/services/route_session_manager.dart",
+      "type": "depends-on",
+      "deterministic": true,
+      "source": "map"
+    },
+    {
+      "from": "file:test/services/route_session_manager_test.dart",
+      "to": "symbol:test/services/route_session_manager_test.dart#main",
       "type": "contains",
       "deterministic": true,
       "source": "map"

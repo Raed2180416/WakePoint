@@ -92,8 +92,9 @@ class AdService {
   }
 
   /// Show an interstitial at a permitted, frequency-capped placement
-  /// (route-arming only, every 3 rides). No-op (returns false) when policy
-  /// forbids. Never throws, never during an ongoing trip.
+  /// (post-arrival only, every 3 rides — after tracking has fully ended and
+  /// the wake alarm is dismissed). No-op (returns false) when policy forbids.
+  /// Never throws, never during an ongoing trip or the alarm/wake path.
   Future<bool> maybeShowInterstitial({
     required AdPlacement placement,
     required PremiumService premium,

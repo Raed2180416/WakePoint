@@ -123,6 +123,27 @@ class RouteSessionManager {
     currentDirections = null;
   }
 
+  /// Evict per-route-key auxiliary map entries that no longer have a
+  /// corresponding entry in [registry] — i.e. keys the registry's own
+  /// capacity-bounded LRU (`RouteRegistry._evictIfNeeded`) has already
+  /// dropped. These maps mirror the registry one-to-one but were never
+  /// pruned in lockstep with it, so within one long session with many
+  /// reroutes/alternates they could grow past what the registry itself
+  /// retains. Called after every `registry.upsert()` — cheap (a handful of
+  /// key lookups) and a strict no-op once the registry is below capacity,
+  /// since every live key is still present in `registry.entries`.
+  void _pruneEvictedAuxMaps() {
+    final liveKeys = registry.entries.map((e) => e.key).toSet();
+    routeEventsByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    stepBoundsMetersByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    stepStopsCumulativeByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    stepDurationsSecondsByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    firstTransitBoardingByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    transitModeByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    transitLegStopsByKey.removeWhere((k, _) => !liveKeys.contains(k));
+    _routePayloadsByKey.removeWhere((k, _) => !liveKeys.contains(k));
+  }
+
   // --- Route Registration Interface ---
 
   /// Register a route from directions response.
@@ -824,6 +845,7 @@ class RouteSessionManager {
       points: points,
     );
     registry.upsert(entry);
+    _pruneEvictedAuxMaps();
 
     List<Map<String, dynamic>>? filteredSwitchPoints;
     if (switchPoints != null) {
